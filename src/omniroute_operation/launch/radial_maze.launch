@@ -7,7 +7,8 @@
   <arg name="single_T_maze_node_start_delay" default="1.0" />
 
   <!-- Single T-maze interface -->
-  <node name="single_T_maze" pkg="omniroute_operation" type="single_T_maze"
+  <node name="radial_maze" pkg="omniroute_operation" type="radial_maze"
     output="screen" launch-prefix="bash -c 'sleep $(arg single_T_maze_node_start_delay); $0 $@' " />
 
 </launch>
+    

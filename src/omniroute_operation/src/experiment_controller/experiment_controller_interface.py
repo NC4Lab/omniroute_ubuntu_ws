@@ -220,6 +220,9 @@ class Interface(Plugin):
         elif experiment == "pseudorandom_controller_experiment":
             self.experiment_type = "pseudorandom_controller_experiment"
             rospy.loginfo("Pseudorandom control experiment selected")
+        elif experiment == "radial_maze_experiment":
+            self.experiment_type = "radial_maze_experiment"
+            rospy.loginfo("Radial maze experiment selected")
 
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
@@ -359,6 +362,9 @@ class Interface(Plugin):
             elif self.experiment_type == "pseudorandom_controller_experiment":
                 # Record all ROS topics to pseudorandomExperimentData.bag
                 command_data = f"rosbag record -a -o pseudorandomExperimentData"
+            elif self.experiment_type == "radial_maze_experiment":
+                # Record all ROS topics to pseudorandomExperimentData.bag
+                command_data = f"rosbag record -a -o radialMazeExperimentData"
             else:
                 rospy.logerr(f"Unknown experiment type: {self.experiment_type}")
                 return
@@ -469,6 +475,9 @@ class Interface(Plugin):
         elif experiment == "pseudorandom_controller_experiment":
             self.experiment_type = "pseudorandom_controller_experiment"
             rospy.loginfo("Pseudorandom control experiment selected")
+        elif experiment == "radial_maze_experiment":
+            self.experiment_type = "radial_maze_experiment"
+            rospy.loginfo("Radial mazel experiment selected")
 
 
 class CommonFunctions:

@@ -37,7 +37,7 @@ class Mode(Enum):
     START_TRIAL = 2
     RAT_IN_START_CHAMBER = 3
     START = 4
-    SOUND_CUE = 5
+    SOUND_CUE_START = 5
     START_TO_CHOICE = 6
     CHOICE = 7
     CHOICE_TO_GOAL = 8
@@ -62,6 +62,11 @@ class Mode(Enum):
     RAISE_WALLS = 27
     LOWER_WALLS = 28
     WALL_HABITUATION_STOP = 29
+    START_TO_CENTRAL = 30
+    CENTRAL_TO_CHOICE = 31
+    SOUND_CUE_STOP = 32
+    REWARD_SOUND_STOP = 33
+    ERROR_SOUND_STOP = 34
 
 
 class Interface(Plugin):
@@ -190,25 +195,29 @@ class Interface(Plugin):
         # Duration of delay in the beginning of the trial
         self.start_first_delay = rospy.Duration(5.0)
         # Delay between sound cue and lowering the doors of the start chamber
-        self.sound_delay = rospy.Duration(1.5)
+        self.sound_delay_1 = rospy.Duration(3.5)
         # Duration to wait for rat to move to the choice point
         self.choice_delay = rospy.Duration(2)
         # Duration to wait to for the reward to dispense
-        self.reward_start_delay = rospy.Duration(5)
+        self.reward_start_delay = rospy.Duration(3)
         # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(10)
-        self.success_delay = rospy.Duration(5)  # Delay after reward ends
+        self.success_delay = rospy.Duration(1.5)  # Delay after reward ends
         self.error_delay = rospy.Duration(40)  # Delay after error
         self.end_trial_delay = rospy.Duration(
             1)  # Delay after the end of the trial
-        self.error_start_delay = rospy.Duration(5)
+        self.error_start_delay = rospy.Duration(0.5)
         self.error_end_delay = rospy.Duration(10)
         self.wall_delay = rospy.Duration(10)
+        self.sound_delay_2 = rospy.Duration(1.5)
+        self.sound_delay_3 = rospy.Duration(1.5)
+        self.sound_delay_4 = rospy.Duration(3.5)
 
         # Stimulus parameters
         self.play_left_sound_cue = 0
         self.play_right_sound_cue = 0
-        self.sound_cue = "1kHz"
+        self.start_sound_cue = "1kHz_120s" #"1kHz"
+        self.choice_sound_cue = "1kHz_120s"
 
         # Chamber parameters
         self.success_chamber = 0
@@ -223,6 +232,7 @@ class Interface(Plugin):
 
         # Wall parameters
         self.start_wall = Wall(0, 0)
+        self.choice_wall = Wall(0, 0)
         self.left_goal_entry_wall = Wall(0, 0)
         self.right_goal_entry_wall = Wall(0, 0)
         self.left_goal_exit_wall = Wall(0, 0)
@@ -270,6 +280,18 @@ class Interface(Plugin):
         self.left_count = 0
         self.right_count = 0
 
+    def trial_callback(self, msg):
+        # Convert the string back into a list (if necessary)
+        trial_data = json.loads(msg.data)
+        self.currentTrial = trial_data['trial']
+        self.current_trial_index = trial_data['current_trial_index']
+        self.trials = trial_data['trials']
+        self.nTrials = trial_data['nTrials']
+
+        # Log the received trial and index
+        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
+        rospy.loginfo(
+            f"Received current_trial_index: {self.current_trial_index}")
     # Define actions for clicking each button in the interface
     def _handle_alignMaxTrainingBtn_clicked(self):
         self.alignMax_training = True
@@ -366,6 +388,7 @@ class Interface(Plugin):
         self.right_return_chamber = 2
 
         self.start_wall = Wall(4, 4)
+        self.choice_wall = Wall(4, 0)
         self.left_goal_entry_wall = Wall(6, 2)
         self.right_goal_entry_wall = Wall(0, 6)
         self.left_goal_exit_wall = Wall(6, 4)
@@ -430,6 +453,8 @@ class Interface(Plugin):
 
                 self.common_functions.raise_wall(
                     self.start_wall, send=True)
+                self.common_functions.raise_wall(
+                    self.choice_wall, send=True)
                 self.common_functions.raise_wall(
                     self.left_return_wall, send=True)
                 self.common_functions.raise_wall(
@@ -562,6 +587,8 @@ class Interface(Plugin):
             if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
+            self.common_functions.raise_wall(self.choice_wall, send=True)
+            rospy.loginfo("raise choice wall")
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.START_TRIAL
             rospy.loginfo(f"START OF TRIAL: {self.currentTrial}")
@@ -608,7 +635,8 @@ class Interface(Plugin):
                 rospy.loginfo(f"Selected stimulus is: {self.stimulus}")
 
                 if self.stimulus == -1:
-                    self.sound_cue = '1KHz'
+                    self.start_sound_cue = '1KHz_120s' #1KHz
+                    self.choice_sound_cue = '1KHz_120s'
                     self.answer[self.currentTrialNumber] = 2
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -618,7 +646,8 @@ class Interface(Plugin):
                     self.trial_count[1] = 0
 
                 elif self.stimulus == 1:
-                    self.sound_cue = '8KHz'
+                    self.start_sound_cue = '8KHz_120s' #8KHz
+                    self.choice_sound_cue = '8KHz_120s'
                     self.answer[self.currentTrialNumber] = 1
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -635,22 +664,30 @@ class Interface(Plugin):
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
                 if self.pseudorandom_training == True:
                     self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.SOUND_CUE
-                    rospy.loginfo("SOUND_CUE")
+                    self.mode = Mode.SOUND_CUE_START
+                    rospy.loginfo("SOUND_CUE_START")
                 else:
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.START_TO_CHOICE
                     rospy.loginfo("START_TO_CHOICE")
 
-        elif self.mode == Mode.SOUND_CUE:
-            self.sound_pub.publish(self.sound_cue)
+        elif self.mode == Mode.SOUND_CUE_START:
+            self.sound_pub.publish(self.start_sound_cue)
             #self.play_sound_cue(self.sound_cue)
-            rospy.loginfo(f"sound played: {self.sound_cue}")
+            rospy.loginfo(f"sound played: {self.start_sound_cue}")
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.START_TO_CHOICE
-            rospy.loginfo("START_TO_CHOICE")
+            self.mode = Mode.SOUND_CUE_STOP
+            rospy.loginfo("SOUND_CUE_STOP")
 
-        elif self.mode == Mode.START_TO_CHOICE:
+        elif self.mode == Mode.SOUND_CUE_STOP:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay_1.to_sec():
+                # Stop the sound after 2 s
+                self.sound_pub.publish('Stop')
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START_TO_CENTRAL
+                rospy.loginfo("START_TO_CENTRAL")
+
+        elif self.mode == Mode.START_TO_CENTRAL:
             if self.pretraining_phase_one == True:
                 if self.currentTrialNumber == 0:
                     self.common_functions.lower_wall(
@@ -663,20 +700,22 @@ class Interface(Plugin):
                     self.mode = Mode.CHOICE
                     rospy.loginfo("CHOICE")
             else:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay.to_sec():
-                    # Lower start wall to let the rat move to the choice point
+                if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay_2.to_sec():
+                    # Lower start wall to let the rat move to the central chamber
                     self.common_functions.lower_wall(self.start_wall, send=True)
                     self.common_functions.lower_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.lower_wall(
                         self.right_goal_entry_wall, send=True)
+                    rospy.loginfo(f"sound played: {self.choice_sound_cue}")
                     self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.CHOICE
-                    rospy.loginfo("CHOICE")
+                    self.mode = Mode.CENTRAL_TO_CHOICE
+                    rospy.loginfo("CENTRAL_TO_CHOICE")
 
-        elif self.mode == Mode.CHOICE:
+        elif self.mode == Mode.CENTRAL_TO_CHOICE:
             # Raise start wall after he moves into the choice chamber
-            if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
+            #if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
+            if self.rat_head_chamber == self.central_chamber:
                 if self.pretraining_phase_one == True:
                     if self.currentTrialNumber == 0:
                         self.common_functions.lower_wall(
@@ -694,11 +733,20 @@ class Interface(Plugin):
                     self.mode = Mode.CHOICE_TO_GOAL
                     rospy.loginfo("CHOICE_TO_GOAL")
                 else:
-                    self.common_functions.raise_wall(
-                        self.start_wall, send=True)
+                    #self.common_functions.raise_wall(self.start_wall, send=True)
+                    self.sound_pub.publish(self.choice_sound_cue)
+                    #self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.CHOICE_TO_GOAL
-                    rospy.loginfo("CHOICE_TO_GOAL")
+                    self.mode = Mode.CHOICE
+                    rospy.loginfo("CHOICE")
+
+        elif self.mode == Mode.CHOICE:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay_3.to_sec():
+                # Lower start wall to let the rat move to the choice point
+                self.common_functions.lower_wall(self.choice_wall, send=True)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE_TO_GOAL
+                rospy.loginfo("CHOICE_TO_GOAL")
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             if self.pretraining_phase_one == True or self.pretraining_phase_two == True:
@@ -780,6 +828,7 @@ class Interface(Plugin):
 
                 # If rat moved chose the correct chamber, raise the entry wall of both the left and right goal chambers
                 if self.rat_body_chamber == self.success_chamber:
+                    self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
@@ -794,10 +843,13 @@ class Interface(Plugin):
 
                 # If rat chose the wrong chamber, raise the entry wall of both the left and right return chambers
                 elif self.rat_body_chamber == self.error_chamber:
+                    #self.sound_pub.publish('Stop')
+                    self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
                         self.right_goal_entry_wall, send=True)
+                    rospy.loginfo("sound stoppped")
                     # Record that the rat made the wrong choice
                     self.correct[self.currentTrialNumber] = 0
                     self.mode_start_time = rospy.Time.now()
@@ -828,8 +880,16 @@ class Interface(Plugin):
             self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
 
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.REWARD_START
-            rospy.loginfo("REWARD_START")
+            self.mode = Mode.REWARD_SOUND_STOP
+            rospy.loginfo("SOUND_STOP")
+
+        elif self.mode == Mode.REWARD_SOUND_STOP:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay_4.to_sec():
+                self.sound_pub.publish('Stop')
+                rospy.loginfo("sound stoppped")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.REWARD_START
+                rospy.loginfo("REWARD_START")
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
@@ -921,8 +981,16 @@ class Interface(Plugin):
                         f"choice (y) is right: {self.y[self.currentTrialNumber]}")
 
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.ERROR_START
-            rospy.loginfo("ERROR_START")
+            self.mode = Mode.ERROR_SOUND_STOP
+            rospy.loginfo("SOUND_STOP")
+
+        elif self.mode == Mode.ERROR_SOUND_STOP:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay_4.to_sec():
+                self.sound_pub.publish('Stop')
+                rospy.loginfo("sound stoppped")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR_START
+                rospy.loginfo("ERROR_START")
 
         elif self.mode == Mode.ERROR_START:
             if self.pretraining_phase_one == True:
