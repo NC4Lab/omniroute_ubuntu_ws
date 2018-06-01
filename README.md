@@ -4,6 +4,9 @@
 
 This repository contains the Ubuntu ROS (Noetic) workspace used to control the Omniroute maze. It runs the ROS master, high-level behavioral logic, and the gate/gantry controller nodes, and provides the interface to the Windows-based tracking and projection workspace.
 
+<p align="center">
+  <img src="assets/system_diagram.svg" alt="System Diagram" width="700">
+</p>
 
 ## Setup
 
