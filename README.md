@@ -20,3 +20,6 @@ make
 cd ../../..
 
 catkin_make
+```
+
+Add documention for ethercat_grant
