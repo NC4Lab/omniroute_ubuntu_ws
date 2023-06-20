@@ -1,0 +1,349 @@
+\hypertarget{slave__import__wizard_8c}{}\doxysection{esmacat\+\_\+slave\+\_\+drivers/utilities/slave\+\_\+import\+\_\+wizard/slave\+\_\+import\+\_\+wizard.c File Reference}
+\label{slave__import__wizard_8c}\index{esmacat\_slave\_drivers/utilities/slave\_import\_wizard/slave\_import\_wizard.c@{esmacat\_slave\_drivers/utilities/slave\_import\_wizard/slave\_import\_wizard.c}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$inttypes.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}ethercat.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$ctype.\+h$>$}\newline
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}} \{ \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3a71566e7831783d15a2f67c685a30f016}{P\+D\+O\+\_\+input}}, 
+\mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3ac49659b9fd8b93e31a09838cae1e8251}{P\+D\+O\+\_\+output}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{slave__import__wizard_8c_a1942cabcce37f1925f60501d66079877}{write\+\_\+the\+\_\+beginning\+\_\+of\+\_\+esmacat\+\_\+header\+\_\+file}} ()
+\item 
+void \mbox{\hyperlink{slave__import__wizard_8c_ac9b0e84be2a30ab6d31ffda87e755355}{write\+\_\+the\+\_\+beginning\+\_\+of\+\_\+esmacat\+\_\+source\+\_\+file}} ()
+\item 
+char $\ast$ \mbox{\hyperlink{slave__import__wizard_8c_adf78507fc0efdea77b1c1fabc8850f3f}{dtype2string}} (uint16 dtype)
+\item 
+char $\ast$ \mbox{\hyperlink{slave__import__wizard_8c_a5066329a9911268cf5743e9dba54ca27}{dtype2string\+\_\+for\+\_\+esmacat}} (uint16 dtype)
+\item 
+char $\ast$ \mbox{\hyperlink{slave__import__wizard_8c_a4832e1e90a7ff54c233b13ae1ddd08ed}{S\+D\+O2string}} (uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_af1e33a403d6371958b35b74f529e145d}{si\+\_\+\+P\+D\+Oassign}} (uint16 slave, uint16 P\+D\+Oassign, int mapoffset, int bitoffset, enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}} pdo\+\_\+dir, boolean flag\+\_\+for\+\_\+siw)
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a71f2d61fca6d79b639dde22958ef3f9d}{si\+\_\+map\+\_\+sdo}} (int slave)
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a263f66d2f46be549dc208bc07f39810e}{si\+\_\+sii\+P\+DO}} (uint16 slave, uint8 t, int mapoffset, int bitoffset, enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}} pdo\+\_\+dir, boolean flag\+\_\+for\+\_\+siw)
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a3027c2bb48c60b883837277f35af5a27}{si\+\_\+map\+\_\+sii}} (int slave)
+\item 
+void \mbox{\hyperlink{slave__import__wizard_8c_ac9d3d9f3b56effa025526d6c7f072cbd}{si\+\_\+sdo}} (int cnt)
+\item 
+void \mbox{\hyperlink{slave__import__wizard_8c_a3552c609d2e51520c4afde65240a22d6}{slaveinfo}} (char $\ast$ifname)
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_abd49ea7d1a34c36e74ff633f727a6260}{I\+Omap}} \mbox{[}4096\mbox{]}
+\item 
+ec\+\_\+\+O\+Dlistt \mbox{\hyperlink{slave__import__wizard_8c_ae1e48e874936243e9edeab1f7a96dd29}{O\+Dlist}}
+\item 
+ec\+\_\+\+O\+Elistt \mbox{\hyperlink{slave__import__wizard_8c_a65f75866b1c783f9afc422afd033f146}{O\+Elist}}
+\item 
+boolean \mbox{\hyperlink{slave__import__wizard_8c_a6a38fcf4c24e7c26159e94642e13d4d8}{print\+S\+DO}} = F\+A\+L\+SE
+\item 
+boolean \mbox{\hyperlink{slave__import__wizard_8c_af97f9482aef3b3dfb48f421c9d201e7c}{print\+M\+AP}} = F\+A\+L\+SE
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a5c1fdba957183a8fbf710fcad1739264}{usdo}} \mbox{[}128\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_af6f9a9fbc3bde825d687ac39debfaca5}{hstr}} \mbox{[}1024\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a6682bf87d7f849d282cea1e6b3e91e7f}{pdo\+\_\+input\+\_\+variable\+\_\+name}} \mbox{[}100\mbox{]}\mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a12456549185265bbfa76ffe4d395f66e}{pdo\+\_\+input\+\_\+variable\+\_\+type}} \mbox{[}100\mbox{]}\mbox{[}100\mbox{]}
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a5f18c57bc6096a8b456dbfb023bc7d77}{pdo\+\_\+input\+\_\+variable\+\_\+bit\+\_\+length}} \mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a0269b9c895864f561411f01b113d7bbb}{pdo\+\_\+output\+\_\+variable\+\_\+name}} \mbox{[}100\mbox{]}\mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_ae3f5f0c035e80cdf12118d906f4b5b1d}{pdo\+\_\+output\+\_\+variable\+\_\+type}} \mbox{[}100\mbox{]}\mbox{[}100\mbox{]}
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a27c14e546414705f951fbfb69fd2910b}{pdo\+\_\+output\+\_\+variable\+\_\+bit\+\_\+length}} \mbox{[}100\mbox{]}
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a3f43e8c9dc7f9a0597508709659b3ecf}{pdo\+\_\+input\+\_\+variable\+\_\+byte}} = 0
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a9835ed7c302830724e4869786c9b0a7a}{pdo\+\_\+output\+\_\+variable\+\_\+byte}} = 0
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a9287b6686adc30498cbe4305940f7f34}{esmacat\+\_\+class\+\_\+name\+\_\+siw}} \mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a2b5303e343e53e72c3c61674c84c4fac}{esmacat\+\_\+slave\+\_\+name\+\_\+for\+\_\+header\+\_\+file}} \mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a33f71a8ec543c6cb1616f62caae1cf52}{esmacat\+\_\+slave\+\_\+name\+\_\+for\+\_\+source\+\_\+file}} \mbox{[}100\mbox{]}
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_abe38a8b9d8cdbfaada492131f9c42a54}{esmacat\+\_\+slave\+\_\+name\+\_\+without\+\_\+space}} \mbox{[}100\mbox{]}
+\item 
+F\+I\+LE $\ast$ \mbox{\hyperlink{slave__import__wizard_8c_a009473a8629f224c494a7f9749c57a14}{ofp\+\_\+esmacat\+\_\+slave\+\_\+header\+\_\+file}}
+\item 
+F\+I\+LE $\ast$ \mbox{\hyperlink{slave__import__wizard_8c_a606230c25f1b2a5201b4d939761eedef}{ofp\+\_\+esmacat\+\_\+slave\+\_\+source\+\_\+file}}
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_af99f355dd4a1af12fc620e48f054a867}{slave\+\_\+index\+\_\+for\+\_\+siw}} =0
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_a47c8b28ffb85a7dcf46147661a7a9b2f}{esmacat\+\_\+slave\+\_\+input\+\_\+var\+\_\+index}} =0
+\item 
+int \mbox{\hyperlink{slave__import__wizard_8c_ab784785043a7c0a659a07741f61351e0}{esmacat\+\_\+slave\+\_\+output\+\_\+var\+\_\+index}} =0
+\item 
+boolean \mbox{\hyperlink{slave__import__wizard_8c_a9acc785cd74a6a9edd75596899cb4e6a}{ready\+\_\+to\+\_\+write\+\_\+siw}} = 0
+\item 
+char \mbox{\hyperlink{slave__import__wizard_8c_a3c57011eba83aa8dc298fbfbe08efff3}{ifbuf}} \mbox{[}1024\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}\label{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!PDO\_direction@{PDO\_direction}}
+\index{PDO\_direction@{PDO\_direction}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{PDO\_direction}{PDO\_direction}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PDO\_input@{PDO\_input}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!PDO\_input@{PDO\_input}}}\mbox{\Hypertarget{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3a71566e7831783d15a2f67c685a30f016}\label{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3a71566e7831783d15a2f67c685a30f016}} 
+P\+D\+O\+\_\+input&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PDO\_output@{PDO\_output}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!PDO\_output@{PDO\_output}}}\mbox{\Hypertarget{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3ac49659b9fd8b93e31a09838cae1e8251}\label{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3ac49659b9fd8b93e31a09838cae1e8251}} 
+P\+D\+O\+\_\+output&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{slave__import__wizard_8c_adf78507fc0efdea77b1c1fabc8850f3f}\label{slave__import__wizard_8c_adf78507fc0efdea77b1c1fabc8850f3f}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!dtype2string@{dtype2string}}
+\index{dtype2string@{dtype2string}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{dtype2string()}{dtype2string()}}
+{\footnotesize\ttfamily char$\ast$ dtype2string (\begin{DoxyParamCaption}\item[{uint16}]{dtype }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a5066329a9911268cf5743e9dba54ca27}\label{slave__import__wizard_8c_a5066329a9911268cf5743e9dba54ca27}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!dtype2string\_for\_esmacat@{dtype2string\_for\_esmacat}}
+\index{dtype2string\_for\_esmacat@{dtype2string\_for\_esmacat}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{dtype2string\_for\_esmacat()}{dtype2string\_for\_esmacat()}}
+{\footnotesize\ttfamily char$\ast$ dtype2string\+\_\+for\+\_\+esmacat (\begin{DoxyParamCaption}\item[{uint16}]{dtype }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}\label{slave__import__wizard_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!main@{main}}
+\index{main@{main}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a4832e1e90a7ff54c233b13ae1ddd08ed}\label{slave__import__wizard_8c_a4832e1e90a7ff54c233b13ae1ddd08ed}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!SDO2string@{SDO2string}}
+\index{SDO2string@{SDO2string}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{SDO2string()}{SDO2string()}}
+{\footnotesize\ttfamily char$\ast$ S\+D\+O2string (\begin{DoxyParamCaption}\item[{uint16}]{slave,  }\item[{uint16}]{index,  }\item[{uint8}]{subidx,  }\item[{uint16}]{dtype }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a71f2d61fca6d79b639dde22958ef3f9d}\label{slave__import__wizard_8c_a71f2d61fca6d79b639dde22958ef3f9d}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!si\_map\_sdo@{si\_map\_sdo}}
+\index{si\_map\_sdo@{si\_map\_sdo}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{si\_map\_sdo()}{si\_map\_sdo()}}
+{\footnotesize\ttfamily int si\+\_\+map\+\_\+sdo (\begin{DoxyParamCaption}\item[{int}]{slave }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a3027c2bb48c60b883837277f35af5a27}\label{slave__import__wizard_8c_a3027c2bb48c60b883837277f35af5a27}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!si\_map\_sii@{si\_map\_sii}}
+\index{si\_map\_sii@{si\_map\_sii}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{si\_map\_sii()}{si\_map\_sii()}}
+{\footnotesize\ttfamily int si\+\_\+map\+\_\+sii (\begin{DoxyParamCaption}\item[{int}]{slave }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_af1e33a403d6371958b35b74f529e145d}\label{slave__import__wizard_8c_af1e33a403d6371958b35b74f529e145d}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!si\_PDOassign@{si\_PDOassign}}
+\index{si\_PDOassign@{si\_PDOassign}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{si\_PDOassign()}{si\_PDOassign()}}
+{\footnotesize\ttfamily int si\+\_\+\+P\+D\+Oassign (\begin{DoxyParamCaption}\item[{uint16}]{slave,  }\item[{uint16}]{P\+D\+Oassign,  }\item[{int}]{mapoffset,  }\item[{int}]{bitoffset,  }\item[{enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}}}]{pdo\+\_\+dir,  }\item[{boolean}]{flag\+\_\+for\+\_\+siw }\end{DoxyParamCaption})}
+
+Read P\+DO assign structure \mbox{\Hypertarget{slave__import__wizard_8c_ac9d3d9f3b56effa025526d6c7f072cbd}\label{slave__import__wizard_8c_ac9d3d9f3b56effa025526d6c7f072cbd}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!si\_sdo@{si\_sdo}}
+\index{si\_sdo@{si\_sdo}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{si\_sdo()}{si\_sdo()}}
+{\footnotesize\ttfamily void si\+\_\+sdo (\begin{DoxyParamCaption}\item[{int}]{cnt }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a263f66d2f46be549dc208bc07f39810e}\label{slave__import__wizard_8c_a263f66d2f46be549dc208bc07f39810e}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!si\_siiPDO@{si\_siiPDO}}
+\index{si\_siiPDO@{si\_siiPDO}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{si\_siiPDO()}{si\_siiPDO()}}
+{\footnotesize\ttfamily int si\+\_\+sii\+P\+DO (\begin{DoxyParamCaption}\item[{uint16}]{slave,  }\item[{uint8}]{t,  }\item[{int}]{mapoffset,  }\item[{int}]{bitoffset,  }\item[{enum \mbox{\hyperlink{slave__import__wizard_8c_a0a51f43da0eaef00214432fdcdf89fe3}{P\+D\+O\+\_\+direction}}}]{pdo\+\_\+dir,  }\item[{boolean}]{flag\+\_\+for\+\_\+siw }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a3552c609d2e51520c4afde65240a22d6}\label{slave__import__wizard_8c_a3552c609d2e51520c4afde65240a22d6}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!slaveinfo@{slaveinfo}}
+\index{slaveinfo@{slaveinfo}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{slaveinfo()}{slaveinfo()}}
+{\footnotesize\ttfamily void slaveinfo (\begin{DoxyParamCaption}\item[{char $\ast$}]{ifname }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a1942cabcce37f1925f60501d66079877}\label{slave__import__wizard_8c_a1942cabcce37f1925f60501d66079877}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!write\_the\_beginning\_of\_esmacat\_header\_file@{write\_the\_beginning\_of\_esmacat\_header\_file}}
+\index{write\_the\_beginning\_of\_esmacat\_header\_file@{write\_the\_beginning\_of\_esmacat\_header\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{write\_the\_beginning\_of\_esmacat\_header\_file()}{write\_the\_beginning\_of\_esmacat\_header\_file()}}
+{\footnotesize\ttfamily void write\+\_\+the\+\_\+beginning\+\_\+of\+\_\+esmacat\+\_\+header\+\_\+file (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_ac9b0e84be2a30ab6d31ffda87e755355}\label{slave__import__wizard_8c_ac9b0e84be2a30ab6d31ffda87e755355}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!write\_the\_beginning\_of\_esmacat\_source\_file@{write\_the\_beginning\_of\_esmacat\_source\_file}}
+\index{write\_the\_beginning\_of\_esmacat\_source\_file@{write\_the\_beginning\_of\_esmacat\_source\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{write\_the\_beginning\_of\_esmacat\_source\_file()}{write\_the\_beginning\_of\_esmacat\_source\_file()}}
+{\footnotesize\ttfamily void write\+\_\+the\+\_\+beginning\+\_\+of\+\_\+esmacat\+\_\+source\+\_\+file (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{slave__import__wizard_8c_a9287b6686adc30498cbe4305940f7f34}\label{slave__import__wizard_8c_a9287b6686adc30498cbe4305940f7f34}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_class\_name\_siw@{esmacat\_class\_name\_siw}}
+\index{esmacat\_class\_name\_siw@{esmacat\_class\_name\_siw}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_class\_name\_siw}{esmacat\_class\_name\_siw}}
+{\footnotesize\ttfamily char esmacat\+\_\+class\+\_\+name\+\_\+siw\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a47c8b28ffb85a7dcf46147661a7a9b2f}\label{slave__import__wizard_8c_a47c8b28ffb85a7dcf46147661a7a9b2f}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_slave\_input\_var\_index@{esmacat\_slave\_input\_var\_index}}
+\index{esmacat\_slave\_input\_var\_index@{esmacat\_slave\_input\_var\_index}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_input\_var\_index}{esmacat\_slave\_input\_var\_index}}
+{\footnotesize\ttfamily int esmacat\+\_\+slave\+\_\+input\+\_\+var\+\_\+index =0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a2b5303e343e53e72c3c61674c84c4fac}\label{slave__import__wizard_8c_a2b5303e343e53e72c3c61674c84c4fac}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_slave\_name\_for\_header\_file@{esmacat\_slave\_name\_for\_header\_file}}
+\index{esmacat\_slave\_name\_for\_header\_file@{esmacat\_slave\_name\_for\_header\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_name\_for\_header\_file}{esmacat\_slave\_name\_for\_header\_file}}
+{\footnotesize\ttfamily char esmacat\+\_\+slave\+\_\+name\+\_\+for\+\_\+header\+\_\+file\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a33f71a8ec543c6cb1616f62caae1cf52}\label{slave__import__wizard_8c_a33f71a8ec543c6cb1616f62caae1cf52}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_slave\_name\_for\_source\_file@{esmacat\_slave\_name\_for\_source\_file}}
+\index{esmacat\_slave\_name\_for\_source\_file@{esmacat\_slave\_name\_for\_source\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_name\_for\_source\_file}{esmacat\_slave\_name\_for\_source\_file}}
+{\footnotesize\ttfamily char esmacat\+\_\+slave\+\_\+name\+\_\+for\+\_\+source\+\_\+file\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_abe38a8b9d8cdbfaada492131f9c42a54}\label{slave__import__wizard_8c_abe38a8b9d8cdbfaada492131f9c42a54}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_slave\_name\_without\_space@{esmacat\_slave\_name\_without\_space}}
+\index{esmacat\_slave\_name\_without\_space@{esmacat\_slave\_name\_without\_space}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_name\_without\_space}{esmacat\_slave\_name\_without\_space}}
+{\footnotesize\ttfamily char esmacat\+\_\+slave\+\_\+name\+\_\+without\+\_\+space\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_ab784785043a7c0a659a07741f61351e0}\label{slave__import__wizard_8c_ab784785043a7c0a659a07741f61351e0}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!esmacat\_slave\_output\_var\_index@{esmacat\_slave\_output\_var\_index}}
+\index{esmacat\_slave\_output\_var\_index@{esmacat\_slave\_output\_var\_index}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_output\_var\_index}{esmacat\_slave\_output\_var\_index}}
+{\footnotesize\ttfamily int esmacat\+\_\+slave\+\_\+output\+\_\+var\+\_\+index =0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_af6f9a9fbc3bde825d687ac39debfaca5}\label{slave__import__wizard_8c_af6f9a9fbc3bde825d687ac39debfaca5}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!hstr@{hstr}}
+\index{hstr@{hstr}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{hstr}{hstr}}
+{\footnotesize\ttfamily char hstr\mbox{[}1024\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a3c57011eba83aa8dc298fbfbe08efff3}\label{slave__import__wizard_8c_a3c57011eba83aa8dc298fbfbe08efff3}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!ifbuf@{ifbuf}}
+\index{ifbuf@{ifbuf}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{ifbuf}{ifbuf}}
+{\footnotesize\ttfamily char ifbuf\mbox{[}1024\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_abd49ea7d1a34c36e74ff633f727a6260}\label{slave__import__wizard_8c_abd49ea7d1a34c36e74ff633f727a6260}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!IOmap@{IOmap}}
+\index{IOmap@{IOmap}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{IOmap}{IOmap}}
+{\footnotesize\ttfamily char I\+Omap\mbox{[}4096\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_ae1e48e874936243e9edeab1f7a96dd29}\label{slave__import__wizard_8c_ae1e48e874936243e9edeab1f7a96dd29}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!ODlist@{ODlist}}
+\index{ODlist@{ODlist}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{ODlist}{ODlist}}
+{\footnotesize\ttfamily ec\+\_\+\+O\+Dlistt O\+Dlist}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a65f75866b1c783f9afc422afd033f146}\label{slave__import__wizard_8c_a65f75866b1c783f9afc422afd033f146}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!OElist@{OElist}}
+\index{OElist@{OElist}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{OElist}{OElist}}
+{\footnotesize\ttfamily ec\+\_\+\+O\+Elistt O\+Elist}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a009473a8629f224c494a7f9749c57a14}\label{slave__import__wizard_8c_a009473a8629f224c494a7f9749c57a14}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!ofp\_esmacat\_slave\_header\_file@{ofp\_esmacat\_slave\_header\_file}}
+\index{ofp\_esmacat\_slave\_header\_file@{ofp\_esmacat\_slave\_header\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{ofp\_esmacat\_slave\_header\_file}{ofp\_esmacat\_slave\_header\_file}}
+{\footnotesize\ttfamily F\+I\+LE$\ast$ ofp\+\_\+esmacat\+\_\+slave\+\_\+header\+\_\+file}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a606230c25f1b2a5201b4d939761eedef}\label{slave__import__wizard_8c_a606230c25f1b2a5201b4d939761eedef}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!ofp\_esmacat\_slave\_source\_file@{ofp\_esmacat\_slave\_source\_file}}
+\index{ofp\_esmacat\_slave\_source\_file@{ofp\_esmacat\_slave\_source\_file}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{ofp\_esmacat\_slave\_source\_file}{ofp\_esmacat\_slave\_source\_file}}
+{\footnotesize\ttfamily F\+I\+LE$\ast$ ofp\+\_\+esmacat\+\_\+slave\+\_\+source\+\_\+file}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a5f18c57bc6096a8b456dbfb023bc7d77}\label{slave__import__wizard_8c_a5f18c57bc6096a8b456dbfb023bc7d77}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_input\_variable\_bit\_length@{pdo\_input\_variable\_bit\_length}}
+\index{pdo\_input\_variable\_bit\_length@{pdo\_input\_variable\_bit\_length}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_input\_variable\_bit\_length}{pdo\_input\_variable\_bit\_length}}
+{\footnotesize\ttfamily int pdo\+\_\+input\+\_\+variable\+\_\+bit\+\_\+length\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a3f43e8c9dc7f9a0597508709659b3ecf}\label{slave__import__wizard_8c_a3f43e8c9dc7f9a0597508709659b3ecf}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_input\_variable\_byte@{pdo\_input\_variable\_byte}}
+\index{pdo\_input\_variable\_byte@{pdo\_input\_variable\_byte}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_input\_variable\_byte}{pdo\_input\_variable\_byte}}
+{\footnotesize\ttfamily int pdo\+\_\+input\+\_\+variable\+\_\+byte = 0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a6682bf87d7f849d282cea1e6b3e91e7f}\label{slave__import__wizard_8c_a6682bf87d7f849d282cea1e6b3e91e7f}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_input\_variable\_name@{pdo\_input\_variable\_name}}
+\index{pdo\_input\_variable\_name@{pdo\_input\_variable\_name}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_input\_variable\_name}{pdo\_input\_variable\_name}}
+{\footnotesize\ttfamily char pdo\+\_\+input\+\_\+variable\+\_\+name\mbox{[}100\mbox{]}\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a12456549185265bbfa76ffe4d395f66e}\label{slave__import__wizard_8c_a12456549185265bbfa76ffe4d395f66e}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_input\_variable\_type@{pdo\_input\_variable\_type}}
+\index{pdo\_input\_variable\_type@{pdo\_input\_variable\_type}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_input\_variable\_type}{pdo\_input\_variable\_type}}
+{\footnotesize\ttfamily char pdo\+\_\+input\+\_\+variable\+\_\+type\mbox{[}100\mbox{]}\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a27c14e546414705f951fbfb69fd2910b}\label{slave__import__wizard_8c_a27c14e546414705f951fbfb69fd2910b}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_output\_variable\_bit\_length@{pdo\_output\_variable\_bit\_length}}
+\index{pdo\_output\_variable\_bit\_length@{pdo\_output\_variable\_bit\_length}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_output\_variable\_bit\_length}{pdo\_output\_variable\_bit\_length}}
+{\footnotesize\ttfamily int pdo\+\_\+output\+\_\+variable\+\_\+bit\+\_\+length\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a9835ed7c302830724e4869786c9b0a7a}\label{slave__import__wizard_8c_a9835ed7c302830724e4869786c9b0a7a}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_output\_variable\_byte@{pdo\_output\_variable\_byte}}
+\index{pdo\_output\_variable\_byte@{pdo\_output\_variable\_byte}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_output\_variable\_byte}{pdo\_output\_variable\_byte}}
+{\footnotesize\ttfamily int pdo\+\_\+output\+\_\+variable\+\_\+byte = 0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a0269b9c895864f561411f01b113d7bbb}\label{slave__import__wizard_8c_a0269b9c895864f561411f01b113d7bbb}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_output\_variable\_name@{pdo\_output\_variable\_name}}
+\index{pdo\_output\_variable\_name@{pdo\_output\_variable\_name}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_output\_variable\_name}{pdo\_output\_variable\_name}}
+{\footnotesize\ttfamily char pdo\+\_\+output\+\_\+variable\+\_\+name\mbox{[}100\mbox{]}\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_ae3f5f0c035e80cdf12118d906f4b5b1d}\label{slave__import__wizard_8c_ae3f5f0c035e80cdf12118d906f4b5b1d}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!pdo\_output\_variable\_type@{pdo\_output\_variable\_type}}
+\index{pdo\_output\_variable\_type@{pdo\_output\_variable\_type}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{pdo\_output\_variable\_type}{pdo\_output\_variable\_type}}
+{\footnotesize\ttfamily char pdo\+\_\+output\+\_\+variable\+\_\+type\mbox{[}100\mbox{]}\mbox{[}100\mbox{]}}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_af97f9482aef3b3dfb48f421c9d201e7c}\label{slave__import__wizard_8c_af97f9482aef3b3dfb48f421c9d201e7c}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!printMAP@{printMAP}}
+\index{printMAP@{printMAP}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{printMAP}{printMAP}}
+{\footnotesize\ttfamily boolean print\+M\+AP = F\+A\+L\+SE}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a6a38fcf4c24e7c26159e94642e13d4d8}\label{slave__import__wizard_8c_a6a38fcf4c24e7c26159e94642e13d4d8}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!printSDO@{printSDO}}
+\index{printSDO@{printSDO}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{printSDO}{printSDO}}
+{\footnotesize\ttfamily boolean print\+S\+DO = F\+A\+L\+SE}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a9acc785cd74a6a9edd75596899cb4e6a}\label{slave__import__wizard_8c_a9acc785cd74a6a9edd75596899cb4e6a}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!ready\_to\_write\_siw@{ready\_to\_write\_siw}}
+\index{ready\_to\_write\_siw@{ready\_to\_write\_siw}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{ready\_to\_write\_siw}{ready\_to\_write\_siw}}
+{\footnotesize\ttfamily boolean ready\+\_\+to\+\_\+write\+\_\+siw = 0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_af99f355dd4a1af12fc620e48f054a867}\label{slave__import__wizard_8c_af99f355dd4a1af12fc620e48f054a867}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!slave\_index\_for\_siw@{slave\_index\_for\_siw}}
+\index{slave\_index\_for\_siw@{slave\_index\_for\_siw}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{slave\_index\_for\_siw}{slave\_index\_for\_siw}}
+{\footnotesize\ttfamily int slave\+\_\+index\+\_\+for\+\_\+siw =0}
+
+\mbox{\Hypertarget{slave__import__wizard_8c_a5c1fdba957183a8fbf710fcad1739264}\label{slave__import__wizard_8c_a5c1fdba957183a8fbf710fcad1739264}} 
+\index{slave\_import\_wizard.c@{slave\_import\_wizard.c}!usdo@{usdo}}
+\index{usdo@{usdo}!slave\_import\_wizard.c@{slave\_import\_wizard.c}}
+\doxysubsubsection{\texorpdfstring{usdo}{usdo}}
+{\footnotesize\ttfamily char usdo\mbox{[}128\mbox{]}}
+

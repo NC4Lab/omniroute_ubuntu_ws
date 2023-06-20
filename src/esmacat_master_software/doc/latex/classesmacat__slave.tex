@@ -1,0 +1,226 @@
+\hypertarget{classesmacat__slave}{}\doxysection{esmacat\+\_\+slave Class Reference}
+\label{classesmacat__slave}\index{esmacat\_slave@{esmacat\_slave}}
+
+
+Generic parent Esmacat slave class that can be used for any Ether\+C\+AT slave.  
+
+
+
+
+{\ttfamily \#include $<$slave.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+slave\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.484099cm]{classesmacat__slave}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__slave_a177f119e202bc8aa1fdf054d3e78696d}{esmacat\+\_\+slave}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the Ether\+C\+AT slave class that will contain the initialization for class variables. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classesmacat__slave_aafcff93b943221599d1972e5807b6244}{$\sim$esmacat\+\_\+slave}} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the Ether\+C\+AT slave class. \end{DoxyCompactList}\item 
+virtual int \mbox{\hyperlink{classesmacat__slave_a31e7649ad4cc96b2368fec8d76d1e9d5}{flush\+\_\+one\+\_\+set\+\_\+of\+\_\+system\+\_\+parameters}} ()
+\begin{DoxyCompactList}\small\item\em Flushes a system parameter type and value from the queue. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__slave_ade8e1bd7344a45bb1d2090f6489f51ab}{add\+\_\+system\+\_\+parameters\+\_\+in\+\_\+queue}} (uint16\+\_\+t system\+\_\+parameter\+\_\+type, uint16\+\_\+t system\+\_\+parameter\+\_\+value)
+\begin{DoxyCompactList}\small\item\em Pushes the parameter type and value onto their corresponding queues. \end{DoxyCompactList}\item 
+virtual uint32\+\_\+t \mbox{\hyperlink{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}{get\+\_\+esmacat\+\_\+product\+\_\+id}} ()=0
+\begin{DoxyCompactList}\small\item\em Pure virtual function that has to be implemented by the child classes. \end{DoxyCompactList}\item 
+virtual uint32\+\_\+t \mbox{\hyperlink{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}{get\+\_\+esmacat\+\_\+vendor\+\_\+id}} ()=0
+\begin{DoxyCompactList}\small\item\em Pure virtual function that has to be implemented by the child classes. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}{ecat\+\_\+data\+\_\+process}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, int oloop, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs, int iloop)
+\begin{DoxyCompactList}\small\item\em Virtual function that will be overwritten by the child class. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__slave_a8bab2e08510b5808becfee9e33ec95ac}{I\+N\+\_\+system\+\_\+parameter\+\_\+type}}
+\begin{DoxyCompactList}\small\item\em Input System parameter type. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__slave_acbc87be0957dec11db60b80052965635}{I\+N\+\_\+system\+\_\+parameter\+\_\+value}}
+\begin{DoxyCompactList}\small\item\em Input System paramter value. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__slave_a17da68b4dc54e17f175f3a26204df47a}{O\+U\+T\+\_\+system\+\_\+parameter\+\_\+type}}
+\begin{DoxyCompactList}\small\item\em Output System parameter type. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__slave_a8303cae353267e39042d9124673b5c57}{O\+U\+T\+\_\+system\+\_\+parameter\+\_\+value}}
+\begin{DoxyCompactList}\small\item\em Output System parameter value. \end{DoxyCompactList}\item 
+std\+::queue$<$ uint16\+\_\+t $>$ \mbox{\hyperlink{classesmacat__slave_addfc6afcfaaf1995d321c087cc1e956d}{system\+\_\+parameter\+\_\+type\+\_\+queue}}
+\begin{DoxyCompactList}\small\item\em Queue containing all the system parameter types. \end{DoxyCompactList}\item 
+std\+::queue$<$ uint16\+\_\+t $>$ \mbox{\hyperlink{classesmacat__slave_a3b4d450f5be38307c8df80a926e81ef6}{system\+\_\+parameter\+\_\+value\+\_\+queue}}
+\begin{DoxyCompactList}\small\item\em Queue containing all the system parameter values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Generic parent Esmacat slave class that can be used for any Ether\+C\+AT slave. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__slave_a177f119e202bc8aa1fdf054d3e78696d}\label{classesmacat__slave_a177f119e202bc8aa1fdf054d3e78696d}} 
+\index{esmacat\_slave@{esmacat\_slave}!esmacat\_slave@{esmacat\_slave}}
+\index{esmacat\_slave@{esmacat\_slave}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave()}{esmacat\_slave()}}
+{\footnotesize\ttfamily esmacat\+\_\+slave\+::esmacat\+\_\+slave (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the Ether\+C\+AT slave class that will contain the initialization for class variables. 
+
+\mbox{\Hypertarget{classesmacat__slave_aafcff93b943221599d1972e5807b6244}\label{classesmacat__slave_aafcff93b943221599d1972e5807b6244}} 
+\index{esmacat\_slave@{esmacat\_slave}!````~esmacat\_slave@{$\sim$esmacat\_slave}}
+\index{````~esmacat\_slave@{$\sim$esmacat\_slave}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{$\sim$esmacat\_slave()}{~esmacat\_slave()}}
+{\footnotesize\ttfamily esmacat\+\_\+slave\+::$\sim$esmacat\+\_\+slave (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Destructor for the Ether\+C\+AT slave class. 
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__slave_ade8e1bd7344a45bb1d2090f6489f51ab}\label{classesmacat__slave_ade8e1bd7344a45bb1d2090f6489f51ab}} 
+\index{esmacat\_slave@{esmacat\_slave}!add\_system\_parameters\_in\_queue@{add\_system\_parameters\_in\_queue}}
+\index{add\_system\_parameters\_in\_queue@{add\_system\_parameters\_in\_queue}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{add\_system\_parameters\_in\_queue()}{add\_system\_parameters\_in\_queue()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+slave\+::add\+\_\+system\+\_\+parameters\+\_\+in\+\_\+queue (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{system\+\_\+parameter\+\_\+type,  }\item[{uint16\+\_\+t}]{system\+\_\+parameter\+\_\+value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Pushes the parameter type and value onto their corresponding queues. 
+
+Provides error handling. If the queue is full, then an error message is output E\+R\+R\+\_\+\+S\+L\+A\+V\+E\+\_\+\+Q\+U\+E\+U\+E\+\_\+\+F\+U\+LL, else N\+O\+\_\+\+E\+RR is returned
+
+
+\begin{DoxyParams}{Parameters}
+{\em system\+\_\+parameter\+\_\+type} & Type of system parameter to be queued \\
+\hline
+{\em system\+\_\+parameter\+\_\+value} & Value of system paramter to be queued \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Error status of the function ( E\+R\+R\+\_\+\+S\+L\+A\+V\+E\+\_\+\+Q\+U\+E\+U\+E\+\_\+\+F\+U\+LL or N\+O\+\_\+\+E\+RR) 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}\label{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}} 
+\index{esmacat\_slave@{esmacat\_slave}!ecat\_data\_process@{ecat\_data\_process}}
+\index{ecat\_data\_process@{ecat\_data\_process}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process()}{ecat\_data\_process()}}
+{\footnotesize\ttfamily void esmacat\+\_\+slave\+::ecat\+\_\+data\+\_\+process (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{int}]{oloop,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs,  }\item[{int}]{iloop }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Virtual function that will be overwritten by the child class. 
+
+
+
+Reimplemented in \mbox{\hyperlink{classesmacat__loadcell__interface_a73ca15505c73e6f0a91f0543bfd2510a}{esmacat\+\_\+loadcell\+\_\+interface}}, \mbox{\hyperlink{classesmacat__analog__input__slave_a82df4c14626eb9c23b854199814ef04c}{esmacat\+\_\+analog\+\_\+input\+\_\+slave}}, \mbox{\hyperlink{classesmacat__motor__driver_ab84b9351c84dbacb7f99f4845484b60c}{esmacat\+\_\+motor\+\_\+driver}}, \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a21011e445c4bf9a3739a6e653c1d8601}{esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat}}, \mbox{\hyperlink{classesmacat__base__module_aac6191f5a1005dc129b03593e4b3cd40}{esmacat\+\_\+base\+\_\+module}}, and \mbox{\hyperlink{classesmacat__el3102_a8eef59447b1377b5694b718821d235f5}{esmacat\+\_\+el3102}}.
+
+\mbox{\Hypertarget{classesmacat__slave_a31e7649ad4cc96b2368fec8d76d1e9d5}\label{classesmacat__slave_a31e7649ad4cc96b2368fec8d76d1e9d5}} 
+\index{esmacat\_slave@{esmacat\_slave}!flush\_one\_set\_of\_system\_parameters@{flush\_one\_set\_of\_system\_parameters}}
+\index{flush\_one\_set\_of\_system\_parameters@{flush\_one\_set\_of\_system\_parameters}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{flush\_one\_set\_of\_system\_parameters()}{flush\_one\_set\_of\_system\_parameters()}}
+{\footnotesize\ttfamily int esmacat\+\_\+slave\+::flush\+\_\+one\+\_\+set\+\_\+of\+\_\+system\+\_\+parameters (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Flushes a system parameter type and value from the queue. 
+
+This function reads the value at the front of the queue (L\+I\+FO), and if this parameter type is the same as the input parameter type, then this value is popped and therefore flushed
+
+\begin{DoxyReturn}{Returns}
+Size of the queue after parameter is flushed 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}\label{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}} 
+\index{esmacat\_slave@{esmacat\_slave}!get\_esmacat\_product\_id@{get\_esmacat\_product\_id}}
+\index{get\_esmacat\_product\_id@{get\_esmacat\_product\_id}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_product\_id()}{get\_esmacat\_product\_id()}}
+{\footnotesize\ttfamily virtual uint32\+\_\+t esmacat\+\_\+slave\+::get\+\_\+esmacat\+\_\+product\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Pure virtual function that has to be implemented by the child classes. 
+
+
+
+Implemented in \mbox{\hyperlink{classesmacat__loadcell__interface_a46f6d2554d13e80d5223307b5581a5f4}{esmacat\+\_\+loadcell\+\_\+interface}}, \mbox{\hyperlink{classesmacat__motor__driver_a7347f34125d11f6bbc45bf60aa77b83b}{esmacat\+\_\+motor\+\_\+driver}}, \mbox{\hyperlink{classesmacat__analog__input__slave_a5b03033167245e786aab42943c33a43d}{esmacat\+\_\+analog\+\_\+input\+\_\+slave}}, \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a02dfa145e410280c6e29ee5f5d0d52d5}{esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat}}, and \mbox{\hyperlink{classesmacat__el3102_a95f0b922a246293073df6ae81a9e6e13}{esmacat\+\_\+el3102}}.
+
+\mbox{\Hypertarget{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}\label{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}} 
+\index{esmacat\_slave@{esmacat\_slave}!get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}}
+\index{get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_vendor\_id()}{get\_esmacat\_vendor\_id()}}
+{\footnotesize\ttfamily virtual uint32\+\_\+t esmacat\+\_\+slave\+::get\+\_\+esmacat\+\_\+vendor\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Pure virtual function that has to be implemented by the child classes. 
+
+
+
+Implemented in \mbox{\hyperlink{classesmacat__loadcell__interface_afa3d2fabde0daa53bb46c3166e75481b}{esmacat\+\_\+loadcell\+\_\+interface}}, \mbox{\hyperlink{classesmacat__motor__driver_afcd5ed84fbbd2a18f004fdf6229f8e2f}{esmacat\+\_\+motor\+\_\+driver}}, \mbox{\hyperlink{classesmacat__analog__input__slave_aba5be1c7d1a0edf8269eb6882aa00296}{esmacat\+\_\+analog\+\_\+input\+\_\+slave}}, \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a419f66a6fddd70093a67966600050f04}{esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat}}, and \mbox{\hyperlink{classesmacat__el3102_a55e7f83a9f3dfd12e92ba77f7c6d7222}{esmacat\+\_\+el3102}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__slave_a8bab2e08510b5808becfee9e33ec95ac}\label{classesmacat__slave_a8bab2e08510b5808becfee9e33ec95ac}} 
+\index{esmacat\_slave@{esmacat\_slave}!IN\_system\_parameter\_type@{IN\_system\_parameter\_type}}
+\index{IN\_system\_parameter\_type@{IN\_system\_parameter\_type}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{IN\_system\_parameter\_type}{IN\_system\_parameter\_type}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+slave\+::\+I\+N\+\_\+system\+\_\+parameter\+\_\+type}
+
+
+
+Input System parameter type. 
+
+\mbox{\Hypertarget{classesmacat__slave_acbc87be0957dec11db60b80052965635}\label{classesmacat__slave_acbc87be0957dec11db60b80052965635}} 
+\index{esmacat\_slave@{esmacat\_slave}!IN\_system\_parameter\_value@{IN\_system\_parameter\_value}}
+\index{IN\_system\_parameter\_value@{IN\_system\_parameter\_value}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{IN\_system\_parameter\_value}{IN\_system\_parameter\_value}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+slave\+::\+I\+N\+\_\+system\+\_\+parameter\+\_\+value}
+
+
+
+Input System paramter value. 
+
+\mbox{\Hypertarget{classesmacat__slave_a17da68b4dc54e17f175f3a26204df47a}\label{classesmacat__slave_a17da68b4dc54e17f175f3a26204df47a}} 
+\index{esmacat\_slave@{esmacat\_slave}!OUT\_system\_parameter\_type@{OUT\_system\_parameter\_type}}
+\index{OUT\_system\_parameter\_type@{OUT\_system\_parameter\_type}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{OUT\_system\_parameter\_type}{OUT\_system\_parameter\_type}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+slave\+::\+O\+U\+T\+\_\+system\+\_\+parameter\+\_\+type}
+
+
+
+Output System parameter type. 
+
+\mbox{\Hypertarget{classesmacat__slave_a8303cae353267e39042d9124673b5c57}\label{classesmacat__slave_a8303cae353267e39042d9124673b5c57}} 
+\index{esmacat\_slave@{esmacat\_slave}!OUT\_system\_parameter\_value@{OUT\_system\_parameter\_value}}
+\index{OUT\_system\_parameter\_value@{OUT\_system\_parameter\_value}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{OUT\_system\_parameter\_value}{OUT\_system\_parameter\_value}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+slave\+::\+O\+U\+T\+\_\+system\+\_\+parameter\+\_\+value}
+
+
+
+Output System parameter value. 
+
+\mbox{\Hypertarget{classesmacat__slave_addfc6afcfaaf1995d321c087cc1e956d}\label{classesmacat__slave_addfc6afcfaaf1995d321c087cc1e956d}} 
+\index{esmacat\_slave@{esmacat\_slave}!system\_parameter\_type\_queue@{system\_parameter\_type\_queue}}
+\index{system\_parameter\_type\_queue@{system\_parameter\_type\_queue}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{system\_parameter\_type\_queue}{system\_parameter\_type\_queue}}
+{\footnotesize\ttfamily std\+::queue$<$uint16\+\_\+t$>$ esmacat\+\_\+slave\+::system\+\_\+parameter\+\_\+type\+\_\+queue}
+
+
+
+Queue containing all the system parameter types. 
+
+\mbox{\Hypertarget{classesmacat__slave_a3b4d450f5be38307c8df80a926e81ef6}\label{classesmacat__slave_a3b4d450f5be38307c8df80a926e81ef6}} 
+\index{esmacat\_slave@{esmacat\_slave}!system\_parameter\_value\_queue@{system\_parameter\_value\_queue}}
+\index{system\_parameter\_value\_queue@{system\_parameter\_value\_queue}!esmacat\_slave@{esmacat\_slave}}
+\doxysubsubsection{\texorpdfstring{system\_parameter\_value\_queue}{system\_parameter\_value\_queue}}
+{\footnotesize\ttfamily std\+::queue$<$uint16\+\_\+t$>$ esmacat\+\_\+slave\+::system\+\_\+parameter\+\_\+value\+\_\+queue}
+
+
+
+Queue containing all the system parameter values. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+library/\mbox{\hyperlink{slave_8h}{slave.\+h}}\item 
+esmacat\+\_\+library/\mbox{\hyperlink{slave_8cpp}{slave.\+cpp}}\end{DoxyCompactItemize}

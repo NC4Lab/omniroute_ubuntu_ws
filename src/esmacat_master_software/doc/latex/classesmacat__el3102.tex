@@ -1,0 +1,255 @@
+\hypertarget{classesmacat__el3102}{}\doxysection{esmacat\+\_\+el3102 Class Reference}
+\label{classesmacat__el3102}\index{esmacat\_el3102@{esmacat\_el3102}}
+
+
+Generic class that allows for access of information from the E\+L3102 slave.  
+
+
+
+
+{\ttfamily \#include $<$el3102.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+el3102\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classesmacat__el3102}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__el3102_ab92473f18e8f709c36bc3d1b4e9fecd4}{esmacat\+\_\+el3102}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the class that holds the initialization. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__el3102_a8eef59447b1377b5694b718821d235f5}{ecat\+\_\+data\+\_\+process}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, int oloop, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs, int iloop)
+\begin{DoxyCompactList}\small\item\em Data exchange process that is specific to the E\+L3102 slave. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a49cb6b36e59d9ba9347f40b9bf04e233}{get\+\_\+input\+\_\+variable\+\_\+0\+\_\+\+Status}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of class variable input\+\_\+variable\+\_\+0\+\_\+\+Status. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__el3102_aa3be7e59dc83d9f74f2bf866da64ae62}{get\+\_\+input\+\_\+variable\+\_\+1\+\_\+\+Value}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of class variable input\+\_\+variable\+\_\+1\+\_\+\+Value. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{classesmacat__el3102_ad61fd82a87cdfc7a5e1f225aea7dd845}{get\+\_\+input\+\_\+variable\+\_\+2\+\_\+\+Status}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of class variable input\+\_\+variable\+\_\+2\+\_\+\+Status. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__el3102_ab6bd411aad1fba291bf1567e0aeef90f}{get\+\_\+input\+\_\+variable\+\_\+3\+\_\+\+Value}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of class variable input\+\_\+variable\+\_\+3\+\_\+\+Value. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a95f0b922a246293073df6ae81a9e6e13}{get\+\_\+esmacat\+\_\+product\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Reads the product id of the slave. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a55e7f83a9f3dfd12e92ba77f7c6d7222}{get\+\_\+esmacat\+\_\+vendor\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Returns the vendor ID of the slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a141b954e525cfb3c678110e3da42a123}{esmacat\+\_\+slave\+\_\+product\+\_\+id}} = \mbox{\hyperlink{el3102_8h_ac879a51b5b251117447d361ec746cdfb}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+L3102\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__el3102_acdf2411b83ce4a1561113bf81bfc220f}{esmacat\+\_\+slave\+\_\+vendor\+\_\+id}} = \mbox{\hyperlink{el3102_8h_a5310520f6cbc744c3be7719e52d9e43b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+L3102\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a8253160fc088acd835c4541af0b20848}{input\+\_\+variable\+\_\+0\+\_\+\+Status}}
+\begin{DoxyCompactList}\small\item\em Contains the status of variable 0. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a6b2b37fb464e41de2723554616a16ddc}{input\+\_\+variable\+\_\+1\+\_\+\+Value}}
+\begin{DoxyCompactList}\small\item\em Contains the value of variable 1. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a1f139fee74a9237b61bb4b2ff0dad5e5}{input\+\_\+variable\+\_\+2\+\_\+\+Status}}
+\begin{DoxyCompactList}\small\item\em Contains the status of variable 2. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__el3102_a51089d2ce6dd9859579a8140ff14c4de}{input\+\_\+variable\+\_\+3\+\_\+\+Value}}
+\begin{DoxyCompactList}\small\item\em Contains the value of variable 3. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Generic class that allows for access of information from the E\+L3102 slave. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__el3102_ab92473f18e8f709c36bc3d1b4e9fecd4}\label{classesmacat__el3102_ab92473f18e8f709c36bc3d1b4e9fecd4}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!esmacat\_el3102@{esmacat\_el3102}}
+\index{esmacat\_el3102@{esmacat\_el3102}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{esmacat\_el3102()}{esmacat\_el3102()}}
+{\footnotesize\ttfamily esmacat\+\_\+el3102\+::esmacat\+\_\+el3102 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the class that holds the initialization. 
+
+Intializes all the variables and sets the product code and Vendor ID for the slave 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__el3102_a8eef59447b1377b5694b718821d235f5}\label{classesmacat__el3102_a8eef59447b1377b5694b718821d235f5}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!ecat\_data\_process@{ecat\_data\_process}}
+\index{ecat\_data\_process@{ecat\_data\_process}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process()}{ecat\_data\_process()}}
+{\footnotesize\ttfamily void esmacat\+\_\+el3102\+::ecat\+\_\+data\+\_\+process (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{int}]{oloop,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs,  }\item[{int}]{iloop }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Data exchange process that is specific to the E\+L3102 slave. 
+
+Access the first 6 bytes.
+
+Variable 0 status = Byte 0
+
+Variable 1 value = Bytes 2, Byte 1
+
+Variable 2 status = Byte 3
+
+Variable 3 value = Byte 5, Byte 4
+
+
+\begin{DoxyParams}{Parameters}
+{\em ec\+\_\+slave\+\_\+outputs} & Pointer to the start of the outputs for slave in consideration \\
+\hline
+{\em oloop} & No. of output bytes \\
+\hline
+{\em ec\+\_\+slave\+\_\+inputs} & Pointer to the start of the inputs for slave in consideration \\
+\hline
+{\em iloop} & No. of input bytes \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \mbox{\hyperlink{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__el3102_a95f0b922a246293073df6ae81a9e6e13}\label{classesmacat__el3102_a95f0b922a246293073df6ae81a9e6e13}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_esmacat\_product\_id@{get\_esmacat\_product\_id}}
+\index{get\_esmacat\_product\_id@{get\_esmacat\_product\_id}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_product\_id()}{get\_esmacat\_product\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+esmacat\+\_\+product\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reads the product id of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Product ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__el3102_a55e7f83a9f3dfd12e92ba77f7c6d7222}\label{classesmacat__el3102_a55e7f83a9f3dfd12e92ba77f7c6d7222}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}}
+\index{get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_vendor\_id()}{get\_esmacat\_vendor\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+esmacat\+\_\+vendor\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Returns the vendor ID of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Vendor ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__el3102_a49cb6b36e59d9ba9347f40b9bf04e233}\label{classesmacat__el3102_a49cb6b36e59d9ba9347f40b9bf04e233}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_input\_variable\_0\_Status@{get\_input\_variable\_0\_Status}}
+\index{get\_input\_variable\_0\_Status@{get\_input\_variable\_0\_Status}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_0\_Status()}{get\_input\_variable\_0\_Status()}}
+{\footnotesize\ttfamily uint8\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+input\+\_\+variable\+\_\+0\+\_\+\+Status (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of class variable input\+\_\+variable\+\_\+0\+\_\+\+Status. 
+
+\begin{DoxyReturn}{Returns}
+Byte containing Variable 0 status 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__el3102_aa3be7e59dc83d9f74f2bf866da64ae62}\label{classesmacat__el3102_aa3be7e59dc83d9f74f2bf866da64ae62}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_input\_variable\_1\_Value@{get\_input\_variable\_1\_Value}}
+\index{get\_input\_variable\_1\_Value@{get\_input\_variable\_1\_Value}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_1\_Value()}{get\_input\_variable\_1\_Value()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+input\+\_\+variable\+\_\+1\+\_\+\+Value (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of class variable input\+\_\+variable\+\_\+1\+\_\+\+Value. 
+
+\begin{DoxyReturn}{Returns}
+Byte containing Variable 1 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__el3102_ad61fd82a87cdfc7a5e1f225aea7dd845}\label{classesmacat__el3102_ad61fd82a87cdfc7a5e1f225aea7dd845}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_input\_variable\_2\_Status@{get\_input\_variable\_2\_Status}}
+\index{get\_input\_variable\_2\_Status@{get\_input\_variable\_2\_Status}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_2\_Status()}{get\_input\_variable\_2\_Status()}}
+{\footnotesize\ttfamily uint8\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+input\+\_\+variable\+\_\+2\+\_\+\+Status (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of class variable input\+\_\+variable\+\_\+2\+\_\+\+Status. 
+
+\begin{DoxyReturn}{Returns}
+Byte containing Variable 2 status 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__el3102_ab6bd411aad1fba291bf1567e0aeef90f}\label{classesmacat__el3102_ab6bd411aad1fba291bf1567e0aeef90f}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!get\_input\_variable\_3\_Value@{get\_input\_variable\_3\_Value}}
+\index{get\_input\_variable\_3\_Value@{get\_input\_variable\_3\_Value}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_3\_Value()}{get\_input\_variable\_3\_Value()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+el3102\+::get\+\_\+input\+\_\+variable\+\_\+3\+\_\+\+Value (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of class variable input\+\_\+variable\+\_\+3\+\_\+\+Value. 
+
+\begin{DoxyReturn}{Returns}
+Byte containing Variable 3 value 
+\end{DoxyReturn}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__el3102_a141b954e525cfb3c678110e3da42a123}\label{classesmacat__el3102_a141b954e525cfb3c678110e3da42a123}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}}
+\index{esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_product\_id}{esmacat\_slave\_product\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+el3102\+::esmacat\+\_\+slave\+\_\+product\+\_\+id = \mbox{\hyperlink{el3102_8h_ac879a51b5b251117447d361ec746cdfb}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+L3102\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}}
+
+Contains a product code of the E\+L3102 slave \mbox{\Hypertarget{classesmacat__el3102_acdf2411b83ce4a1561113bf81bfc220f}\label{classesmacat__el3102_acdf2411b83ce4a1561113bf81bfc220f}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}}
+\index{esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_vendor\_id}{esmacat\_slave\_vendor\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+el3102\+::esmacat\+\_\+slave\+\_\+vendor\+\_\+id = \mbox{\hyperlink{el3102_8h_a5310520f6cbc744c3be7719e52d9e43b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+L3102\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}}
+
+Contains a vendor ID assigned by the Ether\+C\+AT Technology Group \mbox{\Hypertarget{classesmacat__el3102_a8253160fc088acd835c4541af0b20848}\label{classesmacat__el3102_a8253160fc088acd835c4541af0b20848}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!input\_variable\_0\_Status@{input\_variable\_0\_Status}}
+\index{input\_variable\_0\_Status@{input\_variable\_0\_Status}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_0\_Status}{input\_variable\_0\_Status}}
+{\footnotesize\ttfamily uint8\+\_\+t esmacat\+\_\+el3102\+::input\+\_\+variable\+\_\+0\+\_\+\+Status\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the status of variable 0. 
+
+\mbox{\Hypertarget{classesmacat__el3102_a6b2b37fb464e41de2723554616a16ddc}\label{classesmacat__el3102_a6b2b37fb464e41de2723554616a16ddc}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!input\_variable\_1\_Value@{input\_variable\_1\_Value}}
+\index{input\_variable\_1\_Value@{input\_variable\_1\_Value}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_1\_Value}{input\_variable\_1\_Value}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+el3102\+::input\+\_\+variable\+\_\+1\+\_\+\+Value\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of variable 1. 
+
+\mbox{\Hypertarget{classesmacat__el3102_a1f139fee74a9237b61bb4b2ff0dad5e5}\label{classesmacat__el3102_a1f139fee74a9237b61bb4b2ff0dad5e5}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!input\_variable\_2\_Status@{input\_variable\_2\_Status}}
+\index{input\_variable\_2\_Status@{input\_variable\_2\_Status}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_2\_Status}{input\_variable\_2\_Status}}
+{\footnotesize\ttfamily uint8\+\_\+t esmacat\+\_\+el3102\+::input\+\_\+variable\+\_\+2\+\_\+\+Status\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the status of variable 2. 
+
+\mbox{\Hypertarget{classesmacat__el3102_a51089d2ce6dd9859579a8140ff14c4de}\label{classesmacat__el3102_a51089d2ce6dd9859579a8140ff14c4de}} 
+\index{esmacat\_el3102@{esmacat\_el3102}!input\_variable\_3\_Value@{input\_variable\_3\_Value}}
+\index{input\_variable\_3\_Value@{input\_variable\_3\_Value}!esmacat\_el3102@{esmacat\_el3102}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_3\_Value}{input\_variable\_3\_Value}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+el3102\+::input\+\_\+variable\+\_\+3\+\_\+\+Value\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of variable 3. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{el3102_8h}{el3102.\+h}}\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{el3102_8cpp}{el3102.\+cpp}}\end{DoxyCompactItemize}

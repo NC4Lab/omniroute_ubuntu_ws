@@ -1,0 +1,153 @@
+\hypertarget{analog__input_8h}{}\doxysection{esmacat\+\_\+slave\+\_\+drivers/drivers/analog\+\_\+input.h File Reference}
+\label{analog__input_8h}\index{esmacat\_slave\_drivers/drivers/analog\_input.h@{esmacat\_slave\_drivers/drivers/analog\_input.h}}
+
+
+Contains all the declarations required for the Esmacat Analog Input slave.  
+
+
+{\ttfamily \#include \char`\"{}base\+\_\+module.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}slave.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}error\+\_\+list.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structesmacat__analog__input__channel__config__T}{esmacat\+\_\+analog\+\_\+input\+\_\+channel\+\_\+config\+\_\+T}}
+\begin{DoxyCompactList}\small\item\em Structure that holds the Analog Input slave channel configuration. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classesmacat__analog__input__slave}{esmacat\+\_\+analog\+\_\+input\+\_\+slave}}
+\begin{DoxyCompactList}\small\item\em Class that holds the Analog Input slave data and functions to access and communicate with it. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{analog__input_8h_a1cf4191606776705a2f45a60edf30a5c}{E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}~0x0062696f
+\begin{DoxyCompactList}\small\item\em Unique vendor ID assigned by the Ether\+C\+AT Technology Group to Harmonic Bionics Inc. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{analog__input_8h_a9de4640a8cc7dabf55418d49c666fd57}{E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}~0x00040101
+\begin{DoxyCompactList}\small\item\em Unique product code for Esmacat Analog Input slave required for Ether\+C\+AT. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{analog__input_8h_a310c5e05c4c11037c7fc8e05e20be3ec}{E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+M\+A\+X\+\_\+\+C\+H\+A\+N\+N\+E\+L\+\_\+\+I\+N\+D\+EX}}~16
+\begin{DoxyCompactList}\small\item\em Total channels on the Esmacat Analog Input slave. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{analog__input_8h_a7b065f2129e23498d2b3c6ae8ec3bf9e}{E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+C\+O\+N\+F\+I\+G\+\_\+\+R\+E\+G\+I\+S\+T\+ER}}~0x0701
+\begin{DoxyCompactList}\small\item\em A\+DC Configuration register defined in firmware. \mbox{[}{\itshape {\bfseries{firmware dependent -\/ do not change}}}\mbox{]}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9}{Adc\+Channel\+Typeand\+Range}} \{ \newline
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ab47e3e95ea6c200e2f8f2c97933b16b3}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G3\+V\+\_\+\+P\+O\+S3V}} = 0b0001, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9adf812f4469110e49908a2502710df4f8}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G6\+V\+\_\+0V}} = 0b0010, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2a60f325402e640c723663f0735cb52f}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+0\+V\+\_\+\+P\+O\+S6V}} = 0b0011, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2dc766a6e892a2a80c86d0bb2b30ac49}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G6\+V\+\_\+\+P\+O\+S6V}} = 0b0100, 
+\newline
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a0385625d95d591c7e9d41c557eae5e12}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G12\+V\+\_\+0V}} = 0b0101, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac1d4545ff8a905a0b72fe679e4aa49f4}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+0\+V\+\_\+\+P\+O\+S12V}} = 0b0110, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9aa8374353008491395b270ca0382dfda1}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G12\+V\+\_\+\+P\+O\+S12V}} = 0b0111, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a72e6f01bde59857f4024e3da92e5dfd4}{D\+I\+F\+F\+\_\+\+N\+E\+G6\+V\+\_\+\+P\+O\+S6V}} = 0b1001, 
+\newline
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac4f41379e1d7ec2d6338a7dff8b651ac}{D\+I\+F\+F\+\_\+\+N\+E\+G12\+V\+\_\+\+P\+O\+S12V}} = 0b1100, 
+\mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ad44051572d68014e8ca308dbcf828e4d}{D\+I\+F\+F\+\_\+\+N\+E\+G24\+V\+\_\+\+P\+O\+S24V}} = 0b1111
+ \}
+\begin{DoxyCompactList}\small\item\em Range-\/\+Select bits of the M\+A\+X1300 A\+DC. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains all the declarations required for the Esmacat Analog Input slave. 
+
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{analog__input_8h_a7b065f2129e23498d2b3c6ae8ec3bf9e}\label{analog__input_8h_a7b065f2129e23498d2b3c6ae8ec3bf9e}} 
+\index{analog\_input.h@{analog\_input.h}!ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER@{ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER}}
+\index{ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER@{ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER}!analog\_input.h@{analog\_input.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER}{ESMACAT\_ANALOG\_INPUT\_CONFIG\_REGISTER}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+C\+O\+N\+F\+I\+G\+\_\+\+R\+E\+G\+I\+S\+T\+ER~0x0701}
+
+
+
+A\+DC Configuration register defined in firmware. \mbox{[}{\itshape {\bfseries{firmware dependent -\/ do not change}}}\mbox{]}. 
+
+\mbox{\Hypertarget{analog__input_8h_a310c5e05c4c11037c7fc8e05e20be3ec}\label{analog__input_8h_a310c5e05c4c11037c7fc8e05e20be3ec}} 
+\index{analog\_input.h@{analog\_input.h}!ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX@{ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX}}
+\index{ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX@{ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX}!analog\_input.h@{analog\_input.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX}{ESMACAT\_ANALOG\_INPUT\_MAX\_CHANNEL\_INDEX}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+M\+A\+X\+\_\+\+C\+H\+A\+N\+N\+E\+L\+\_\+\+I\+N\+D\+EX~16}
+
+
+
+Total channels on the Esmacat Analog Input slave. 
+
+\mbox{\Hypertarget{analog__input_8h_a9de4640a8cc7dabf55418d49c666fd57}\label{analog__input_8h_a9de4640a8cc7dabf55418d49c666fd57}} 
+\index{analog\_input.h@{analog\_input.h}!ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID@{ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID}}
+\index{ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID@{ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID}!analog\_input.h@{analog\_input.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID}{ESMACAT\_ANALOG\_INPUT\_PRODUCT\_ID}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID~0x00040101}
+
+
+
+Unique product code for Esmacat Analog Input slave required for Ether\+C\+AT. 
+
+\mbox{\Hypertarget{analog__input_8h_a1cf4191606776705a2f45a60edf30a5c}\label{analog__input_8h_a1cf4191606776705a2f45a60edf30a5c}} 
+\index{analog\_input.h@{analog\_input.h}!ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID@{ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID}}
+\index{ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID@{ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID}!analog\_input.h@{analog\_input.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID}{ESMACAT\_ANALOG\_INPUT\_VENDOR\_ID}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID~0x0062696f}
+
+
+
+Unique vendor ID assigned by the Ether\+C\+AT Technology Group to Harmonic Bionics Inc. 
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9}} 
+\index{analog\_input.h@{analog\_input.h}!AdcChannelTypeandRange@{AdcChannelTypeandRange}}
+\index{AdcChannelTypeandRange@{AdcChannelTypeandRange}!analog\_input.h@{analog\_input.h}}
+\doxysubsubsection{\texorpdfstring{AdcChannelTypeandRange}{AdcChannelTypeandRange}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9}{Adc\+Channel\+Typeand\+Range}}}
+
+
+
+Range-\/\+Select bits of the M\+A\+X1300 A\+DC. 
+
+bit\mbox{[}3\mbox{]} \+: 1 if differential, 0 if single-\/ended
+
+bit\mbox{[}2-\/0\mbox{]} represent the range per the datasheet (Vref = 4096 mV) \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_NEG3V\_POS3V@{SINGLE\_ENDED\_NEG3V\_POS3V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_NEG3V\_POS3V@{SINGLE\_ENDED\_NEG3V\_POS3V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ab47e3e95ea6c200e2f8f2c97933b16b3}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ab47e3e95ea6c200e2f8f2c97933b16b3}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G3\+V\+\_\+\+P\+O\+S3V&Single-\/ended -\/3V to +3V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_NEG6V\_0V@{SINGLE\_ENDED\_NEG6V\_0V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_NEG6V\_0V@{SINGLE\_ENDED\_NEG6V\_0V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9adf812f4469110e49908a2502710df4f8}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9adf812f4469110e49908a2502710df4f8}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G6\+V\+\_\+0V&Single-\/ended -\/6V to 0V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_0V\_POS6V@{SINGLE\_ENDED\_0V\_POS6V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_0V\_POS6V@{SINGLE\_ENDED\_0V\_POS6V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2a60f325402e640c723663f0735cb52f}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2a60f325402e640c723663f0735cb52f}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+0\+V\+\_\+\+P\+O\+S6V&Single-\/ended 0V to 6V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_NEG6V\_POS6V@{SINGLE\_ENDED\_NEG6V\_POS6V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_NEG6V\_POS6V@{SINGLE\_ENDED\_NEG6V\_POS6V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2dc766a6e892a2a80c86d0bb2b30ac49}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a2dc766a6e892a2a80c86d0bb2b30ac49}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G6\+V\+\_\+\+P\+O\+S6V&Single-\/ended -\/6V to +6V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_NEG12V\_0V@{SINGLE\_ENDED\_NEG12V\_0V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_NEG12V\_0V@{SINGLE\_ENDED\_NEG12V\_0V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a0385625d95d591c7e9d41c557eae5e12}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a0385625d95d591c7e9d41c557eae5e12}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G12\+V\+\_\+0V&Single-\/ended -\/12V to 0V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_0V\_POS12V@{SINGLE\_ENDED\_0V\_POS12V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_0V\_POS12V@{SINGLE\_ENDED\_0V\_POS12V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac1d4545ff8a905a0b72fe679e4aa49f4}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac1d4545ff8a905a0b72fe679e4aa49f4}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+0\+V\+\_\+\+P\+O\+S12V&Single-\/ended -\/0V to 12V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_NEG12V\_POS12V@{SINGLE\_ENDED\_NEG12V\_POS12V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!SINGLE\_ENDED\_NEG12V\_POS12V@{SINGLE\_ENDED\_NEG12V\_POS12V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9aa8374353008491395b270ca0382dfda1}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9aa8374353008491395b270ca0382dfda1}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+N\+E\+G12\+V\+\_\+\+P\+O\+S12V&Single-\/ended -\/12V to +12V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DIFF\_NEG6V\_POS6V@{DIFF\_NEG6V\_POS6V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!DIFF\_NEG6V\_POS6V@{DIFF\_NEG6V\_POS6V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a72e6f01bde59857f4024e3da92e5dfd4}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9a72e6f01bde59857f4024e3da92e5dfd4}} 
+D\+I\+F\+F\+\_\+\+N\+E\+G6\+V\+\_\+\+P\+O\+S6V&Differential -\/6V to +6V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DIFF\_NEG12V\_POS12V@{DIFF\_NEG12V\_POS12V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!DIFF\_NEG12V\_POS12V@{DIFF\_NEG12V\_POS12V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac4f41379e1d7ec2d6338a7dff8b651ac}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ac4f41379e1d7ec2d6338a7dff8b651ac}} 
+D\+I\+F\+F\+\_\+\+N\+E\+G12\+V\+\_\+\+P\+O\+S12V&Differential -\/12V to +12V \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DIFF\_NEG24V\_POS24V@{DIFF\_NEG24V\_POS24V}!analog\_input.h@{analog\_input.h}}\index{analog\_input.h@{analog\_input.h}!DIFF\_NEG24V\_POS24V@{DIFF\_NEG24V\_POS24V}}}\mbox{\Hypertarget{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ad44051572d68014e8ca308dbcf828e4d}\label{analog__input_8h_aa3bea0bd9c7299d16f3efd41b41cc9c9ad44051572d68014e8ca308dbcf828e4d}} 
+D\+I\+F\+F\+\_\+\+N\+E\+G24\+V\+\_\+\+P\+O\+S24V&Differential -\/24V to +24V \\
+\hline
+
+\end{DoxyEnumFields}

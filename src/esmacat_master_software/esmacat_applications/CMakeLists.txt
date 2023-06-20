@@ -1,0 +1,2 @@
+add_subdirectory(my_project)
+add_subdirectory(project_examples)

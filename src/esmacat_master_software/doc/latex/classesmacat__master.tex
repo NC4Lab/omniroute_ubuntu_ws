@@ -1,0 +1,370 @@
+\hypertarget{classesmacat__master}{}\doxysection{esmacat\+\_\+master Class Reference}
+\label{classesmacat__master}\index{esmacat\_master@{esmacat\_master}}
+
+
+Holds all the functions and variables used by the ethercat master.  
+
+
+
+
+{\ttfamily \#include $<$master.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__master_ade0d6c58f3f182a64305c8649edd60df}{esmacat\+\_\+master}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}} class. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classesmacat__master_adc3f908c9ad057037310adfbd998f83e}{$\sim$esmacat\+\_\+master}} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}} class. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__master_a9485ffe8a19e778a74129c64b112bde5}{Start\+Internal\+Thread}} ()
+\begin{DoxyCompactList}\small\item\em Starts the threads that will be running in parallel. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__master_a9ca3c00137b303330949ca28a2cd68dc}{Wait\+For\+Internal\+Thread\+To\+Exit}} ()
+\begin{DoxyCompactList}\small\item\em Ensures that the thread has been closed successfully. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__master_aa50ecd9002e268fca636f2e059a1c00f}{esmacat\+\_\+master\+\_\+loop}} ()
+\begin{DoxyCompactList}\small\item\em This function supports the exchange of real-\/time data between the master and slaves. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__master_a90ce7ab6b669aa0961500c6aa2db0260}{ecatcheck}} ()
+\begin{DoxyCompactList}\small\item\em Continuously checks the Ether\+C\+AT status. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__master_a9bdb7ef4775659ea7fa415d5fe2d2d0e}{is\+\_\+ec\+\_\+closed}} ()
+\begin{DoxyCompactList}\small\item\em Returns the status of the ethercat master connection. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__master_a38afc63d62042c6104b0ab60d050e0e2}{assign\+\_\+esmacat\+\_\+application}} (\mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} $\ast$esmacat\+\_\+app)
+\item 
+void \mbox{\hyperlink{classesmacat__master_a6d86c7e6c60d4ff71c09c8730fb4e7cf}{stop\+\_\+thread}} ()
+\begin{DoxyCompactList}\small\item\em Stops the thread on which the master application is running. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__master_a668ec2cfe185f769ca93968bd090c867}{set\+\_\+ethernet\+\_\+adapter\+\_\+name\+\_\+for\+\_\+esmacat}} (char $\ast$eth\+\_\+adapter\+\_\+name)
+\begin{DoxyCompactList}\small\item\em Sets the ethercat adapter name. \end{DoxyCompactList}\item 
+uint32 \mbox{\hyperlink{classesmacat__master_a3b69813af72daca16dd567dace68013e}{get\+\_\+error\+\_\+counter}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__slave}{esmacat\+\_\+slave}} $\ast$ \mbox{\hyperlink{classesmacat__master_a74ba58f0d040d024a267c3d09c82176a}{E\+C\+A\+T\+\_\+slave}} \mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}
+\end{DoxyCompactItemize}
+\doxysubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void $\ast$ \mbox{\hyperlink{classesmacat__master_a22249c60c86ab248ef915f1698eb40af}{Internal\+Thread\+Entry\+\_\+esmacat\+\_\+master\+\_\+loop}} (void $\ast$This)
+\begin{DoxyCompactList}\small\item\em this is an intermediate function to use pthread \end{DoxyCompactList}\item 
+static void $\ast$ \mbox{\hyperlink{classesmacat__master_a9f6bed02ce557b2d3a20d7f6e95b744a}{Internal\+Thread\+Entry\+\_\+ecatcheck}} (void $\ast$This)
+\begin{DoxyCompactList}\small\item\em this is an intermediate function to use pthread \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+char \mbox{\hyperlink{classesmacat__master_a98acb153aab23a5d8d07487e8a9ced10}{I\+Omap}} \mbox{[}4096\mbox{]}
+\begin{DoxyCompactList}\small\item\em Holds the P\+DO map for C\+A\+N\+Open for all the slaves. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{classesmacat__master_af6e5690f4f52c62ace4ceeb70c9d083e}{expected\+W\+KC}}
+\begin{DoxyCompactList}\small\item\em Expected value of the working counter (part of Ether\+C\+AT protocol)-\/ used by S\+O\+EM. \end{DoxyCompactList}\item 
+boolean \mbox{\hyperlink{classesmacat__master_ad8732eadd5f886bb58d370f94fec6ab9}{needlf}}
+\item 
+volatile int \mbox{\hyperlink{classesmacat__master_a02d961a22b0e8020fcd6f8eb096ef492}{wkc}}
+\begin{DoxyCompactList}\small\item\em Value of the work counter -\/ used by S\+O\+EM. \end{DoxyCompactList}\item 
+boolean \mbox{\hyperlink{classesmacat__master_a180a723947482d1c1d0dfb9f67de5206}{in\+OP}}
+\begin{DoxyCompactList}\small\item\em Indicates that the master is operational and communicating with the slaves -\/ used by S\+O\+EM. \end{DoxyCompactList}\item 
+uint8 \mbox{\hyperlink{classesmacat__master_a44d07ac7ff6a245111ad16a633bcbd2b}{currentgroup}}
+\begin{DoxyCompactList}\small\item\em Group of slaves -\/ used by S\+O\+EM. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__master_a3a358b2975b237f241fc2155856577e6}{ec\+\_\+closed}}
+\begin{DoxyCompactList}\small\item\em Indicates that the master connection is closed. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__master_abd527ebf0ddf608ee85e3cfe128098c9}{stop\+\_\+thread\+\_\+loop}}
+\begin{DoxyCompactList}\small\item\em Flag to indicate that the thread must be stopped. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} $\ast$ \mbox{\hyperlink{classesmacat__master_a1b837415241c54a2a06d10c2b4de2b7a}{E\+C\+A\+T\+\_\+app}}
+\begin{DoxyCompactList}\small\item\em Pointer to the user-\/defined ethercat application to be used. \end{DoxyCompactList}\item 
+O\+S\+A\+L\+\_\+\+T\+H\+R\+E\+A\+D\+\_\+\+H\+A\+N\+D\+LE \mbox{\hyperlink{classesmacat__master_ab57cd3fb10c93e2a4157edd20a2187c4}{\+\_\+thread\+\_\+esmacat\+\_\+master\+\_\+loop}}
+\begin{DoxyCompactList}\small\item\em Pointer to the thread for the ethercat process data communication loop. \end{DoxyCompactList}\item 
+O\+S\+A\+L\+\_\+\+T\+H\+R\+E\+A\+D\+\_\+\+H\+A\+N\+D\+LE \mbox{\hyperlink{classesmacat__master_ab149a74f05eb26cd4aecf24bc4cf385e}{\+\_\+thread\+\_\+ecatcheck}}
+\begin{DoxyCompactList}\small\item\em Pointer to the thread for the ethercat status check. \end{DoxyCompactList}\item 
+char \mbox{\hyperlink{classesmacat__master_aa9f5391b84bc88dda57355775cc84651}{ifname}} \mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Name of the Ethercat adapter. \end{DoxyCompactList}\item 
+uint32 \mbox{\hyperlink{classesmacat__master_ae37b3092b7a156c714d26c16a73ec510}{error\+\_\+counter}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Holds all the functions and variables used by the ethercat master. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__master_ade0d6c58f3f182a64305c8649edd60df}\label{classesmacat__master_ade0d6c58f3f182a64305c8649edd60df}} 
+\index{esmacat\_master@{esmacat\_master}!esmacat\_master@{esmacat\_master}}
+\index{esmacat\_master@{esmacat\_master}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{esmacat\_master()}{esmacat\_master()}}
+{\footnotesize\ttfamily esmacat\+\_\+master\+::esmacat\+\_\+master (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}} class. 
+
+Resets the values of currentgroup, shows the master connection to be active, and the threads running \mbox{\Hypertarget{classesmacat__master_adc3f908c9ad057037310adfbd998f83e}\label{classesmacat__master_adc3f908c9ad057037310adfbd998f83e}} 
+\index{esmacat\_master@{esmacat\_master}!````~esmacat\_master@{$\sim$esmacat\_master}}
+\index{````~esmacat\_master@{$\sim$esmacat\_master}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{$\sim$esmacat\_master()}{~esmacat\_master()}}
+{\footnotesize\ttfamily esmacat\+\_\+master\+::$\sim$esmacat\+\_\+master (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destructor for the \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}} class. 
+
+Ends the threads on which the applications are running 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__master_a38afc63d62042c6104b0ab60d050e0e2}\label{classesmacat__master_a38afc63d62042c6104b0ab60d050e0e2}} 
+\index{esmacat\_master@{esmacat\_master}!assign\_esmacat\_application@{assign\_esmacat\_application}}
+\index{assign\_esmacat\_application@{assign\_esmacat\_application}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{assign\_esmacat\_application()}{assign\_esmacat\_application()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::assign\+\_\+esmacat\+\_\+application (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} $\ast$}]{esmacat\+\_\+app }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+\mbox{\Hypertarget{classesmacat__master_a90ce7ab6b669aa0961500c6aa2db0260}\label{classesmacat__master_a90ce7ab6b669aa0961500c6aa2db0260}} 
+\index{esmacat\_master@{esmacat\_master}!ecatcheck@{ecatcheck}}
+\index{ecatcheck@{ecatcheck}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{ecatcheck()}{ecatcheck()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::ecatcheck (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Continuously checks the Ether\+C\+AT status. 
+
+If the slave belongs to the current group and the state of the slave is\+:
+
+E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+S\+A\+F\+E\+\_\+\+OP + E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+E\+R\+R\+OR then it is attempted to be set to C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+S\+A\+F\+E\+\_\+\+OP + E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+A\+CK
+
+E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+S\+A\+F\+E\+\_\+\+OP then it is attempted to be set to E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+O\+P\+E\+R\+A\+T\+I\+O\+N\+AL
+
+Any state but E\+C\+\_\+\+S\+T\+A\+T\+E\+\_\+\+N\+O\+NE then it is reconfigured
+
+If the slave is flagged to be unresponsive, and a state check reveals slave to be in a valid state, then the flag is reset. Otherwise, the slave is attempted to be recovered and flag reset.
+
+Once all the slaves have been checked to be in operational state, the thread is suspended for 10 ms \mbox{\Hypertarget{classesmacat__master_aa50ecd9002e268fca636f2e059a1c00f}\label{classesmacat__master_aa50ecd9002e268fca636f2e059a1c00f}} 
+\index{esmacat\_master@{esmacat\_master}!esmacat\_master\_loop@{esmacat\_master\_loop}}
+\index{esmacat\_master\_loop@{esmacat\_master\_loop}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{esmacat\_master\_loop()}{esmacat\_master\_loop()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::esmacat\+\_\+master\+\_\+loop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+This function supports the exchange of real-\/time data between the master and slaves. 
+
+\mbox{\Hypertarget{classesmacat__master_a3b69813af72daca16dd567dace68013e}\label{classesmacat__master_a3b69813af72daca16dd567dace68013e}} 
+\index{esmacat\_master@{esmacat\_master}!get\_error\_counter@{get\_error\_counter}}
+\index{get\_error\_counter@{get\_error\_counter}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{get\_error\_counter()}{get\_error\_counter()}}
+{\footnotesize\ttfamily uint32 esmacat\+\_\+master\+::get\+\_\+error\+\_\+counter (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classesmacat__master_a9f6bed02ce557b2d3a20d7f6e95b744a}\label{classesmacat__master_a9f6bed02ce557b2d3a20d7f6e95b744a}} 
+\index{esmacat\_master@{esmacat\_master}!InternalThreadEntry\_ecatcheck@{InternalThreadEntry\_ecatcheck}}
+\index{InternalThreadEntry\_ecatcheck@{InternalThreadEntry\_ecatcheck}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{InternalThreadEntry\_ecatcheck()}{InternalThreadEntry\_ecatcheck()}}
+{\footnotesize\ttfamily static void$\ast$ esmacat\+\_\+master\+::\+Internal\+Thread\+Entry\+\_\+ecatcheck (\begin{DoxyParamCaption}\item[{void $\ast$}]{This }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+this is an intermediate function to use pthread 
+
+\mbox{\Hypertarget{classesmacat__master_a22249c60c86ab248ef915f1698eb40af}\label{classesmacat__master_a22249c60c86ab248ef915f1698eb40af}} 
+\index{esmacat\_master@{esmacat\_master}!InternalThreadEntry\_esmacat\_master\_loop@{InternalThreadEntry\_esmacat\_master\_loop}}
+\index{InternalThreadEntry\_esmacat\_master\_loop@{InternalThreadEntry\_esmacat\_master\_loop}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{InternalThreadEntry\_esmacat\_master\_loop()}{InternalThreadEntry\_esmacat\_master\_loop()}}
+{\footnotesize\ttfamily static void$\ast$ esmacat\+\_\+master\+::\+Internal\+Thread\+Entry\+\_\+esmacat\+\_\+master\+\_\+loop (\begin{DoxyParamCaption}\item[{void $\ast$}]{This }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+this is an intermediate function to use pthread 
+
+\mbox{\Hypertarget{classesmacat__master_a9bdb7ef4775659ea7fa415d5fe2d2d0e}\label{classesmacat__master_a9bdb7ef4775659ea7fa415d5fe2d2d0e}} 
+\index{esmacat\_master@{esmacat\_master}!is\_ec\_closed@{is\_ec\_closed}}
+\index{is\_ec\_closed@{is\_ec\_closed}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{is\_ec\_closed()}{is\_ec\_closed()}}
+{\footnotesize\ttfamily bool esmacat\+\_\+master\+::is\+\_\+ec\+\_\+closed (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the status of the ethercat master connection. 
+
+\begin{DoxyReturn}{Returns}
+Boolean value indicating the status of the ethercat master connection 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__master_a668ec2cfe185f769ca93968bd090c867}\label{classesmacat__master_a668ec2cfe185f769ca93968bd090c867}} 
+\index{esmacat\_master@{esmacat\_master}!set\_ethernet\_adapter\_name\_for\_esmacat@{set\_ethernet\_adapter\_name\_for\_esmacat}}
+\index{set\_ethernet\_adapter\_name\_for\_esmacat@{set\_ethernet\_adapter\_name\_for\_esmacat}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{set\_ethernet\_adapter\_name\_for\_esmacat()}{set\_ethernet\_adapter\_name\_for\_esmacat()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::set\+\_\+ethernet\+\_\+adapter\+\_\+name\+\_\+for\+\_\+esmacat (\begin{DoxyParamCaption}\item[{char $\ast$}]{eth\+\_\+adapter\+\_\+name }\end{DoxyParamCaption})}
+
+
+
+Sets the ethercat adapter name. 
+
+The input name is passed into the S\+O\+EM
+
+
+\begin{DoxyParams}{Parameters}
+{\em eth\+\_\+adapter\+\_\+name} & Name provided for the ethercat adapter \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__master_a9485ffe8a19e778a74129c64b112bde5}\label{classesmacat__master_a9485ffe8a19e778a74129c64b112bde5}} 
+\index{esmacat\_master@{esmacat\_master}!StartInternalThread@{StartInternalThread}}
+\index{StartInternalThread@{StartInternalThread}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{StartInternalThread()}{StartInternalThread()}}
+{\footnotesize\ttfamily bool esmacat\+\_\+master\+::\+Start\+Internal\+Thread (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Starts the threads that will be running in parallel. 
+
+One of the threads checks the status of the Ether\+C\+AT to ensure that all slaves are operational. The other threads runs the master loop that ensures constant communication and real-\/time exchange of data with the slaves
+
+\begin{DoxyReturn}{Returns}
+Returns 0 if successful, and 1 if there is an error 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__master_a6d86c7e6c60d4ff71c09c8730fb4e7cf}\label{classesmacat__master_a6d86c7e6c60d4ff71c09c8730fb4e7cf}} 
+\index{esmacat\_master@{esmacat\_master}!stop\_thread@{stop\_thread}}
+\index{stop\_thread@{stop\_thread}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{stop\_thread()}{stop\_thread()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::stop\+\_\+thread (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Stops the thread on which the master application is running. 
+
+Also sets the stop\+\_\+thread\+\_\+loop flag to 1 which flags for the thread to be terminated \mbox{\Hypertarget{classesmacat__master_a9ca3c00137b303330949ca28a2cd68dc}\label{classesmacat__master_a9ca3c00137b303330949ca28a2cd68dc}} 
+\index{esmacat\_master@{esmacat\_master}!WaitForInternalThreadToExit@{WaitForInternalThreadToExit}}
+\index{WaitForInternalThreadToExit@{WaitForInternalThreadToExit}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{WaitForInternalThreadToExit()}{WaitForInternalThreadToExit()}}
+{\footnotesize\ttfamily void esmacat\+\_\+master\+::\+Wait\+For\+Internal\+Thread\+To\+Exit (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Ensures that the thread has been closed successfully. 
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__master_ab149a74f05eb26cd4aecf24bc4cf385e}\label{classesmacat__master_ab149a74f05eb26cd4aecf24bc4cf385e}} 
+\index{esmacat\_master@{esmacat\_master}!\_thread\_ecatcheck@{\_thread\_ecatcheck}}
+\index{\_thread\_ecatcheck@{\_thread\_ecatcheck}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{\_thread\_ecatcheck}{\_thread\_ecatcheck}}
+{\footnotesize\ttfamily O\+S\+A\+L\+\_\+\+T\+H\+R\+E\+A\+D\+\_\+\+H\+A\+N\+D\+LE esmacat\+\_\+master\+::\+\_\+thread\+\_\+ecatcheck\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Pointer to the thread for the ethercat status check. 
+
+\mbox{\Hypertarget{classesmacat__master_ab57cd3fb10c93e2a4157edd20a2187c4}\label{classesmacat__master_ab57cd3fb10c93e2a4157edd20a2187c4}} 
+\index{esmacat\_master@{esmacat\_master}!\_thread\_esmacat\_master\_loop@{\_thread\_esmacat\_master\_loop}}
+\index{\_thread\_esmacat\_master\_loop@{\_thread\_esmacat\_master\_loop}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{\_thread\_esmacat\_master\_loop}{\_thread\_esmacat\_master\_loop}}
+{\footnotesize\ttfamily O\+S\+A\+L\+\_\+\+T\+H\+R\+E\+A\+D\+\_\+\+H\+A\+N\+D\+LE esmacat\+\_\+master\+::\+\_\+thread\+\_\+esmacat\+\_\+master\+\_\+loop\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Pointer to the thread for the ethercat process data communication loop. 
+
+\mbox{\Hypertarget{classesmacat__master_a44d07ac7ff6a245111ad16a633bcbd2b}\label{classesmacat__master_a44d07ac7ff6a245111ad16a633bcbd2b}} 
+\index{esmacat\_master@{esmacat\_master}!currentgroup@{currentgroup}}
+\index{currentgroup@{currentgroup}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{currentgroup}{currentgroup}}
+{\footnotesize\ttfamily uint8 esmacat\+\_\+master\+::currentgroup\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Group of slaves -\/ used by S\+O\+EM. 
+
+\mbox{\Hypertarget{classesmacat__master_a3a358b2975b237f241fc2155856577e6}\label{classesmacat__master_a3a358b2975b237f241fc2155856577e6}} 
+\index{esmacat\_master@{esmacat\_master}!ec\_closed@{ec\_closed}}
+\index{ec\_closed@{ec\_closed}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{ec\_closed}{ec\_closed}}
+{\footnotesize\ttfamily bool esmacat\+\_\+master\+::ec\+\_\+closed\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Indicates that the master connection is closed. 
+
+\mbox{\Hypertarget{classesmacat__master_a1b837415241c54a2a06d10c2b4de2b7a}\label{classesmacat__master_a1b837415241c54a2a06d10c2b4de2b7a}} 
+\index{esmacat\_master@{esmacat\_master}!ECAT\_app@{ECAT\_app}}
+\index{ECAT\_app@{ECAT\_app}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{ECAT\_app}{ECAT\_app}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}}$\ast$ esmacat\+\_\+master\+::\+E\+C\+A\+T\+\_\+app\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Pointer to the user-\/defined ethercat application to be used. 
+
+\mbox{\Hypertarget{classesmacat__master_a74ba58f0d040d024a267c3d09c82176a}\label{classesmacat__master_a74ba58f0d040d024a267c3d09c82176a}} 
+\index{esmacat\_master@{esmacat\_master}!ECAT\_slave@{ECAT\_slave}}
+\index{ECAT\_slave@{ECAT\_slave}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{ECAT\_slave}{ECAT\_slave}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classesmacat__slave}{esmacat\+\_\+slave}}$\ast$ esmacat\+\_\+master\+::\+E\+C\+A\+T\+\_\+slave\mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}}
+
+\mbox{\Hypertarget{classesmacat__master_ae37b3092b7a156c714d26c16a73ec510}\label{classesmacat__master_ae37b3092b7a156c714d26c16a73ec510}} 
+\index{esmacat\_master@{esmacat\_master}!error\_counter@{error\_counter}}
+\index{error\_counter@{error\_counter}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{error\_counter}{error\_counter}}
+{\footnotesize\ttfamily uint32 esmacat\+\_\+master\+::error\+\_\+counter\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{classesmacat__master_af6e5690f4f52c62ace4ceeb70c9d083e}\label{classesmacat__master_af6e5690f4f52c62ace4ceeb70c9d083e}} 
+\index{esmacat\_master@{esmacat\_master}!expectedWKC@{expectedWKC}}
+\index{expectedWKC@{expectedWKC}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{expectedWKC}{expectedWKC}}
+{\footnotesize\ttfamily int esmacat\+\_\+master\+::expected\+W\+KC\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Expected value of the working counter (part of Ether\+C\+AT protocol)-\/ used by S\+O\+EM. 
+
+\mbox{\Hypertarget{classesmacat__master_aa9f5391b84bc88dda57355775cc84651}\label{classesmacat__master_aa9f5391b84bc88dda57355775cc84651}} 
+\index{esmacat\_master@{esmacat\_master}!ifname@{ifname}}
+\index{ifname@{ifname}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{ifname}{ifname}}
+{\footnotesize\ttfamily char esmacat\+\_\+master\+::ifname\mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Name of the Ethercat adapter. 
+
+\mbox{\Hypertarget{classesmacat__master_a180a723947482d1c1d0dfb9f67de5206}\label{classesmacat__master_a180a723947482d1c1d0dfb9f67de5206}} 
+\index{esmacat\_master@{esmacat\_master}!inOP@{inOP}}
+\index{inOP@{inOP}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{inOP}{inOP}}
+{\footnotesize\ttfamily boolean esmacat\+\_\+master\+::in\+OP\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Indicates that the master is operational and communicating with the slaves -\/ used by S\+O\+EM. 
+
+\mbox{\Hypertarget{classesmacat__master_a98acb153aab23a5d8d07487e8a9ced10}\label{classesmacat__master_a98acb153aab23a5d8d07487e8a9ced10}} 
+\index{esmacat\_master@{esmacat\_master}!IOmap@{IOmap}}
+\index{IOmap@{IOmap}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{IOmap}{IOmap}}
+{\footnotesize\ttfamily char esmacat\+\_\+master\+::\+I\+Omap\mbox{[}4096\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Holds the P\+DO map for C\+A\+N\+Open for all the slaves. 
+
+\mbox{\Hypertarget{classesmacat__master_ad8732eadd5f886bb58d370f94fec6ab9}\label{classesmacat__master_ad8732eadd5f886bb58d370f94fec6ab9}} 
+\index{esmacat\_master@{esmacat\_master}!needlf@{needlf}}
+\index{needlf@{needlf}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{needlf}{needlf}}
+{\footnotesize\ttfamily boolean esmacat\+\_\+master\+::needlf\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{classesmacat__master_abd527ebf0ddf608ee85e3cfe128098c9}\label{classesmacat__master_abd527ebf0ddf608ee85e3cfe128098c9}} 
+\index{esmacat\_master@{esmacat\_master}!stop\_thread\_loop@{stop\_thread\_loop}}
+\index{stop\_thread\_loop@{stop\_thread\_loop}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{stop\_thread\_loop}{stop\_thread\_loop}}
+{\footnotesize\ttfamily bool esmacat\+\_\+master\+::stop\+\_\+thread\+\_\+loop\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Flag to indicate that the thread must be stopped. 
+
+\mbox{\Hypertarget{classesmacat__master_a02d961a22b0e8020fcd6f8eb096ef492}\label{classesmacat__master_a02d961a22b0e8020fcd6f8eb096ef492}} 
+\index{esmacat\_master@{esmacat\_master}!wkc@{wkc}}
+\index{wkc@{wkc}!esmacat\_master@{esmacat\_master}}
+\doxysubsubsection{\texorpdfstring{wkc}{wkc}}
+{\footnotesize\ttfamily volatile int esmacat\+\_\+master\+::wkc\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Value of the work counter -\/ used by S\+O\+EM. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+library/\mbox{\hyperlink{master_8h}{master.\+h}}\item 
+esmacat\+\_\+library/\mbox{\hyperlink{master_8cpp}{master.\+cpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,324 @@
+\hypertarget{classesmacat__application}{}\doxysection{esmacat\+\_\+application Class Reference}
+\label{classesmacat__application}\index{esmacat\_application@{esmacat\_application}}
+
+
+Class that holds generic Esmacat application variables and functions.  
+
+
+
+
+{\ttfamily \#include $<$application.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+application\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=12.000000cm]{classesmacat__application}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{classesmacat__application_a104742177ffd4ac337858555ecb742c3}{is\+\_\+esmacat\+\_\+master\+\_\+closed}} ()
+\begin{DoxyCompactList}\small\item\em This value is True if the Ether\+C\+AT connection to the Master is closed; False otherwise. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classesmacat__application_ac6a211e26ebaceec85ce6c45654d473e}{esmacat\+\_\+application}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the Esmacat application class which initializes all the variables. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_abe666512333e397b310dc62831b32409}{stop}} ()
+\begin{DoxyCompactList}\small\item\em Terminates the thread of the application. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_a566284ab1ea730dcfb64b2130003bfb8}{start}} ()
+\begin{DoxyCompactList}\small\item\em Assigns this application as the application to be executed by the Ether\+C\+AT master. Starts the thread on which this application is executed. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_a76b10e77a773fe2d446b3fc67761ff43}{set\+\_\+ethercat\+\_\+adapter\+\_\+name}} (char $\ast$eth\+\_\+adapter\+\_\+name)
+\begin{DoxyCompactList}\small\item\em Sets the given name to the Ether\+C\+AT adapter i.\+e. the name for the master port. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_af0ffb490bcdd419b2ab3748f5f4234fa}{set\+\_\+ethercat\+\_\+adapter\+\_\+name\+\_\+through\+\_\+terminal}} ()
+\begin{DoxyCompactList}\small\item\em Allows for the Ether\+C\+AT adapter name to be set via the terminal. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_a2aceaa8dcd09a3ca8a9321a4e38d5afe}{set\+\_\+elapsed\+\_\+time\+\_\+ms}} (double elapsed\+\_\+time\+\_\+ms\+\_\+)
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. \end{DoxyCompactList}\item 
+uint64\+\_\+t \mbox{\hyperlink{classesmacat__application_afffa3750abf661a8516efcaea8c401d1}{get\+\_\+loop\+\_\+cnt}} ()
+\begin{DoxyCompactList}\small\item\em Returns the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} loop counter that indicates how many loops of the application have been run. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__application_acf663901066581d3ab6bc563e4356419}{increment\+\_\+loop\+\_\+cnt}} ()
+\begin{DoxyCompactList}\small\item\em Increments the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} loop counter that indicates how many loops of the application have been run. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__application_a907094bf35d3c88d5662b7beeed11339}{assign\+\_\+slave\+\_\+sequence}} ()=0
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__application_a6819edf43987011b7ebbf328ec3f2607}{configure\+\_\+slaves}} ()=0
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__application_a0f4590a2e9628941fe634823e2ea1adb}{init}} ()=0
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__application_aa297879c0779983be975f88692f65ab8}{loop}} ()=0
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. \end{DoxyCompactList}\item 
+uint32 \mbox{\hyperlink{classesmacat__application_a7d5f8e7ad5fd52004c47ba1b40b7fb58}{get\+\_\+app\+\_\+error\+\_\+counter}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__application_aa90cab2d0d6affe4a1288d88477105f6}{ethercat\+\_\+vendor\+\_\+id\+\_\+list}} \mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em The Vendor I\+Ds of the maximum number of slaves that can be connected to the Master. If the slave is not present/initialized, D\+E\+F\+A\+U\+L\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID is assigned for it. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__application_a1400220562dc961190f8ab881e808cc6}{ethercat\+\_\+product\+\_\+id\+\_\+list}} \mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em The Product codes of the maximum number of slaves that can be connected to the Master. If the slave is not present/initialized, D\+E\+F\+A\+U\+L\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID is assigned for it. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__application_ad22051373ccce1e7bdebfeb1f3c7ac2a}{assign\+\_\+esmacat\+\_\+slave\+\_\+index}} (\mbox{\hyperlink{classesmacat__slave}{esmacat\+\_\+slave}} $\ast$slave\+\_\+in\+\_\+app, int slave\+\_\+index)
+\begin{DoxyCompactList}\small\item\em Assigns the slave indices for each slave in the Ether\+C\+AT communication chain. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{classesmacat__application_ac795c45cef7e16927bdbbdc69a93b0b1}{elapsed\+\_\+time\+\_\+ms}}
+\begin{DoxyCompactList}\small\item\em Protected variable -\/ amount of time in ms for which the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} has been running. \end{DoxyCompactList}\item 
+uint64\+\_\+t \mbox{\hyperlink{classesmacat__application_a5031b65ce6c5fb0d8d6057b96079e5aa}{loop\+\_\+cnt}}
+\begin{DoxyCompactList}\small\item\em Protected variable -\/ Counts the number of loops of this application have been executed. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}} $\ast$ \mbox{\hyperlink{classesmacat__application_ae117fb850da0cbd68a4ed8341f0141b7}{ecat\+\_\+master}}
+\begin{DoxyCompactList}\small\item\em Pointer to the Ether\+C\+AT master in which the Ether\+C\+AT threads are running at the master app. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Class that holds generic Esmacat application variables and functions. 
+
+It is the parent class for all user-\/defined Esmacat applications (\mbox{\hyperlink{classmy__app}{my\+\_\+app}}) 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__application_ac6a211e26ebaceec85ce6c45654d473e}\label{classesmacat__application_ac6a211e26ebaceec85ce6c45654d473e}} 
+\index{esmacat\_application@{esmacat\_application}!esmacat\_application@{esmacat\_application}}
+\index{esmacat\_application@{esmacat\_application}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{esmacat\_application()}{esmacat\_application()}}
+{\footnotesize\ttfamily esmacat\+\_\+application\+::esmacat\+\_\+application (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the Esmacat application class which initializes all the variables. 
+
+Initializes a master. Sets the initial loop count to 0. Initializes the Vendor ID and Product codes of the maximum possible slaves to default 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__application_ad22051373ccce1e7bdebfeb1f3c7ac2a}\label{classesmacat__application_ad22051373ccce1e7bdebfeb1f3c7ac2a}} 
+\index{esmacat\_application@{esmacat\_application}!assign\_esmacat\_slave\_index@{assign\_esmacat\_slave\_index}}
+\index{assign\_esmacat\_slave\_index@{assign\_esmacat\_slave\_index}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{assign\_esmacat\_slave\_index()}{assign\_esmacat\_slave\_index()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+application\+::assign\+\_\+esmacat\+\_\+slave\+\_\+index (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classesmacat__slave}{esmacat\+\_\+slave}} $\ast$}]{slave\+\_\+in\+\_\+app,  }\item[{int}]{slave\+\_\+index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Assigns the slave indices for each slave in the Ether\+C\+AT communication chain. 
+
+Also assigns their respective Vendor ID and Product code. Proivdes error handling 
+\begin{DoxyParams}{Parameters}
+{\em esmacat\+\_\+slave$\ast$} & Pointer to the Esmacat slave application. \\
+\hline
+{\em slave\+\_\+index} & Position/index of the specified slave in the Ether\+C\+AT communication chain. Starts at 0. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Error status of the function. N\+O\+\_\+\+E\+RR indicates successful completion. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__application_a907094bf35d3c88d5662b7beeed11339}\label{classesmacat__application_a907094bf35d3c88d5662b7beeed11339}} 
+\index{esmacat\_application@{esmacat\_application}!assign\_slave\_sequence@{assign\_slave\_sequence}}
+\index{assign\_slave\_sequence@{assign\_slave\_sequence}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{assign\_slave\_sequence()}{assign\_slave\_sequence()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::assign\+\_\+slave\+\_\+sequence (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. 
+
+
+
+Implemented in \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}, and \mbox{\hyperlink{classmy__app_a8c6ca6be54363e4bd6bdff77a2640fd5}{my\+\_\+app}}.
+
+\mbox{\Hypertarget{classesmacat__application_a6819edf43987011b7ebbf328ec3f2607}\label{classesmacat__application_a6819edf43987011b7ebbf328ec3f2607}} 
+\index{esmacat\_application@{esmacat\_application}!configure\_slaves@{configure\_slaves}}
+\index{configure\_slaves@{configure\_slaves}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{configure\_slaves()}{configure\_slaves()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::configure\+\_\+slaves (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. 
+
+
+
+Implemented in \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}, and \mbox{\hyperlink{classmy__app_a1a8040a9edc43aaa58c93ddeeb077fa3}{my\+\_\+app}}.
+
+\mbox{\Hypertarget{classesmacat__application_a7d5f8e7ad5fd52004c47ba1b40b7fb58}\label{classesmacat__application_a7d5f8e7ad5fd52004c47ba1b40b7fb58}} 
+\index{esmacat\_application@{esmacat\_application}!get\_app\_error\_counter@{get\_app\_error\_counter}}
+\index{get\_app\_error\_counter@{get\_app\_error\_counter}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{get\_app\_error\_counter()}{get\_app\_error\_counter()}}
+{\footnotesize\ttfamily uint32 esmacat\+\_\+application\+::get\+\_\+app\+\_\+error\+\_\+counter (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classesmacat__application_afffa3750abf661a8516efcaea8c401d1}\label{classesmacat__application_afffa3750abf661a8516efcaea8c401d1}} 
+\index{esmacat\_application@{esmacat\_application}!get\_loop\_cnt@{get\_loop\_cnt}}
+\index{get\_loop\_cnt@{get\_loop\_cnt}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{get\_loop\_cnt()}{get\_loop\_cnt()}}
+{\footnotesize\ttfamily uint64\+\_\+t esmacat\+\_\+application\+::get\+\_\+loop\+\_\+cnt (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} loop counter that indicates how many loops of the application have been run. 
+
+\mbox{\Hypertarget{classesmacat__application_acf663901066581d3ab6bc563e4356419}\label{classesmacat__application_acf663901066581d3ab6bc563e4356419}} 
+\index{esmacat\_application@{esmacat\_application}!increment\_loop\_cnt@{increment\_loop\_cnt}}
+\index{increment\_loop\_cnt@{increment\_loop\_cnt}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{increment\_loop\_cnt()}{increment\_loop\_cnt()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::increment\+\_\+loop\+\_\+cnt (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Increments the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} loop counter that indicates how many loops of the application have been run. 
+
+\mbox{\Hypertarget{classesmacat__application_a0f4590a2e9628941fe634823e2ea1adb}\label{classesmacat__application_a0f4590a2e9628941fe634823e2ea1adb}} 
+\index{esmacat\_application@{esmacat\_application}!init@{init}}
+\index{init@{init}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{init()}{init()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::init (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. 
+
+
+
+Implemented in \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}, and \mbox{\hyperlink{classmy__app_acf0ef035723364ee482bf60b054df858}{my\+\_\+app}}.
+
+\mbox{\Hypertarget{classesmacat__application_a104742177ffd4ac337858555ecb742c3}\label{classesmacat__application_a104742177ffd4ac337858555ecb742c3}} 
+\index{esmacat\_application@{esmacat\_application}!is\_esmacat\_master\_closed@{is\_esmacat\_master\_closed}}
+\index{is\_esmacat\_master\_closed@{is\_esmacat\_master\_closed}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{is\_esmacat\_master\_closed()}{is\_esmacat\_master\_closed()}}
+{\footnotesize\ttfamily bool esmacat\+\_\+application\+::is\+\_\+esmacat\+\_\+master\+\_\+closed (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+This value is True if the Ether\+C\+AT connection to the Master is closed; False otherwise. 
+
+Checks if the Ether\+C\+AT master connection is closed.
+
+\begin{DoxyReturn}{Returns}
+True if closed, False if still open 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__application_aa297879c0779983be975f88692f65ab8}\label{classesmacat__application_aa297879c0779983be975f88692f65ab8}} 
+\index{esmacat\_application@{esmacat\_application}!loop@{loop}}
+\index{loop@{loop}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{loop()}{loop()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::loop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. 
+
+
+
+Implemented in \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}, and \mbox{\hyperlink{classmy__app_a503337aedcd9e126f06ed2bae596cb8e}{my\+\_\+app}}.
+
+\mbox{\Hypertarget{classesmacat__application_a2aceaa8dcd09a3ca8a9321a4e38d5afe}\label{classesmacat__application_a2aceaa8dcd09a3ca8a9321a4e38d5afe}} 
+\index{esmacat\_application@{esmacat\_application}!set\_elapsed\_time\_ms@{set\_elapsed\_time\_ms}}
+\index{set\_elapsed\_time\_ms@{set\_elapsed\_time\_ms}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{set\_elapsed\_time\_ms()}{set\_elapsed\_time\_ms()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::set\+\_\+elapsed\+\_\+time\+\_\+ms (\begin{DoxyParamCaption}\item[{double}]{elapsed\+\_\+time\+\_\+ms\+\_\+ }\end{DoxyParamCaption})}
+
+
+
+Virtual function to be overwritten by the user application \mbox{\hyperlink{classmy__app}{my\+\_\+app}} class. 
+
+\mbox{\Hypertarget{classesmacat__application_a76b10e77a773fe2d446b3fc67761ff43}\label{classesmacat__application_a76b10e77a773fe2d446b3fc67761ff43}} 
+\index{esmacat\_application@{esmacat\_application}!set\_ethercat\_adapter\_name@{set\_ethercat\_adapter\_name}}
+\index{set\_ethercat\_adapter\_name@{set\_ethercat\_adapter\_name}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{set\_ethercat\_adapter\_name()}{set\_ethercat\_adapter\_name()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::set\+\_\+ethercat\+\_\+adapter\+\_\+name (\begin{DoxyParamCaption}\item[{char $\ast$}]{eth\+\_\+adapter\+\_\+name }\end{DoxyParamCaption})}
+
+
+
+Sets the given name to the Ether\+C\+AT adapter i.\+e. the name for the master port. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em Pointer} & to the name of the Ether\+C\+AT adapter \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__application_af0ffb490bcdd419b2ab3748f5f4234fa}\label{classesmacat__application_af0ffb490bcdd419b2ab3748f5f4234fa}} 
+\index{esmacat\_application@{esmacat\_application}!set\_ethercat\_adapter\_name\_through\_terminal@{set\_ethercat\_adapter\_name\_through\_terminal}}
+\index{set\_ethercat\_adapter\_name\_through\_terminal@{set\_ethercat\_adapter\_name\_through\_terminal}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{set\_ethercat\_adapter\_name\_through\_terminal()}{set\_ethercat\_adapter\_name\_through\_terminal()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::set\+\_\+ethercat\+\_\+adapter\+\_\+name\+\_\+through\+\_\+terminal (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Allows for the Ether\+C\+AT adapter name to be set via the terminal. 
+
+This function prints out the names of the various adapters that are on the Ether\+C\+AT communication chain and their indices . It then accepts from the user, the index of the adapter name that is to be assigned to this adapter. This adapter name is set \mbox{\Hypertarget{classesmacat__application_a566284ab1ea730dcfb64b2130003bfb8}\label{classesmacat__application_a566284ab1ea730dcfb64b2130003bfb8}} 
+\index{esmacat\_application@{esmacat\_application}!start@{start}}
+\index{start@{start}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{start()}{start()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::start (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Assigns this application as the application to be executed by the Ether\+C\+AT master. Starts the thread on which this application is executed. 
+
+\mbox{\Hypertarget{classesmacat__application_abe666512333e397b310dc62831b32409}\label{classesmacat__application_abe666512333e397b310dc62831b32409}} 
+\index{esmacat\_application@{esmacat\_application}!stop@{stop}}
+\index{stop@{stop}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{stop()}{stop()}}
+{\footnotesize\ttfamily void esmacat\+\_\+application\+::stop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Terminates the thread of the application. 
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__application_ae117fb850da0cbd68a4ed8341f0141b7}\label{classesmacat__application_ae117fb850da0cbd68a4ed8341f0141b7}} 
+\index{esmacat\_application@{esmacat\_application}!ecat\_master@{ecat\_master}}
+\index{ecat\_master@{ecat\_master}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{ecat\_master}{ecat\_master}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}}$\ast$ esmacat\+\_\+application\+::ecat\+\_\+master\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Pointer to the Ether\+C\+AT master in which the Ether\+C\+AT threads are running at the master app. 
+
+\mbox{\Hypertarget{classesmacat__application_ac795c45cef7e16927bdbbdc69a93b0b1}\label{classesmacat__application_ac795c45cef7e16927bdbbdc69a93b0b1}} 
+\index{esmacat\_application@{esmacat\_application}!elapsed\_time\_ms@{elapsed\_time\_ms}}
+\index{elapsed\_time\_ms@{elapsed\_time\_ms}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{elapsed\_time\_ms}{elapsed\_time\_ms}}
+{\footnotesize\ttfamily double esmacat\+\_\+application\+::elapsed\+\_\+time\+\_\+ms\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Protected variable -\/ amount of time in ms for which the \mbox{\hyperlink{classesmacat__application}{esmacat\+\_\+application}} has been running. 
+
+\mbox{\Hypertarget{classesmacat__application_a1400220562dc961190f8ab881e808cc6}\label{classesmacat__application_a1400220562dc961190f8ab881e808cc6}} 
+\index{esmacat\_application@{esmacat\_application}!ethercat\_product\_id\_list@{ethercat\_product\_id\_list}}
+\index{ethercat\_product\_id\_list@{ethercat\_product\_id\_list}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{ethercat\_product\_id\_list}{ethercat\_product\_id\_list}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+application\+::ethercat\+\_\+product\+\_\+id\+\_\+list\mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}}
+
+
+
+The Product codes of the maximum number of slaves that can be connected to the Master. If the slave is not present/initialized, D\+E\+F\+A\+U\+L\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID is assigned for it. 
+
+\mbox{\Hypertarget{classesmacat__application_aa90cab2d0d6affe4a1288d88477105f6}\label{classesmacat__application_aa90cab2d0d6affe4a1288d88477105f6}} 
+\index{esmacat\_application@{esmacat\_application}!ethercat\_vendor\_id\_list@{ethercat\_vendor\_id\_list}}
+\index{ethercat\_vendor\_id\_list@{ethercat\_vendor\_id\_list}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{ethercat\_vendor\_id\_list}{ethercat\_vendor\_id\_list}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+application\+::ethercat\+\_\+vendor\+\_\+id\+\_\+list\mbox{[}\mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}\mbox{]}}
+
+
+
+The Vendor I\+Ds of the maximum number of slaves that can be connected to the Master. If the slave is not present/initialized, D\+E\+F\+A\+U\+L\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID is assigned for it. 
+
+\mbox{\Hypertarget{classesmacat__application_a5031b65ce6c5fb0d8d6057b96079e5aa}\label{classesmacat__application_a5031b65ce6c5fb0d8d6057b96079e5aa}} 
+\index{esmacat\_application@{esmacat\_application}!loop\_cnt@{loop\_cnt}}
+\index{loop\_cnt@{loop\_cnt}!esmacat\_application@{esmacat\_application}}
+\doxysubsubsection{\texorpdfstring{loop\_cnt}{loop\_cnt}}
+{\footnotesize\ttfamily uint64\+\_\+t esmacat\+\_\+application\+::loop\+\_\+cnt\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Protected variable -\/ Counts the number of loops of this application have been executed. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+library/\mbox{\hyperlink{application_8h}{application.\+h}}\item 
+esmacat\+\_\+library/\mbox{\hyperlink{application_8cpp}{application.\+cpp}}\end{DoxyCompactItemize}

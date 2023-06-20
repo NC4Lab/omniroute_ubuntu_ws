@@ -1,0 +1,257 @@
+\hypertarget{classesmacat__base__module}{}\doxysection{esmacat\+\_\+base\+\_\+module Class Reference}
+\label{classesmacat__base__module}\index{esmacat\_base\_module@{esmacat\_base\_module}}
+
+
+This is the parent class for all Esmacat slaves.  
+
+
+
+
+{\ttfamily \#include $<$base\+\_\+module.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+base\+\_\+module\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classesmacat__base__module}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__base__module_a6d9e54281282bd06179e83432b857634}{esmacat\+\_\+base\+\_\+module}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the Esmacat Base module class. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__base__module_a0c52f1724333a583adf69e8e3a8875bf}{set\+\_\+usr\+\_\+led}} (bool led\+\_\+on)
+\begin{DoxyCompactList}\small\item\em Turns on/off the digital output of the system. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__base__module_a40ced16a3231d51196c6dcbd6d7699a1}{set\+\_\+digital\+\_\+output}} (int digital\+\_\+output\+\_\+index, bool digital\+\_\+output\+\_\+value)
+\begin{DoxyCompactList}\small\item\em Assigns the the specified digital output boolean value to the specified output signal. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_a17f71c3fe080568e02da3419b2c6c352}{get\+\_\+digital\+\_\+input}} (int index\+\_\+of\+\_\+digital\+\_\+input, \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&error)
+\begin{DoxyCompactList}\small\item\em Reads the value of the specified input signal. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_afbffc6056c9efdd32798dc9f9165864a}{get\+\_\+digital\+\_\+input}} (int index\+\_\+of\+\_\+digital\+\_\+input)
+\begin{DoxyCompactList}\small\item\em Reads the value of the specified input signal. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__base__module_afb6add2d9b95ed0a1b617c242ee8e91b}{ecat\+\_\+data\+\_\+process\+\_\+base\+\_\+module}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs)
+\begin{DoxyCompactList}\small\item\em Private function-\/ Data exchange process that is specific to the Esmacat base slave. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__base__module_a2862f0fef2dc91f7e61ceae5e6cfe458}{configure\+\_\+slave\+\_\+dio\+\_\+direction}} (\mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}{I\+O\+\_\+\+Direction}} dio\+\_\+direction\mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]})
+\begin{DoxyCompactList}\small\item\em Sets the direction of the digital I/O on the slave. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classesmacat__base__module_aac6191f5a1005dc129b03593e4b3cd40}{ecat\+\_\+data\+\_\+process}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, int oloop, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs, int iloop)
+\begin{DoxyCompactList}\small\item\em Virtual function to be overwritten by the specific slave classes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{classesmacat__base__module_ad0d69f492394f6be95b7a035e82f9916}{sys\+\_\+digital\+\_\+in}}
+\begin{DoxyCompactList}\small\item\em Private variable -\/ Digital input of the system. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_aa6a37fc1e8b5fc20a038c409a18ffdc4}{digital\+\_\+data\+\_\+in}} \mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Private variable -\/ Digital input of Esmacat slave. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_a18c991737b221d721345be7393ee93f8}{user\+\_\+led\+\_\+out}}
+\begin{DoxyCompactList}\small\item\em Private variable -\/ Digital output of the system. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_a1d088142594ed1c79611d3d96cabb509}{digital\+\_\+data\+\_\+out}} \mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Private variable -\/ Digital output of the Esmacat slave. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__base__module_a17f959c69219c96c6c50cd70527f7c8e}{I\+C\+A\+T\+\_\+base\+\_\+dio\+\_\+direction}} \mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Private variable -\/ Direction of the 8 I/O available on the slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+This is the parent class for all Esmacat slaves. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__base__module_a6d9e54281282bd06179e83432b857634}\label{classesmacat__base__module_a6d9e54281282bd06179e83432b857634}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!esmacat\_base\_module@{esmacat\_base\_module}}
+\index{esmacat\_base\_module@{esmacat\_base\_module}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{esmacat\_base\_module()}{esmacat\_base\_module()}}
+{\footnotesize\ttfamily esmacat\+\_\+base\+\_\+module\+::esmacat\+\_\+base\+\_\+module (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the Esmacat Base module class. 
+
+The system inputs and outputs are set to 0. All the I/\+Os are configured to Outputs. Values that were inherited from the parent class are also set to 0 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__base__module_a2862f0fef2dc91f7e61ceae5e6cfe458}\label{classesmacat__base__module_a2862f0fef2dc91f7e61ceae5e6cfe458}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!configure\_slave\_dio\_direction@{configure\_slave\_dio\_direction}}
+\index{configure\_slave\_dio\_direction@{configure\_slave\_dio\_direction}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{configure\_slave\_dio\_direction()}{configure\_slave\_dio\_direction()}}
+{\footnotesize\ttfamily void esmacat\+\_\+base\+\_\+module\+::configure\+\_\+slave\+\_\+dio\+\_\+direction (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}{I\+O\+\_\+\+Direction}}}]{dio\+\_\+direction\mbox{[}\+E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+I\+O\mbox{]} }\end{DoxyParamCaption})}
+
+
+
+Sets the direction of the digital I/O on the slave. 
+
+Also queues the values to be sent to the firmware \mbox{[}$\ast$$\ast$ do not change$\ast$$\ast$\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em dio\+\_\+direction} & Array of E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO number of values specifying which signals are inputs and which are set as outputs \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__base__module_aac6191f5a1005dc129b03593e4b3cd40}\label{classesmacat__base__module_aac6191f5a1005dc129b03593e4b3cd40}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!ecat\_data\_process@{ecat\_data\_process}}
+\index{ecat\_data\_process@{ecat\_data\_process}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process()}{ecat\_data\_process()}}
+{\footnotesize\ttfamily void esmacat\+\_\+base\+\_\+module\+::ecat\+\_\+data\+\_\+process (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{int}]{oloop,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs,  }\item[{int}]{iloop }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Virtual function to be overwritten by the specific slave classes. 
+
+
+
+Reimplemented from \mbox{\hyperlink{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}{esmacat\+\_\+slave}}.
+
+
+
+Reimplemented in \mbox{\hyperlink{classesmacat__loadcell__interface_a73ca15505c73e6f0a91f0543bfd2510a}{esmacat\+\_\+loadcell\+\_\+interface}}, \mbox{\hyperlink{classesmacat__analog__input__slave_a82df4c14626eb9c23b854199814ef04c}{esmacat\+\_\+analog\+\_\+input\+\_\+slave}}, and \mbox{\hyperlink{classesmacat__motor__driver_ab84b9351c84dbacb7f99f4845484b60c}{esmacat\+\_\+motor\+\_\+driver}}.
+
+\mbox{\Hypertarget{classesmacat__base__module_afb6add2d9b95ed0a1b617c242ee8e91b}\label{classesmacat__base__module_afb6add2d9b95ed0a1b617c242ee8e91b}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!ecat\_data\_process\_base\_module@{ecat\_data\_process\_base\_module}}
+\index{ecat\_data\_process\_base\_module@{ecat\_data\_process\_base\_module}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process\_base\_module()}{ecat\_data\_process\_base\_module()}}
+{\footnotesize\ttfamily void esmacat\+\_\+base\+\_\+module\+::ecat\+\_\+data\+\_\+process\+\_\+base\+\_\+module (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs }\end{DoxyParamCaption})}
+
+
+
+Private function-\/ Data exchange process that is specific to the Esmacat base slave. 
+
+\mbox{[}{\itshape {\bfseries{hardware dependent -\/ do not change}}}\mbox{]} This function queues the values to be sent to the firmware, and also decodes packets received. sys\+\_\+digital\+\_\+in, I\+N\+\_\+\+B\+A\+S\+E\+\_\+\+DO, user\+\_\+led\+\_\+out and digital\+\_\+data\+\_\+out are set 
+\begin{DoxyParams}{Parameters}
+{\em ec\+\_\+slave\+\_\+outputs} & Pointer to the start of the outputs for slave in consideration \\
+\hline
+{\em ec\+\_\+slave\+\_\+inputs} & Pointer to the start of the inputs for slave in consideration \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__base__module_afbffc6056c9efdd32798dc9f9165864a}\label{classesmacat__base__module_afbffc6056c9efdd32798dc9f9165864a}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!get\_digital\_input@{get\_digital\_input}}
+\index{get\_digital\_input@{get\_digital\_input}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{get\_digital\_input()}{get\_digital\_input()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::get\+\_\+digital\+\_\+input (\begin{DoxyParamCaption}\item[{int}]{index\+\_\+of\+\_\+digital\+\_\+input }\end{DoxyParamCaption})}
+
+
+
+Reads the value of the specified input signal. 
+
+No error handling
+
+
+\begin{DoxyParams}{Parameters}
+{\em index\+\_\+of\+\_\+digital\+\_\+input} & Index of the digital output signal to be assigned \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Boolean value read at the specified index 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__base__module_a17f71c3fe080568e02da3419b2c6c352}\label{classesmacat__base__module_a17f71c3fe080568e02da3419b2c6c352}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!get\_digital\_input@{get\_digital\_input}}
+\index{get\_digital\_input@{get\_digital\_input}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{get\_digital\_input()}{get\_digital\_input()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::get\+\_\+digital\+\_\+input (\begin{DoxyParamCaption}\item[{int}]{index\+\_\+of\+\_\+digital\+\_\+input,  }\item[{\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&}]{error }\end{DoxyParamCaption})}
+
+
+
+Reads the value of the specified input signal. 
+
+Has error handling-\/ E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE if input index is out of range, E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+D\+I\+R\+E\+C\+T\+I\+O\+N\+\_\+\+N\+O\+T\+\_\+input if value is being read is not an input, N\+O\+\_\+\+E\+RR indicates successful completion
+
+
+\begin{DoxyParams}{Parameters}
+{\em index\+\_\+of\+\_\+digital\+\_\+input} & Index of the digital output signal to be assigned \\
+\hline
+{\em error} & Status of the function (E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE, E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+D\+I\+R\+E\+C\+T\+I\+O\+N\+\_\+\+N\+O\+T\+\_\+\+I\+N\+P\+UT, N\+O\+\_\+\+E\+RR) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Boolean value read at the specified index 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__base__module_a40ced16a3231d51196c6dcbd6d7699a1}\label{classesmacat__base__module_a40ced16a3231d51196c6dcbd6d7699a1}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!set\_digital\_output@{set\_digital\_output}}
+\index{set\_digital\_output@{set\_digital\_output}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{set\_digital\_output()}{set\_digital\_output()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+base\+\_\+module\+::set\+\_\+digital\+\_\+output (\begin{DoxyParamCaption}\item[{int}]{index\+\_\+of\+\_\+digital\+\_\+output,  }\item[{bool}]{digital\+\_\+output\+\_\+value }\end{DoxyParamCaption})}
+
+
+
+Assigns the the specified digital output boolean value to the specified output signal. 
+
+Has error handling-\/ E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE if input index is out of range, E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+D\+I\+R\+E\+C\+T\+I\+O\+N\+\_\+\+N\+O\+T\+\_\+\+O\+U\+T\+P\+UT if value is being assigned to an input not output, N\+O\+\_\+\+E\+RR indicates successful completion
+
+
+\begin{DoxyParams}{Parameters}
+{\em index\+\_\+of\+\_\+digital\+\_\+output} & Index of the digital output signal to be assigned \\
+\hline
+{\em digital\+\_\+output\+\_\+value} & Boolean value to be assigned to the digital output signal \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Error status of the function (E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE, E\+R\+R\+\_\+\+B\+A\+S\+E\+\_\+\+M\+O\+D\+U\+L\+E\+\_\+\+D\+I\+O\+\_\+\+D\+I\+R\+E\+C\+T\+I\+O\+N\+\_\+\+N\+O\+T\+\_\+\+O\+U\+T\+P\+UT, N\+O\+\_\+\+E\+RR) 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__base__module_a0c52f1724333a583adf69e8e3a8875bf}\label{classesmacat__base__module_a0c52f1724333a583adf69e8e3a8875bf}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!set\_usr\_led@{set\_usr\_led}}
+\index{set\_usr\_led@{set\_usr\_led}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{set\_usr\_led()}{set\_usr\_led()}}
+{\footnotesize\ttfamily void esmacat\+\_\+base\+\_\+module\+::set\+\_\+usr\+\_\+led (\begin{DoxyParamCaption}\item[{bool}]{led\+\_\+on }\end{DoxyParamCaption})}
+
+
+
+Turns on/off the digital output of the system. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em Boolean} & input indicating whether User L\+ED must be turned on \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__base__module_aa6a37fc1e8b5fc20a038c409a18ffdc4}\label{classesmacat__base__module_aa6a37fc1e8b5fc20a038c409a18ffdc4}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!digital\_data\_in@{digital\_data\_in}}
+\index{digital\_data\_in@{digital\_data\_in}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{digital\_data\_in}{digital\_data\_in}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::digital\+\_\+data\+\_\+in\mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private variable -\/ Digital input of Esmacat slave. 
+
+\mbox{\Hypertarget{classesmacat__base__module_a1d088142594ed1c79611d3d96cabb509}\label{classesmacat__base__module_a1d088142594ed1c79611d3d96cabb509}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!digital\_data\_out@{digital\_data\_out}}
+\index{digital\_data\_out@{digital\_data\_out}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{digital\_data\_out}{digital\_data\_out}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::digital\+\_\+data\+\_\+out\mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private variable -\/ Digital output of the Esmacat slave. 
+
+\mbox{\Hypertarget{classesmacat__base__module_a17f959c69219c96c6c50cd70527f7c8e}\label{classesmacat__base__module_a17f959c69219c96c6c50cd70527f7c8e}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!ICAT\_base\_dio\_direction@{ICAT\_base\_dio\_direction}}
+\index{ICAT\_base\_dio\_direction@{ICAT\_base\_dio\_direction}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{ICAT\_base\_dio\_direction}{ICAT\_base\_dio\_direction}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::\+I\+C\+A\+T\+\_\+base\+\_\+dio\+\_\+direction\mbox{[}\mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private variable -\/ Direction of the 8 I/O available on the slave. 
+
+\mbox{\Hypertarget{classesmacat__base__module_ad0d69f492394f6be95b7a035e82f9916}\label{classesmacat__base__module_ad0d69f492394f6be95b7a035e82f9916}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!sys\_digital\_in@{sys\_digital\_in}}
+\index{sys\_digital\_in@{sys\_digital\_in}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{sys\_digital\_in}{sys\_digital\_in}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::sys\+\_\+digital\+\_\+in\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private variable -\/ Digital input of the system. 
+
+\mbox{\Hypertarget{classesmacat__base__module_a18c991737b221d721345be7393ee93f8}\label{classesmacat__base__module_a18c991737b221d721345be7393ee93f8}} 
+\index{esmacat\_base\_module@{esmacat\_base\_module}!user\_led\_out@{user\_led\_out}}
+\index{user\_led\_out@{user\_led\_out}!esmacat\_base\_module@{esmacat\_base\_module}}
+\doxysubsubsection{\texorpdfstring{user\_led\_out}{user\_led\_out}}
+{\footnotesize\ttfamily bool esmacat\+\_\+base\+\_\+module\+::user\+\_\+led\+\_\+out\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private variable -\/ Digital output of the system. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+library/\mbox{\hyperlink{base__module_8h}{base\+\_\+module.\+h}}\item 
+esmacat\+\_\+library/\mbox{\hyperlink{base__module_8cpp}{base\+\_\+module.\+cpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,103 @@
+\hypertarget{base__module_8h}{}\doxysection{esmacat\+\_\+library/base\+\_\+module.h File Reference}
+\label{base__module_8h}\index{esmacat\_library/base\_module.h@{esmacat\_library/base\_module.h}}
+
+
+This file contains the declarations for the generic Esmacat slave.  
+
+
+{\ttfamily \#include \char`\"{}slave.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}error\+\_\+list.\+h\char`\"{}}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classesmacat__base__module}{esmacat\+\_\+base\+\_\+module}}
+\begin{DoxyCompactList}\small\item\em This is the parent class for all Esmacat slaves. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{base__module_8h_a9f029a0e92ea13e0b36cbf21b9652bdd}{E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+I\+D\+\_\+\+O\+F\+\_\+\+H\+A\+R\+M\+O\+N\+I\+C\+\_\+\+B\+I\+O\+N\+I\+CS}}~0x0062696F
+\begin{DoxyCompactList}\small\item\em Unique Vendor ID assigned to Harmonic Bionics, Inc. by the Ether\+C\+AT Technology Group. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO}}~7
+\begin{DoxyCompactList}\small\item\em Max Number of digital inputs and outputs supported by all Esmacat slaves. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}{I\+O\+\_\+\+Direction}} \{ \mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda4d4ea09dfb8d627e529f40657897ae29}{I\+O\+\_\+\+I\+N\+P\+UT}} = 0, 
+\mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda1bd5c788c43a72ecd510e9da7521ee84}{I\+O\+\_\+\+O\+U\+T\+P\+UT}} = 1
+ \}
+\begin{DoxyCompactList}\small\item\em Direction for the input/output. \end{DoxyCompactList}\item 
+enum \mbox{\hyperlink{base__module_8h_ab03c31cfa268da879c807aacedfa5094}{A\+D\+C\+\_\+input\+\_\+single\+\_\+ended\+\_\+diff}} \{ \mbox{\hyperlink{base__module_8h_ab03c31cfa268da879c807aacedfa5094ab524b7474da7aab5c5e10a3a671332dc}{S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+I\+N\+P\+UT}} = 0, 
+\mbox{\hyperlink{base__module_8h_ab03c31cfa268da879c807aacedfa5094a556313622648fe536fe7757b53748acd}{D\+I\+F\+F\+E\+R\+E\+N\+T\+I\+A\+L\+\_\+\+I\+N\+P\+UT}} = 1
+ \}
+\begin{DoxyCompactList}\small\item\em Identifies if the analog input is single-\/ended or differential. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file contains the declarations for the generic Esmacat slave. 
+
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}\label{base__module_8h_a1a26615ab1cae8871d03229a405c8ca6}} 
+\index{base\_module.h@{base\_module.h}!ESMACAT\_BASE\_NUMBER\_OF\_DIO@{ESMACAT\_BASE\_NUMBER\_OF\_DIO}}
+\index{ESMACAT\_BASE\_NUMBER\_OF\_DIO@{ESMACAT\_BASE\_NUMBER\_OF\_DIO}!base\_module.h@{base\_module.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_BASE\_NUMBER\_OF\_DIO}{ESMACAT\_BASE\_NUMBER\_OF\_DIO}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+B\+A\+S\+E\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+D\+IO~7}
+
+
+
+Max Number of digital inputs and outputs supported by all Esmacat slaves. 
+
+\mbox{\Hypertarget{base__module_8h_a9f029a0e92ea13e0b36cbf21b9652bdd}\label{base__module_8h_a9f029a0e92ea13e0b36cbf21b9652bdd}} 
+\index{base\_module.h@{base\_module.h}!ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS@{ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS}}
+\index{ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS@{ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS}!base\_module.h@{base\_module.h}}
+\doxysubsubsection{\texorpdfstring{ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS}{ETHERCAT\_VENDOR\_ID\_OF\_HARMONIC\_BIONICS}}
+{\footnotesize\ttfamily \#define E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+I\+D\+\_\+\+O\+F\+\_\+\+H\+A\+R\+M\+O\+N\+I\+C\+\_\+\+B\+I\+O\+N\+I\+CS~0x0062696F}
+
+
+
+Unique Vendor ID assigned to Harmonic Bionics, Inc. by the Ether\+C\+AT Technology Group. 
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{base__module_8h_ab03c31cfa268da879c807aacedfa5094}\label{base__module_8h_ab03c31cfa268da879c807aacedfa5094}} 
+\index{base\_module.h@{base\_module.h}!ADC\_input\_single\_ended\_diff@{ADC\_input\_single\_ended\_diff}}
+\index{ADC\_input\_single\_ended\_diff@{ADC\_input\_single\_ended\_diff}!base\_module.h@{base\_module.h}}
+\doxysubsubsection{\texorpdfstring{ADC\_input\_single\_ended\_diff}{ADC\_input\_single\_ended\_diff}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{base__module_8h_ab03c31cfa268da879c807aacedfa5094}{A\+D\+C\+\_\+input\+\_\+single\+\_\+ended\+\_\+diff}}}
+
+
+
+Identifies if the analog input is single-\/ended or differential. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SINGLE\_ENDED\_INPUT@{SINGLE\_ENDED\_INPUT}!base\_module.h@{base\_module.h}}\index{base\_module.h@{base\_module.h}!SINGLE\_ENDED\_INPUT@{SINGLE\_ENDED\_INPUT}}}\mbox{\Hypertarget{base__module_8h_ab03c31cfa268da879c807aacedfa5094ab524b7474da7aab5c5e10a3a671332dc}\label{base__module_8h_ab03c31cfa268da879c807aacedfa5094ab524b7474da7aab5c5e10a3a671332dc}} 
+S\+I\+N\+G\+L\+E\+\_\+\+E\+N\+D\+E\+D\+\_\+\+I\+N\+P\+UT&Single-\/ended, reference is ground; input signal V\textquotesingle{}s voltage reading = V -\/ Vground \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DIFFERENTIAL\_INPUT@{DIFFERENTIAL\_INPUT}!base\_module.h@{base\_module.h}}\index{base\_module.h@{base\_module.h}!DIFFERENTIAL\_INPUT@{DIFFERENTIAL\_INPUT}}}\mbox{\Hypertarget{base__module_8h_ab03c31cfa268da879c807aacedfa5094a556313622648fe536fe7757b53748acd}\label{base__module_8h_ab03c31cfa268da879c807aacedfa5094a556313622648fe536fe7757b53748acd}} 
+D\+I\+F\+F\+E\+R\+E\+N\+T\+I\+A\+L\+\_\+\+I\+N\+P\+UT&Differential signal, two inputs Vp and Vn, voltage reading = Vp -\/ Vn \\
+\hline
+
+\end{DoxyEnumFields}
+\mbox{\Hypertarget{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}\label{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}} 
+\index{base\_module.h@{base\_module.h}!IO\_Direction@{IO\_Direction}}
+\index{IO\_Direction@{IO\_Direction}!base\_module.h@{base\_module.h}}
+\doxysubsubsection{\texorpdfstring{IO\_Direction}{IO\_Direction}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bd}{I\+O\+\_\+\+Direction}}}
+
+
+
+Direction for the input/output. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{IO\_INPUT@{IO\_INPUT}!base\_module.h@{base\_module.h}}\index{base\_module.h@{base\_module.h}!IO\_INPUT@{IO\_INPUT}}}\mbox{\Hypertarget{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda4d4ea09dfb8d627e529f40657897ae29}\label{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda4d4ea09dfb8d627e529f40657897ae29}} 
+I\+O\+\_\+\+I\+N\+P\+UT&Configured as an input \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{IO\_OUTPUT@{IO\_OUTPUT}!base\_module.h@{base\_module.h}}\index{base\_module.h@{base\_module.h}!IO\_OUTPUT@{IO\_OUTPUT}}}\mbox{\Hypertarget{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda1bd5c788c43a72ecd510e9da7521ee84}\label{base__module_8h_a1fbf9be561fafc7bd6fce7a04fd0f4bda1bd5c788c43a72ecd510e9da7521ee84}} 
+I\+O\+\_\+\+O\+U\+T\+P\+UT&Configured as an output \\
+\hline
+
+\end{DoxyEnumFields}

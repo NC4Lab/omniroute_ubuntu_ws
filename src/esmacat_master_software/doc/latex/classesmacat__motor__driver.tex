@@ -1,0 +1,601 @@
+\hypertarget{classesmacat__motor__driver}{}\doxysection{esmacat\+\_\+motor\+\_\+driver Class Reference}
+\label{classesmacat__motor__driver}\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+
+
+Class containing all the variables and functions used by the Esmacat Motor Driver slave.  
+
+
+
+
+{\ttfamily \#include $<$motordriver.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+motor\+\_\+driver\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classesmacat__motor__driver}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__motor__driver_aa90e568329f9cc92b6170a53f4404924}{esmacat\+\_\+motor\+\_\+driver}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the class that holds the initialization. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_ab84b9351c84dbacb7f99f4845484b60c}{ecat\+\_\+data\+\_\+process}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, int oloop, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs, int iloop)
+\begin{DoxyCompactList}\small\item\em Definition of inherited data exchange function for Esmacat slave. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_a6c6145de230e700072064f21f56460fd}{enable\+\_\+escon}} (bool enable\+\_\+on)
+\begin{DoxyCompactList}\small\item\em Enables/disables the escon. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__motor__driver_a7c7a25d92d6e0d807f7d2c07ca657e3f}{set\+\_\+escon\+\_\+current\+\_\+setpoint}} (float setpoint)
+\begin{DoxyCompactList}\small\item\em Provides current setpoint to the E\+S\+C\+ON. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__motor__driver_a41d430bd93588c981b6653d05f7e1aad}{set\+\_\+desired\+\_\+position}} (int32\+\_\+t desired\+\_\+position)
+\begin{DoxyCompactList}\small\item\em Position control P\+ID loop that supplies the E\+S\+C\+ON with its setpoint. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_abf9feb1706761c34f06efa99f4ec030a}{get\+\_\+analog\+\_\+input\+\_\+from\+\_\+external\+\_\+source\+\_\+mV}} (int index\+\_\+of\+\_\+analog\+\_\+input, \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&error)
+\begin{DoxyCompactList}\small\item\em Reads analog input value in mV and provides error handling. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_ab041000f6d797de36a3ed7b99765a6ef}{get\+\_\+analog\+\_\+input\+\_\+from\+\_\+external\+\_\+source\+\_\+mV}} (int index\+\_\+of\+\_\+analog\+\_\+input)
+\begin{DoxyCompactList}\small\item\em Reads analog input value from external source of specified index in mV. No error handling. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_ade38a4d59ce3d48dbde73faa4dabcc39}{get\+\_\+analog\+\_\+input\+\_\+from\+\_\+escon\+\_\+mV}} (int index\+\_\+of\+\_\+analog\+\_\+input, \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&error)
+\begin{DoxyCompactList}\small\item\em Reads analog input value in mV and provides error handling. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a7485aad0c20cb7ab77aaedd258f8e72b}{get\+\_\+analog\+\_\+input\+\_\+from\+\_\+escon\+\_\+mV}} (int index\+\_\+of\+\_\+analog\+\_\+input)
+\begin{DoxyCompactList}\small\item\em Reads analog input value from E\+S\+C\+ON source of specified index in mV. No error handling. \end{DoxyCompactList}\item 
+int32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a8fa751bc5bdd3a55555cb32b0f1c13a1}{get\+\_\+encoder\+\_\+counter}} ()
+\begin{DoxyCompactList}\small\item\em Obtains the encoder reading. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classesmacat__motor__driver_ad8214851b2ed0faa5f84ae299abade3a}{get\+\_\+escon\+\_\+fault}} ()
+\begin{DoxyCompactList}\small\item\em Obtains the fault status of the E\+S\+C\+ON. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_a27c7e4218f6a541b705375c043ea4eba}{configure\+\_\+slave\+\_\+encoder\+\_\+clear}} ()
+\begin{DoxyCompactList}\small\item\em Clears the encoder \mbox{[}Do not change\mbox{]}. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_a6cac647e9f63d5ee3ca83427ab97a41d}{set\+\_\+position\+\_\+control\+\_\+pid\+\_\+gain}} (float p, float i, float d)
+\begin{DoxyCompactList}\small\item\em Sets the proportional, integral and derivative gains for the control loop for position. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_a6efecef0e53268dd8db1809180ebd440}{set\+\_\+max\+\_\+allowable\+\_\+integrated\+\_\+error\+\_\+for\+\_\+position\+\_\+control}} (uint32\+\_\+t max\+\_\+value)
+\begin{DoxyCompactList}\small\item\em Sets the maximum allowed integral error for position control loop This may be used to prevent integral windup. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_a7ec3cd209ae6960cb1a091b9260d4cea}{set\+\_\+max\+\_\+velocity\+\_\+in\+\_\+position\+\_\+control\+\_\+qc\+\_\+p\+\_\+ms}} (uint32\+\_\+t v)
+\begin{DoxyCompactList}\small\item\em Sets the maximum allowed velocity in quadrature counts per ms for the motor. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a7347f34125d11f6bbc45bf60aa77b83b}{get\+\_\+esmacat\+\_\+product\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Reads the product id of the slave. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_afcd5ed84fbbd2a18f004fdf6229f8e2f}{get\+\_\+esmacat\+\_\+vendor\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Returns the vendor ID of the slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a24f70db08cd4236a7fb79c2b748909ff}{esmacat\+\_\+slave\+\_\+product\+\_\+id}} = \mbox{\hyperlink{motordriver_8h_a0fa71a26056accb023e19350e5a8de0b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a94b03073aaf49fa044e72ab5b55234f5}{esmacat\+\_\+slave\+\_\+vendor\+\_\+id}} = \mbox{\hyperlink{motordriver_8h_a905b6b03fb449a350a3d63ed8cf06305}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \mbox{\hyperlink{classesmacat__motor__driver_ae833ae131955b645629325592896619f}{set\+\_\+escon\+\_\+pwm}} (unsigned int pwm\+\_\+value)
+\begin{DoxyCompactList}\small\item\em Protected funciton -\/ Sets the P\+WM duty cycle of the E\+S\+C\+ON within the specified bounds. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a7813895cc22acea2db8fb27d2095b11c}{get\+\_\+raw\+\_\+ext\+\_\+analog\+\_\+input}} (int ai\+\_\+index)
+\begin{DoxyCompactList}\small\item\em Protected Function-\/ Reads the specified raw analog input from external source. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a41cd6d05c6187531662cb22402d269e2}{get\+\_\+raw\+\_\+escon\+\_\+analog\+\_\+input}} (int ai\+\_\+index)
+\begin{DoxyCompactList}\small\item\em Protected Function-\/ Reads the specified raw analog input from E\+S\+C\+ON. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_ab7c1f5bb6b3c3e87027237fd84a00c1f}{escon\+\_\+current\+\_\+setpoint}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_ab71d74841c21d6f4d6194567ed7de8b5}{esmacat\+\_\+app\+\_\+one\+\_\+cycle\+\_\+time\+\_\+sec}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{classesmacat__motor__driver_aaf5e6c72f856ef4b3c48eaf603a2382a}{ecat\+\_\+data\+\_\+process\+\_\+motor\+\_\+driver}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs)
+\begin{DoxyCompactList}\small\item\em Private function-\/ Data exchange process that is specific to the Esmacat Motor Driver slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a2b88b98b12c029231157d4109501941f}{raw\+\_\+external\+\_\+analog\+\_\+input\+\_\+reading}} \mbox{[}\mbox{\hyperlink{motordriver_8h_a0a74872206b8302b47c03ae30ecfb7ba}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+X\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}\mbox{]}
+\item 
+uint16\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_a317c2650d9ee095460d2f9e2c8105f0b}{raw\+\_\+escon\+\_\+analog\+\_\+input\+\_\+reading}} \mbox{[}\mbox{\hyperlink{motordriver_8h_a974181382aa374bc356b71597ec3a832}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}\mbox{]}
+\item 
+int32\+\_\+t \mbox{\hyperlink{classesmacat__motor__driver_aa9c1d91480f680a8b4db367c5ce898a5}{encoder\+\_\+reading}}
+\item 
+bool \mbox{\hyperlink{classesmacat__motor__driver_aa951c638b5d2a669ce15336b20ed29e3}{escon\+\_\+enable}}
+\item 
+bool \mbox{\hyperlink{classesmacat__motor__driver_a659346536700ee1e4ab6e3b1d34b69d8}{escon\+\_\+direction}}
+\item 
+bool \mbox{\hyperlink{classesmacat__motor__driver_ae0cf53406fa0689ec7d35e687ea7fe87}{escon\+\_\+fault}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_ad8ce52ec441f4e23a75747bb93d1bbc4}{position\+\_\+control\+\_\+p\+\_\+gain}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a217b0a702a919eb5bdd6cbc3cbf5c579}{position\+\_\+control\+\_\+i\+\_\+gain}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a11a72b6868aa3d2ec94eea379698468d}{position\+\_\+control\+\_\+d\+\_\+gain}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a74457d4488df0c4ac86e48a5fc8a853d}{integ\+\_\+position\+\_\+error}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a880ba13de49b2bab7ffa839665723e7d}{prev\+\_\+position\+\_\+error}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_a7355aa241c8901154cc0b2cfe99d35ef}{max\+\_\+integ\+\_\+position\+\_\+error}}
+\item 
+float \mbox{\hyperlink{classesmacat__motor__driver_ae62e35a5b81ac618e7875bbcd7cbc237}{max\+\_\+position\+\_\+change\+\_\+qc\+\_\+per\+\_\+interval}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Class containing all the variables and functions used by the Esmacat Motor Driver slave. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__motor__driver_aa90e568329f9cc92b6170a53f4404924}\label{classesmacat__motor__driver_aa90e568329f9cc92b6170a53f4404924}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{esmacat\_motor\_driver()}{esmacat\_motor\_driver()}}
+{\footnotesize\ttfamily esmacat\+\_\+motor\+\_\+driver\+::esmacat\+\_\+motor\+\_\+driver (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the class that holds the initialization. 
+
+Intializes the raw A\+DC readings for the analog inputs from both external sources and the E\+S\+C\+ON. Also sets the product code and vendor ID. Clears the encoder, disables the E\+S\+C\+ON and clears its inputs and fault, resets all the values used in the control loop, and sets the max values for the integrated position error, and the velocity. It also sets the time interval for the control loop computations. 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__motor__driver_a27c7e4218f6a541b705375c043ea4eba}\label{classesmacat__motor__driver_a27c7e4218f6a541b705375c043ea4eba}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!configure\_slave\_encoder\_clear@{configure\_slave\_encoder\_clear}}
+\index{configure\_slave\_encoder\_clear@{configure\_slave\_encoder\_clear}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{configure\_slave\_encoder\_clear()}{configure\_slave\_encoder\_clear()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::configure\+\_\+slave\+\_\+encoder\+\_\+clear (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Clears the encoder \mbox{[}Do not change\mbox{]}. 
+
+This function should not be modified since it is tied to the firmware for the slave \mbox{\Hypertarget{classesmacat__motor__driver_ab84b9351c84dbacb7f99f4845484b60c}\label{classesmacat__motor__driver_ab84b9351c84dbacb7f99f4845484b60c}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!ecat\_data\_process@{ecat\_data\_process}}
+\index{ecat\_data\_process@{ecat\_data\_process}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process()}{ecat\_data\_process()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::ecat\+\_\+data\+\_\+process (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{int}]{oloop,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs,  }\item[{int}]{iloop }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition of inherited data exchange function for Esmacat slave. 
+
+Combines data exchange process of the base module and the motor driver slaves
+
+
+\begin{DoxyParams}{Parameters}
+{\em ec\+\_\+slave\+\_\+outputs} & Pointer to the start of the outputs for slave in consideration \\
+\hline
+{\em oloop} & No. of output bytes \\
+\hline
+{\em ec\+\_\+slave\+\_\+inputs} & Pointer to the start of the inputs for slave in consideration \\
+\hline
+{\em iloop} & No. of input bytes \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \mbox{\hyperlink{classesmacat__base__module_aac6191f5a1005dc129b03593e4b3cd40}{esmacat\+\_\+base\+\_\+module}}.
+
+\mbox{\Hypertarget{classesmacat__motor__driver_aaf5e6c72f856ef4b3c48eaf603a2382a}\label{classesmacat__motor__driver_aaf5e6c72f856ef4b3c48eaf603a2382a}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!ecat\_data\_process\_motor\_driver@{ecat\_data\_process\_motor\_driver}}
+\index{ecat\_data\_process\_motor\_driver@{ecat\_data\_process\_motor\_driver}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process\_motor\_driver()}{ecat\_data\_process\_motor\_driver()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::ecat\+\_\+data\+\_\+process\+\_\+motor\+\_\+driver (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Private function-\/ Data exchange process that is specific to the Esmacat Motor Driver slave. 
+
+\mbox{[}{\itshape {\bfseries{hardware dependent -\/ do not change}}}\mbox{]} This function queues the values to be sent to the firmware, and also decodes packets received. Motor Driver fault, analog input readings from both the external source and the E\+S\+C\+ON, and quadrature encoder readings are handled here. 
+\begin{DoxyParams}{Parameters}
+{\em ec\+\_\+slave\+\_\+outputs} & Pointer to the start of the outputs for slave in consideration \\
+\hline
+{\em ec\+\_\+slave\+\_\+inputs} & Pointer to the start of the inputs for slave in consideration \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__motor__driver_a6c6145de230e700072064f21f56460fd}\label{classesmacat__motor__driver_a6c6145de230e700072064f21f56460fd}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!enable\_escon@{enable\_escon}}
+\index{enable\_escon@{enable\_escon}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{enable\_escon()}{enable\_escon()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::enable\+\_\+escon (\begin{DoxyParamCaption}\item[{bool}]{enable }\end{DoxyParamCaption})}
+
+
+
+Enables/disables the escon. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em enable} & 1= Enable, 0 = Disable \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__motor__driver_a7485aad0c20cb7ab77aaedd258f8e72b}\label{classesmacat__motor__driver_a7485aad0c20cb7ab77aaedd258f8e72b}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_analog\_input\_from\_escon\_mV@{get\_analog\_input\_from\_escon\_mV}}
+\index{get\_analog\_input\_from\_escon\_mV@{get\_analog\_input\_from\_escon\_mV}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_analog\_input\_from\_escon\_mV()}{get\_analog\_input\_from\_escon\_mV()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+analog\+\_\+input\+\_\+from\+\_\+escon\+\_\+mV (\begin{DoxyParamCaption}\item[{int}]{analog\+\_\+input\+\_\+index }\end{DoxyParamCaption})}
+
+
+
+Reads analog input value from E\+S\+C\+ON source of specified index in mV. No error handling. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em analog\+\_\+input\+\_\+index} & Index of the E\+S\+C\+ON analog input to be read \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Voltage reading (mV) of the selected E\+S\+C\+ON analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_ade38a4d59ce3d48dbde73faa4dabcc39}\label{classesmacat__motor__driver_ade38a4d59ce3d48dbde73faa4dabcc39}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_analog\_input\_from\_escon\_mV@{get\_analog\_input\_from\_escon\_mV}}
+\index{get\_analog\_input\_from\_escon\_mV@{get\_analog\_input\_from\_escon\_mV}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_analog\_input\_from\_escon\_mV()}{get\_analog\_input\_from\_escon\_mV()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+analog\+\_\+input\+\_\+from\+\_\+escon\+\_\+mV (\begin{DoxyParamCaption}\item[{int}]{analog\+\_\+input\+\_\+index,  }\item[{\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&}]{error }\end{DoxyParamCaption})}
+
+
+
+Reads analog input value in mV and provides error handling. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em analog\+\_\+input\+\_\+index} & Index of the E\+S\+C\+ON analog input to be read \\
+\hline
+{\em error} & Contains the error message to demonstrate success of data acquisition (E\+R\+R\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE or N\+O\+\_\+\+E\+RR) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Voltage reading (mV) of the selected E\+S\+C\+ON analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_ab041000f6d797de36a3ed7b99765a6ef}\label{classesmacat__motor__driver_ab041000f6d797de36a3ed7b99765a6ef}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_analog\_input\_from\_external\_source\_mV@{get\_analog\_input\_from\_external\_source\_mV}}
+\index{get\_analog\_input\_from\_external\_source\_mV@{get\_analog\_input\_from\_external\_source\_mV}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_analog\_input\_from\_external\_source\_mV()}{get\_analog\_input\_from\_external\_source\_mV()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+analog\+\_\+input\+\_\+from\+\_\+external\+\_\+source\+\_\+mV (\begin{DoxyParamCaption}\item[{int}]{analog\+\_\+input\+\_\+index }\end{DoxyParamCaption})}
+
+
+
+Reads analog input value from external source of specified index in mV. No error handling. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em analog\+\_\+input\+\_\+index} & Index of the external source analog input to be read \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Voltage reading (mV) of the selected external source analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_abf9feb1706761c34f06efa99f4ec030a}\label{classesmacat__motor__driver_abf9feb1706761c34f06efa99f4ec030a}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_analog\_input\_from\_external\_source\_mV@{get\_analog\_input\_from\_external\_source\_mV}}
+\index{get\_analog\_input\_from\_external\_source\_mV@{get\_analog\_input\_from\_external\_source\_mV}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_analog\_input\_from\_external\_source\_mV()}{get\_analog\_input\_from\_external\_source\_mV()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+analog\+\_\+input\+\_\+from\+\_\+external\+\_\+source\+\_\+mV (\begin{DoxyParamCaption}\item[{int}]{analog\+\_\+input\+\_\+index,  }\item[{\mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} \&}]{error }\end{DoxyParamCaption})}
+
+
+
+Reads analog input value in mV and provides error handling. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em analog\+\_\+input\+\_\+index} & Index of the external source analog input to be read \\
+\hline
+{\em error} & Contains the error message to demonstrate success of data acquisition (E\+R\+R\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+E\+X\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+U\+T\+\_\+\+I\+N\+D\+E\+X\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE or N\+O\+\_\+\+E\+RR) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Voltage reading (mV) of the selected external source analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a8fa751bc5bdd3a55555cb32b0f1c13a1}\label{classesmacat__motor__driver_a8fa751bc5bdd3a55555cb32b0f1c13a1}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_encoder\_counter@{get\_encoder\_counter}}
+\index{get\_encoder\_counter@{get\_encoder\_counter}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_encoder\_counter()}{get\_encoder\_counter()}}
+{\footnotesize\ttfamily int32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+encoder\+\_\+counter (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Obtains the encoder reading. 
+
+\begin{DoxyReturn}{Returns}
+Encoder reading in ticks 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_ad8214851b2ed0faa5f84ae299abade3a}\label{classesmacat__motor__driver_ad8214851b2ed0faa5f84ae299abade3a}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_escon\_fault@{get\_escon\_fault}}
+\index{get\_escon\_fault@{get\_escon\_fault}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_escon\_fault()}{get\_escon\_fault()}}
+{\footnotesize\ttfamily bool esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+escon\+\_\+fault (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Obtains the fault status of the E\+S\+C\+ON. 
+
+\begin{DoxyReturn}{Returns}
+E\+S\+C\+ON fault status 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a7347f34125d11f6bbc45bf60aa77b83b}\label{classesmacat__motor__driver_a7347f34125d11f6bbc45bf60aa77b83b}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_esmacat\_product\_id@{get\_esmacat\_product\_id}}
+\index{get\_esmacat\_product\_id@{get\_esmacat\_product\_id}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_product\_id()}{get\_esmacat\_product\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+esmacat\+\_\+product\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reads the product id of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Product ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__motor__driver_afcd5ed84fbbd2a18f004fdf6229f8e2f}\label{classesmacat__motor__driver_afcd5ed84fbbd2a18f004fdf6229f8e2f}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}}
+\index{get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_vendor\_id()}{get\_esmacat\_vendor\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+esmacat\+\_\+vendor\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Returns the vendor ID of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Vendor ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__motor__driver_a41cd6d05c6187531662cb22402d269e2}\label{classesmacat__motor__driver_a41cd6d05c6187531662cb22402d269e2}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_raw\_escon\_analog\_input@{get\_raw\_escon\_analog\_input}}
+\index{get\_raw\_escon\_analog\_input@{get\_raw\_escon\_analog\_input}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_raw\_escon\_analog\_input()}{get\_raw\_escon\_analog\_input()}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+raw\+\_\+escon\+\_\+analog\+\_\+input (\begin{DoxyParamCaption}\item[{int}]{ai\+\_\+index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Protected Function-\/ Reads the specified raw analog input from E\+S\+C\+ON. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em Index} & of the analog input to be read \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Reading of the specified analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a7813895cc22acea2db8fb27d2095b11c}\label{classesmacat__motor__driver_a7813895cc22acea2db8fb27d2095b11c}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!get\_raw\_ext\_analog\_input@{get\_raw\_ext\_analog\_input}}
+\index{get\_raw\_ext\_analog\_input@{get\_raw\_ext\_analog\_input}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{get\_raw\_ext\_analog\_input()}{get\_raw\_ext\_analog\_input()}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::get\+\_\+raw\+\_\+ext\+\_\+analog\+\_\+input (\begin{DoxyParamCaption}\item[{int}]{ai\+\_\+index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Protected Function-\/ Reads the specified raw analog input from external source. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em Index} & of the analog input to be read \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Reading of the specified analog input 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a41d430bd93588c981b6653d05f7e1aad}\label{classesmacat__motor__driver_a41d430bd93588c981b6653d05f7e1aad}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_desired\_position@{set\_desired\_position}}
+\index{set\_desired\_position@{set\_desired\_position}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_desired\_position()}{set\_desired\_position()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+desired\+\_\+position (\begin{DoxyParamCaption}\item[{int32\+\_\+t}]{desired\+\_\+position }\end{DoxyParamCaption})}
+
+
+
+Position control P\+ID loop that supplies the E\+S\+C\+ON with its setpoint. 
+
+The rate of change of position is limited by using max\+\_\+position\+\_\+change\+\_\+qc\+\_\+per\+\_\+interval.
+
+Output Current Setpoint for E\+S\+C\+ON = pterm + iterm + dterm
+
+error = position setpoint -\/ measured position
+
+pterm = kp $\ast$ error
+
+iterm = ki $\ast$ (integral of error over time)
+
+dterm = kd $\ast$ (rate of change of error)
+
+The iterm is bounded by \mbox{[}-\/max\+\_\+integ\+\_\+position\+\_\+error, max\+\_\+integ\+\_\+position\+\_\+error\mbox{]} to prevent integral windup.
+
+The final current setpoint sent to the E\+S\+C\+ON is also bounded to \mbox{[}E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE, E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em desired\+\_\+position} & Position setpoint in quadrature counts \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Error status of the function (Currently only returns N\+O\+\_\+\+E\+RR if successful) 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a7c7a25d92d6e0d807f7d2c07ca657e3f}\label{classesmacat__motor__driver_a7c7a25d92d6e0d807f7d2c07ca657e3f}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_escon\_current\_setpoint@{set\_escon\_current\_setpoint}}
+\index{set\_escon\_current\_setpoint@{set\_escon\_current\_setpoint}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_escon\_current\_setpoint()}{set\_escon\_current\_setpoint()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+escon\+\_\+current\+\_\+setpoint (\begin{DoxyParamCaption}\item[{float}]{setpoint }\end{DoxyParamCaption})}
+
+
+
+Provides current setpoint to the E\+S\+C\+ON. 
+
+Verifies that the setpoint is within the specified bounds. Limits the value to the bounds specified. The E\+S\+C\+ON in only driven from 10\% to 90\% of its usable range 
+\begin{DoxyParams}{Parameters}
+{\em setpoint} & Current setpoint value for the E\+S\+C\+ON (Range = \mbox{[}E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE, E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE\mbox{]}) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Status of the function. E\+R\+R\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+S\+E\+T\+P\+O\+I\+N\+T\+\_\+\+O\+U\+T\+\_\+\+O\+F\+\_\+\+R\+A\+N\+GE if the setpoint was out of range, else N\+O\+\_\+\+E\+RR 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_ae833ae131955b645629325592896619f}\label{classesmacat__motor__driver_ae833ae131955b645629325592896619f}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_escon\_pwm@{set\_escon\_pwm}}
+\index{set\_escon\_pwm@{set\_escon\_pwm}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_escon\_pwm()}{set\_escon\_pwm()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error__list_8h_a87416c4ac67855c0221fb89f3918b8e3}{esmacat\+\_\+err}} esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+escon\+\_\+pwm (\begin{DoxyParamCaption}\item[{unsigned int}]{pwm\+\_\+value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Protected funciton -\/ Sets the P\+WM duty cycle of the E\+S\+C\+ON within the specified bounds. 
+
+It ensures that the provided pwm setpoint does not exceed E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT and does not go below E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT. Also provides error handling.
+
+
+\begin{DoxyParams}{Parameters}
+{\em pwm\+\_\+value} & Dutycycle setpoint for the E\+S\+C\+ON; 10000 implies duty\+\_\+cycle of 100\% \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Status of the operation-\/ N\+O\+\_\+\+E\+RR, E\+R\+R\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+M\+A\+X\+\_\+\+P\+W\+M\+\_\+\+R\+E\+A\+C\+H\+ED, E\+R\+R\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+M\+I\+N\+\_\+\+P\+W\+M\+\_\+\+R\+E\+A\+C\+H\+ED 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__motor__driver_a6efecef0e53268dd8db1809180ebd440}\label{classesmacat__motor__driver_a6efecef0e53268dd8db1809180ebd440}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_max\_allowable\_integrated\_error\_for\_position\_control@{set\_max\_allowable\_integrated\_error\_for\_position\_control}}
+\index{set\_max\_allowable\_integrated\_error\_for\_position\_control@{set\_max\_allowable\_integrated\_error\_for\_position\_control}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_max\_allowable\_integrated\_error\_for\_position\_control()}{set\_max\_allowable\_integrated\_error\_for\_position\_control()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+max\+\_\+allowable\+\_\+integrated\+\_\+error\+\_\+for\+\_\+position\+\_\+control (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{max\+\_\+value }\end{DoxyParamCaption})}
+
+
+
+Sets the maximum allowed integral error for position control loop This may be used to prevent integral windup. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em max\+\_\+value} & Maximum Allowable integrated position error \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__motor__driver_a7ec3cd209ae6960cb1a091b9260d4cea}\label{classesmacat__motor__driver_a7ec3cd209ae6960cb1a091b9260d4cea}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_max\_velocity\_in\_position\_control\_qc\_p\_ms@{set\_max\_velocity\_in\_position\_control\_qc\_p\_ms}}
+\index{set\_max\_velocity\_in\_position\_control\_qc\_p\_ms@{set\_max\_velocity\_in\_position\_control\_qc\_p\_ms}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_max\_velocity\_in\_position\_control\_qc\_p\_ms()}{set\_max\_velocity\_in\_position\_control\_qc\_p\_ms()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+max\+\_\+velocity\+\_\+in\+\_\+position\+\_\+control\+\_\+qc\+\_\+p\+\_\+ms (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{max\+\_\+value }\end{DoxyParamCaption})}
+
+
+
+Sets the maximum allowed velocity in quadrature counts per ms for the motor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em max\+\_\+value} & maximum allowed velocity in quadrature counts per ms \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classesmacat__motor__driver_a6cac647e9f63d5ee3ca83427ab97a41d}\label{classesmacat__motor__driver_a6cac647e9f63d5ee3ca83427ab97a41d}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!set\_position\_control\_pid\_gain@{set\_position\_control\_pid\_gain}}
+\index{set\_position\_control\_pid\_gain@{set\_position\_control\_pid\_gain}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{set\_position\_control\_pid\_gain()}{set\_position\_control\_pid\_gain()}}
+{\footnotesize\ttfamily void esmacat\+\_\+motor\+\_\+driver\+::set\+\_\+position\+\_\+control\+\_\+pid\+\_\+gain (\begin{DoxyParamCaption}\item[{float}]{p,  }\item[{float}]{i,  }\item[{float}]{d }\end{DoxyParamCaption})}
+
+
+
+Sets the proportional, integral and derivative gains for the control loop for position. 
+
+The gains are multiplied by a factor of 0.\+001 prior to being applied 
+\begin{DoxyParams}{Parameters}
+{\em p} & Proportional gain \\
+\hline
+{\em i} & Integral gain \\
+\hline
+{\em d} & Derivative gain \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__motor__driver_aa9c1d91480f680a8b4db367c5ce898a5}\label{classesmacat__motor__driver_aa9c1d91480f680a8b4db367c5ce898a5}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!encoder\_reading@{encoder\_reading}}
+\index{encoder\_reading@{encoder\_reading}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{encoder\_reading}{encoder\_reading}}
+{\footnotesize\ttfamily int32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::encoder\+\_\+reading\hspace{0.3cm}{\ttfamily [private]}}
+
+Input from the L\+S7366 quadrature encoder reader \mbox{\Hypertarget{classesmacat__motor__driver_ab7c1f5bb6b3c3e87027237fd84a00c1f}\label{classesmacat__motor__driver_ab7c1f5bb6b3c3e87027237fd84a00c1f}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!escon\_current\_setpoint@{escon\_current\_setpoint}}
+\index{escon\_current\_setpoint@{escon\_current\_setpoint}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{escon\_current\_setpoint}{escon\_current\_setpoint}}
+{\footnotesize\ttfamily int32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::escon\+\_\+current\+\_\+setpoint\hspace{0.3cm}{\ttfamily [protected]}}
+
+Current Setpoint for E\+S\+C\+ON\+: O\+U\+T\+\_\+setpoint on the E\+S\+C\+ON datasheet \mbox{\Hypertarget{classesmacat__motor__driver_a659346536700ee1e4ab6e3b1d34b69d8}\label{classesmacat__motor__driver_a659346536700ee1e4ab6e3b1d34b69d8}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!escon\_direction@{escon\_direction}}
+\index{escon\_direction@{escon\_direction}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{escon\_direction}{escon\_direction}}
+{\footnotesize\ttfamily bool esmacat\+\_\+motor\+\_\+driver\+::escon\+\_\+direction\hspace{0.3cm}{\ttfamily [private]}}
+
+Direction of the motor; O\+U\+T\+\_\+\+M\+D\+\_\+direction on E\+S\+C\+ON datasheet \mbox{\Hypertarget{classesmacat__motor__driver_aa951c638b5d2a669ce15336b20ed29e3}\label{classesmacat__motor__driver_aa951c638b5d2a669ce15336b20ed29e3}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!escon\_enable@{escon\_enable}}
+\index{escon\_enable@{escon\_enable}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{escon\_enable}{escon\_enable}}
+{\footnotesize\ttfamily bool esmacat\+\_\+motor\+\_\+driver\+::escon\+\_\+enable\hspace{0.3cm}{\ttfamily [private]}}
+
+Enable E\+S\+C\+ON (1), disable E\+S\+C\+ON (0); O\+U\+T\+\_\+\+M\+D\+\_\+enable on E\+S\+C\+ON datasheet \mbox{\Hypertarget{classesmacat__motor__driver_ae0cf53406fa0689ec7d35e687ea7fe87}\label{classesmacat__motor__driver_ae0cf53406fa0689ec7d35e687ea7fe87}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!escon\_fault@{escon\_fault}}
+\index{escon\_fault@{escon\_fault}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{escon\_fault}{escon\_fault}}
+{\footnotesize\ttfamily bool esmacat\+\_\+motor\+\_\+driver\+::escon\+\_\+fault\hspace{0.3cm}{\ttfamily [private]}}
+
+Status from E\+S\+C\+ON; Fault = 1; I\+N\+\_\+\+M\+D\+\_\+\+F\+A\+U\+LT on E\+S\+C\+ON datasheet \mbox{\Hypertarget{classesmacat__motor__driver_ab71d74841c21d6f4d6194567ed7de8b5}\label{classesmacat__motor__driver_ab71d74841c21d6f4d6194567ed7de8b5}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!esmacat\_app\_one\_cycle\_time\_sec@{esmacat\_app\_one\_cycle\_time\_sec}}
+\index{esmacat\_app\_one\_cycle\_time\_sec@{esmacat\_app\_one\_cycle\_time\_sec}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{esmacat\_app\_one\_cycle\_time\_sec}{esmacat\_app\_one\_cycle\_time\_sec}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::esmacat\+\_\+app\+\_\+one\+\_\+cycle\+\_\+time\+\_\+sec\hspace{0.3cm}{\ttfamily [protected]}}
+
+Time interval for the loop computations \mbox{\Hypertarget{classesmacat__motor__driver_a24f70db08cd4236a7fb79c2b748909ff}\label{classesmacat__motor__driver_a24f70db08cd4236a7fb79c2b748909ff}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}}
+\index{esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_product\_id}{esmacat\_slave\_product\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::esmacat\+\_\+slave\+\_\+product\+\_\+id = \mbox{\hyperlink{motordriver_8h_a0fa71a26056accb023e19350e5a8de0b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}}
+
+Contains a product code of the Esmacat slave \mbox{\Hypertarget{classesmacat__motor__driver_a94b03073aaf49fa044e72ab5b55234f5}\label{classesmacat__motor__driver_a94b03073aaf49fa044e72ab5b55234f5}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}}
+\index{esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_vendor\_id}{esmacat\_slave\_vendor\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::esmacat\+\_\+slave\+\_\+vendor\+\_\+id = \mbox{\hyperlink{motordriver_8h_a905b6b03fb449a350a3d63ed8cf06305}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}}
+
+Contains the vendor ID issued by the Ether\+C\+AT Technology group \mbox{\Hypertarget{classesmacat__motor__driver_a74457d4488df0c4ac86e48a5fc8a853d}\label{classesmacat__motor__driver_a74457d4488df0c4ac86e48a5fc8a853d}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!integ\_position\_error@{integ\_position\_error}}
+\index{integ\_position\_error@{integ\_position\_error}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{integ\_position\_error}{integ\_position\_error}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::integ\+\_\+position\+\_\+error\hspace{0.3cm}{\ttfamily [private]}}
+
+Summation of the position error over time-\/ to be used for the control loop \mbox{\Hypertarget{classesmacat__motor__driver_a7355aa241c8901154cc0b2cfe99d35ef}\label{classesmacat__motor__driver_a7355aa241c8901154cc0b2cfe99d35ef}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!max\_integ\_position\_error@{max\_integ\_position\_error}}
+\index{max\_integ\_position\_error@{max\_integ\_position\_error}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{max\_integ\_position\_error}{max\_integ\_position\_error}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::max\+\_\+integ\+\_\+position\+\_\+error\hspace{0.3cm}{\ttfamily [private]}}
+
+Max value for Summation of the position error over time-\/ used to prevent integral windup \mbox{\Hypertarget{classesmacat__motor__driver_ae62e35a5b81ac618e7875bbcd7cbc237}\label{classesmacat__motor__driver_ae62e35a5b81ac618e7875bbcd7cbc237}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!max\_position\_change\_qc\_per\_interval@{max\_position\_change\_qc\_per\_interval}}
+\index{max\_position\_change\_qc\_per\_interval@{max\_position\_change\_qc\_per\_interval}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{max\_position\_change\_qc\_per\_interval}{max\_position\_change\_qc\_per\_interval}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::max\+\_\+position\+\_\+change\+\_\+qc\+\_\+per\+\_\+interval\hspace{0.3cm}{\ttfamily [private]}}
+
+Max allowable change in position in quadrature counts per interval \mbox{\Hypertarget{classesmacat__motor__driver_a11a72b6868aa3d2ec94eea379698468d}\label{classesmacat__motor__driver_a11a72b6868aa3d2ec94eea379698468d}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!position\_control\_d\_gain@{position\_control\_d\_gain}}
+\index{position\_control\_d\_gain@{position\_control\_d\_gain}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{position\_control\_d\_gain}{position\_control\_d\_gain}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::position\+\_\+control\+\_\+d\+\_\+gain\hspace{0.3cm}{\ttfamily [private]}}
+
+Derivative gain for the position control loop \mbox{\Hypertarget{classesmacat__motor__driver_a217b0a702a919eb5bdd6cbc3cbf5c579}\label{classesmacat__motor__driver_a217b0a702a919eb5bdd6cbc3cbf5c579}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!position\_control\_i\_gain@{position\_control\_i\_gain}}
+\index{position\_control\_i\_gain@{position\_control\_i\_gain}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{position\_control\_i\_gain}{position\_control\_i\_gain}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::position\+\_\+control\+\_\+i\+\_\+gain\hspace{0.3cm}{\ttfamily [private]}}
+
+Integral gain for the position control loop \mbox{\Hypertarget{classesmacat__motor__driver_ad8ce52ec441f4e23a75747bb93d1bbc4}\label{classesmacat__motor__driver_ad8ce52ec441f4e23a75747bb93d1bbc4}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!position\_control\_p\_gain@{position\_control\_p\_gain}}
+\index{position\_control\_p\_gain@{position\_control\_p\_gain}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{position\_control\_p\_gain}{position\_control\_p\_gain}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::position\+\_\+control\+\_\+p\+\_\+gain\hspace{0.3cm}{\ttfamily [private]}}
+
+Proportional gain for the position control loop \mbox{\Hypertarget{classesmacat__motor__driver_a880ba13de49b2bab7ffa839665723e7d}\label{classesmacat__motor__driver_a880ba13de49b2bab7ffa839665723e7d}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!prev\_position\_error@{prev\_position\_error}}
+\index{prev\_position\_error@{prev\_position\_error}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{prev\_position\_error}{prev\_position\_error}}
+{\footnotesize\ttfamily float esmacat\+\_\+motor\+\_\+driver\+::prev\+\_\+position\+\_\+error\hspace{0.3cm}{\ttfamily [private]}}
+
+Value of position error at the previous time instant-\/ to be used for the control loop \mbox{\Hypertarget{classesmacat__motor__driver_a317c2650d9ee095460d2f9e2c8105f0b}\label{classesmacat__motor__driver_a317c2650d9ee095460d2f9e2c8105f0b}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!raw\_escon\_analog\_input\_reading@{raw\_escon\_analog\_input\_reading}}
+\index{raw\_escon\_analog\_input\_reading@{raw\_escon\_analog\_input\_reading}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{raw\_escon\_analog\_input\_reading}{raw\_escon\_analog\_input\_reading}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::raw\+\_\+escon\+\_\+analog\+\_\+input\+\_\+reading\mbox{[}\mbox{\hyperlink{motordriver_8h_a974181382aa374bc356b71597ec3a832}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+Array containing raw readings for 2 analog inputs from E\+S\+C\+ON; I\+N\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+LG on E\+S\+C\+ON datasheet \mbox{\Hypertarget{classesmacat__motor__driver_a2b88b98b12c029231157d4109501941f}\label{classesmacat__motor__driver_a2b88b98b12c029231157d4109501941f}} 
+\index{esmacat\_motor\_driver@{esmacat\_motor\_driver}!raw\_external\_analog\_input\_reading@{raw\_external\_analog\_input\_reading}}
+\index{raw\_external\_analog\_input\_reading@{raw\_external\_analog\_input\_reading}!esmacat\_motor\_driver@{esmacat\_motor\_driver}}
+\doxysubsubsection{\texorpdfstring{raw\_external\_analog\_input\_reading}{raw\_external\_analog\_input\_reading}}
+{\footnotesize\ttfamily uint16\+\_\+t esmacat\+\_\+motor\+\_\+driver\+::raw\+\_\+external\+\_\+analog\+\_\+input\+\_\+reading\mbox{[}\mbox{\hyperlink{motordriver_8h_a0a74872206b8302b47c03ae30ecfb7ba}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+X\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+Array containing raw readings for analog inputs from 2 external sources; I\+N\+\_\+\+M\+D\+\_\+\+A\+N\+LG on E\+S\+C\+ON datasheet 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{motordriver_8h}{motordriver.\+h}}\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{motordriver_8cpp}{motordriver.\+cpp}}\end{DoxyCompactItemize}

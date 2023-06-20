@@ -1,0 +1,120 @@
+\hypertarget{master_8h}{}\doxysection{esmacat\+\_\+library/master.h File Reference}
+\label{master_8h}\index{esmacat\_library/master.h@{esmacat\_library/master.h}}
+
+
+This file contains the declaration for the esmacat master.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$inttypes.\+h$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include \char`\"{}ethercat.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}application.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}slave.\+h\char`\"{}}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classesmacat__master}{esmacat\+\_\+master}}
+\begin{DoxyCompactList}\small\item\em Holds all the functions and variables used by the ethercat master. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{master_8h_af779536d343f909d8fcca2d754555ddd}{M\+Y\+\_\+\+P\+R\+I\+O\+R\+I\+TY}}
+\item 
+\#define \mbox{\hyperlink{master_8h_a879e10cc3ad4709ecca7d0b56c93c1f0}{M\+A\+X\+\_\+\+S\+A\+F\+E\+\_\+\+S\+T\+A\+CK}}
+\item 
+\#define \mbox{\hyperlink{master_8h_a0501e82515b2bdf36453c4cc80f5e0cc}{N\+S\+E\+C\+\_\+\+P\+E\+R\+\_\+\+S\+EC}}~(1000000000) /$\ast$ The number of nsecs per sec. $\ast$/
+\begin{DoxyCompactList}\small\item\em The number of nano-\/seconds in a sec is 10$^\wedge$9. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{master_8h_a6a69d6cbdab5f24c2e66959293f210c1}{U\+S\+E\+C\+\_\+\+P\+E\+R\+\_\+\+S\+EC}}~(1000000)
+\begin{DoxyCompactList}\small\item\em The number of micro-\/seconds in a sec is 10$^\wedge$6. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{master_8h_a984397379b1b2255a13470ac600ae679}{E\+C\+\_\+\+T\+I\+M\+E\+O\+U\+T\+M\+ON}}~500
+\begin{DoxyCompactList}\small\item\em Timeout value in us. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{master_8h_a186edc425c4c611f7259674f8b39769b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+T\+I\+M\+E\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+US}}~25000
+\begin{DoxyCompactList}\small\item\em The time period/cycle time of the esmacat application is set to 25000 us = 25 ms. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}{M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE}}~100
+\begin{DoxyCompactList}\small\item\em Maximum Number of Ethercat slaves supported by the master. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file contains the declaration for the esmacat master. 
+
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{master_8h_a984397379b1b2255a13470ac600ae679}\label{master_8h_a984397379b1b2255a13470ac600ae679}} 
+\index{master.h@{master.h}!EC\_TIMEOUTMON@{EC\_TIMEOUTMON}}
+\index{EC\_TIMEOUTMON@{EC\_TIMEOUTMON}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{EC\_TIMEOUTMON}{EC\_TIMEOUTMON}}
+{\footnotesize\ttfamily \#define E\+C\+\_\+\+T\+I\+M\+E\+O\+U\+T\+M\+ON~500}
+
+
+
+Timeout value in us. 
+
+\mbox{\Hypertarget{master_8h_a186edc425c4c611f7259674f8b39769b}\label{master_8h_a186edc425c4c611f7259674f8b39769b}} 
+\index{master.h@{master.h}!ESMACAT\_TIME\_PERIOD\_US@{ESMACAT\_TIME\_PERIOD\_US}}
+\index{ESMACAT\_TIME\_PERIOD\_US@{ESMACAT\_TIME\_PERIOD\_US}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_TIME\_PERIOD\_US}{ESMACAT\_TIME\_PERIOD\_US}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+T\+I\+M\+E\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+US~25000}
+
+
+
+The time period/cycle time of the esmacat application is set to 25000 us = 25 ms. 
+
+Please change this setting to modify the rate at which the application operates \mbox{\Hypertarget{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}\label{master_8h_a7fb4c76d7e5eb874af2486c59ed02312}} 
+\index{master.h@{master.h}!MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE@{MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE}}
+\index{MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE@{MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE}{MAX\_NUMBER\_OF\_ETHERCAT\_SLAVE}}
+{\footnotesize\ttfamily \#define M\+A\+X\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+S\+L\+A\+VE~100}
+
+
+
+Maximum Number of Ethercat slaves supported by the master. 
+
+\mbox{\Hypertarget{master_8h_a879e10cc3ad4709ecca7d0b56c93c1f0}\label{master_8h_a879e10cc3ad4709ecca7d0b56c93c1f0}} 
+\index{master.h@{master.h}!MAX\_SAFE\_STACK@{MAX\_SAFE\_STACK}}
+\index{MAX\_SAFE\_STACK@{MAX\_SAFE\_STACK}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{MAX\_SAFE\_STACK}{MAX\_SAFE\_STACK}}
+{\footnotesize\ttfamily \#define M\+A\+X\+\_\+\+S\+A\+F\+E\+\_\+\+S\+T\+A\+CK}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{(8*1024) \textcolor{comment}{/* The maximum stack size which is}}
+\DoxyCodeLine{\textcolor{comment}{                                   guaranteed safe to access without}}
+\DoxyCodeLine{\textcolor{comment}{                                   faulting */}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{master_8h_af779536d343f909d8fcca2d754555ddd}\label{master_8h_af779536d343f909d8fcca2d754555ddd}} 
+\index{master.h@{master.h}!MY\_PRIORITY@{MY\_PRIORITY}}
+\index{MY\_PRIORITY@{MY\_PRIORITY}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{MY\_PRIORITY}{MY\_PRIORITY}}
+{\footnotesize\ttfamily \#define M\+Y\+\_\+\+P\+R\+I\+O\+R\+I\+TY}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{(49) \textcolor{comment}{/* we use 49 as the PRREMPT\_RT use 50}}
+\DoxyCodeLine{\textcolor{comment}{                            as the priority of kernel tasklets}}
+\DoxyCodeLine{\textcolor{comment}{                            and interrupt handler by default */}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{master_8h_a0501e82515b2bdf36453c4cc80f5e0cc}\label{master_8h_a0501e82515b2bdf36453c4cc80f5e0cc}} 
+\index{master.h@{master.h}!NSEC\_PER\_SEC@{NSEC\_PER\_SEC}}
+\index{NSEC\_PER\_SEC@{NSEC\_PER\_SEC}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{NSEC\_PER\_SEC}{NSEC\_PER\_SEC}}
+{\footnotesize\ttfamily \#define N\+S\+E\+C\+\_\+\+P\+E\+R\+\_\+\+S\+EC~(1000000000) /$\ast$ The number of nsecs per sec. $\ast$/}
+
+
+
+The number of nano-\/seconds in a sec is 10$^\wedge$9. 
+
+\mbox{\Hypertarget{master_8h_a6a69d6cbdab5f24c2e66959293f210c1}\label{master_8h_a6a69d6cbdab5f24c2e66959293f210c1}} 
+\index{master.h@{master.h}!USEC\_PER\_SEC@{USEC\_PER\_SEC}}
+\index{USEC\_PER\_SEC@{USEC\_PER\_SEC}!master.h@{master.h}}
+\doxysubsubsection{\texorpdfstring{USEC\_PER\_SEC}{USEC\_PER\_SEC}}
+{\footnotesize\ttfamily \#define U\+S\+E\+C\+\_\+\+P\+E\+R\+\_\+\+S\+EC~(1000000)}
+
+
+
+The number of micro-\/seconds in a sec is 10$^\wedge$6. 
+

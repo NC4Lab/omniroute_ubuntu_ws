@@ -1,0 +1,545 @@
+\hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat}{}\doxysection{esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat Class Reference}
+\label{classesmacat__ethercat__arduino__shield__by__esmacat}\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+
+
+Generic class that allows for access of information from the Arduino Shield slave.  
+
+
+
+
+{\ttfamily \#include $<$ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat.\+h$>$}
+
+Inheritance diagram for esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classesmacat__ethercat__arduino__shield__by__esmacat}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a2819696f0c5dcb2d6fe460f170898435}{esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat}} ()
+\begin{DoxyCompactList}\small\item\em Constructor for the class that holds the initialization. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a02dfa145e410280c6e29ee5f5d0d52d5}{get\+\_\+esmacat\+\_\+product\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Reads the product id of the slave. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a419f66a6fddd70093a67966600050f04}{get\+\_\+esmacat\+\_\+vendor\+\_\+id}} ()
+\begin{DoxyCompactList}\small\item\em Reads the Vendor id of the slave. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a21011e445c4bf9a3739a6e653c1d8601}{ecat\+\_\+data\+\_\+process}} (uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+outputs, int oloop, uint8\+\_\+t $\ast$ec\+\_\+slave\+\_\+inputs, int iloop)
+\begin{DoxyCompactList}\small\item\em Data exchange process that is specific to the Arduino Shield slave Queues the values of the received input into the input\+\_\+variable and queues all the values to be transmitted into output\+\_\+variable which is then sent out using ethercat. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a913c112a59651ce82170a0cb1019f498}{get\+\_\+input\+\_\+variable\+\_\+0\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 0. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a2e1336d5cf5d25b9b625e713a7b5f963}{get\+\_\+input\+\_\+variable\+\_\+1\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 1. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_ab1467ac154b9214fdf36e0da28ea42e2}{get\+\_\+input\+\_\+variable\+\_\+2\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 2. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_ae7819dcf49bbecce9312dfd19bcc871a}{get\+\_\+input\+\_\+variable\+\_\+3\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 3. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_ae04e92b575f67b69aa0eddf1807f47cb}{get\+\_\+input\+\_\+variable\+\_\+4\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 4. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_afa5fe86bcbf61627db7565c09d6bba0c}{get\+\_\+input\+\_\+variable\+\_\+5\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 5. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a6feba078bd0244de638d5ac8e0fa43c3}{get\+\_\+input\+\_\+variable\+\_\+6\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 6. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a7ac25ad2df354406704cb78bd4eda186}{get\+\_\+input\+\_\+variable\+\_\+7\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7}} ()
+\begin{DoxyCompactList}\small\item\em Returns the value of input variable 7. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a8157b43695da46340bb4b1b2a0b21680}{set\+\_\+output\+\_\+variable\+\_\+0\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 0. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a0f270a4d072313450339ff310f6eb7b9}{set\+\_\+output\+\_\+variable\+\_\+1\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 1. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a4af0da99609ea30bd0443f2bd776bf45}{set\+\_\+output\+\_\+variable\+\_\+2\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 2. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_aee914d7b8c155331297790732bd0b8d4}{set\+\_\+output\+\_\+variable\+\_\+3\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 3. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a1bf49402eefaa10b1a1f984f8c876f2a}{set\+\_\+output\+\_\+variable\+\_\+4\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 4. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a3318b19815cbd4754106db9b272a6f53}{set\+\_\+output\+\_\+variable\+\_\+5\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 5. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a037328043d86f439e8818565954b54ec}{set\+\_\+output\+\_\+variable\+\_\+6\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 6. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a3a68d2dad7bdcc9950e25453e7b79834}{set\+\_\+output\+\_\+variable\+\_\+7\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7}} (int16\+\_\+t value)
+\begin{DoxyCompactList}\small\item\em Sets the value of output variable 7. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a32aaf7a90b03974552e205a3549acb5b}{esmacat\+\_\+slave\+\_\+product\+\_\+id}} = \mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8h_a0ffc5cec9ce3717f5c1e84027140b91f}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+A\+R\+D\+U\+I\+N\+O\+\_\+\+S\+H\+I\+E\+L\+D\+\_\+\+B\+Y\+\_\+\+E\+S\+M\+A\+C\+A\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a493e55c6eb76ff88407316d72f0c4456}{esmacat\+\_\+slave\+\_\+vendor\+\_\+id}} = \mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8h_acd88983f0008bef6ef08d5941afab266}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+A\+R\+D\+U\+I\+N\+O\+\_\+\+S\+H\+I\+E\+L\+D\+\_\+\+B\+Y\+\_\+\+E\+S\+M\+A\+C\+A\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_af1b197a2eef52b5c8c8b16d4b65e268c}{input\+\_\+variable\+\_\+0\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 0. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a291f109fdbc02015fc3087266a67be30}{input\+\_\+variable\+\_\+1\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 1. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_aeb261b2dfc068023197863609bf029b9}{input\+\_\+variable\+\_\+2\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 2. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a106af4945e2218f99812ec9315fbda3e}{input\+\_\+variable\+\_\+3\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 3. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a852f4fd3921c21a788478caeed7ca580}{input\+\_\+variable\+\_\+4\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 4. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a6417312c6d9ab9a9807b631e720beb2c}{input\+\_\+variable\+\_\+5\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 5. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_abe78fa94c01fc75160ba5bb26819a20c}{input\+\_\+variable\+\_\+6\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 6. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a0f2991ad774d8de9e87a5d51eccbe765}{input\+\_\+variable\+\_\+7\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7}}
+\begin{DoxyCompactList}\small\item\em Contains the value of input variable 7. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a1b2bf6aa63cd023990619c34288be3b2}{output\+\_\+variable\+\_\+0\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 0. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a8c70d4ddb020bd2e799db777c2e30c01}{output\+\_\+variable\+\_\+1\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 1. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a5fb6809f706994864ddd5162816c5339}{output\+\_\+variable\+\_\+2\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 2. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_aa158ccb1199f3a015173c09f7d87cc6f}{output\+\_\+variable\+\_\+3\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 3. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a3b4c44ea5a4e3a4f794b1a35f9c5dbfe}{output\+\_\+variable\+\_\+4\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 4. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a4021ea0503b8779ddf6a1d6a9dc9ee51}{output\+\_\+variable\+\_\+5\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 5. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_acd3e3eaaba89840ecec236c4e5917650}{output\+\_\+variable\+\_\+6\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 6. \end{DoxyCompactList}\item 
+int16\+\_\+t \mbox{\hyperlink{classesmacat__ethercat__arduino__shield__by__esmacat_a4ae5a2755841fcace09b1eba67593458}{output\+\_\+variable\+\_\+7\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7}}
+\begin{DoxyCompactList}\small\item\em Contains the value of output variable 7. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Generic class that allows for access of information from the Arduino Shield slave. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a2819696f0c5dcb2d6fe460f170898435}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a2819696f0c5dcb2d6fe460f170898435}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{esmacat\_ethercat\_arduino\_shield\_by\_esmacat()}{esmacat\_ethercat\_arduino\_shield\_by\_esmacat()}}
+{\footnotesize\ttfamily esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Constructor for the class that holds the initialization. 
+
+Intializes all the variables to 0 and sets the product code and Vendor ID for the slave 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a21011e445c4bf9a3739a6e653c1d8601}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a21011e445c4bf9a3739a6e653c1d8601}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!ecat\_data\_process@{ecat\_data\_process}}
+\index{ecat\_data\_process@{ecat\_data\_process}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{ecat\_data\_process()}{ecat\_data\_process()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::ecat\+\_\+data\+\_\+process (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+outputs,  }\item[{int}]{oloop,  }\item[{uint8\+\_\+t $\ast$}]{ec\+\_\+slave\+\_\+inputs,  }\item[{int}]{iloop }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Data exchange process that is specific to the Arduino Shield slave Queues the values of the received input into the input\+\_\+variable and queues all the values to be transmitted into output\+\_\+variable which is then sent out using ethercat. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ec\+\_\+slave\+\_\+outputs} & Pointer to the start of the outputs for slave in consideration \\
+\hline
+{\em oloop} & No. of output bytes \\
+\hline
+{\em ec\+\_\+slave\+\_\+inputs} & Pointer to the start of the inputs for slave in consideration \\
+\hline
+{\em iloop} & No. of input bytes \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \mbox{\hyperlink{classesmacat__slave_a612c0f9747ff9c49116265a87472ddd4}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a02dfa145e410280c6e29ee5f5d0d52d5}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a02dfa145e410280c6e29ee5f5d0d52d5}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_esmacat\_product\_id@{get\_esmacat\_product\_id}}
+\index{get\_esmacat\_product\_id@{get\_esmacat\_product\_id}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_product\_id()}{get\_esmacat\_product\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+esmacat\+\_\+product\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reads the product id of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Product ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a0808c617b567d0c96b5f479445d8ccca}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a419f66a6fddd70093a67966600050f04}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a419f66a6fddd70093a67966600050f04}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}}
+\index{get\_esmacat\_vendor\_id@{get\_esmacat\_vendor\_id}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_esmacat\_vendor\_id()}{get\_esmacat\_vendor\_id()}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+esmacat\+\_\+vendor\+\_\+id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reads the Vendor id of the slave. 
+
+\begin{DoxyReturn}{Returns}
+Vendor ID of the slave 
+\end{DoxyReturn}
+
+
+Implements \mbox{\hyperlink{classesmacat__slave_a5e4611cbf6327a6307c4d6c454792605}{esmacat\+\_\+slave}}.
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a913c112a59651ce82170a0cb1019f498}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a913c112a59651ce82170a0cb1019f498}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_0\_IN\_GEN\_INT0@{get\_input\_variable\_0\_IN\_GEN\_INT0}}
+\index{get\_input\_variable\_0\_IN\_GEN\_INT0@{get\_input\_variable\_0\_IN\_GEN\_INT0}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_0\_IN\_GEN\_INT0()}{get\_input\_variable\_0\_IN\_GEN\_INT0()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+0\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 0. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 0 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a2e1336d5cf5d25b9b625e713a7b5f963}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a2e1336d5cf5d25b9b625e713a7b5f963}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_1\_IN\_GEN\_INT1@{get\_input\_variable\_1\_IN\_GEN\_INT1}}
+\index{get\_input\_variable\_1\_IN\_GEN\_INT1@{get\_input\_variable\_1\_IN\_GEN\_INT1}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_1\_IN\_GEN\_INT1()}{get\_input\_variable\_1\_IN\_GEN\_INT1()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+1\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 1. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 1 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_ab1467ac154b9214fdf36e0da28ea42e2}\label{classesmacat__ethercat__arduino__shield__by__esmacat_ab1467ac154b9214fdf36e0da28ea42e2}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_2\_IN\_GEN\_INT2@{get\_input\_variable\_2\_IN\_GEN\_INT2}}
+\index{get\_input\_variable\_2\_IN\_GEN\_INT2@{get\_input\_variable\_2\_IN\_GEN\_INT2}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_2\_IN\_GEN\_INT2()}{get\_input\_variable\_2\_IN\_GEN\_INT2()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+2\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 2. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 2 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_ae7819dcf49bbecce9312dfd19bcc871a}\label{classesmacat__ethercat__arduino__shield__by__esmacat_ae7819dcf49bbecce9312dfd19bcc871a}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_3\_IN\_GEN\_INT3@{get\_input\_variable\_3\_IN\_GEN\_INT3}}
+\index{get\_input\_variable\_3\_IN\_GEN\_INT3@{get\_input\_variable\_3\_IN\_GEN\_INT3}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_3\_IN\_GEN\_INT3()}{get\_input\_variable\_3\_IN\_GEN\_INT3()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+3\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 3. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 3 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_ae04e92b575f67b69aa0eddf1807f47cb}\label{classesmacat__ethercat__arduino__shield__by__esmacat_ae04e92b575f67b69aa0eddf1807f47cb}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_4\_IN\_GEN\_INT4@{get\_input\_variable\_4\_IN\_GEN\_INT4}}
+\index{get\_input\_variable\_4\_IN\_GEN\_INT4@{get\_input\_variable\_4\_IN\_GEN\_INT4}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_4\_IN\_GEN\_INT4()}{get\_input\_variable\_4\_IN\_GEN\_INT4()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+4\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 4. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 4 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_afa5fe86bcbf61627db7565c09d6bba0c}\label{classesmacat__ethercat__arduino__shield__by__esmacat_afa5fe86bcbf61627db7565c09d6bba0c}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_5\_IN\_GEN\_INT5@{get\_input\_variable\_5\_IN\_GEN\_INT5}}
+\index{get\_input\_variable\_5\_IN\_GEN\_INT5@{get\_input\_variable\_5\_IN\_GEN\_INT5}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_5\_IN\_GEN\_INT5()}{get\_input\_variable\_5\_IN\_GEN\_INT5()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+5\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 5. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 5 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a6feba078bd0244de638d5ac8e0fa43c3}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a6feba078bd0244de638d5ac8e0fa43c3}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_6\_IN\_GEN\_INT6@{get\_input\_variable\_6\_IN\_GEN\_INT6}}
+\index{get\_input\_variable\_6\_IN\_GEN\_INT6@{get\_input\_variable\_6\_IN\_GEN\_INT6}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_6\_IN\_GEN\_INT6()}{get\_input\_variable\_6\_IN\_GEN\_INT6()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+6\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 6. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 6 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a7ac25ad2df354406704cb78bd4eda186}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a7ac25ad2df354406704cb78bd4eda186}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!get\_input\_variable\_7\_IN\_GEN\_INT7@{get\_input\_variable\_7\_IN\_GEN\_INT7}}
+\index{get\_input\_variable\_7\_IN\_GEN\_INT7@{get\_input\_variable\_7\_IN\_GEN\_INT7}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{get\_input\_variable\_7\_IN\_GEN\_INT7()}{get\_input\_variable\_7\_IN\_GEN\_INT7()}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::get\+\_\+input\+\_\+variable\+\_\+7\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Returns the value of input variable 7. 
+
+\begin{DoxyReturn}{Returns}
+Signed integer containing Variable 7 value 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a8157b43695da46340bb4b1b2a0b21680}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a8157b43695da46340bb4b1b2a0b21680}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_0\_OUT\_GEN\_INT0@{set\_output\_variable\_0\_OUT\_GEN\_INT0}}
+\index{set\_output\_variable\_0\_OUT\_GEN\_INT0@{set\_output\_variable\_0\_OUT\_GEN\_INT0}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_0\_OUT\_GEN\_INT0()}{set\_output\_variable\_0\_OUT\_GEN\_INT0()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+0\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 0. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a0f270a4d072313450339ff310f6eb7b9}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a0f270a4d072313450339ff310f6eb7b9}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_1\_OUT\_GEN\_INT1@{set\_output\_variable\_1\_OUT\_GEN\_INT1}}
+\index{set\_output\_variable\_1\_OUT\_GEN\_INT1@{set\_output\_variable\_1\_OUT\_GEN\_INT1}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_1\_OUT\_GEN\_INT1()}{set\_output\_variable\_1\_OUT\_GEN\_INT1()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+1\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 1. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a4af0da99609ea30bd0443f2bd776bf45}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a4af0da99609ea30bd0443f2bd776bf45}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_2\_OUT\_GEN\_INT2@{set\_output\_variable\_2\_OUT\_GEN\_INT2}}
+\index{set\_output\_variable\_2\_OUT\_GEN\_INT2@{set\_output\_variable\_2\_OUT\_GEN\_INT2}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_2\_OUT\_GEN\_INT2()}{set\_output\_variable\_2\_OUT\_GEN\_INT2()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+2\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 2. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_aee914d7b8c155331297790732bd0b8d4}\label{classesmacat__ethercat__arduino__shield__by__esmacat_aee914d7b8c155331297790732bd0b8d4}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_3\_OUT\_GEN\_INT3@{set\_output\_variable\_3\_OUT\_GEN\_INT3}}
+\index{set\_output\_variable\_3\_OUT\_GEN\_INT3@{set\_output\_variable\_3\_OUT\_GEN\_INT3}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_3\_OUT\_GEN\_INT3()}{set\_output\_variable\_3\_OUT\_GEN\_INT3()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+3\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 3. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a1bf49402eefaa10b1a1f984f8c876f2a}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a1bf49402eefaa10b1a1f984f8c876f2a}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_4\_OUT\_GEN\_INT4@{set\_output\_variable\_4\_OUT\_GEN\_INT4}}
+\index{set\_output\_variable\_4\_OUT\_GEN\_INT4@{set\_output\_variable\_4\_OUT\_GEN\_INT4}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_4\_OUT\_GEN\_INT4()}{set\_output\_variable\_4\_OUT\_GEN\_INT4()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+4\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 4. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a3318b19815cbd4754106db9b272a6f53}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a3318b19815cbd4754106db9b272a6f53}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_5\_OUT\_GEN\_INT5@{set\_output\_variable\_5\_OUT\_GEN\_INT5}}
+\index{set\_output\_variable\_5\_OUT\_GEN\_INT5@{set\_output\_variable\_5\_OUT\_GEN\_INT5}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_5\_OUT\_GEN\_INT5()}{set\_output\_variable\_5\_OUT\_GEN\_INT5()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+5\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 5. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a037328043d86f439e8818565954b54ec}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a037328043d86f439e8818565954b54ec}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_6\_OUT\_GEN\_INT6@{set\_output\_variable\_6\_OUT\_GEN\_INT6}}
+\index{set\_output\_variable\_6\_OUT\_GEN\_INT6@{set\_output\_variable\_6\_OUT\_GEN\_INT6}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_6\_OUT\_GEN\_INT6()}{set\_output\_variable\_6\_OUT\_GEN\_INT6()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+6\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 6. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a3a68d2dad7bdcc9950e25453e7b79834}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a3a68d2dad7bdcc9950e25453e7b79834}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!set\_output\_variable\_7\_OUT\_GEN\_INT7@{set\_output\_variable\_7\_OUT\_GEN\_INT7}}
+\index{set\_output\_variable\_7\_OUT\_GEN\_INT7@{set\_output\_variable\_7\_OUT\_GEN\_INT7}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{set\_output\_variable\_7\_OUT\_GEN\_INT7()}{set\_output\_variable\_7\_OUT\_GEN\_INT7()}}
+{\footnotesize\ttfamily void esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::set\+\_\+output\+\_\+variable\+\_\+7\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7 (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{value }\end{DoxyParamCaption})}
+
+
+
+Sets the value of output variable 7. 
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a32aaf7a90b03974552e205a3549acb5b}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a32aaf7a90b03974552e205a3549acb5b}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}}
+\index{esmacat\_slave\_product\_id@{esmacat\_slave\_product\_id}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_product\_id}{esmacat\_slave\_product\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::esmacat\+\_\+slave\+\_\+product\+\_\+id = \mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8h_a0ffc5cec9ce3717f5c1e84027140b91f}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+A\+R\+D\+U\+I\+N\+O\+\_\+\+S\+H\+I\+E\+L\+D\+\_\+\+B\+Y\+\_\+\+E\+S\+M\+A\+C\+A\+T\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}}
+
+Contains a product code of the Arduino Shield slave \mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a493e55c6eb76ff88407316d72f0c4456}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a493e55c6eb76ff88407316d72f0c4456}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}}
+\index{esmacat\_slave\_vendor\_id@{esmacat\_slave\_vendor\_id}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{esmacat\_slave\_vendor\_id}{esmacat\_slave\_vendor\_id}}
+{\footnotesize\ttfamily uint32\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::esmacat\+\_\+slave\+\_\+vendor\+\_\+id = \mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8h_acd88983f0008bef6ef08d5941afab266}{E\+S\+M\+A\+C\+A\+T\+\_\+\+E\+T\+H\+E\+R\+C\+A\+T\+\_\+\+A\+R\+D\+U\+I\+N\+O\+\_\+\+S\+H\+I\+E\+L\+D\+\_\+\+B\+Y\+\_\+\+E\+S\+M\+A\+C\+A\+T\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}}
+
+Contains a Vendor ID of the Arduino Shield slave \mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_af1b197a2eef52b5c8c8b16d4b65e268c}\label{classesmacat__ethercat__arduino__shield__by__esmacat_af1b197a2eef52b5c8c8b16d4b65e268c}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_0\_IN\_GEN\_INT0@{input\_variable\_0\_IN\_GEN\_INT0}}
+\index{input\_variable\_0\_IN\_GEN\_INT0@{input\_variable\_0\_IN\_GEN\_INT0}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_0\_IN\_GEN\_INT0}{input\_variable\_0\_IN\_GEN\_INT0}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+0\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 0. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a291f109fdbc02015fc3087266a67be30}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a291f109fdbc02015fc3087266a67be30}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_1\_IN\_GEN\_INT1@{input\_variable\_1\_IN\_GEN\_INT1}}
+\index{input\_variable\_1\_IN\_GEN\_INT1@{input\_variable\_1\_IN\_GEN\_INT1}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_1\_IN\_GEN\_INT1}{input\_variable\_1\_IN\_GEN\_INT1}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+1\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 1. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_aeb261b2dfc068023197863609bf029b9}\label{classesmacat__ethercat__arduino__shield__by__esmacat_aeb261b2dfc068023197863609bf029b9}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_2\_IN\_GEN\_INT2@{input\_variable\_2\_IN\_GEN\_INT2}}
+\index{input\_variable\_2\_IN\_GEN\_INT2@{input\_variable\_2\_IN\_GEN\_INT2}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_2\_IN\_GEN\_INT2}{input\_variable\_2\_IN\_GEN\_INT2}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+2\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 2. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a106af4945e2218f99812ec9315fbda3e}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a106af4945e2218f99812ec9315fbda3e}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_3\_IN\_GEN\_INT3@{input\_variable\_3\_IN\_GEN\_INT3}}
+\index{input\_variable\_3\_IN\_GEN\_INT3@{input\_variable\_3\_IN\_GEN\_INT3}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_3\_IN\_GEN\_INT3}{input\_variable\_3\_IN\_GEN\_INT3}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+3\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 3. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a852f4fd3921c21a788478caeed7ca580}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a852f4fd3921c21a788478caeed7ca580}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_4\_IN\_GEN\_INT4@{input\_variable\_4\_IN\_GEN\_INT4}}
+\index{input\_variable\_4\_IN\_GEN\_INT4@{input\_variable\_4\_IN\_GEN\_INT4}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_4\_IN\_GEN\_INT4}{input\_variable\_4\_IN\_GEN\_INT4}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+4\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 4. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a6417312c6d9ab9a9807b631e720beb2c}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a6417312c6d9ab9a9807b631e720beb2c}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_5\_IN\_GEN\_INT5@{input\_variable\_5\_IN\_GEN\_INT5}}
+\index{input\_variable\_5\_IN\_GEN\_INT5@{input\_variable\_5\_IN\_GEN\_INT5}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_5\_IN\_GEN\_INT5}{input\_variable\_5\_IN\_GEN\_INT5}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+5\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 5. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_abe78fa94c01fc75160ba5bb26819a20c}\label{classesmacat__ethercat__arduino__shield__by__esmacat_abe78fa94c01fc75160ba5bb26819a20c}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_6\_IN\_GEN\_INT6@{input\_variable\_6\_IN\_GEN\_INT6}}
+\index{input\_variable\_6\_IN\_GEN\_INT6@{input\_variable\_6\_IN\_GEN\_INT6}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_6\_IN\_GEN\_INT6}{input\_variable\_6\_IN\_GEN\_INT6}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+6\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 6. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a0f2991ad774d8de9e87a5d51eccbe765}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a0f2991ad774d8de9e87a5d51eccbe765}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!input\_variable\_7\_IN\_GEN\_INT7@{input\_variable\_7\_IN\_GEN\_INT7}}
+\index{input\_variable\_7\_IN\_GEN\_INT7@{input\_variable\_7\_IN\_GEN\_INT7}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{input\_variable\_7\_IN\_GEN\_INT7}{input\_variable\_7\_IN\_GEN\_INT7}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::input\+\_\+variable\+\_\+7\+\_\+\+I\+N\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of input variable 7. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a1b2bf6aa63cd023990619c34288be3b2}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a1b2bf6aa63cd023990619c34288be3b2}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_0\_OUT\_GEN\_INT0@{output\_variable\_0\_OUT\_GEN\_INT0}}
+\index{output\_variable\_0\_OUT\_GEN\_INT0@{output\_variable\_0\_OUT\_GEN\_INT0}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_0\_OUT\_GEN\_INT0}{output\_variable\_0\_OUT\_GEN\_INT0}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+0\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T0\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 0. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a8c70d4ddb020bd2e799db777c2e30c01}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a8c70d4ddb020bd2e799db777c2e30c01}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_1\_OUT\_GEN\_INT1@{output\_variable\_1\_OUT\_GEN\_INT1}}
+\index{output\_variable\_1\_OUT\_GEN\_INT1@{output\_variable\_1\_OUT\_GEN\_INT1}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_1\_OUT\_GEN\_INT1}{output\_variable\_1\_OUT\_GEN\_INT1}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+1\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T1\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 1. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a5fb6809f706994864ddd5162816c5339}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a5fb6809f706994864ddd5162816c5339}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_2\_OUT\_GEN\_INT2@{output\_variable\_2\_OUT\_GEN\_INT2}}
+\index{output\_variable\_2\_OUT\_GEN\_INT2@{output\_variable\_2\_OUT\_GEN\_INT2}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_2\_OUT\_GEN\_INT2}{output\_variable\_2\_OUT\_GEN\_INT2}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+2\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T2\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 2. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_aa158ccb1199f3a015173c09f7d87cc6f}\label{classesmacat__ethercat__arduino__shield__by__esmacat_aa158ccb1199f3a015173c09f7d87cc6f}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_3\_OUT\_GEN\_INT3@{output\_variable\_3\_OUT\_GEN\_INT3}}
+\index{output\_variable\_3\_OUT\_GEN\_INT3@{output\_variable\_3\_OUT\_GEN\_INT3}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_3\_OUT\_GEN\_INT3}{output\_variable\_3\_OUT\_GEN\_INT3}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+3\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T3\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 3. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a3b4c44ea5a4e3a4f794b1a35f9c5dbfe}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a3b4c44ea5a4e3a4f794b1a35f9c5dbfe}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_4\_OUT\_GEN\_INT4@{output\_variable\_4\_OUT\_GEN\_INT4}}
+\index{output\_variable\_4\_OUT\_GEN\_INT4@{output\_variable\_4\_OUT\_GEN\_INT4}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_4\_OUT\_GEN\_INT4}{output\_variable\_4\_OUT\_GEN\_INT4}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+4\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T4\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 4. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a4021ea0503b8779ddf6a1d6a9dc9ee51}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a4021ea0503b8779ddf6a1d6a9dc9ee51}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_5\_OUT\_GEN\_INT5@{output\_variable\_5\_OUT\_GEN\_INT5}}
+\index{output\_variable\_5\_OUT\_GEN\_INT5@{output\_variable\_5\_OUT\_GEN\_INT5}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_5\_OUT\_GEN\_INT5}{output\_variable\_5\_OUT\_GEN\_INT5}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+5\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T5\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 5. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_acd3e3eaaba89840ecec236c4e5917650}\label{classesmacat__ethercat__arduino__shield__by__esmacat_acd3e3eaaba89840ecec236c4e5917650}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_6\_OUT\_GEN\_INT6@{output\_variable\_6\_OUT\_GEN\_INT6}}
+\index{output\_variable\_6\_OUT\_GEN\_INT6@{output\_variable\_6\_OUT\_GEN\_INT6}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_6\_OUT\_GEN\_INT6}{output\_variable\_6\_OUT\_GEN\_INT6}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+6\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T6\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 6. 
+
+\mbox{\Hypertarget{classesmacat__ethercat__arduino__shield__by__esmacat_a4ae5a2755841fcace09b1eba67593458}\label{classesmacat__ethercat__arduino__shield__by__esmacat_a4ae5a2755841fcace09b1eba67593458}} 
+\index{esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}!output\_variable\_7\_OUT\_GEN\_INT7@{output\_variable\_7\_OUT\_GEN\_INT7}}
+\index{output\_variable\_7\_OUT\_GEN\_INT7@{output\_variable\_7\_OUT\_GEN\_INT7}!esmacat\_ethercat\_arduino\_shield\_by\_esmacat@{esmacat\_ethercat\_arduino\_shield\_by\_esmacat}}
+\doxysubsubsection{\texorpdfstring{output\_variable\_7\_OUT\_GEN\_INT7}{output\_variable\_7\_OUT\_GEN\_INT7}}
+{\footnotesize\ttfamily int16\+\_\+t esmacat\+\_\+ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat\+::output\+\_\+variable\+\_\+7\+\_\+\+O\+U\+T\+\_\+\+G\+E\+N\+\_\+\+I\+N\+T7\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Contains the value of output variable 7. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8h}{ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat.\+h}}\item 
+esmacat\+\_\+slave\+\_\+drivers/drivers/\mbox{\hyperlink{ethercat__arduino__shield__by__esmacat_8cpp}{ethercat\+\_\+arduino\+\_\+shield\+\_\+by\+\_\+esmacat.\+cpp}}\end{DoxyCompactItemize}

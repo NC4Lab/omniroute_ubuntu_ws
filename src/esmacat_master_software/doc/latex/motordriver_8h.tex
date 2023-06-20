@@ -1,0 +1,124 @@
+\hypertarget{motordriver_8h}{}\doxysection{esmacat\+\_\+slave\+\_\+drivers/drivers/motordriver.h File Reference}
+\label{motordriver_8h}\index{esmacat\_slave\_drivers/drivers/motordriver.h@{esmacat\_slave\_drivers/drivers/motordriver.h}}
+
+
+Contains all the declarations required for the Esmacat Motor Driver slave.  
+
+
+{\ttfamily \#include \char`\"{}base\+\_\+module.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}error\+\_\+list.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}master.\+h\char`\"{}}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classesmacat__motor__driver}{esmacat\+\_\+motor\+\_\+driver}}
+\begin{DoxyCompactList}\small\item\em Class containing all the variables and functions used by the Esmacat Motor Driver slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{motordriver_8h_a905b6b03fb449a350a3d63ed8cf06305}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID}}~0x0062696f
+\begin{DoxyCompactList}\small\item\em Unique vendor ID assigned by the Ether\+C\+AT Technology Group to Harmonic Bionics Inc. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_a0fa71a26056accb023e19350e5a8de0b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID}}~0x00020101
+\begin{DoxyCompactList}\small\item\em Unique product code for Esmacat Loadcell Interface slave required for Ether\+C\+AT. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_a687038773ab34b47b587dbee1d68c23b}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT}}~0
+\begin{DoxyCompactList}\small\item\em Minimum value for the P\+WM output. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_ac8de0248ebc61f8b0b1e53d5ae26ccf6}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT}}~10000
+\begin{DoxyCompactList}\small\item\em Maximum value for the P\+WM output. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_a1a6015cf25b6f16b26ddd20bd57c5be8}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE}}~1
+\begin{DoxyCompactList}\small\item\em Maximum E\+S\+C\+ON current setpoint value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_aa00aff133082c08946c0244499b4ad0a}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE}}~-\/1
+\begin{DoxyCompactList}\small\item\em Minimum E\+S\+C\+ON current setpoint value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_a0a74872206b8302b47c03ae30ecfb7ba}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+X\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}~2
+\begin{DoxyCompactList}\small\item\em Maximum number of external analog input sources for the slave. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{motordriver_8h_a974181382aa374bc356b71597ec3a832}{E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT}}~2
+\begin{DoxyCompactList}\small\item\em Maximum number of E\+S\+C\+ON analog input sources for the slave. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains all the declarations required for the Esmacat Motor Driver slave. 
+
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{motordriver_8h_ac8de0248ebc61f8b0b1e53d5ae26ccf6}\label{motordriver_8h_ac8de0248ebc61f8b0b1e53d5ae26ccf6}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_MAX\_PWM\_OUTPUT@{ESMACAT\_MD\_MAX\_PWM\_OUTPUT}}
+\index{ESMACAT\_MD\_MAX\_PWM\_OUTPUT@{ESMACAT\_MD\_MAX\_PWM\_OUTPUT}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_MAX\_PWM\_OUTPUT}{ESMACAT\_MD\_MAX\_PWM\_OUTPUT}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT~10000}
+
+
+
+Maximum value for the P\+WM output. 
+
+\mbox{\Hypertarget{motordriver_8h_a1a6015cf25b6f16b26ddd20bd57c5be8}\label{motordriver_8h_a1a6015cf25b6f16b26ddd20bd57c5be8}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_MAX\_SET\_VALUE@{ESMACAT\_MD\_MAX\_SET\_VALUE}}
+\index{ESMACAT\_MD\_MAX\_SET\_VALUE@{ESMACAT\_MD\_MAX\_SET\_VALUE}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_MAX\_SET\_VALUE}{ESMACAT\_MD\_MAX\_SET\_VALUE}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+A\+X\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE~1}
+
+
+
+Maximum E\+S\+C\+ON current setpoint value. 
+
+\mbox{\Hypertarget{motordriver_8h_a687038773ab34b47b587dbee1d68c23b}\label{motordriver_8h_a687038773ab34b47b587dbee1d68c23b}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_MIN\_PWM\_OUTPUT@{ESMACAT\_MD\_MIN\_PWM\_OUTPUT}}
+\index{ESMACAT\_MD\_MIN\_PWM\_OUTPUT@{ESMACAT\_MD\_MIN\_PWM\_OUTPUT}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_MIN\_PWM\_OUTPUT}{ESMACAT\_MD\_MIN\_PWM\_OUTPUT}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+P\+W\+M\+\_\+\+O\+U\+T\+P\+UT~0}
+
+
+
+Minimum value for the P\+WM output. 
+
+\mbox{\Hypertarget{motordriver_8h_aa00aff133082c08946c0244499b4ad0a}\label{motordriver_8h_aa00aff133082c08946c0244499b4ad0a}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_MIN\_SET\_VALUE@{ESMACAT\_MD\_MIN\_SET\_VALUE}}
+\index{ESMACAT\_MD\_MIN\_SET\_VALUE@{ESMACAT\_MD\_MIN\_SET\_VALUE}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_MIN\_SET\_VALUE}{ESMACAT\_MD\_MIN\_SET\_VALUE}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+M\+I\+N\+\_\+\+S\+E\+T\+\_\+\+V\+A\+L\+UE~-\/1}
+
+
+
+Minimum E\+S\+C\+ON current setpoint value. 
+
+\mbox{\Hypertarget{motordriver_8h_a974181382aa374bc356b71597ec3a832}\label{motordriver_8h_a974181382aa374bc356b71597ec3a832}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT@{ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT}}
+\index{ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT@{ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT}{ESMACAT\_MD\_NUMBER\_OF\_ESCON\_ANALOG\_INPUT}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+S\+C\+O\+N\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT~2}
+
+
+
+Maximum number of E\+S\+C\+ON analog input sources for the slave. 
+
+\mbox{\Hypertarget{motordriver_8h_a0a74872206b8302b47c03ae30ecfb7ba}\label{motordriver_8h_a0a74872206b8302b47c03ae30ecfb7ba}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT@{ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT}}
+\index{ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT@{ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT}{ESMACAT\_MD\_NUMBER\_OF\_EXT\_ANALOG\_INPUT}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+D\+\_\+\+N\+U\+M\+B\+E\+R\+\_\+\+O\+F\+\_\+\+E\+X\+T\+\_\+\+A\+N\+A\+L\+O\+G\+\_\+\+I\+N\+P\+UT~2}
+
+
+
+Maximum number of external analog input sources for the slave. 
+
+\mbox{\Hypertarget{motordriver_8h_a0fa71a26056accb023e19350e5a8de0b}\label{motordriver_8h_a0fa71a26056accb023e19350e5a8de0b}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID@{ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID}}
+\index{ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID@{ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID}{ESMACAT\_MOTOR\_DRIVER\_PRODUCT\_ID}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+P\+R\+O\+D\+U\+C\+T\+\_\+\+ID~0x00020101}
+
+
+
+Unique product code for Esmacat Loadcell Interface slave required for Ether\+C\+AT. 
+
+\mbox{\Hypertarget{motordriver_8h_a905b6b03fb449a350a3d63ed8cf06305}\label{motordriver_8h_a905b6b03fb449a350a3d63ed8cf06305}} 
+\index{motordriver.h@{motordriver.h}!ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID@{ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID}}
+\index{ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID@{ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID}!motordriver.h@{motordriver.h}}
+\doxysubsubsection{\texorpdfstring{ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID}{ESMACAT\_MOTOR\_DRIVER\_VENDOR\_ID}}
+{\footnotesize\ttfamily \#define E\+S\+M\+A\+C\+A\+T\+\_\+\+M\+O\+T\+O\+R\+\_\+\+D\+R\+I\+V\+E\+R\+\_\+\+V\+E\+N\+D\+O\+R\+\_\+\+ID~0x0062696f}
+
+
+
+Unique vendor ID assigned by the Ether\+C\+AT Technology Group to Harmonic Bionics Inc. 
+
