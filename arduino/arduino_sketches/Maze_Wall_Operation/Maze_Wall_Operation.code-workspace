@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../libraries/Cypress_Com"
+		},
+		{
+			"path": "../../libraries/Maze_Debug"
+		},
+		{
+			"path": "../../libraries/Safe_Vector"
+		},
+		{
+			"path": "../../libraries/Wall_Operation"
+		},
+		{
+			"path": "../../libraries/Esmacatshield"
+		}
+	],
+	"settings": {
+		"editor.foldingStrategy": "auto",
+		"files.associations": {
+			"utility": "cpp",
+			"tuple": "cpp"
+		}
+	}
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Safe_Vector",
+  "version": "1.0.0",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github/Safe_Vector"
+  },
+  "authors":
+  [
+    {
+      "name": "Adam Lester"
+    }
+  ],
+  "frameworks": "*",
+  "platforms": "*"
+}
