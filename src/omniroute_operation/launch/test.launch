@@ -10,7 +10,7 @@
     <param name="maze_ard0_ease_slave_index" type="int" value="0" />
 
     <!-- Esmacat Node -->
-    <node name = "Esmacat_application_node" pkg = "nc4_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
+    <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
     
     <!-- Wall operation test -->
     <node name = "Wall_test_node" pkg = "omniroute_operation" type = "wall_controller.py" output = "screen"/>
