@@ -26,7 +26,7 @@ extern bool DB_VERBOSE = 1; //<set to control debugging behavior [0:silent, 1:ve
 
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-uint8_t nCham = 1;	   ///< number of chambers being used [1-49]
+uint8_t nCham = 3;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 180; ///< PWM duty for all walls [0-255]
 
 // Initialize struct and class instances
@@ -93,44 +93,50 @@ void setup()
 	//resp = W_OPR.initializeWalls();
 
 	//while(true); // TEMP
+	//TEMP
+	while(true){
+		uint8_t r_bit_out;
+		uint8_t wall = 1;
+		uint8_t resp = C_COM.ioReadPin(W_OPR.C[0].addr, W_OPR.wms.ioDown[0][wall], W_OPR.wms.ioDown[1][wall], r_bit_out);
+		Serial.println(r_bit_out);
+		delay(100);
+	}
 
-	// Test input pins
-	/*uint8_t a_wall[2] = { 5, 7 };
-	Serial.println("Start IO Test");
-	resp = W_OPR.testWallIO(0, a_wall, 2);
-	Serial.println("!!Failed IO Test!!");*/
+	// // Test input pins
+	// uint8_t a_wall[1] = { 1 };
+	// resp = W_OPR.testWallIO(0, a_wall, 1);
 
-	// Test PWM output
+	// // Test PWM output
 	// uint8_t a_wall[1] = { 1 };
 	// W_OPR.testWallPWM(0, a_wall, 1);
 	// while (true);
 
-	// Test wall opperation
-	// uint8_t a_wall[2] = { 0, 4 };
+	// // Test wall opperation
+	// uint8_t a_wall[2] = { 1, 3 };
 	// W_OPR.testWallOperation(0, a_wall, 2);
 	// while (true);//TEMP
 
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
-	// Move chambers
-	bool do_cham_arr[3] = { true, false, false };
-	uint32_t dt_timout = 1500;
-	uint8_t c1 = 0;
-	uint8_t a_c1_wall[1] = { 3 };
-	uint8_t c2 = 1;
-	uint8_t a_c2_wall[1] = { 5 };
-	uint8_t c3 = 2;
-	uint8_t a_c3_wall[1] = { 5 };
-	if (do_cham_arr[0]) { W_OPR.setWallCmdManual(c1, 1, a_c1_wall, 1); }
-	if (do_cham_arr[1]) { W_OPR.setWallCmdManual(c2, 1, a_c2_wall, 1); }
-	if (do_cham_arr[2]) { W_OPR.setWallCmdManual(c3, 1, a_c3_wall, 1); }
-	resp = W_OPR.runWalls(dt_timout); // move walls up
-	return;
-	if (do_cham_arr[0]) { W_OPR.setWallCmdManual(c1, 0, a_c1_wall, 1); }
-	if (do_cham_arr[1]) { W_OPR.setWallCmdManual(c2, 0, a_c2_wall, 1); }
-	if (do_cham_arr[2]) { W_OPR.setWallCmdManual(c3, 0, a_c3_wall, 1); }
-	resp = W_OPR.runWalls(dt_timout); // move walls down
+	// // Move chambers
+	// bool do_cham_arr[3] = { true, true, true };
+	// uint32_t dt_timout = 1500;
+	// uint8_t c1 = 0;
+	// uint8_t a_c1_wall[1] = { 1 };
+	// uint8_t c2 = 1;
+	// uint8_t a_c2_wall[1] = { 5 };
+	// uint8_t c3 = 2;
+	// uint8_t a_c3_wall[1] = { 5 };
+	// if (do_cham_arr[0]) { W_OPR.setWallCmdManual(c1, 1, a_c1_wall, 1); }
+	// if (do_cham_arr[1]) { W_OPR.setWallCmdManual(c2, 1, a_c2_wall, 1); }
+	// if (do_cham_arr[2]) { W_OPR.setWallCmdManual(c3, 1, a_c3_wall, 1); }
+	// resp = W_OPR.runWalls(dt_timout); // move walls up
+	// //return;
+	// if (do_cham_arr[0]) { W_OPR.setWallCmdManual(c1, 0, a_c1_wall, 1); }
+	// if (do_cham_arr[1]) { W_OPR.setWallCmdManual(c2, 0, a_c2_wall, 1); }
+	// if (do_cham_arr[2]) { W_OPR.setWallCmdManual(c3, 0, a_c3_wall, 1); }
+	// resp = W_OPR.runWalls(dt_timout); // move walls down
 }
 
 //=============== LOOP ==================

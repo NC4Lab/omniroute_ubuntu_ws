@@ -1,0 +1,21 @@
+{
+    "name": "Esmacatshield",
+    "keywords": "Esmacatshield, start_spi, get_ecat_registers, write_reg_value",
+    "description": "Arduino library to interface EASE board",
+    "authors":
+    [
+      {
+        "name": "Harmonic Bionics, Inc.",
+        "email": "info@esmacat.com",
+        "maintainer": true
+      }
+    ],
+    "repository":
+    {
+      "type": "git",
+      "url": "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
+    },
+    "version":"0.3.0",
+    "frameworks": "arduino",
+    "platforms": "*"
+  }

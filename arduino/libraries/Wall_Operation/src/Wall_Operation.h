@@ -13,9 +13,9 @@
 
 //============= INCLUDE ================
 #include "Arduino.h"
+#include "Esmacatshield.h"
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
-#include "Esmacatshield.h"
 
 /// <summary>
 /// This class handles the actual opperation of the maze walls.
@@ -58,8 +58,8 @@ public:
 		uint8_t port[6]; ///<stores port numbers
 		uint8_t pin[6][8]; ///<stores pin numbers
 		uint8_t wall[6][8]; ///<stores wall numbers
-		uint8_t bitMask[6]; ///<stores registry mask byte for each used port
-		uint8_t bitMaskLong[6]; ///<stores registry mask byte for all ports in registry
+		uint8_t byteMask[6]; ///<stores registry mask byte for each used port
+		uint8_t byteMaskLong[6]; ///<stores registry mask byte for all ports in registry
 		uint8_t nPorts; ///<stores number of ports in list
 		uint8_t nPins[6]; ///<stores number of pins in list
 	};
@@ -73,26 +73,25 @@ public:
 	{
 		uint8_t num = 0; ///<chamber number
 		uint8_t addr = 0; ///<chamber I2C address 
-		uint8_t bitWallMoveFlag = 0; ///<bitwise variable, current wall active flag [0:inactive, 1:active]
-		uint8_t bitWallPosition = 0; ///<bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallErrorFlag = 0; ///<bitwise variable, flag move errors for a given wall
-		uint8_t updateFlag = 0; ///<flag that wall state should be updated
+		uint8_t byteWallActive = 0; ///<bitwise variable, current wall active flag [0:inactive, 1:active]
+		uint8_t byteWallPosition = 0; ///<bitwise variable, current wall position [0:down, 1:up]
+		uint8_t byteUpdateFlag = 0; ///<flag that wall state should be updated
+		uint8_t byteErrorFlag = 0; ///<flag move errors for a given wall
 		uint8_t byteOutRegLast[6]; ///<stores output registry values
 		PinMapStruct pmsDynPWM; ///<reusable dynamic instance for active PWM
 		PinMapStruct pmsDynIO; ///<reusable dynamic instance for active IO
 	};
 	ChamberTrackStruct C[9]; ///<initialize with max number of chambers for 3x3
-	union Union { ///<union for storing registry or ethercat data shareable accross data types
+	union Union_Reg { ///<union for storing registry data shareable accross data types
 		byte b[16];	///<(byte) 1 byte
 		uint16_t i16[8];///<(uint16_t) 2 byte
 		uint32_t i32[4];///<(uint32_t) 4 byte
 		uint64_t i64[2];///<(uint64_t) 8 byte
 	};
-	Union U;
+	Union_Reg U;
 private:
-	Maze_Debug _DB; ///<local instance of Maze_Debug class
+	Maze_Debug _DB;
 	Cypress_Com _C_COM; ///<local instance of Cypress_Com class
-	Esmacatshield ESlave; //<instance of Esmacatshield class
 
 	// -----------METHODS-----------------
 public:	Wall_Operation(uint8_t);
@@ -104,10 +103,10 @@ private: void _sortArr(uint8_t[], size_t s, uint8_t[] = nullptr);
 public:	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 public:	uint8_t setupWallIO();
 public:	uint8_t setupWallPWM(uint8_t);
-public:	uint8_t initializeWalls();
+public:	uint8_t resetAllWalls();
 private: void _resetPMS(PinMapStruct&);
 private: void _updateDynamicPMS(PinMapStruct, PinMapStruct&, uint8_t);
-public:	uint8_t getWallCmdEthercat();
+public:	uint8_t getWallCmdSerial();
 public:	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 public:	uint8_t runWalls(uint32_t = 1500);
 public:	uint8_t forceStopWalls();
