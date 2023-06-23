@@ -1,8 +1,8 @@
-//######################################
+// ######################################
 
 //======== Wall_Operation.cpp ==========
 
-//######################################
+// ######################################
 
 /// <file>
 /// Used for the Wall_Operation class
@@ -17,40 +17,43 @@
 /// Constructor
 /// </summary>
 /// <param name="_nCham">Spcify number of chambers to track [1-49]</param>
-Wall_Operation::Wall_Operation(uint8_t _nCham) {
-	nCham = _nCham; //store number of chambers
+Wall_Operation::Wall_Operation(uint8_t _nCham)
+{
+	nCham = _nCham;								// store number of chambers
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++) // update chamber struct entries
 	{
 		C[ch_i].num = ch_i;
 		C[ch_i].addr = _C_COM.ADDR_LIST[ch_i];
 	}
 	// Create WallMapStruct lists for each function
-	_makePMS(pmsAllIO, wms.ioDown[0], wms.ioDown[1], wms.ioUp[0], wms.ioUp[1]); //all io pins
-	_makePMS(pmsAllPWM, wms.pwmDown[0], wms.pwmDown[1], wms.pwmUp[0], wms.pwmUp[1]); //all pwm pins
-	_makePMS(pmsUpIO, wms.ioUp[0], wms.ioUp[1]); //io up pins
-	_makePMS(pmsDownIO, wms.ioDown[0], wms.ioDown[1]); //io down pins
-	_makePMS(pmsUpPWM, wms.pwmUp[0], wms.pwmUp[1]); //pwm up pins
-	_makePMS(pmsDownPWM, wms.pwmDown[0], wms.pwmDown[1]); //pwm down pins
+	_makePMS(pmsAllIO, wms.ioDown[0], wms.ioDown[1], wms.ioUp[0], wms.ioUp[1]);		 // all io pins
+	_makePMS(pmsAllPWM, wms.pwmDown[0], wms.pwmDown[1], wms.pwmUp[0], wms.pwmUp[1]); // all pwm pins
+	_makePMS(pmsUpIO, wms.ioUp[0], wms.ioUp[1]);									 // io up pins
+	_makePMS(pmsDownIO, wms.ioDown[0], wms.ioDown[1]);								 // io down pins
+	_makePMS(pmsUpPWM, wms.pwmUp[0], wms.pwmUp[1]);									 // pwm up pins
+	_makePMS(pmsDownPWM, wms.pwmDown[0], wms.pwmDown[1]);							 // pwm down pins
 	// Update pin function map [0,1,2,3] [io down, io up, pwm down, pwm up]
-	for (size_t i = 0; i < 8; i++) { //loop wall map entries
-		wms.funMap[wms.ioDown[0][i]][wms.ioDown[1][i]] = 1; //label io down
-		wms.funMap[wms.ioUp[0][i]][wms.ioUp[1][i]] = 2; //label io up
-		wms.funMap[wms.pwmDown[0][i]][wms.pwmDown[1][i]] = 3; //label pwm down
-		wms.funMap[wms.pwmUp[0][i]][wms.pwmUp[1][i]] = 4; //label pwm up
+	for (size_t i = 0; i < 8; i++)
+	{														  // loop wall map entries
+		wms.funMap[wms.ioDown[0][i]][wms.ioDown[1][i]] = 1;	  // label io down
+		wms.funMap[wms.ioUp[0][i]][wms.ioUp[1][i]] = 2;		  // label io up
+		wms.funMap[wms.pwmDown[0][i]][wms.pwmDown[1][i]] = 3; // label pwm down
+		wms.funMap[wms.pwmUp[0][i]][wms.pwmUp[1][i]] = 4;	  // label pwm up
 	}
 }
 
 //++++++++++++ Setup Methods +++++++++++++
 
 /// <summary>
-/// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information 
+/// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information
 /// related to pin/port and wall mapping for specified functions (i.e., pwm, io, up, down)
 /// Note, these methods are only used in the construtor
 /// </summary>
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port_1">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_1">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(PinMapStruct& r_pms, uint8_t p_port_1[], uint8_t p_pin_1[]) {
+void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
+{
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
 	_addPinPMS(r_pms, p_port_1, p_pin_1);
@@ -61,7 +64,8 @@ void Wall_Operation::_makePMS(PinMapStruct& r_pms, uint8_t p_port_1[], uint8_t p
 /// </summary>
 /// <param name="p_port_2">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_2">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(PinMapStruct& r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[]) {
+void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
+{
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
 	_addPortPMS(r_pms, p_port_2, p_pin_2);
@@ -75,19 +79,22 @@ void Wall_Operation::_makePMS(PinMapStruct& r_pms, uint8_t p_port_1[], uint8_t p
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_addPortPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t p_pin[]) {
+void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+{
 
-	for (size_t wal_i = 0; wal_i < 8; wal_i++) { //loop port list by wall
-		for (size_t prt_i = 0; prt_i < 6; prt_i++) { //loop port array in struct
-			if (r_pms.port[prt_i] != p_port[wal_i] && r_pms.port[prt_i] != 255) continue; //find first emtpy  or existing entry and store there
-			r_pms.nPorts = r_pms.port[prt_i] == 255 ? prt_i + 1 : r_pms.nPorts;//update length
+	for (size_t wal_i = 0; wal_i < 8; wal_i++)
+	{ // loop port list by wall
+		for (size_t prt_i = 0; prt_i < 6; prt_i++)
+		{ // loop port array in struct
+			if (r_pms.port[prt_i] != p_port[wal_i] && r_pms.port[prt_i] != 255)
+				continue;														// find first emtpy  or existing entry and store there
+			r_pms.nPorts = r_pms.port[prt_i] == 255 ? prt_i + 1 : r_pms.nPorts; // update length
 			r_pms.port[prt_i] = p_port[wal_i];
 			break;
 		}
 	}
 	// Sort array
 	_sortArr(r_pms.port, 6);
-
 }
 
 /// <summary>
@@ -96,14 +103,21 @@ void Wall_Operation::_addPortPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t 
 /// <param name="r_pms">Reference to PMS to be updated.</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct.</param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct.</param>
-void Wall_Operation::_addPinPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t p_pin[]) {
-	for (size_t prt_i = 0; prt_i < 6; prt_i++) { //loop ports in struct arr
-		if (r_pms.port[prt_i] == 255) break;  //bail if reached end of list
-		for (size_t wal_i = 0; wal_i < 8; wal_i++) { //loop wall list
-			if (p_port[wal_i] != r_pms.port[prt_i]) continue; //check port match
-			for (size_t pin_ii = 0; pin_ii < 8; pin_ii++) { //loop pin struct
-				if (r_pms.pin[prt_i][pin_ii] != 255) continue; //find first emtpy entry and store there
-				r_pms.nPins[prt_i] = pin_ii + 1;//update length
+void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+{
+	for (size_t prt_i = 0; prt_i < 6; prt_i++)
+	{ // loop ports in struct arr
+		if (r_pms.port[prt_i] == 255)
+			break; // bail if reached end of list
+		for (size_t wal_i = 0; wal_i < 8; wal_i++)
+		{ // loop wall list
+			if (p_port[wal_i] != r_pms.port[prt_i])
+				continue; // check port match
+			for (size_t pin_ii = 0; pin_ii < 8; pin_ii++)
+			{ // loop pin struct
+				if (r_pms.pin[prt_i][pin_ii] != 255)
+					continue;					 // find first emtpy entry and store there
+				r_pms.nPins[prt_i] = pin_ii + 1; // update length
 				r_pms.pin[prt_i][pin_ii] = p_pin[wal_i];
 				r_pms.wall[prt_i][pin_ii] = wal_i;
 				break;
@@ -113,10 +127,11 @@ void Wall_Operation::_addPinPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t p
 		_sortArr(r_pms.pin[prt_i], 8, r_pms.wall[prt_i]);
 
 		// Update registry byte
-		for (size_t pin_i = 0; pin_i < r_pms.nPins[prt_i]; pin_i++) {
-			bitWrite(r_pms.bitMask[prt_i], r_pms.pin[prt_i][pin_i], 1); //update short/truncated version
+		for (size_t pin_i = 0; pin_i < r_pms.nPins[prt_i]; pin_i++)
+		{
+			bitWrite(r_pms.bitMask[prt_i], r_pms.pin[prt_i][pin_i], 1); // update short/truncated version
 		}
-		r_pms.bitMaskLong[r_pms.port[prt_i]] = r_pms.bitMask[prt_i]; //update long/complete version
+		r_pms.bitMaskLong[r_pms.port[prt_i]] = r_pms.bitMask[prt_i]; // update long/complete version
 	}
 }
 
@@ -127,26 +142,30 @@ void Wall_Operation::_addPinPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t p
 /// <param name="p_arr">Array to be sorted</param>
 /// <param name="s">Length of array</param>
 /// <param name="p_co_arr">OPTIONAL: array to be sorted in the same order as "p_arr"</param>
-void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[]) {
+void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
+{
 	bool is_sorted = false;
-	while (!is_sorted) {
+	while (!is_sorted)
+	{
 		is_sorted = true;
 
 		// Iterate over the array, swapping adjacent elements if they are out of order
-		for (size_t i = 0; i < s - 1; ++i) {
-			if (p_arr[i] > p_arr[i + 1]) {
+		for (size_t i = 0; i < s - 1; ++i)
+		{
+			if (p_arr[i] > p_arr[i + 1])
+			{
 				// Swap the elements without using the std::swap function
 				uint8_t tmp1 = p_arr[i];
 				p_arr[i] = p_arr[i + 1];
 				p_arr[i + 1] = tmp1;
 				// Update sort ind
-				if (p_co_arr) {
+				if (p_co_arr)
+				{
 					uint8_t tmp2 = p_co_arr[i];
 					p_co_arr[i] = p_co_arr[i + 1];
 					p_co_arr[i + 1] = tmp2;
 				}
 				is_sorted = false;
-
 			}
 		}
 	}
@@ -161,9 +180,11 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[]) {
 /// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
 /// <param name="duty">PWM duty cycle [0-255].</param>
 /// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty) {
-	if (cham_i > 48 || wall_i > 7 || duty > 255) return -1;
-	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); //set duty cycle to duty
+uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
+{
+	if (cham_i > 48 || wall_i > 7 || duty > 255)
+		return -1;
+	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
 	return resp;
 }
 
@@ -175,64 +196,78 @@ uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_
 /// reconfiguration, these registers [output] have to store �1�s."
 /// </summary>
 /// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
-uint8_t Wall_Operation::setupWallIO() {
+uint8_t Wall_Operation::setupWallIO()
+{
 	uint8_t resp = 0;
 
 	// Setup wall io pins
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) {
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{
 
 		// Set entire output register to off
-		uint8_t p_byte_mask_in[6] = { 0xFF, 0xFF, 0xFF, 0xFF,0xFF, 0xFF };
+		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, p_byte_mask_in, 6, 0);
-		if (resp != 0) return resp;
+		if (resp != 0)
+			return resp;
 
-		for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++) { //loop through port list
+		for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
+		{ // loop through port list
 
 			// Set input pins as input
 			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 
 			// Set pins as high impedance
 			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 
 			// Set corrisponding output register entries to 1 as per datasheet
 			resp = _C_COM.ioWritePort(C[ch_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 		}
 	}
 	return resp;
 }
 
 /// <summary>
-/// Setup PWM pins for each chamber including the specifying them as PWM outputs 
+/// Setup PWM pins for each chamber including the specifying them as PWM outputs
 /// and also detting the drive mode to "Strong Drive". This also sets up the PWM
 /// Source using @ref Cypress_Com::setupSourcePWM()
 /// </summary>
 /// <param name="pwm_duty">Duty cycle for the pwm [0-255]</param>
 /// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
-uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty) {
+uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty)
+{
 	uint8_t resp = 0;
 
 	// Setup pwm
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) {
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{
 
 		// Setup source
-		for (size_t src_i = 0; src_i < 8; src_i++) {
+		for (size_t src_i = 0; src_i < 8; src_i++)
+		{
 			resp = _C_COM.setupSourcePWM(C[ch_i].addr, wms.pwmSrc[src_i], pwm_duty);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 		}
 
 		// Setup wall pwm pins
-		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++) { //loop through port list
+		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
+		{ // loop through port list
 
 			// Set pwm pins as pwm output
 			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 
 			// Set pins as strong drive
 			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp != 0) return resp;
+			if (resp != 0)
+				return resp;
 		}
 	}
 	return resp;
@@ -281,14 +316,17 @@ uint8_t Wall_Operation::initializeWalls()
 /// Resets most entries in a dynamic PMS struct to there default values.
 /// </summary>
 /// <param name="r_pms">Reference to PMS struct to be reset</param>
-void Wall_Operation::_resetPMS(PinMapStruct& r_pms) {
+void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
+{
 	r_pms.nPorts = 0;
-	for (size_t prt_i = 0; prt_i < 6; prt_i++) {
+	for (size_t prt_i = 0; prt_i < 6; prt_i++)
+	{
 		r_pms.port[prt_i] = 255;
 		r_pms.bitMask[prt_i] = 0;
 		r_pms.bitMaskLong[prt_i] = 0;
 		r_pms.nPins[prt_i] = 0;
-		for (size_t pin_i = 0; pin_i < 8; pin_i++) {
+		for (size_t pin_i = 0; pin_i < 8; pin_i++)
+		{
 			r_pms.pin[prt_i][pin_i] = 255;
 			r_pms.wall[prt_i][pin_i] = 255;
 		}
@@ -301,23 +339,31 @@ void Wall_Operation::_resetPMS(PinMapStruct& r_pms) {
 /// <param name="r_pms1">PMS struct to use as the basis for entries in "r_pms2"</param>
 /// <param name="r_pms2">Reference to a PMS struct to update</param>
 /// <param name="wall_byte_mask">Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.</param>
-void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct& r_pms2, uint8_t wall_byte_mask) {
-	for (size_t prt_i = 0; prt_i < r_pms1.nPorts; prt_i++) { //loop ports
-		for (size_t pin_i = 0; pin_i < r_pms1.nPins[prt_i]; pin_i++) { //loop pins
-			if (bitRead(wall_byte_mask, r_pms1.wall[prt_i][pin_i]) == 1) { //check if wall is on this port
+void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2, uint8_t wall_byte_mask)
+{
+	for (size_t prt_i = 0; prt_i < r_pms1.nPorts; prt_i++)
+	{ // loop ports
+		for (size_t pin_i = 0; pin_i < r_pms1.nPins[prt_i]; pin_i++)
+		{ // loop pins
+			if (bitRead(wall_byte_mask, r_pms1.wall[prt_i][pin_i]) == 1)
+			{ // check if wall is on this port
 
-				//Copy all struct fields
-				for (size_t prt_ii = 0; prt_ii < 6; prt_ii++) { //loop ports
-					if (r_pms2.port[prt_ii] != r_pms1.port[prt_i] && r_pms2.port[prt_ii] != 255) continue; //find first emtpy  or existing entry and store there
-					r_pms2.nPorts = r_pms2.port[prt_ii] == 255 ? r_pms2.nPorts + 1 : r_pms2.nPorts; //update port count for new entry
-					r_pms2.nPins[prt_ii]++; //update pin count
-					r_pms2.port[prt_ii] = r_pms1.port[prt_i]; //update port number
-					for (size_t pin_ii = 0; pin_ii < 8; pin_ii++) { //loop pins
-						if (r_pms2.pin[prt_ii][pin_ii] != 255) continue; //find first emtpy entry and store there
-						r_pms2.pin[prt_ii][pin_ii] = r_pms1.pin[prt_i][pin_i]; //update pin number
-						r_pms2.wall[prt_ii][pin_ii] = r_pms1.wall[prt_i][pin_i]; //update wall number
-						bitWrite(r_pms2.bitMask[prt_ii], r_pms2.pin[prt_ii][pin_ii], 1); //update short/truncated registry
-						r_pms2.bitMaskLong[r_pms2.port[prt_ii]] = r_pms2.bitMask[prt_ii]; //update long/complete version
+				// Copy all struct fields
+				for (size_t prt_ii = 0; prt_ii < 6; prt_ii++)
+				{ // loop ports
+					if (r_pms2.port[prt_ii] != r_pms1.port[prt_i] && r_pms2.port[prt_ii] != 255)
+						continue;																	// find first emtpy  or existing entry and store there
+					r_pms2.nPorts = r_pms2.port[prt_ii] == 255 ? r_pms2.nPorts + 1 : r_pms2.nPorts; // update port count for new entry
+					r_pms2.nPins[prt_ii]++;															// update pin count
+					r_pms2.port[prt_ii] = r_pms1.port[prt_i];										// update port number
+					for (size_t pin_ii = 0; pin_ii < 8; pin_ii++)
+					{ // loop pins
+						if (r_pms2.pin[prt_ii][pin_ii] != 255)
+							continue;													  // find first emtpy entry and store there
+						r_pms2.pin[prt_ii][pin_ii] = r_pms1.pin[prt_i][pin_i];			  // update pin number
+						r_pms2.wall[prt_ii][pin_ii] = r_pms1.wall[prt_i][pin_i];		  // update wall number
+						bitWrite(r_pms2.bitMask[prt_ii], r_pms2.pin[prt_ii][pin_ii], 1);  // update short/truncated registry
+						r_pms2.bitMaskLong[r_pms2.port[prt_ii]] = r_pms2.bitMask[prt_ii]; // update long/complete version
 						break;
 					}
 					break;
@@ -419,7 +465,6 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	return 0;
 }
 
-
 /// <summary>
 /// Option to speicify a given set of walls to move programmatically as an
 /// alternative to @ref Wall_Operation::getWallCmdSerial.
@@ -437,106 +482,132 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 /// uint8_t bit_val_set = 1; //set walls to move up
 /// uint8_t s = 3; //number of walls
 /// uint8_t p_wall_inc[s] = {0, 2, 5}; //array with wall numbers to move
-/// Wall_Operation::setWallCmdManual(cham_i, bit_val_set, p_wall_inc, s); 
+/// Wall_Operation::setWallCmdManual(cham_i, bit_val_set, p_wall_inc, s);
 /// Wall_Operation::setWallCmdManual(3, p_wall_inc, s); //can be run more than once to setup multiple chambers with different wall configurations
 /// uint8_t bit_val_set = 0; //set walls not to move up, which will result in them being moved down
 /// Wall_Operation::setWallCmdManual(cham_i, 0, p_wall_inc, s); //this will lower all the walls specified in "p_wall_inc"
-/// Wall_Operation::W_OPR.setWallCmdManual(0, 0); //this will lower all walls in chamber 0 
+/// Wall_Operation::W_OPR.setWallCmdManual(0, 0); //this will lower all walls in chamber 0
 /// Wall_Operation::runWalls(); //note that @ref Wall_Operation::runWalls() must be run after all settings complete
 /// </code>
 /// </example>
-uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, uint8_t p_wall_inc[], uint8_t s) {
-	if (s > 8) return -1;
-	uint8_t p_wi[s]; //initialize array to handle null array argument
-	if (p_wall_inc == nullptr) { //set default 8 walls
-		for (size_t i = 0; i < s; i++) p_wi[i] = i;
+uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, uint8_t p_wall_inc[], uint8_t s)
+{
+	if (s > 8)
+		return -1;
+	uint8_t p_wi[s]; // initialize array to handle null array argument
+	if (p_wall_inc == nullptr)
+	{ // set default 8 walls
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = i;
 	}
-	else { // copy over input
-		for (size_t i = 0; i < s; i++) p_wi[i] = p_wall_inc[i];
+	else
+	{ // copy over input
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = p_wall_inc[i];
 	}
-	for (size_t i = 0; i < s; i++) { //loop through each entry
-		bitWrite(C[cham_i].bitWallMoveFlag, p_wi[i], bit_val_set); //set bit for newly active wall
-		C[cham_i].updateFlag = 1; //flag update
+	for (size_t i = 0; i < s; i++)
+	{															   // loop through each entry
+		bitWrite(C[cham_i].bitWallMoveFlag, p_wi[i], bit_val_set); // set bit for newly active wall
+		C[cham_i].updateFlag = 1;								   // flag update
 	}
 	return 0;
 }
 
 /// <summary>
-/// The main workhorse of the class, which mannages initiating and compleating 
-/// the wall movement for all active chambers based on either 
+/// The main workhorse of the class, which mannages initiating and compleating
+/// the wall movement for all active chambers based on either
 /// @ref Wall_Operation::getWallCmdSerial or @ref Wall_Operation::getWallCmdSerial.
 /// </summary>
 /// <param name="dt_timout">Time to attemp movement (ms) DEFAULT:[1500]</param>
 /// <returns>Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]</returns>
-uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
+uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
+{
 	// Local vars
 	uint8_t resp = 0;
-	uint8_t run_error = 0; //store run errors
-	uint8_t is_timedout = 0; //flag timeout
-	uint8_t do_move_check = 1; //will track if all chamber movement done
-	uint32_t ts_timeout = millis() + dt_timout; //set timout 
+	uint8_t run_error = 0;						// store run errors
+	uint8_t is_timedout = 0;					// flag timeout
+	uint8_t do_move_check = 1;					// will track if all chamber movement done
+	uint32_t ts_timeout = millis() + dt_timout; // set timout
+
+	_DB.printMsgTime("Moving walls");
 
 	// Update dynamic port/pin structs
-	_DB.dtTrack(1); //start timer
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		if (C[ch_i].updateFlag != 1) continue; //check if chamber flagged for updating
+	_DB.dtTrack(1); // start timer
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{ // loop chambers
+		if (C[ch_i].updateFlag != 1)
+			continue; // check if chamber flagged for updating
 
 		// Reset structs
 		_resetPMS(C[ch_i].pmsDynPWM);
 		_resetPMS(C[ch_i].pmsDynIO);
 
 		// Get byte mask for walls that should be moved and update dynamic PMS struct
-		uint8_t wall_up_byte_mask = ~C[ch_i].bitWallPosition & C[ch_i].bitWallMoveFlag; //up (wall_state == 0 & wall_active == 1) 
-		uint8_t wall_down_byte_mask = C[ch_i].bitWallPosition & ~C[ch_i].bitWallMoveFlag; //down (wall_state == 1 & wall_active == 0)
-		_updateDynamicPMS(pmsDownIO, C[ch_i].pmsDynIO, wall_down_byte_mask); //pwm down
-		_updateDynamicPMS(pmsUpIO, C[ch_i].pmsDynIO, wall_up_byte_mask); //pwm up
-		_updateDynamicPMS(pmsDownPWM, C[ch_i].pmsDynPWM, wall_down_byte_mask); //io down
-		_updateDynamicPMS(pmsUpPWM, C[ch_i].pmsDynPWM, wall_up_byte_mask); //io up
+		uint8_t wall_up_byte_mask = ~C[ch_i].bitWallPosition & C[ch_i].bitWallMoveFlag;	  // up (wall_state == 0 & wall_active == 1)
+		uint8_t wall_down_byte_mask = C[ch_i].bitWallPosition & ~C[ch_i].bitWallMoveFlag; // down (wall_state == 1 & wall_active == 0)
+		_updateDynamicPMS(pmsDownIO, C[ch_i].pmsDynIO, wall_down_byte_mask);			  // pwm down
+		_updateDynamicPMS(pmsUpIO, C[ch_i].pmsDynIO, wall_up_byte_mask);				  // pwm up
+		_updateDynamicPMS(pmsDownPWM, C[ch_i].pmsDynPWM, wall_down_byte_mask);			  // io down
+		_updateDynamicPMS(pmsUpPWM, C[ch_i].pmsDynPWM, wall_up_byte_mask);				  // io up
 
 		// Move walls up/down
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, C[ch_i].pmsDynPWM.bitMaskLong, 6, 1);
 
 		// Print walls being moved
-		if (wall_up_byte_mask > 0) _DB.printMsgTime("Start move up: chamber=%d walls=%s", ch_i, _DB.bitIndStr(wall_up_byte_mask));
-		if (wall_down_byte_mask > 0) _DB.printMsgTime("Start move down: chamber=%d walls=%s", ch_i, _DB.bitIndStr(wall_down_byte_mask));
+		if (wall_up_byte_mask > 0)
+			_DB.printMsgTime("\tstart move up: chamber=%d walls=%s", ch_i, _DB.bitIndStr(wall_up_byte_mask));
+		if (wall_down_byte_mask > 0)
+			_DB.printMsgTime("\tstart move down: chamber=%d walls=%s", ch_i, _DB.bitIndStr(wall_down_byte_mask));
 	}
 
 	// Check IO pins
-	while (!is_timedout && do_move_check) { //loop till finished or timed out
-		do_move_check = 0; //reset
-		is_timedout = millis() >= ts_timeout; //check for timeout
-		for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-			do_move_check += C[ch_i].updateFlag; //update flag
-			//_DB.printMsg("ch_i=%d do_move_check=%d is_timedout=%d", ch_i, do_move_check, is_timedout); //TEMP
-			if (C[ch_i].updateFlag != 1) continue; //check if chamber flagged for updating
+	while (!is_timedout && do_move_check)
+	{										  // loop till finished or timed out
+		do_move_check = 0;					  // reset
+		is_timedout = millis() >= ts_timeout; // check for timeout
+		for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+		{										 // loop chambers
+			do_move_check += C[ch_i].updateFlag; // update flag
+			//_DB.printMsgTime("ch_i=%d do_move_check=%d is_timedout=%d", ch_i, do_move_check, is_timedout); //TEMP
+			if (C[ch_i].updateFlag != 1)
+				continue; // check if chamber flagged for updating
 
 			// Get io registry bytes. Note we are reading out the output registry as well to save an additional read if we write the pwm output later
-			U.i64[0] = 0; U.i64[1] = 0; //zero out union values
-			resp = _C_COM.ioReadReg(C[ch_i].addr, REG_GI0, U.b, 14); //read through all input registers (6 active, 2 unused) and the 6 active output registers
-			if (resp != 0) { forceStopWalls(); run_error = 1; } //force stop and set flag
-			uint8_t io_in_reg[6] = { U.b[0], U.b[1] , U.b[2] , U.b[3] , U.b[4] , U.b[5] }; //copy out values
-			uint8_t io_out_reg[6] = { U.b[8], U.b[9] , U.b[10] , U.b[11] , U.b[12] , U.b[13] }; //copy out values
-			uint8_t io_out_mask[6] = { 0 }; //will store new output pwm reg mask 
+			U.i64[0] = 0;
+			U.i64[1] = 0;											 // zero out union values
+			resp = _C_COM.ioReadReg(C[ch_i].addr, REG_GI0, U.b, 14); // read through all input registers (6 active, 2 unused) and the 6 active output registers
+			if (resp != 0)
+			{
+				forceStopWalls();
+				run_error = 1;
+			}																			  // force stop and set flag
+			uint8_t io_in_reg[6] = {U.b[0], U.b[1], U.b[2], U.b[3], U.b[4], U.b[5]};	  // copy out values
+			uint8_t io_out_reg[6] = {U.b[8], U.b[9], U.b[10], U.b[11], U.b[12], U.b[13]}; // copy out values
+			uint8_t io_out_mask[6] = {0};												  // will store new output pwm reg mask
 
-			// Compare check ifcurrent registry io to saved registry 
-			uint8_t f_track_reg = 0; //will track if all io pins have been been triggered 
-			uint8_t f_do_pwm_update = 0; //will track if pwm registry should be updated
-			for (size_t prt_i = 0; prt_i < C[ch_i].pmsDynIO.nPorts; prt_i++) { //loop ports
+			// Compare check ifcurrent registry io to saved registry
+			uint8_t f_track_reg = 0;	 // will track if all io pins have been been triggered
+			uint8_t f_do_pwm_update = 0; // will track if pwm registry should be updated
+			for (size_t prt_i = 0; prt_i < C[ch_i].pmsDynIO.nPorts; prt_i++)
+			{ // loop ports
 
 				// Compare current io registry to saved mask
-				uint8_t port_n = C[ch_i].pmsDynIO.port[prt_i]; //get port number
-				uint8_t comp_byte = C[ch_i].pmsDynIO.bitMask[prt_i] & io_in_reg[port_n]; //triggered pin/bit matching mask will be 1
-				f_track_reg += C[ch_i].pmsDynIO.bitMask[prt_i]; //update flag
+				uint8_t port_n = C[ch_i].pmsDynIO.port[prt_i];							 // get port number
+				uint8_t comp_byte = C[ch_i].pmsDynIO.bitMask[prt_i] & io_in_reg[port_n]; // triggered pin/bit matching mask will be 1
+				f_track_reg += C[ch_i].pmsDynIO.bitMask[prt_i];							 // update flag
 
 				// Check each bit in comparison byte
-				for (size_t pin_i = 0; pin_i < C[ch_i].pmsDynIO.nPins[prt_i]; pin_i++) { //loop pins
-					uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i]; //get pin number
-					if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
-					if (!bitRead(comp_byte, pin_n)) continue; //check io pin
-					bitWrite(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n, 0); //remove from byte reg
+				for (size_t pin_i = 0; pin_i < C[ch_i].pmsDynIO.nPins[prt_i]; pin_i++)
+				{														// loop pins
+					uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i]; // get pin number
+					if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n))
+						continue; // check if pin still flagged in reg byte
+					if (!bitRead(comp_byte, pin_n))
+						continue;										 // check io pin
+					bitWrite(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n, 0); // remove from byte reg
 
 					// Update pwm registry array (note, sets both up and down pwm reg entries as this makes the code easier)
-					uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; //get wall number
+					uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; // get wall number
 					bitWrite(io_out_mask[wms.pwmDown[0][wall_n]], wms.pwmDown[1][wall_n], 1);
 					bitWrite(io_out_mask[wms.pwmUp[0][wall_n]], wms.pwmUp[1][wall_n], 1);
 					f_do_pwm_update = 1; // flag to update pwm
@@ -545,60 +616,76 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 					uint8_t swtch_fun = wms.funMap[port_n][pin_n]; // get wall state
 					bitWrite(C[ch_i].bitWallPosition, wall_n, swtch_fun == 1 ? 0 : 1);
 
-					_DB.printMsgTime("End move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", ch_i, wall_n, _DB.dtTrack());
+					_DB.printMsgTime("\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", ch_i, wall_n, _DB.dtTrack());
 				}
 			}
 
 			// Send pwm off command
-			if (f_do_pwm_update) { //check for update flag
-				resp = _C_COM.ioWriteReg(C[ch_i].addr, io_out_mask, 6, 0, io_out_reg); //include last reg read and turn off pwms
-				if (resp != 0) { forceStopWalls(); run_error = 1; } //force stop and set flag
+			if (f_do_pwm_update)
+			{																		   // check for update flag
+				resp = _C_COM.ioWriteReg(C[ch_i].addr, io_out_mask, 6, 0, io_out_reg); // include last reg read and turn off pwms
+				if (resp != 0)
+				{
+					forceStopWalls();
+					run_error = 1;
+				} // force stop and set flag
 			}
-			C[ch_i].updateFlag = f_track_reg == 0 ? 0 : C[ch_i].updateFlag; //reset flag
-
+			C[ch_i].updateFlag = f_track_reg == 0 ? 0 : C[ch_i].updateFlag; // reset flag
 		}
 	}
 
 	// Check for any unifinished moves
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		if (C[ch_i].updateFlag != 1) { //check if chamber still flagged for updating
-			C[ch_i].bitWallErrorFlag = 0; //reset error flags
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{ // loop chambers
+		if (C[ch_i].updateFlag != 1)
+		{								  // check if chamber still flagged for updating
+			C[ch_i].bitWallErrorFlag = 0; // reset error flags
 			continue;
 		}
-		for (size_t prt_i = 0; prt_i < C[ch_i].pmsDynIO.nPorts; prt_i++) { //loop ports
-			for (size_t pin_i = 0; pin_i < C[ch_i].pmsDynIO.nPins[prt_i]; pin_i++) { //loop pins
+		for (size_t prt_i = 0; prt_i < C[ch_i].pmsDynIO.nPorts; prt_i++)
+		{ // loop ports
+			for (size_t pin_i = 0; pin_i < C[ch_i].pmsDynIO.nPins[prt_i]; pin_i++)
+			{ // loop pins
 
 				// Check if pin still flagged for movement
-				uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i]; //get pin number
-				if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
+				uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i];	  // get pin number
+				if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n)) // check if pin still flagged in reg byte
+					continue;
 
 				// Flag error for debugging and to stop all wall movement
-				uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; //get wall number
-				run_error = is_timedout && run_error != 1 ? 2 : 3; //set error flag
-				_DB.printMsg("!!Movement failed: chamber=%d wall=%d cause=%s dt=%s!!", ch_i, wall_n,
-					run_error == 1 ? "i2c" : run_error == 2 ? "timedout" : "unknown", _DB.dtTrack());
-				bitWrite(C[ch_i].bitWallErrorFlag, wall_n, 1); //set chamber/wall specific error flag
+				uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; // get wall number
+				run_error = is_timedout && run_error != 1 ? 2 : 3;	  // set error flag
+				_DB.printMsgTime("\t!!movement failed: chamber=%d wall=%d cause=%s dt=%s!!", ch_i, wall_n,
+								 run_error == 1 ? "i2c" : run_error == 2 ? "timedout"
+																		 : "unknown",
+								 _DB.dtTrack());
+				bitWrite(C[ch_i].bitWallErrorFlag, wall_n, 1); // set chamber/wall specific error flag
 			}
 		}
 	}
 
 	// Force stop all walls if error encountered
-	if (run_error != 0) resp = forceStopWalls();
-	else _DB.printMsgTime("Finished all movement");
+	if (run_error != 0)
+		resp = forceStopWalls();
+	else
+		_DB.printMsgTime("Finished all movement");
 
-	return run_error; //return error
+	return run_error; // return error
 }
 
 /// <summary>
 /// Sends a command to stop all walls by setting all PWM outputs to zero.
 /// </summary>
 /// <returns>Wire::method output [0-4].</returns>
-uint8_t Wall_Operation::forceStopWalls() {
+uint8_t Wall_Operation::forceStopWalls()
+{
 	uint8_t resp = 0;
 	_DB.printMsgTime("!!Running forse stop!!");
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		resp = _C_COM.ioWriteReg(C[ch_i].addr, pmsAllPWM.bitMaskLong, 6, 0); //stop all pwm output
-		if (resp != 0) return resp;
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{																		 // loop chambers
+		resp = _C_COM.ioWriteReg(C[ch_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
+		if (resp != 0)
+			return resp;
 	}
 	return resp;
 }
@@ -653,20 +740,20 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 			// Check down pins
 			uint8_t resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
 			if (resp != 0)
-				//break;
-			Serial.println(r_bit_out);
+				// break;
+				Serial.println(r_bit_out);
 			if (r_bit_out == 1)
 				_DB.printMsgTime("\tWall %d: down", wall_n);
-			
+
 			// Check up pins
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
 			if (resp != 0)
-				//break;
-			if (r_bit_out == 1)
-				_DB.printMsgTime("\tWall %d: up", wall_n);
+				// break;
+				if (r_bit_out == 1)
+					_DB.printMsgTime("\tWall %d: up", wall_n);
 
 			// Add small delay
-			delay(10); 
+			delay(10);
 		}
 	}
 	if (resp != 0)
@@ -831,14 +918,17 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 /// Used for debugging to print out all fields of a PMS struct.
 /// </summary>
 /// <param name="pms">PMS struct to print</param>
-void Wall_Operation::_printPMS(PinMapStruct pms) {
+void Wall_Operation::_printPMS(PinMapStruct pms)
+{
 	char buff[250];
 	sprintf(buff, "\nIO/PWM nPorts=%d__________________", pms.nPorts);
 	_DB.printMsg(buff);
-	for (size_t prt_i = 0; prt_i < pms.nPorts; prt_i++) {
+	for (size_t prt_i = 0; prt_i < pms.nPorts; prt_i++)
+	{
 		sprintf(buff, "port[%d] nPins=%d bitMask=%s", pms.port[prt_i], pms.nPins[prt_i], _DB.binStr(pms.bitMask[prt_i]));
 		_DB.printMsg(buff);
-		for (size_t pin_i = 0; pin_i < pms.nPins[prt_i]; pin_i++) {
+		for (size_t pin_i = 0; pin_i < pms.nPins[prt_i]; pin_i++)
+		{
 			sprintf(buff, "   wall=%d   pin=%d", pms.wall[prt_i][pin_i], pms.pin[prt_i][pin_i]);
 			_DB.printMsg(buff);
 		}
