@@ -587,8 +587,8 @@ uint8_t Wall_Operation::forceStopWalls() {
 //+++++++ Testing and Debugging Methods ++++++++
 
 /// <summary>
-/// Used for testing the limit switch IO pins on a given Cypress chip. 
-/// Note, this will loop indefinaitely. Best to put this in the Arduino 
+/// Used for testing the limit switch IO pins on a given Cypress chip.
+/// Note, this will loop indefinaitely. Best to put this in the Arduino
 /// Setup() function.
 /// </summary>
 /// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
@@ -602,46 +602,61 @@ uint8_t Wall_Operation::forceStopWalls() {
 /// uint8_t s = 3; //number of walls
 /// uint8_t p_wall_inc[s] = {0, 2, 5}; //array with wall numbers to move
 /// Wall_Operation::testWallIO(cham_i, a_wall, s); //this can be run more than once to setup multiple chambers
-/// Wall_Operation::testWallIO(0); //this will test all walls in chamber 0 
+/// Wall_Operation::testWallIO(0); //this will test all walls in chamber 0
 /// </code>
 /// Mannually trigger switches to test there function
 /// </example>
-uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s) {
-	if (cham_i > 48 || s > 8) return -1;
-	uint8_t p_wi[s]; //initialize array to handle null array argument
-	if (p_wall_inc == nullptr) { //set default 8 walls
-		for (size_t i = 0; i < s; i++) p_wi[i] = i;
+uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
+{
+	if (cham_i > 48 || s > 8)
+		return -1;
+	uint8_t p_wi[s]; // initialize array to handle null array argument
+	if (p_wall_inc == nullptr)
+	{ // set default 8 walls
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = i;
 	}
-	else { // copy over input
-		for (size_t i = 0; i < s; i++) p_wi[i] = p_wall_inc[i];
+	else
+	{ // copy over input
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = p_wall_inc[i];
 	}
 
 	// Test input pins
 	uint8_t r_bit_out;
 	uint8_t resp = 0;
-	_DB.printMsg("Testing limit switches for wall number %s", _DB.arrayStr(p_wi, s));
-	while (true) { // loop indefinitely
-		for (size_t i = 0; i < s; i++) { //loop walls
+	_DB.printMsgTime("Runing test IO switches: chamber=%d wall=%s", cham_i, _DB.arrayStr(p_wi, s));
+	while (true)
+	{ // loop indefinitely
+		for (size_t i = 0; i < s; i++)
+		{ // loop walls
 			uint8_t wall_n = p_wi[i];
 			// Check down pins
 			uint8_t resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
-			if (resp != 0) return resp;
-			if (r_bit_out == 1) {
-				_DB.printMsg("\tWall %d: Down", wall_n);
-			}
+			if (resp != 0)
+				//break;
+			Serial.println(r_bit_out);
+			if (r_bit_out == 1)
+				_DB.printMsgTime("\tWall %d: down", wall_n);
+			
 			// Check up pins
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
-			if (resp != 0) return resp; // TEMP
-			if (r_bit_out == 1) {
-				_DB.printMsg("\tWall %d: Up", wall_n);
-			}
-			delay(10); //add small delay
+			if (resp != 0)
+				//break;
+			if (r_bit_out == 1)
+				_DB.printMsgTime("\tWall %d: up", wall_n);
+
+			// Add small delay
+			delay(10); 
 		}
 	}
+	if (resp != 0)
+		_DB.printMsgTime("!!Failed test IO switches: chamber=%d wall=%s!!", cham_i, _DB.arrayStr(p_wi, s));
+	return resp;
 }
 
 /// <summary>
-/// Used for testing the motor PWM outputs for a given Cypress chip. 
+/// Used for testing the motor PWM outputs for a given Cypress chip.
 /// Note, best to put this in the Arduino  Setup() function.
 /// </summary>
 /// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
@@ -651,39 +666,50 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 /// <example>
 /// @see Wall_Operation::testWallIO()
 /// </example>
-uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s, uint32_t dt_run) {
-	if (cham_i > 48 || s > 8) return -1;
+uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s, uint32_t dt_run)
+{
+	if (cham_i > 48 || s > 8)
+		return -1;
 	uint8_t p_wi[s];
-	if (p_wall_inc == nullptr) { //set default 8 walls
-		for (size_t i = 0; i < s; i++) p_wi[i] = i;
+	if (p_wall_inc == nullptr)
+	{ // set default 8 walls
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = i;
 	}
-	else { // copy over input
-		for (size_t i = 0; i < s; i++) p_wi[i] = p_wall_inc[i];
+	else
+	{ // copy over input
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = p_wall_inc[i];
 	}
 
 	// Run each wall up then down for dt_run ms
-	_DB.printMsg("Testing PWM for wall number %s", _DB.arrayStr(p_wi, s));
+	_DB.printMsgTime("Testing PWM: chamber=%d wall=%s", cham_i, _DB.arrayStr(p_wi, s));
 	uint8_t resp = 0;
-	for (size_t i = 0; i < s; i++) { //loop walls
+	for (size_t i = 0; i < s; i++)
+	{ // loop walls
 		uint8_t wall_n = p_wi[i];
-		_DB.printMsg("\tWall %d: Up", wall_n);
-		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 1); //run wall up
-		if (resp != 0) return resp;
+		_DB.printMsgTime("\tWall %d: Up", wall_n);
+		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 1); // run wall up
+		if (resp != 0)
+			return resp;
 		delay(dt_run);
-		_DB.printMsg("\tWall %d: Down", wall_n);
-		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 1); //run wall down (run before so motoro hard stops)
-		if (resp != 0) return resp;
-		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 0); //stop wall up pwm
-		if (resp != 0) return resp;
+		_DB.printMsgTime("\tWall %d: Down", wall_n);
+		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 1); // run wall down (run before so motoro hard stops)
+		if (resp != 0)
+			return resp;
+		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 0); // stop wall up pwm
+		if (resp != 0)
+			return resp;
 		delay(dt_run);
-		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 0); //stop wall down pwm
-		if (resp != 0) return resp;
+		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 0); // stop wall down pwm
+		if (resp != 0)
+			return resp;
 	}
 	return resp;
 }
 
 /// <summary>
-/// Used for testing the overal wall module function for a given Cypress chip. 
+/// Used for testing the overal wall module function for a given Cypress chip.
 /// Note, best to put this in the Arduino  Setup() function.
 /// </summary>
 /// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
@@ -693,69 +719,88 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 /// <example>
 /// @see Wall_Operation::testWallIO()
 /// </example>
-uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s) {
-	if (cham_i > 48 || s > 8) return -1;
+uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
+{
+	if (cham_i > 48 || s > 8)
+		return -1;
 	uint8_t p_wi[s];
-	if (p_wall_inc == nullptr) { //set default 8 walls
-		for (size_t i = 0; i < s; i++) p_wi[i] = i;
+	if (p_wall_inc == nullptr)
+	{ // set default 8 walls
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = i;
 	}
-	else { // copy over input
-		for (size_t i = 0; i < s; i++) p_wi[i] = p_wall_inc[i];
+	else
+	{ // copy over input
+		for (size_t i = 0; i < s; i++)
+			p_wi[i] = p_wall_inc[i];
 	}
 
 	// Test all walls
-	_DB.printMsg("Testing move opperation for wall number %s", _DB.arrayStr(p_wi, s));
+	_DB.printMsgTime("Testing move opperation: chamber=%d wall=%s", cham_i, _DB.arrayStr(p_wi, s));
 	uint8_t r_bit_out = 1;
 	uint16_t dt = 2000;
 	uint16_t ts;
 	uint8_t resp = 0;
-	for (size_t i = 0; i < s; i++) { //loop walls
+	for (size_t i = 0; i < s; i++)
+	{ // loop walls
 		uint8_t wall_n = p_wi[i];
-		_DB.printMsg("Running wall %d", wall_n);
+		_DB.printMsgTime("Running wall %d", wall_n);
 
 		// Run up
-		_DB.printMsg("\tUp start");
+		_DB.printMsgTime("\tup start");
 		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 1);
-		if (resp != 0) return resp;
-		ts = millis() + dt; //set timeout
-		_DB.dtTrack(1); //start timer
-		while (true) { //check up switch
+		if (resp != 0)
+			return resp;
+		ts = millis() + dt; // set timeout
+		_DB.dtTrack(1);		// start timer
+		while (true)
+		{ // check up switch
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
-			if (resp != 0) return resp;
-			if (r_bit_out == 1) {
-				_DB.printMsg("\tUp end [%s]", _DB.dtTrack());
+			if (resp != 0)
+				return resp;
+			if (r_bit_out == 1)
+			{
+				_DB.printMsgTime("\tup end [%s]", _DB.dtTrack());
 				break;
 			}
-			else if (millis() >= ts) {
-				_DB.printMsg("\t!!Up timedout [%s]!!", _DB.dtTrack());
+			else if (millis() >= ts)
+			{
+				_DB.printMsgTime("\t!!up timedout [%s]!!", _DB.dtTrack());
 				break;
 			}
 			delay(10);
 		}
 
 		// Run down
-		_DB.printMsg("\tDown start");
+		_DB.printMsgTime("\tDown start");
 		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 1);
-		if (resp != 0) return resp;
+		if (resp != 0)
+			return resp;
 		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 0);
-		if (resp != 0) return resp;
-		ts = millis() + dt; //set timeout
-		_DB.dtTrack(1); //start timer
-		while (true) { //check up switch
+		if (resp != 0)
+			return resp;
+		ts = millis() + dt; // set timeout
+		_DB.dtTrack(1);		// start timer
+		while (true)
+		{ // check up switch
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
-			if (resp != 0) return resp;
-			if (r_bit_out == 1) {
-				_DB.printMsg("\tDown end [%s]", _DB.dtTrack());
+			if (resp != 0)
+				return resp;
+			if (r_bit_out == 1)
+			{
+				_DB.printMsgTime("\tdown end [%s]", _DB.dtTrack());
 				break;
 			}
-			else if (millis() >= ts) {
-				_DB.printMsg("\t!!Down timedout [%s]!!", _DB.dtTrack());
+			else if (millis() >= ts)
+			{
+				_DB.printMsgTime("\t!!down timedout [%s]!!", _DB.dtTrack());
 				break;
 			}
 			delay(10);
 		}
 		resp = _C_COM.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 0);
-		if (resp != 0) return resp;
+		if (resp != 0)
+			return resp;
 
 		// Pause
 		delay(500);
