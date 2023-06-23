@@ -119,4 +119,3 @@ private: void _printPMS(PinMapStruct);
 };
 
 #endif
-
