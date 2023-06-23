@@ -13,7 +13,6 @@
 
 //============= INCLUDE ================
 #include "Arduino.h"
-#include "Esmacatshield.h"
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
 #include "Esmacatshield.h"
@@ -83,15 +82,15 @@ public:
 		PinMapStruct pmsDynIO; ///<reusable dynamic instance for active IO
 	};
 	ChamberTrackStruct C[9]; ///<initialize with max number of chambers for 3x3
-	union Union_Reg { ///<union for storing registry data shareable accross data types
+	union Union { ///<union for storing registry or ethercat data shareable accross data types
 		byte b[16];	///<(byte) 1 byte
 		uint16_t i16[8];///<(uint16_t) 2 byte
 		uint32_t i32[4];///<(uint32_t) 4 byte
 		uint64_t i64[2];///<(uint64_t) 8 byte
 	};
-	Union_Reg U;
+	Union U;
 private:
-	Maze_Debug _DB;
+	Maze_Debug _DB; ///<local instance of Maze_Debug class
 	Cypress_Com _C_COM; ///<local instance of Cypress_Com class
 	Esmacatshield ESlave; //<instance of Esmacatshield class
 
@@ -105,7 +104,7 @@ private: void _sortArr(uint8_t[], size_t s, uint8_t[] = nullptr);
 public:	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 public:	uint8_t setupWallIO();
 public:	uint8_t setupWallPWM(uint8_t);
-public:	uint8_t resetAllWalls();
+public:	uint8_t initializeWalls();
 private: void _resetPMS(PinMapStruct&);
 private: void _updateDynamicPMS(PinMapStruct, PinMapStruct&, uint8_t);
 public:	uint8_t getWallCmdEthercat();

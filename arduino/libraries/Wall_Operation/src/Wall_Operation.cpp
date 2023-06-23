@@ -239,20 +239,39 @@ uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty) {
 }
 
 /// <summary>
-/// Reset all walls to their down state using @ref Wall_Operation::setWallCmdManual() 
+/// Test up and down movment using @ref Wall_Operation::setWallCmdManual()
 /// and @ref Wall_Operation::runWalls()
+/// <returns>Success/error codes from @ref Wall_Operation::runWalls().</returns>
 /// </summary>
-uint8_t Wall_Operation::resetAllWalls() {
+uint8_t Wall_Operation::initializeWalls()
+{
+	_DB.printMsgTime("Running wall initialization");
 
-	// Run all walls to down position
-	uint8_t resp = 0;
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++) {
-		C[ch_i].bitWallPosition = 0xFF; //change wall setting so all walls are considered up
-		resp = setWallCmdManual(ch_i, 0); //use command to set all walls to be lowered
-		if (resp != 0) return resp;
-		resp = runWalls(); //move walls
-		if (resp != 0) return resp;
+	// Run all walls up then down for each chamber
+	uint8_t resp_arr[nCham] = {0};
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{
+
+		// Run walls up
+		setWallCmdManual(ch_i, 1);
+		resp_arr[ch_i] = runWalls(3000); // move walls up
+
+		// Run walls down
+		if (resp_arr[ch_i] == 0)
+		{
+			setWallCmdManual(ch_i, 0);
+			resp_arr[ch_i] = runWalls(3000); // move walls down
+		}
+
+		if (resp_arr[ch_i] != 0)
+			_DB.printMsgTime("\t!!wall initialization failed for chamber=%d", ch_i);
 	}
+
+	// Set resp to any non-zero flag and return
+	uint8_t resp = 0;
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+		resp = resp > 0 ? resp_arr[ch_i] > 0 ? resp_arr[ch_i] : resp : resp_arr[ch_i];
+	_DB.printMsgTime("Finished wall initialization");
 	return resp;
 }
 
