@@ -58,8 +58,8 @@ public:
 		uint8_t port[6]; ///<stores port numbers
 		uint8_t pin[6][8]; ///<stores pin numbers
 		uint8_t wall[6][8]; ///<stores wall numbers
-		uint8_t byteMask[6]; ///<stores registry mask byte for each used port
-		uint8_t byteMaskLong[6]; ///<stores registry mask byte for all ports in registry
+		uint8_t bitMask[6]; ///<stores registry mask byte for each used port
+		uint8_t bitMaskLong[6]; ///<stores registry mask byte for all ports in registry
 		uint8_t nPorts; ///<stores number of ports in list
 		uint8_t nPins[6]; ///<stores number of pins in list
 	};
@@ -73,10 +73,10 @@ public:
 	{
 		uint8_t num = 0; ///<chamber number
 		uint8_t addr = 0; ///<chamber I2C address 
-		uint8_t byteWallActive = 0; ///<bitwise variable, current wall active flag [0:inactive, 1:active]
-		uint8_t byteWallPosition = 0; ///<bitwise variable, current wall position [0:down, 1:up]
-		uint8_t byteUpdateFlag = 0; ///<flag that wall state should be updated
-		uint8_t byteErrorFlag = 0; ///<flag move errors for a given wall
+		uint8_t bitWallMoveFlag = 0; ///<bitwise variable, current wall active flag [0:inactive, 1:active]
+		uint8_t bitWallPosition = 0; ///<bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallErrorFlag = 0; ///<bitwise variable, flag move errors for a given wall
+		uint8_t updateFlag = 0; ///<flag that wall state should be updated
 		uint8_t byteOutRegLast[6]; ///<stores output registry values
 		PinMapStruct pmsDynPWM; ///<reusable dynamic instance for active PWM
 		PinMapStruct pmsDynIO; ///<reusable dynamic instance for active IO

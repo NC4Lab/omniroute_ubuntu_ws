@@ -114,9 +114,9 @@ void Wall_Operation::_addPinPMS(PinMapStruct& r_pms, uint8_t p_port[], uint8_t p
 
 		// Update registry byte
 		for (size_t pin_i = 0; pin_i < r_pms.nPins[prt_i]; pin_i++) {
-			bitWrite(r_pms.byteMask[prt_i], r_pms.pin[prt_i][pin_i], 1); //update short/truncated version
+			bitWrite(r_pms.bitMask[prt_i], r_pms.pin[prt_i][pin_i], 1); //update short/truncated version
 		}
-		r_pms.byteMaskLong[r_pms.port[prt_i]] = r_pms.byteMask[prt_i]; //update long/complete version
+		r_pms.bitMaskLong[r_pms.port[prt_i]] = r_pms.bitMask[prt_i]; //update long/complete version
 	}
 }
 
@@ -189,15 +189,15 @@ uint8_t Wall_Operation::setupWallIO() {
 		for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++) { //loop through port list
 
 			// Set input pins as input
-			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.byteMask[prt_i], 1);
+			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
 			if (resp != 0) return resp;
 
 			// Set pins as high impedance
-			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.byteMask[prt_i], 1);
+			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
 			if (resp != 0) return resp;
 
 			// Set corrisponding output register entries to 1 as per datasheet
-			resp = _C_COM.ioWritePort(C[ch_i].addr, pmsAllIO.port[prt_i], pmsAllIO.byteMask[prt_i], 1);
+			resp = _C_COM.ioWritePort(C[ch_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
 			if (resp != 0) return resp;
 		}
 	}
@@ -227,11 +227,11 @@ uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty) {
 		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++) { //loop through port list
 
 			// Set pwm pins as pwm output
-			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.byteMask[prt_i], 1);
+			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
 			if (resp != 0) return resp;
 
 			// Set pins as strong drive
-			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.byteMask[prt_i], 1);
+			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
 			if (resp != 0) return resp;
 		}
 	}
@@ -247,7 +247,7 @@ uint8_t Wall_Operation::resetAllWalls() {
 	// Run all walls to down position
 	uint8_t resp = 0;
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++) {
-		C[ch_i].byteWallPosition = 0xFF; //change wall setting so all walls are considered up
+		C[ch_i].bitWallPosition = 0xFF; //change wall setting so all walls are considered up
 		resp = setWallCmdManual(ch_i, 0); //use command to set all walls to be lowered
 		if (resp != 0) return resp;
 		resp = runWalls(); //move walls
@@ -266,8 +266,8 @@ void Wall_Operation::_resetPMS(PinMapStruct& r_pms) {
 	r_pms.nPorts = 0;
 	for (size_t prt_i = 0; prt_i < 6; prt_i++) {
 		r_pms.port[prt_i] = 255;
-		r_pms.byteMask[prt_i] = 0;
-		r_pms.byteMaskLong[prt_i] = 0;
+		r_pms.bitMask[prt_i] = 0;
+		r_pms.bitMaskLong[prt_i] = 0;
 		r_pms.nPins[prt_i] = 0;
 		for (size_t pin_i = 0; pin_i < 8; pin_i++) {
 			r_pms.pin[prt_i][pin_i] = 255;
@@ -297,8 +297,8 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct& r_pms2
 						if (r_pms2.pin[prt_ii][pin_ii] != 255) continue; //find first emtpy entry and store there
 						r_pms2.pin[prt_ii][pin_ii] = r_pms1.pin[prt_i][pin_i]; //update pin number
 						r_pms2.wall[prt_ii][pin_ii] = r_pms1.wall[prt_i][pin_i]; //update wall number
-						bitWrite(r_pms2.byteMask[prt_ii], r_pms2.pin[prt_ii][pin_ii], 1); //update short/truncated registry
-						r_pms2.byteMaskLong[r_pms2.port[prt_ii]] = r_pms2.byteMask[prt_ii]; //update long/complete version
+						bitWrite(r_pms2.bitMask[prt_ii], r_pms2.pin[prt_ii][pin_ii], 1); //update short/truncated registry
+						r_pms2.bitMaskLong[r_pms2.port[prt_ii]] = r_pms2.bitMask[prt_ii]; //update long/complete version
 						break;
 					}
 					break;
@@ -360,8 +360,8 @@ uint8_t Wall_Operation::getWallCmdSerial() {
 
 	// Store values and update the update flag
 	for (size_t ch_i = 0; ch_i < n_cham; ch_i++) { //loop through each chamber message
-		C[cham[ch_i]].byteWallActive = wall_byte[ch_i]; //store values
-		C[cham[ch_i]].byteUpdateFlag = 1; //set update flag
+		C[cham[ch_i]].bitWallMoveFlag = wall_byte[ch_i]; //store values
+		C[cham[ch_i]].updateFlag = 1; //set update flag
 	}
 
 	// Return new message flag
@@ -403,8 +403,8 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 		for (size_t i = 0; i < s; i++) p_wi[i] = p_wall_inc[i];
 	}
 	for (size_t i = 0; i < s; i++) { //loop through each entry
-		bitWrite(C[cham_i].byteWallActive, p_wi[i], bit_val_set); //set bit for newly active wall
-		C[cham_i].byteUpdateFlag = 1; //flag update
+		bitWrite(C[cham_i].bitWallMoveFlag, p_wi[i], bit_val_set); //set bit for newly active wall
+		C[cham_i].updateFlag = 1; //flag update
 	}
 	return 0;
 }
@@ -427,22 +427,22 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 	// Update dynamic port/pin structs
 	_DB.dtTrack(1); //start timer
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		if (C[ch_i].byteUpdateFlag != 1) continue; //check if chamber flagged for updating
+		if (C[ch_i].updateFlag != 1) continue; //check if chamber flagged for updating
 
 		// Reset structs
 		_resetPMS(C[ch_i].pmsDynPWM);
 		_resetPMS(C[ch_i].pmsDynIO);
 
 		// Get byte mask for walls that should be moved and update dynamic PMS struct
-		uint8_t wall_up_byte_mask = ~C[ch_i].byteWallPosition & C[ch_i].byteWallActive; //up (wall_state == 0 & wall_active == 1) 
-		uint8_t wall_down_byte_mask = C[ch_i].byteWallPosition & ~C[ch_i].byteWallActive; //down (wall_state == 1 & wall_active == 0)
+		uint8_t wall_up_byte_mask = ~C[ch_i].bitWallPosition & C[ch_i].bitWallMoveFlag; //up (wall_state == 0 & wall_active == 1) 
+		uint8_t wall_down_byte_mask = C[ch_i].bitWallPosition & ~C[ch_i].bitWallMoveFlag; //down (wall_state == 1 & wall_active == 0)
 		_updateDynamicPMS(pmsDownIO, C[ch_i].pmsDynIO, wall_down_byte_mask); //pwm down
 		_updateDynamicPMS(pmsUpIO, C[ch_i].pmsDynIO, wall_up_byte_mask); //pwm up
 		_updateDynamicPMS(pmsDownPWM, C[ch_i].pmsDynPWM, wall_down_byte_mask); //io down
 		_updateDynamicPMS(pmsUpPWM, C[ch_i].pmsDynPWM, wall_up_byte_mask); //io up
 
 		// Move walls up/down
-		resp = _C_COM.ioWriteReg(C[ch_i].addr, C[ch_i].pmsDynPWM.byteMaskLong, 6, 1);
+		resp = _C_COM.ioWriteReg(C[ch_i].addr, C[ch_i].pmsDynPWM.bitMaskLong, 6, 1);
 
 		// Print walls being moved
 		if (wall_up_byte_mask > 0) _DB.printMsgTime("Start move up: chamber=%d walls=%s", ch_i, _DB.bitIndStr(wall_up_byte_mask));
@@ -454,9 +454,9 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 		do_move_check = 0; //reset
 		is_timedout = millis() >= ts_timeout; //check for timeout
 		for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-			do_move_check += C[ch_i].byteUpdateFlag; //update flag
+			do_move_check += C[ch_i].updateFlag; //update flag
 			//_DB.printMsg("ch_i=%d do_move_check=%d is_timedout=%d", ch_i, do_move_check, is_timedout); //TEMP
-			if (C[ch_i].byteUpdateFlag != 1) continue; //check if chamber flagged for updating
+			if (C[ch_i].updateFlag != 1) continue; //check if chamber flagged for updating
 
 			// Get io registry bytes. Note we are reading out the output registry as well to save an additional read if we write the pwm output later
 			U.i64[0] = 0; U.i64[1] = 0; //zero out union values
@@ -473,15 +473,15 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 
 				// Compare current io registry to saved mask
 				uint8_t port_n = C[ch_i].pmsDynIO.port[prt_i]; //get port number
-				uint8_t comp_byte = C[ch_i].pmsDynIO.byteMask[prt_i] & io_in_reg[port_n]; //triggered pin/bit matching mask will be 1
-				f_track_reg += C[ch_i].pmsDynIO.byteMask[prt_i]; //update flag
+				uint8_t comp_byte = C[ch_i].pmsDynIO.bitMask[prt_i] & io_in_reg[port_n]; //triggered pin/bit matching mask will be 1
+				f_track_reg += C[ch_i].pmsDynIO.bitMask[prt_i]; //update flag
 
 				// Check each bit in comparison byte
 				for (size_t pin_i = 0; pin_i < C[ch_i].pmsDynIO.nPins[prt_i]; pin_i++) { //loop pins
 					uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i]; //get pin number
-					if (!bitRead(C[ch_i].pmsDynIO.byteMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
+					if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
 					if (!bitRead(comp_byte, pin_n)) continue; //check io pin
-					bitWrite(C[ch_i].pmsDynIO.byteMask[prt_i], pin_n, 0); //remove from byte reg
+					bitWrite(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n, 0); //remove from byte reg
 
 					// Update pwm registry array (note, sets both up and down pwm reg entries as this makes the code easier)
 					uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; //get wall number
@@ -491,7 +491,7 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 
 					// Update state [0,1] [down,up] based on active switch function [1:io_down, 2:io_up]
 					uint8_t swtch_fun = wms.funMap[port_n][pin_n]; // get wall state
-					bitWrite(C[ch_i].byteWallPosition, wall_n, swtch_fun == 1 ? 0 : 1);
+					bitWrite(C[ch_i].bitWallPosition, wall_n, swtch_fun == 1 ? 0 : 1);
 
 					_DB.printMsgTime("End move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", ch_i, wall_n, _DB.dtTrack());
 				}
@@ -502,15 +502,15 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 				resp = _C_COM.ioWriteReg(C[ch_i].addr, io_out_mask, 6, 0, io_out_reg); //include last reg read and turn off pwms
 				if (resp != 0) { forceStopWalls(); run_error = 1; } //force stop and set flag
 			}
-			C[ch_i].byteUpdateFlag = f_track_reg == 0 ? 0 : C[ch_i].byteUpdateFlag; //reset flag
+			C[ch_i].updateFlag = f_track_reg == 0 ? 0 : C[ch_i].updateFlag; //reset flag
 
 		}
 	}
 
 	// Check for any unifinished moves
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		if (C[ch_i].byteUpdateFlag != 1) { //check if chamber still flagged for updating
-			C[ch_i].byteErrorFlag = 0; //reset error flags
+		if (C[ch_i].updateFlag != 1) { //check if chamber still flagged for updating
+			C[ch_i].bitWallErrorFlag = 0; //reset error flags
 			continue;
 		}
 		for (size_t prt_i = 0; prt_i < C[ch_i].pmsDynIO.nPorts; prt_i++) { //loop ports
@@ -518,14 +518,14 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout) {
 
 				// Check if pin still flagged for movement
 				uint8_t pin_n = C[ch_i].pmsDynIO.pin[prt_i][pin_i]; //get pin number
-				if (!bitRead(C[ch_i].pmsDynIO.byteMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
+				if (!bitRead(C[ch_i].pmsDynIO.bitMask[prt_i], pin_n)) continue; //check if pin still flagged in reg byte
 
 				// Flag error for debugging and to stop all wall movement
 				uint8_t wall_n = C[ch_i].pmsDynIO.wall[prt_i][pin_i]; //get wall number
 				run_error = is_timedout && run_error != 1 ? 2 : 3; //set error flag
 				_DB.printMsg("!!Movement failed: chamber=%d wall=%d cause=%s dt=%s!!", ch_i, wall_n,
 					run_error == 1 ? "i2c" : run_error == 2 ? "timedout" : "unknown", _DB.dtTrack());
-				bitWrite(C[ch_i].byteErrorFlag, wall_n, 1); //set chamber/wall specific error flag
+				bitWrite(C[ch_i].bitWallErrorFlag, wall_n, 1); //set chamber/wall specific error flag
 			}
 		}
 	}
@@ -545,7 +545,7 @@ uint8_t Wall_Operation::forceStopWalls() {
 	uint8_t resp = 0;
 	_DB.printMsgTime("!!Running forse stop!!");
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++) { //loop chambers
-		resp = _C_COM.ioWriteReg(C[ch_i].addr, pmsAllPWM.byteMaskLong, 6, 0); //stop all pwm output
+		resp = _C_COM.ioWriteReg(C[ch_i].addr, pmsAllPWM.bitMaskLong, 6, 0); //stop all pwm output
 		if (resp != 0) return resp;
 	}
 	return resp;
@@ -739,7 +739,7 @@ void Wall_Operation::_printPMS(PinMapStruct pms) {
 	sprintf(buff, "\nIO/PWM nPorts=%d__________________", pms.nPorts);
 	_DB.printMsg(buff);
 	for (size_t prt_i = 0; prt_i < pms.nPorts; prt_i++) {
-		sprintf(buff, "port[%d] nPins=%d byteMask=%s", pms.port[prt_i], pms.nPins[prt_i], _DB.binStr(pms.byteMask[prt_i]));
+		sprintf(buff, "port[%d] nPins=%d bitMask=%s", pms.port[prt_i], pms.nPins[prt_i], _DB.binStr(pms.bitMask[prt_i]));
 		_DB.printMsg(buff);
 		for (size_t pin_i = 0; pin_i < pms.nPins[prt_i]; pin_i++) {
 			sprintf(buff, "   wall=%d   pin=%d", pms.wall[prt_i][pin_i], pms.pin[prt_i][pin_i]);
