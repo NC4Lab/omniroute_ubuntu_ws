@@ -123,9 +123,10 @@ include_directories(
 )
 
 ## Build the esmacat master software (https://bitbucket.org/harmonicbionics/esmacat_master_software.git) and add directory here
-set(Esmacat_DIR /media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/src/esmacat_master_software)
-## Build plog (https://github.com/SergiusTheBest/plog) and add directory here
-set(Plog_DIR /media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/src/plog)
+#set(Esmacat_DIR /media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/src/esmacat_master_software)
+set(Esmacat_DIR /home/nc4lab/omniroute_operation_ws/src/esmacat_master_software)
+#set(Plog_DIR /media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/src/plog)
+set(Plog_DIR /home/nc4lab/omniroute_operation_ws/src/plog)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}

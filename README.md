@@ -21,5 +21,14 @@ cd ../../..
 
 catkin_make
 ```
+For ethercat_grant, you will likely need to install library libcap-dev
+```
+sudo apt install libcap-dev
+```
+After running catkin_make, copy executable into /usr/local/bin
+```
+sudo cp devel/lib/ethercat_grant/ethercat_grant /usr/local/bin
+sudo chmod +s /usr/local/bin/ethercat_grant
+```
 
-Add documention for ethercat_grant
+
