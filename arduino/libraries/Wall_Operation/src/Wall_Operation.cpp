@@ -309,64 +309,97 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct& r_pms2
 }
 
 /// <summary>
-/// Used to get incoming serial data signalling which walls to raise.
-/// Note, this can be used in conjunction with another microcontroller using
-/// MazeWallOperation\arduino\SendWallMessage\SendWallMessage.ino
+/// Used to get incoming ROS ethercat msg data signalling which walls to raise.
 /// </summary>
-/// <returns>Success/error codes [0:success, 1-4:error] associated with serial data</returns>
-uint8_t Wall_Operation::getWallCmdSerial() {
-	static const uint16_t buff_max = 500;
-	uint16_t buff[500] = { 0 }; buff[0] = '\0';
+/// <returns>Success/error codes [0:new message, 1:no message, 2-3:error]</returns>
+uint8_t Wall_Operation::getWallCmdEthercat()
+{
 	uint16_t byte_in_ind = 0;
 	uint16_t byte_store_ind = 0;
+	static int buff_read_last[8];
+	int buff_read_new[8];
 	uint32_t ts_read = millis() + 500;
 
-	//// Bail if no message
-	if (Serial1.available() == 0) { return 1; }
+	// int cnt = 0;
+	// while (true)
+	// {
+	// 	ESlave.get_ecat_registers(buff_read_new);
+	// 	cnt++;
+	// 	_DB.printMsgTime("CNT %d\n[0]%d\n[1]%d\n[2]%d\n[3]%d\n[4]%d\n[5]%d\n[6]%d\n[7]%d\n",
+	// 				 cnt,
+	// 				 buff_read_new[0],
+	// 				 buff_read_new[1],
+	// 				 buff_read_new[2],
+	// 				 buff_read_new[3],
+	// 				 buff_read_new[4],
+	// 				 buff_read_new[5],
+	// 				 buff_read_new[6],
+	// 				 buff_read_new[7]);
+	// 	delay(1000);
+	// }
 
-	// Read data stream
-	while (millis() < ts_read) {
-		if (Serial1.available() == 0) continue; //wait for new serial
-		buff[byte_in_ind] = Serial1.read();
-		byte_in_ind++;
-		//delay(1);
-		if (byte_in_ind >= buff_max) {
-			_DB.printMsg("!!com buffer overflow: bytes > %d!!", buff_max);
-			return 1;
-		}
-		if (buff[byte_in_ind - 1] == 255) break; //check for footer
-	}
-	if (buff[byte_in_ind - 1] != 255) {
-		_DB.printMsg("!!timed out before footer!!");
-		return 2;
-	}
+	// Read esmacat buffer
+	ESlave.get_ecat_registers(buff_read_new);
+
+	// Check for new data
+	bool is_new = false;
+	for (size_t i = 0; i < 8; i++)
+		is_new = is_new || buff_read_new[i] != buff_read_last[i];
+	if (!is_new)
+		return 1;
+	else
+		for (size_t i = 0; i < 8; i++)
+			buff_read_last[i] = buff_read_new[i];
+
+	// Reset U
+	U.i64[0] = 0;
+	U.i64[1] = 0;
+
+	// Check first register entry
+	U.i16[0] = buff_read_new[byte_in_ind++];
+
+	// Check for header
+	if (U.b[0] != 254 || U.b[1] != 254)
+		return 1;
+
+	_DB.printMsgTime("New ethercat message recieved");
 
 	// Parse message
-	if (buff[byte_store_ind++] != 254) { //check for header
-		_DB.printMsg("!!missing serial header!!");
-		return 3;
-	}
-	uint8_t n_cham = buff[byte_store_ind++]; //get number of chambers to set
-	uint8_t cham[n_cham];
-	uint8_t wall_byte[n_cham];
-	for (size_t ch_i = 0; ch_i < n_cham; ch_i++) { //loop through each chamber message
-		cham[ch_i] = buff[byte_store_ind++];
-		wall_byte[ch_i] = buff[byte_store_ind++];
-	}
-	if (buff[byte_store_ind++] != 255) { //check for footer
-		_DB.printMsg("!!missing serial footer!!");
-		return 4;
-	}
+	while (millis() < ts_read)
+	{
+		// Get next entry
+		U.i16[0] = buff_read_new[byte_in_ind++];
 
-	// Store values and update the update flag
-	for (size_t ch_i = 0; ch_i < n_cham; ch_i++) { //loop through each chamber message
-		C[cham[ch_i]].bitWallMoveFlag = wall_byte[ch_i]; //store values
-		C[cham[ch_i]].updateFlag = 1; //set update flag
+		// Check for footer
+		if (U.b[0] == 255 && U.b[1] == 255)
+			break;
+
+		// Store values
+		uint8_t cham_i = U.b[1];
+		uint8_t wall_b = U.b[0];
+
+		if (cham_i > nCham)
+		{
+			_DB.printMsgTime("!!chamber[%d] > max chamber[%d]!!", cham_i, nCham);
+			return 2;
+		}
+
+		// Update chamber/wall info
+		C[cham_i].bitWallMoveFlag = wall_b; // store values
+		C[cham_i].updateFlag = 1;			// set update flag
+
+		_DB.printMsgTime("\tset move walls: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_b));
+	}
+	if (millis() >= ts_read)
+	{
+		_DB.printMsgTime("!!timed out before footer!!");
+		return 3;
 	}
 
 	// Return new message flag
 	return 0;
 }
+
 
 /// <summary>
 /// Option to speicify a given set of walls to move programmatically as an

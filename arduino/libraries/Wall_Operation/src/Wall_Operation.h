@@ -16,6 +16,7 @@
 #include "Esmacatshield.h"
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
+#include "Esmacatshield.h"
 
 /// <summary>
 /// This class handles the actual opperation of the maze walls.
@@ -92,6 +93,7 @@ public:
 private:
 	Maze_Debug _DB;
 	Cypress_Com _C_COM; ///<local instance of Cypress_Com class
+	Esmacatshield ESlave; //<instance of Esmacatshield class
 
 	// -----------METHODS-----------------
 public:	Wall_Operation(uint8_t);
@@ -106,7 +108,7 @@ public:	uint8_t setupWallPWM(uint8_t);
 public:	uint8_t resetAllWalls();
 private: void _resetPMS(PinMapStruct&);
 private: void _updateDynamicPMS(PinMapStruct, PinMapStruct&, uint8_t);
-public:	uint8_t getWallCmdSerial();
+public:	uint8_t getWallCmdEthercat();
 public:	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 public:	uint8_t runWalls(uint32_t = 1500);
 public:	uint8_t forceStopWalls();
