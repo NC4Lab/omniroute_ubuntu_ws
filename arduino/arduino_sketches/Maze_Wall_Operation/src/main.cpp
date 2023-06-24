@@ -125,8 +125,8 @@ void setup()
 	// Move chambers
 	bool do_cham_arr[3] = {true, false, false};
 	uint32_t dt_timout = 1500;
-	const uint8_t s1 = 5;
-	uint8_t a_c1_wall[s1] = {0, 1, 2, 3, 4};
+	const uint8_t s1 = 8;
+	uint8_t a_c1_wall[s1] = {0,1,2,3,4,5,6,7};
 	const uint8_t s2 = 1;
 	uint8_t a_c2_wall[s2] = {5};
 	const uint8_t s3 = 1;

@@ -218,8 +218,8 @@ uint8_t Wall_Operation::setupWallIO()
 				resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
 				if (resp == 0)
 				{
-					// Set pins as high impedance
-					resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+					// Set pins as pull down
+					resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_PULLDOWN, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
 					if (resp == 0)
 					{
 						// Set corrisponding output register entries to 1 as per datasheet
@@ -546,18 +546,8 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 		_updateDynamicPMS(pmsDownPWM, C[ch_i].pmsDynPWM, wall_down_byte_mask);			  // io down
 		_updateDynamicPMS(pmsUpPWM, C[ch_i].pmsDynPWM, wall_up_byte_mask);				  // io up
 
-		// TEMP
-		uint8_t bo_2;
-		uint8_t wall = 0;
-		_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-		_DB.printMsgTime("#### PRE wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-
 		// Move walls up/down
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, C[ch_i].pmsDynPWM.bitMaskLong, 6, 1);
-
-		// TEMP
-		_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-		_DB.printMsgTime("#### POST wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
 
 		// Print walls being moved
 		if (wall_up_byte_mask > 0)
@@ -623,15 +613,15 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 
 					_DB.printMsgTime("\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", ch_i, wall_n, _DB.dtTrack());
 
-					// TEMP
-					if (wall_n == 0)
-					{
-						uint8_t bo_2;
-						uint8_t wall = 0;
-						_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-						_DB.printMsgTime("#### wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-						_DB.printRegByte(C[ch_i].pmsDynPWM.bitMaskLong, io_in_reg, 6);
-					}
+					// // TEMP
+					// if (wall_n == 0)
+					// {
+					// 	uint8_t bo_2;
+					// 	uint8_t wall = 0;
+					// 	_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+					// 	_DB.printMsgTime("#### wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+					// 	_DB.printRegByte(C[ch_i].pmsDynPWM.bitMaskLong, io_in_reg, 6);
+					// }
 				}
 			}
 
