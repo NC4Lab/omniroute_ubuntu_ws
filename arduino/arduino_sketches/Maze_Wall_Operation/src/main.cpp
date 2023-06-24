@@ -122,30 +122,30 @@ void setup()
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
-	// // Move chambers
-	// bool do_cham_arr[3] = {true, false, false};
-	// uint32_t dt_timout = 1500;
-	// uint8_t c1 = 0;
-	// uint8_t a_c1_wall[2] = {1, 2};
-	// uint8_t c2 = 1;
-	// uint8_t a_c2_wall[1] = {5};
-	// uint8_t c3 = 2;
-	// uint8_t a_c3_wall[1] = {5};
-	// if (do_cham_arr[0])
-	// 	W_OPR.setWallCmdManual(c1, 1, a_c1_wall, 2);
-	// if (do_cham_arr[1])
-	// 	W_OPR.setWallCmdManual(c2, 1, a_c2_wall, 1);
-	// if (do_cham_arr[2])
-	// 	W_OPR.setWallCmdManual(c3, 1, a_c3_wall, 1);
-	// resp = W_OPR.runWalls(dt_timout); // move walls up
-	// // return;
-	// if (do_cham_arr[0])
-	// 	W_OPR.setWallCmdManual(c1, 0, a_c1_wall, 1);
-	// if (do_cham_arr[1])
-	// 	W_OPR.setWallCmdManual(c2, 0, a_c2_wall, 1);
-	// if (do_cham_arr[2])
-	// 	W_OPR.setWallCmdManual(c3, 0, a_c3_wall, 1);
-	// resp = W_OPR.runWalls(dt_timout); // move walls down
+	// Move chambers
+	bool do_cham_arr[3] = {true, false, false};
+	uint32_t dt_timout = 1500;
+	const uint8_t s1 = 6;
+	uint8_t a_c1_wall[s1] = {0, 1, 2, 3, 4, 5};
+	const uint8_t s2 = 1;
+	uint8_t a_c2_wall[s2] = {5};
+	const uint8_t s3 = 1;
+	uint8_t a_c3_wall[s3] = {5};
+	if (do_cham_arr[0])
+		W_OPR.setWallCmdManual(0, 1, a_c1_wall, s1);
+	if (do_cham_arr[1])
+		W_OPR.setWallCmdManual(1, 1, a_c2_wall, s2);
+	if (do_cham_arr[2])
+		W_OPR.setWallCmdManual(2, 1, a_c3_wall, s3);
+	resp = W_OPR.runWalls(dt_timout); // move walls up
+	// return;
+	if (do_cham_arr[0])
+		W_OPR.setWallCmdManual(0, 0, a_c1_wall, s1);
+	if (do_cham_arr[1])
+		W_OPR.setWallCmdManual(1, 0, a_c2_wall, s2);
+	if (do_cham_arr[2])
+		W_OPR.setWallCmdManual(2, 0, a_c3_wall, s3);
+	resp = W_OPR.runWalls(dt_timout); // move walls down
 
 }
 

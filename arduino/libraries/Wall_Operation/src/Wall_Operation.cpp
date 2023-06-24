@@ -206,31 +206,31 @@ uint8_t Wall_Operation::setupWallIO()
 	// Setup wall io pins
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
 	{
-
 		// Set entire output register to off
 		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, p_byte_mask_in, 6, 0);
-		if (resp != 0)
-			return resp;
-
-		for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
-		{ // loop through port list
-
-			// Set input pins as input
-			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0)
-				return resp;
-
-			// Set pins as high impedance
-			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0)
-				return resp;
-
-			// Set corrisponding output register entries to 1 as per datasheet
-			resp = _C_COM.ioWritePort(C[ch_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-			if (resp != 0)
-				return resp;
+		if (resp == 0)
+		{
+			for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
+			{ // loop through port list
+				// Set input pins as input
+				resp = _C_COM.setPortRegister(C[ch_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+				if (resp == 0)
+				{
+					// Set pins as high impedance
+					resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_HIZ, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+					if (resp == 0)
+					{
+						// Set corrisponding output register entries to 1 as per datasheet
+						resp = _C_COM.ioWritePort(C[ch_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+						if (resp != 0)
+							return resp;
+					}
+				}
+			}
 		}
+		if (resp != 0)
+			_DB.printMsgTime("\t!!failed IO pin setup: chamber=%d", ch_i);
 	}
 	_DB.printMsgTime("Finished IO pin setup");
 	return resp;
@@ -251,29 +251,27 @@ uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty)
 	// Setup pwm
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
 	{
-
 		// Setup source
 		for (size_t src_i = 0; src_i < 8; src_i++)
 		{
 			resp = _C_COM.setupSourcePWM(C[ch_i].addr, wms.pwmSrc[src_i], pwm_duty);
 			if (resp != 0)
-				return resp;
+				_DB.printMsgTime("\t!!failed PWM source setup: source=%d", src_i);
 		}
 
 		// Setup wall pwm pins
 		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
 		{ // loop through port list
-
 			// Set pwm pins as pwm output
 			resp = _C_COM.setPortRegister(C[ch_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp != 0)
-				return resp;
-
-			// Set pins as strong drive
-			resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp != 0)
-				return resp;
+			if (resp == 0)
+			{
+				// Set pins as strong drive
+				resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
+			}
 		}
+			if (resp != 0)
+			_DB.printMsgTime("\t!!failed PWM pin setup: chamber=%d", ch_i);
 	}
 	_DB.printMsgTime("Finished PWM setup");
 	return resp;
@@ -302,7 +300,7 @@ uint8_t Wall_Operation::initializeWalls()
 		resp = runWalls(3000); // move walls down
 
 		if (resp != 0)
-			_DB.printMsgTime("\t!!wall initialization failed for chamber=%d", ch_i);
+			_DB.printMsgTime("\t!!failed wall initialization: chamber=%d", ch_i);
 	}
 
 	// Set resp to any non-zero flag and return
