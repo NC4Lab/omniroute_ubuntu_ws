@@ -209,6 +209,7 @@ uint8_t Wall_Operation::setupWallIO()
 		// Set entire output register to off
 		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, p_byte_mask_in, 6, 0);
+
 		if (resp == 0)
 		{
 			for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
@@ -270,7 +271,7 @@ uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty)
 				resp = _C_COM.setPortRegister(C[ch_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
 			}
 		}
-			if (resp != 0)
+		if (resp != 0)
 			_DB.printMsgTime("\t!!failed PWM pin setup: chamber=%d", ch_i);
 	}
 	_DB.printMsgTime("Finished PWM setup");
@@ -377,7 +378,6 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// <returns>Success/error codes [0:new message, 1:no message, 2-3:error]</returns>
 uint8_t Wall_Operation::getWallCmdEthercat()
 {
-	uint16_t byte_in_ind = 0;
 	uint16_t byte_store_ind = 0;
 	static int buff_read_last[8];
 	int buff_read_new[8];
@@ -414,12 +414,8 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 		for (size_t i = 0; i < 8; i++)
 			buff_read_last[i] = buff_read_new[i];
 
-	// Reset U
-	U.i64[0] = 0;
-	U.i64[1] = 0;
-
 	// Check first register entry
-	U.i16[0] = buff_read_new[byte_in_ind++];
+	U.i16[0] = buff_read_new[byte_store_ind++];
 
 	// Check for header
 	if (U.b[0] != 254 || U.b[1] != 254)
@@ -431,7 +427,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	while (millis() < ts_read)
 	{
 		// Get next entry
-		U.i16[0] = buff_read_new[byte_in_ind++];
+		U.i16[0] = buff_read_new[byte_store_ind++];
 
 		// Check for footer
 		if (U.b[0] == 255 && U.b[1] == 255)
@@ -550,8 +546,18 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 		_updateDynamicPMS(pmsDownPWM, C[ch_i].pmsDynPWM, wall_down_byte_mask);			  // io down
 		_updateDynamicPMS(pmsUpPWM, C[ch_i].pmsDynPWM, wall_up_byte_mask);				  // io up
 
+		// TEMP
+		uint8_t bo_2;
+		uint8_t wall = 0;
+		_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+		_DB.printMsgTime("#### PRE wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+
 		// Move walls up/down
 		resp = _C_COM.ioWriteReg(C[ch_i].addr, C[ch_i].pmsDynPWM.bitMaskLong, 6, 1);
+
+		// TEMP
+		_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+		_DB.printMsgTime("#### POST wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
 
 		// Print walls being moved
 		if (wall_up_byte_mask > 0)
@@ -573,17 +579,16 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 				continue; // check if chamber flagged for updating
 
 			// Get io registry bytes. Note we are reading out the output registry as well to save an additional read if we write the pwm output later
-			U.i64[0] = 0;
-			U.i64[1] = 0;											 // zero out union values
-			resp = _C_COM.ioReadReg(C[ch_i].addr, REG_GI0, U.b, 14); // read through all input registers (6 active, 2 unused) and the 6 active output registers
+			uint8_t io_all_reg[14];											// zero out union values
+			resp = _C_COM.ioReadReg(C[ch_i].addr, REG_GI0, io_all_reg, 14); // read through all input registers (6 active, 2 unused) and the 6 active output registers
 			if (resp != 0)
 			{
 				forceStopWalls();
 				run_error = 1;
-			}																			  // force stop and set flag
-			uint8_t io_in_reg[6] = {U.b[0], U.b[1], U.b[2], U.b[3], U.b[4], U.b[5]};	  // copy out values
-			uint8_t io_out_reg[6] = {U.b[8], U.b[9], U.b[10], U.b[11], U.b[12], U.b[13]}; // copy out values
-			uint8_t io_out_mask[6] = {0};												  // will store new output pwm reg mask
+			}																														// force stop and set flag
+			uint8_t io_in_reg[6] = {io_all_reg[0], io_all_reg[1], io_all_reg[2], io_all_reg[3], io_all_reg[4], io_all_reg[5]};		// copy out values
+			uint8_t io_out_reg[6] = {io_all_reg[8], io_all_reg[9], io_all_reg[10], io_all_reg[11], io_all_reg[12], io_all_reg[13]}; // copy out values
+			uint8_t io_out_mask[6] = {0};
 
 			// Compare check ifcurrent registry io to saved registry
 			uint8_t f_track_reg = 0;	 // will track if all io pins have been been triggered
@@ -617,6 +622,16 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 					bitWrite(C[ch_i].bitWallPosition, wall_n, swtch_fun == 1 ? 0 : 1);
 
 					_DB.printMsgTime("\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", ch_i, wall_n, _DB.dtTrack());
+
+					// TEMP
+					if (wall_n == 0)
+					{
+						uint8_t bo_2;
+						uint8_t wall = 0;
+						_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+						_DB.printMsgTime("#### wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
+						_DB.printRegByte(C[ch_i].pmsDynPWM.bitMaskLong, io_in_reg, 6);
+					}
 				}
 			}
 

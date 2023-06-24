@@ -227,10 +227,10 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 	if (DB_VERBOSE == 0)
 		return;
 	char buff[250];
-	Serial.println("Registry Bytes: ");
+	Serial.println("\tRegistry Bytes: ");
 	for (size_t i = 0; i < s; i++)
 	{
-		sprintf(buff, "port[%d]\n   76543210\n  %s", i, binStr(p_byte_mask_in[i]));
+		sprintf(buff, "\tport[%d]\n\t\t 76543210\n\t\t%s", i, binStr(p_byte_mask_in[i]));
 		Serial.println(buff);
 	}
 }
@@ -242,10 +242,10 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in_1[], uint8_t p_byte_mask_in
 	if (DB_VERBOSE == 0)
 		return;
 	char buff[250];
-	Serial.println("Registry Bytes: ");
+	Serial.println("\tRegistry Bytes: ");
 	for (size_t i = 0; i < s; i++)
 	{
-		sprintf(buff, "port[%d]\n  76543210\n1) %s\n2) %s", i, binStr(p_byte_mask_in_1[i]), binStr(p_byte_mask_in_2[i]));
+		sprintf(buff, "\tport[%d]\n\t\t 76543210\n1)\t\t%s\n2)\t\t%s", i, binStr(p_byte_mask_in_1[i]), binStr(p_byte_mask_in_2[i]));
 		Serial.println(buff);
 	}
 }
