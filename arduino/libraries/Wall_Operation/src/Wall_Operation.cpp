@@ -445,7 +445,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 
 		// Update chamber/wall info
 		C[cham_i].bitWallMoveFlag = wall_b; // store values
-		C[cham_i].updateFlag = 1;			// set update flag
+		C[cham_i].bitWallUpdateFlag = 1;			// set update flag
 
 		_DB.printMsgTime("\tset move walls: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_b));
 	}
@@ -502,7 +502,7 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	for (size_t i = 0; i < s; i++)
 	{															   // loop through each entry
 		bitWrite(C[cham_i].bitWallMoveFlag, p_wi[i], bit_val_set); // set bit for newly active wall
-		C[cham_i].updateFlag = 1;								   // flag update
+		C[cham_i].bitWallUpdateFlag = 1;								   // flag update for this wall
 	}
 	_DB.printMsgTime("New manual message recieved", cham_i, _DB.arrayStr(p_wi, s));
 	_DB.printMsgTime("\tset move walls: chamber=%d walls=%s", cham_i, _DB.arrayStr(p_wi, s));
@@ -531,7 +531,7 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 	_DB.dtTrack(1); // start timer
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
 	{ // loop chambers
-		if (C[ch_i].updateFlag != 1)
+		if (C[ch_i].bitWallUpdateFlag != 1)
 			continue; // check if chamber flagged for updating
 
 		// Reset structs
@@ -563,9 +563,9 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 		is_timedout = millis() >= ts_timeout; // check for timeout
 		for (size_t ch_i = 0; ch_i < nCham; ch_i++)
 		{										 // loop chambers
-			do_move_check += C[ch_i].updateFlag; // update flag
+			do_move_check += C[ch_i].bitWallUpdateFlag; // update flag
 			//_DB.printMsgTime("ch_i=%d do_move_check=%d is_timedout=%d", ch_i, do_move_check, is_timedout); //TEMP
-			if (C[ch_i].updateFlag != 1)
+			if (C[ch_i].bitWallUpdateFlag != 1)
 				continue; // check if chamber flagged for updating
 
 			// Get io registry bytes. Note we are reading out the output registry as well to save an additional read if we write the pwm output later
@@ -635,14 +635,14 @@ uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 					run_error = 1;
 				} // force stop and set flag
 			}
-			C[ch_i].updateFlag = f_track_reg == 0 ? 0 : C[ch_i].updateFlag; // reset flag
+			C[ch_i].bitWallUpdateFlag = f_track_reg == 0 ? 0 : C[ch_i].bitWallUpdateFlag; // reset flag
 		}
 	}
 
 	// Check for any unifinished moves
 	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
 	{ // loop chambers
-		if (C[ch_i].updateFlag != 1)
+		if (C[ch_i].bitWallUpdateFlag != 1)
 		{								  // check if chamber still flagged for updating
 			C[ch_i].bitWallErrorFlag = 0; // reset error flags
 			continue;
