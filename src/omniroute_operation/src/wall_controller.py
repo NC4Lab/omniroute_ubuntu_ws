@@ -31,7 +31,7 @@ class WallState(Enum):
         WALL_UP = 2
         WALL_MOVING_DOWN = 3
         WALL_DOWN = 4
-        END = -1
+        CHECK_REPLY = -1
 
 class WallController:
 
@@ -45,8 +45,15 @@ class WallController:
      
         self.start_time = rospy.Time.now()
         self.wall_state = WallState.START
-        self.wall_up_duration = 10
-        self.wall_down_duration = 10
+        self.wall_up_duration = rospy.Duration(10)
+        self.wall_down_duration = rospy.Duration(10)
+
+        # Make chamber and byte array lists
+        self.cw_list = [
+            [[0], [1,3]],
+            [[1], [2,3,5]],
+            [[2], [5]]
+        ]
 
         # @brief Set the desired rate for the loop (100 Hz)
         r = rospy.Rate(100)
@@ -71,46 +78,46 @@ class WallController:
 
         currentTime = rospy.Time.now()
 
+        # State: START
         if self.wall_state == WallState.START:
             # Move walls up
-            # Make chamber and byte array lists
-            cw_list = [
-                [[0], [1,3]],
-                [[1], [2,3,5]],
-                [[2], [5]]
-            ]
-            reg_arr = self.make_reg_msg(cw_list) # Create registry message
+            reg_arr = self.make_reg_msg(self.cw_list) # Create registry message
             self.maze_ard0_pub.publish(*reg_arr) # Publish list to topic
-            # for sublist in cw_list:
+            # for sublist in self.cw_list:
             #     rospy.loginfo(sublist)
 
             self.start_time = rospy.Time.now()
             self.wall_state = WallState.WALL_MOVING_UP
+            rospy.loginfo("MOVE WALL UP")
 
+        # State: WALL_MOVING_UP
         elif self.wall_state == WallState.WALL_MOVING_UP:
             if currentTime >= (self.start_time + self.wall_up_duration):
                 self.wall_state = WallState.WALL_UP
         
+        # State: WALL_UP
         elif self.wall_state == WallState.WALL_UP:
             # Move walls back down
-            for w_l in cw_list:
+            for w_l in self.cw_list:
                 w_l[1] = [0]
-            reg_arr = self.make_reg_msg(cw_list) # Create registry message
+            reg_arr = self.make_reg_msg(self.cw_list) # Create registry message
             self.maze_ard0_pub.publish(*reg_arr) # Publish list to topic
             self.start_time = rospy.Time.now()
             self.wall_state = WallState.WALL_MOVING_DOWN
+            rospy.loginfo("MOVING WALL DOWN")
 
+        # State: WALL_MOVING_DOWN
         elif self.wall_state == WallState.WALL_MOVING_DOWN:
             if currentTime >= (self.start_time + self.wall_down_duration):
                 self.wall_state = WallState.WALL_DOWN
         
+        # State: CHECK_REPLY
         elif self.wall_state == WallState.WALL_DOWN:
-            self.wall_state = WallState.END
+            self.wall_state = WallState.CHECK_REPLY
+            rospy.loginfo("CHECK_REPLY")
 
-        elif self.wall_state == WallState.END:
+        elif self.wall_state == WallState.CHECK_REPLY:
             return
-
-        return
 
     # @brief Create a byte with bits set to 1 based on wall_up_arr
     def set_wall_byte(self, wall_up_arr):
@@ -128,6 +135,12 @@ class WallController:
         # Create a list 'reg' with 8 16-bit Union elements
         U_arr = [Union() for _ in range(8)]
         u_ind = 0
+
+        cw_list = [
+            [[0], [1,3]],
+            [[1], [2,3,5]],
+            [[2], [5]]
+        ]
 
         # Set header
         U_arr[u_ind].b[1] = 254
@@ -148,7 +161,18 @@ class WallController:
 
         # Store and return 16-bit values
         reg_arr = [ctypes.c_int16(U.i16).value for U in U_arr] # cast as signed for use with ease_registers
+
+        # Print reg message
+        for index, U in enumerate(U_arr):
+            rospy.loginfo("%s %s", U.b[0], U.b[1])
+
+            
+
+
         return reg_arr
+    
+        
+
 
         # KEEP THIS AT THE END
         pass

@@ -102,11 +102,11 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_i
 void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (bit_val_set == 1)
-	{ // set bit in byte1 to 1 if it or the corresponding bit in byte2 is equal to 1
+	{ // bitwise comparison, set bit in byte1 to 1 if it or the corresponding bit in byte2 is equal to 1
 		r_byte_val_out = r_byte_val_out | byte_mask;
 	}
 	else
-	{ // set bit in byte1 to 0 if the corresponding bit is equal to 1 in byte2
+	{ // bitwise comparison, set bit in byte1 to 0 if the corresponding bit is equal to 1 in byte2
 		r_byte_val_out = r_byte_val_out & ~byte_mask;
 	}
 }

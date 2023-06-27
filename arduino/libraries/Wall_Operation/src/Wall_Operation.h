@@ -138,7 +138,7 @@ public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
 public:
-	uint8_t runWalls(uint32_t = 1500);
+	uint8_t runWalls(uint32_t = 1000);
 
 public:
 	uint8_t forceStopWalls();

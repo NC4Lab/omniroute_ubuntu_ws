@@ -51,13 +51,6 @@ void setup()
 	// C_COM.i2cScan();
 	// return;
 
-	// TEMP
-	// const uint8_t _a_arr[5] = { 25,22,28, 29, 20 };
-	// const S_VEC<uint8_t> v_arr(5, _a_arr);
-	// v_arr.sort(true);
-	// DB.TEMP_foo(v_arr);
-	// return;
-
 	// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
 	DB.printMsg("Uploading to Arduno Uno");
@@ -89,21 +82,8 @@ void setup()
 	// Setup PWM pins for each chamber
 	resp = W_OPR.setupWallPWM(pwmDuty);
 
-	// // Test and reset all walls
-	// resp = W_OPR.initializeWalls();
-	// while(true); // TEMP
-
-	// // TEMP
-	// while (true)
-	// {
-	// 	uint8_t r_bit_out;
-	// 	uint8_t wall = 2;
-	// 	C_COM.ioReadPin(W_OPR.C[0].addr, W_OPR.wms.ioDown[0][wall], W_OPR.wms.ioDown[1][wall], r_bit_out);
-	// 	if (r_bit_out != 0)
-	// 	{
-	// 		Serial.println(r_bit_out);
-	// 	}
-	// }
+	// Test and reset all walls
+	//resp = W_OPR.initializeWalls();
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 1 };
@@ -122,30 +102,30 @@ void setup()
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
-	// Move chambers
-	bool do_cham_arr[3] = {true, true, true};
-	uint32_t dt_timout = 1500;
-	const uint8_t s1 = 8;
-	uint8_t a_c1_wall[s1] = {0,1,2,3,4,5,6,7};
-	const uint8_t s2 = 1;
-	uint8_t a_c2_wall[s2] = {5};
-	const uint8_t s3 = 1;
-	uint8_t a_c3_wall[s3] = {5};
-	if (do_cham_arr[0])
-		W_OPR.setWallCmdManual(0, 1, a_c1_wall, s1);
-	if (do_cham_arr[1])
-		W_OPR.setWallCmdManual(1, 1, a_c2_wall, s2);
-	if (do_cham_arr[2])
-		W_OPR.setWallCmdManual(2, 1, a_c3_wall, s3);
-	resp = W_OPR.runWalls(dt_timout); // move walls up
-	// return;
-	if (do_cham_arr[0])
-		W_OPR.setWallCmdManual(0, 0, a_c1_wall, s1);
-	if (do_cham_arr[1])
-		W_OPR.setWallCmdManual(1, 0, a_c2_wall, s2);
-	if (do_cham_arr[2])
-		W_OPR.setWallCmdManual(2, 0, a_c3_wall, s3);
-	resp = W_OPR.runWalls(dt_timout); // move walls down
+	// // Move chambers
+	// bool do_cham_arr[3] = {true, true, true};
+	// uint32_t dt_timout = 1500;
+	// const uint8_t s1 = 8;
+	// uint8_t a_c1_wall[s1] = {0,1,2,3,4,5,6,7};
+	// const uint8_t s2 = 1;
+	// uint8_t a_c2_wall[s2] = {5};
+	// const uint8_t s3 = 1;
+	// uint8_t a_c3_wall[s3] = {5};
+	// if (do_cham_arr[0])
+	// 	W_OPR.setWallCmdManual(0, 1, a_c1_wall, s1);
+	// if (do_cham_arr[1])
+	// 	W_OPR.setWallCmdManual(1, 1, a_c2_wall, s2);
+	// if (do_cham_arr[2])
+	// 	W_OPR.setWallCmdManual(2, 1, a_c3_wall, s3);
+	// resp = W_OPR.runWalls(dt_timout); // move walls up
+	// // return;
+	// if (do_cham_arr[0])
+	// 	W_OPR.setWallCmdManual(0, 0, a_c1_wall, s1);
+	// if (do_cham_arr[1])
+	// 	W_OPR.setWallCmdManual(1, 0, a_c2_wall, s2);
+	// if (do_cham_arr[2])
+	// 	W_OPR.setWallCmdManual(2, 0, a_c3_wall, s3);
+	// resp = W_OPR.runWalls(dt_timout); // move walls down
 
 }
 
@@ -153,9 +133,9 @@ void setup()
 void loop()
 {
 
-	// // Check for new message
-	// if (W_OPR.getWallCmdEthercat() == 0)
-	// {
-	// 	W_OPR.runWalls(); // move walls
-	// }
+	// Check for new message
+	if (W_OPR.getWallCmdEthercat() == 0)
+	{
+		W_OPR.runWalls(); // move walls
+	}
 }
