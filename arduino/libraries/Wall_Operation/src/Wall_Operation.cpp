@@ -378,6 +378,7 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// <returns>Success/error codes [0:new message, 1:no message, 2-3:error]</returns>
 uint8_t Wall_Operation::getWallCmdEthercat()
 {
+	//static int msg_num = 0;
 	uint16_t byte_store_ind = 0;
 	static int buff_read_last[8];
 	int buff_read_new[8];
@@ -387,12 +388,15 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	ESlave.get_ecat_registers(buff_read_new);
 
 	// TEMP
+	_DB.printMsg(" ");
 	for (size_t i = 0; i < 8; i++)
 	{
-		U.i16[0] = buff_read_new[byte_store_ind++];
+		int buff =  buff_read_new[byte_store_ind++];
+		_DB.printMsg("%d: [buff]%d", i, buff);
+		U.i16[0] = buff;
 		_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
 	}
-	delay(5000);
+	delay(1000);
 	return;
 
 	// Check for new data
@@ -425,8 +429,8 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 			break;
 
 		// Store values
-		uint8_t cham_i = U.b[1];
-		uint8_t wall_b = U.b[0];
+		uint8_t cham_i = U.b[0];
+		uint8_t wall_b = U.b[1];
 
 		// TEMP
 		_DB.printMsgTime("\tTEMP: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_b));
