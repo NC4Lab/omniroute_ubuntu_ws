@@ -1,0 +1,15 @@
+<library path="src">
+  <class name="OmnirouteInterface" type="omniroute_interface.interface.Interface" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        An rqt-based GUI for testing the functionality of the Omniroute interface.
+    </description>
+    <qtgui>
+      <group>
+        <label>omniroute_operation</label>
+      </group>
+      <label>Omniroute Interface Interface</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Use to test functioning of Omniroute</statustip>
+    </qtgui>
+  </class>
+</library>
