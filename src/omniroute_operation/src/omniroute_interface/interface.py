@@ -15,6 +15,10 @@ from python_qt_binding import loadUi
 from std_msgs.msg import *
 
 class Interface(Plugin):
+    csvDir = ""
+    csvFileName = ""
+
+
     """Main GUI Class
     
     Defines functions which provide slots for Qt Signals, as well as callbacks for ROS messages to which the GUI subscribes. Available signals from the GUI rqt_dome_interface.ui is used for interface elements. Communication between ROS callbacks and UI elements is done through custom signals.
@@ -70,14 +74,14 @@ class Interface(Plugin):
         # rospy.Subscriber("encoder_angle", Angle, self.ros_encoderCallback)
 
         # Publisher instances
-        # self.quit_pub = rospy.Publisher('quit',DomeEvent,queue_size=1);        
+        self.csv_file_name_pub = rospy.Publisher('csv_file_name',String,queue_size=1);        
 
         # Action clients
         # self.feed_client = actionlib.SimpleActionClient('feed', PulseDigitalAction)
 
         # Signal connections
-        # self._widget.xmlLoadBtn.clicked[bool].connect(self._handle_xmlLoadBtn_clicked)
-        # self._widget.intensitySlider.valueChanged[int].connect(self._handle_intensitySlider_valueChanged)
+        self._widget.fileBrowseBtn.clicked.connect(self._handle_fileBrowseBtn_clicked)
+        self._widget.fileLoadBtn.clicked.connect(self._handle_fileLoadBtn_clicked)
 
         # Custom signal connections
         # self.encoderAngleChanged[float].connect(self._handle_encoderAngleChanged)
@@ -89,10 +93,14 @@ class Interface(Plugin):
         # Any GUI updates MUST be made from these callbacks, and not from any other 
         # functions or especially ROS callbacks
 
-    def _handle_intensitySlider_valueChanged(self, intensity):
-        pass
-        # self._widget.intensityValueEdit.setText("%d"%intensity)
+    def _handle_fileBrowseBtn_clicked(self):
+        # Get the absolute path of the current script file
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Create the path to the "config" directory four levels up
+        config_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config'))
+        self.csvDir = config_dir
+        self.csvFileName = QFileDialog.getOpenFileName(None,"Open csv file",self.csvDir,"CSV files (*.csv)")
+        self._widget.fileNameEdit.setText(os.path.join(self.csvDir,self.csvFileName[0]))
 
-        # reg = [0]*8
-        # reg[0] = intensity
-        # self.intensity_pub.publish(*reg)
+    def _handle_fileLoadBtn_clicked(self):
+        self.csv_file_name_pub.publish(self.csvFileName[0])
