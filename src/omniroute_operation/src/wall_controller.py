@@ -5,8 +5,10 @@ from omniroute_esmacat_ros.msg import *
 import struct
 import ctypes
 import time
+import csv
 from enum import Enum
 from std_msgs.msg import String
+from colorama import Fore, Style
 
 # @brief Union class using ctype union for storing ethercat data shareable accross data types
 
@@ -27,22 +29,31 @@ class Union:
 ##
 
 # Enum for tracking run state
+
+
 class RunState(Enum):
     GET_CSV = 0
-    START_MOVE = 1
-    WALL_MOVING_UP = 2
-    WALL_UP = 3
-    WALL_MOVING_DOWN = 4
-    WALL_DOWN = 5
-    CHECK_REPLY = 6
+    INITIALIZE = 1
+    START_MOVE = 2
+    WALL_MOVING_UP = 3
+    WALL_UP = 4
+    WALL_MOVING_DOWN = 5
+    WALL_DOWN = 6
+    CHECK_REPLY = 7
 
 # Enum for message type ID
+
+
 class MsgTypeID(Enum):
-    INITIALIZE = 0
+    INITIALIZE = 128
     MOVE_WALLS_UP = 1
     MOVE_WALLS_DOWN = 2
 
+
 class WallController:
+
+    # Initialize colorama
+    Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
 
     # @brief Initialize the WallController class
     def __init__(self):
@@ -50,29 +61,36 @@ class WallController:
         # @brief Initialize the publisher for writing to '/Esmacat_write_maze_ard0_ease' topic
         self.maze_ard0_pub = rospy.Publisher(
             '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
-        
+
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
-        #rospy.Subscriber('/Esmacat_read_maze_ard0_ease', ease_registers, self.get_response, queue_size=1, tcp_nodelay=True)
+        #rospy.Subscriber('/Esmacat_read_maze_ard0_ease', ease_registers, self.callback_get_response, queue_size=1, tcp_nodelay=True)
 
         # @brief Initialize the subsrciber for reading from '?' topic
         rospy.Subscriber('/csv_file_name', String, self.callback_load_csv)
 
-        self.start_time = rospy.Time.now()
+        # Option to automatically load csv
+        self.do_auto_load_csv = True;
+        self.csv_file_path = "/media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/config/path_1x3_1.csv"
+
+        # State machine variables
+        self.last_ts = rospy.Time.now()
         self.run_state = RunState.GET_CSV
-        self.wall_up_duration = rospy.Duration(10)
-        self.wall_down_duration = rospy.Duration(10)
+        self.start_dt = rospy.Duration(1)
+        self.init_dt = rospy.Duration(1)
+        self.wall_up_dt = rospy.Duration(5)
+        self.wall_down_dt = rospy.Duration(5)
 
         # Track outgoing and incoming message id
         self.msg_num_id_out = 0
 
-        # Make chamber and byte array lists
-        self.cw_list = [
-            [[0], [1,3]],
-            [[1], [2,3,5]],
-            [[2], [5]]
-        ]
+        # # Make chamber and byte array lists
+        # cw_list = [
+        #     [[0], [1,3]],
+        #     [[1], [2,3,5]],
+        #     [[2], [5]]
+        # ]
 
-        # self.cw_list = [
+        # cw_list = [
         #     [[6], [0]],
         #     [[7], [1]],
         #     [[8], [2]],
@@ -103,58 +121,70 @@ class WallController:
         """
 
         currentTime = rospy.Time.now()
-
+      
         # State: GET_CSV
         if self.run_state == RunState.GET_CSV:
-            # Return till csv file loaded
-            return
+            if currentTime >= (self.last_ts + self.start_dt):
+                self.last_ts = rospy.Time.now()
+                # Check for autoload
+                if self.do_auto_load_csv:
+                    self.run_state = RunState.INITIALIZE
+
+        # State: INITIALIZE
+        elif self.run_state == RunState.INITIALIZE:
+            self.rosby_log_info(Fore.GREEN,"INITIALIZE")
+
+            # Send empty init message
+            reg_arr = self.make_reg_msg(MsgTypeID.INITIALIZE)
+            self.maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
+
+            self.last_ts = rospy.Time.now()
+            self.run_state = RunState.START_MOVE
 
         # State: START_MOVE
-        if self.run_state == RunState.START_MOVE:
-            # Send empty init message
-            reg_arr = self.make_reg_msg(MsgTypeID.INITIALIZE.value, self.cw_list)
-            reg_arr = [0] * 8
-            self.maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
+        elif self.run_state == RunState.START_MOVE:
+            if currentTime >= (self.last_ts + self.init_dt):
+                self.rosby_log_info(Fore.GREEN,"MOVE WALL UP")
+                
+                # Parse the csv file
+                cw_list = self.parse_csv()
 
-            # Move walls up
-            # Create registry message
-            reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_UP.value, self.cw_list)
-            self.maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
-            # for sublist in self.cw_list:
-            #     rospy.loginfo(sublist)
+                # Create registry message
+                reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_UP, cw_list)
+                self.maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
+                # for sublist in cw_list:
+                #     rospy.loginfo(sublist)
 
-            self.start_time = rospy.Time.now()
-            self.run_state = RunState.WALL_MOVING_UP
-            rospy.loginfo("MOVE WALL UP")
+                self.last_ts = rospy.Time.now()
+                self.run_state = RunState.WALL_MOVING_UP
 
         # State: WALL_MOVING_UP
         elif self.run_state == RunState.WALL_MOVING_UP:
-            if currentTime >= (self.start_time + self.wall_up_duration):
+            if currentTime >= (self.last_ts + self.wall_up_dt):
                 self.run_state = RunState.WALL_UP
 
         # State: WALL_UP
         elif self.run_state == RunState.WALL_UP:
+            self.rosby_log_info(Fore.GREEN,"MOVING WALL DOWN")
 
-            # Move walls back down
-            for w_l in self.cw_list:
-                w_l[1] = [0]
             # Create registry message
-            reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_DOWN.value, self.cw_list)
-            # self.maze_ard0_pub.publish(*reg_arr) # Publish list to topic
-            self.start_time = rospy.Time.now()
+            reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_DOWN)
+            self.maze_ard0_pub.publish(*reg_arr) # Publish list to topic
+            self.last_ts = rospy.Time.now()
             self.run_state = RunState.WALL_MOVING_DOWN
-            rospy.loginfo("MOVING WALL DOWN")
+           
 
         # State: WALL_MOVING_DOWN
         elif self.run_state == RunState.WALL_MOVING_DOWN:
-            if currentTime >= (self.start_time + self.wall_down_duration):
+            if currentTime >= (self.last_ts + self.wall_down_dt):
                 self.run_state = RunState.WALL_DOWN
 
-        # State: CHECK_REPLY
+        # State: WALL_DOWN
         elif self.run_state == RunState.WALL_DOWN:
+            self.rosby_log_info(Fore.GREEN,"CHECK_REPLY")
             self.run_state = RunState.CHECK_REPLY
-            rospy.loginfo("CHECK_REPLY")
 
+        # State: CHECK_REPLY
         elif self.run_state == RunState.CHECK_REPLY:
             return
 
@@ -170,29 +200,31 @@ class WallController:
 
         return byte_value
 
-    def make_reg_msg(self, msg_type_id, cw_list):
+    def make_reg_msg(self, msg_type_id, cw_list=None):
+
         # Create a list 'reg' with 8 16-bit Union elements
         U_arr = [Union() for _ in range(8)]
         u_ind = 0
 
         # Set message num and type id
-        U_arr[0].b[0] = self.msg_num_id_out
-        U_arr[0].b[1] = msg_type_id
-        self.msg_num_id_out += 1
+        self.msg_num_id_out = self.msg_num_id_out+1 if self.msg_num_id_out < 255 else 1
+        U_arr[u_ind].b[0] = self.msg_num_id_out
+        U_arr[u_ind].b[1] = msg_type_id.value
         
-
-        # Update U_arr with corresponding chamber and wall byte
-        for cw in cw_list:
-            u_ind += 1
-            chamber = cw[0][0]
-            wall_byte = self.set_wall_byte(cw[1])
-            U_arr[u_ind].b[0] = chamber
-            U_arr[u_ind].b[1] = wall_byte
+        # Update walls to move up
+        if msg_type_id == MsgTypeID.MOVE_WALLS_UP and cw_list is not None:
+            # Update U_arr with corresponding chamber and wall byte
+            for cw in cw_list:
+                u_ind += 1
+                chamber = cw[0]
+                wall_byte = self.set_wall_byte(cw[1])
+                U_arr[u_ind].b[0] = chamber
+                U_arr[u_ind].b[1] = wall_byte
 
         # Set footer
         if u_ind < 7:
-            U_arr[u_ind + 1].b[0] = 255
-            U_arr[u_ind + 1].b[1] = 255
+            U_arr[u_ind + 1].b[0] = 254
+            U_arr[u_ind + 1].b[1] = 254
 
         # Store and return 16-bit values
         # cast as signed for use with ease_registers
@@ -200,23 +232,58 @@ class WallController:
 
         # Print reg message
         for index, U in enumerate(U_arr):
-            rospy.loginfo("%d %d", U.b[0], U.b[1])
+            self.rosby_log_info(Fore.BLUE,"%d %d", U.b[0], U.b[1])
 
         return reg_arr
 
-        # KEEP THIS AT THE END
-        pass
+    def parse_csv(self):
+        """
+        Parses the CSV file and returns the chamber and wall configuration list.
+        Returns:
+            list: The chamber and wall configuration list.
+        """
+        cw_list = []  # Create an empty chamber and wall configuration list
+
+        if not self.csv_file_path:
+            rospy.logerr("CSV file path is not set!")
+            return cw_list
+
+        try:
+            with open(self.csv_file_path, 'r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                for row in csv_reader:
+                    if len(row) >= 2:
+                        chamber = int(row[0])
+                        walls_byte = int(row[1])
+                        walls = [i for i in range(8) if walls_byte & (1 << i)]
+                        # Add chamber and wall configuration to the list
+                        cw_list.append([chamber, walls])
+        except IOError as e:
+            rospy.logerr("Error reading CSV file: %s", str(e))
+
+        # # Print the cw_list
+        # self.rosby_log_info(Fore.BLUE,"Chamber and wall configuration list:")
+        # for chamber, walls in cw_list:
+        #     self.rosby_log_info(Fore.BLUE,"Chamber %d: Walls %s", chamber, walls)
+
+        return cw_list
+    
+    def rosby_log_info(self, color, message, *args):
+        colored_message = f"{color}{message}{Style.RESET_ALL}"
+        formatted_message = colored_message % args
+        rospy.loginfo(formatted_message)
 
     def callback_load_csv(self, data):
-        # Log the received message
-        rospy.logerr(rospy.get_caller_id() + 'CSV_DIR: %s', data.data)
-        #self.run_state = RunState.START_MOVE
-        #rospy.loginfo("START_MOVE")
+        # Store the csv file path
+        self.csv_file_path = data.data
+        # rospy.logerr(rospy.get_caller_id() + 'CSV_DIR: %s', data.data)
+        self.run_state = RunState.INITIALIZE
+        rospy.loginfo("INITIALIZE")
 
-    def get_response(self, data):
+    def callback_get_response(self, data):
         # Log the received message
-        #rospy.loginfo(rospy.get_caller_id() + '!!!!!!!!  I heard %s', data.INT0)
-        print("")
+        rospy.loginfo(rospy.get_caller_id() +
+                      '!!!!!!!!  I heard %s', data.INT0)
 
 
 # @brief Main code

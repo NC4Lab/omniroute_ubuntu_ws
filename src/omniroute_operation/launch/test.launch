@@ -13,7 +13,7 @@
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
     
     <!-- Wall controller test -->
-    <!-- <node name = "wall_controller_test_node" pkg = "omniroute_operation" type = "wall_controller.py" output = "screen"/> -->
+    <node name = "wall_controller_test_node" pkg = "omniroute_operation" type = "wall_controller.py" output = "screen"/>
 
      <!-- Omniroute interface test -->
     <node name = "interface_test_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/>

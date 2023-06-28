@@ -382,48 +382,46 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	static uint8_t msg_num_id_last = 0;
 	uint8_t msg_num_id_new;
 	uint8_t msg_type_id;
-	uint16_t byte_store_ind = 0;
-	static int buff_read_last[8];
-	int buff_read_new[8];
+	uint16_t read_ind = 0;
+	int buff_read[8];
 	uint32_t ts_read = millis() + 500;
 
-	return 1;
-
-	//TEMP
-	int add = 0;
-	int val = 1;
-	ESlave.write_reg_value(add, val);
-	ESlave.write_reg_value(1, 2);
-	ESlave.write_reg_value(2, 3);
-	//_DB.printMsg("TEST");
-
-	delay(1000);
-	return 1;
+	// // TEMP
+	// int add = 0;
+	// int val = 1;
+	// ESlave.write_reg_value(add, val);
+	// ESlave.write_reg_value(1, 2);
+	// ESlave.write_reg_value(2, 3);
+	// delay(1000);
+	// return 1;
 
 	// Read esmacat buffer
-	ESlave.get_ecat_registers(buff_read_new);
-
-	// // TEMP
-	// _DB.printMsg(" ");
-	// for (size_t i = 0; i < 8; i++)
-	// {
-	// 	int buff =  buff_read_new[byte_store_ind++];
-	// 	_DB.printMsg("%d: [buff]%d", i, buff);
-	// 	U.i16[0] = buff;
-	// 	_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
-	// }
-	// delay(1000);
-	// return;
+	ESlave.get_ecat_registers(buff_read);
 
 	// Check first register entry for msg id
-	U.i16[0] = buff_read_new[byte_store_ind++];
+	U.i16[0] = buff_read[read_ind++];
 	msg_num_id_new = U.b[0];
 	msg_type_id = U.b[1];
+
+	// // TEMP
+	// if (msg_num_id_new != msg_num_id_last)
+	// {
+	// 	_DB.printMsgTime(" ");
+	// 	for (size_t i = 0; i < 8; i++)
+	// 	{
+	// 		int buff = buff_read[i];
+	// 		U.i16[0] = buff;
+	// 		_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
+	// 		//ESlave.write_reg_value(i, buff_read[i]);
+	// 	}
+	// 	msg_num_id_last = msg_num_id_new < 255 ? msg_num_id_new : 0;
+	// }
+	// return 1;
 
 	// Check for initialzing msg_type_id = 0
 	if (!is_ethercat_init)
 	{
-		if (msg_type_id == 0)
+		if (msg_num_id_new == 1 && msg_type_id == 128)
 		{
 			_DB.printMsgTime("Ethercat message initialized");
 			is_ethercat_init = 1;
@@ -432,46 +430,73 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	}
 
 	// Check for new message
-	if (msg_num_id_new == msg_num_id_last)
+	if (msg_num_id_new == 255 && msg_type_id == 255)
+		return 1;
+	else if (msg_num_id_new == msg_num_id_last)
 		return 1;
 	else if (msg_num_id_new - msg_num_id_last != 1)
 	{
 		_DB.printMsgTime("!!ethercat message id missmatch: msg_id_last=%d msg_id_new = %d!!", msg_num_id_last, msg_num_id_new);
 		return 2;
 	}
-	msg_num_id_last = msg_num_id_new;
+	msg_num_id_last = msg_num_id_new < 255 ? msg_num_id_new : 0;
 	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_id_new);
+
+	// TEMP
+	_DB.printMsg(" ");
+	for (size_t i = 0; i < 8; i++)
+	{
+		int buff = buff_read[i];
+		//_DB.printMsg("%d: [buff]%d", i, buff);
+		U.i16[0] = buff;
+		_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
+	}
 
 	// Parse message
 	while (millis() < ts_read)
 	{
+		uint8_t cham_i;
+		uint8_t wall_b;
+		uint8_t wall_u_b;
+		uint8_t wall_d_b;
+
 		// Get next entry
-		U.i16[0] = buff_read_new[byte_store_ind++];
+		U.i16[0] = buff_read[read_ind++];
 
 		// Check for footer
-		if (U.b[0] == 255 && U.b[1] == 255)
+		if (U.b[0] != 254 && U.b[1] != 254)
+		{
+			// Store values
+			cham_i = U.b[0];
+			wall_b = U.b[1];
+
+			// TEMP
+			//_DB.printMsgTime("\tTEMP: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_b));
+
+			if (cham_i > nCham)
+			{
+				_DB.printMsgTime("!!chamber[%d] > max chamber[%d]!!", cham_i, nCham);
+				return 2;
+			}
+
+			// Update chamber/wall info
+			wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
+			wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
+		}
+		else if (msg_type_id == 2) // check move down message
+		{
+			wall_u_b = 0;
+			wall_d_b = C[cham_i].bitWallPosition & 0xFF;
+		}
+		else
 			break;
 
-		// Store values
-		uint8_t cham_i = U.b[0];
-		uint8_t wall_b = U.b[1];
+		// Update move flag
+		C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
 
-		// TEMP
-		//_DB.printMsgTime("\tTEMP: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_b));
-
-		if (cham_i > nCham)
-		{
-			_DB.printMsgTime("!!chamber[%d] > max chamber[%d]!!", cham_i, nCham);
-			return 2;
-		}
-
-		// Update chamber/wall info
-		uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-		uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
-		// C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b;		// store values in bit flag
-
-		_DB.printMsgTime("\tset move walls up: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_u_b));
-		_DB.printMsgTime("\tset move walls down: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_d_b));
+		_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
+		_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
+		_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
 	}
 	if (millis() >= ts_read)
 	{
@@ -535,8 +560,9 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b;		// store values in bit flag
 
 	_DB.printMsgTime("New manual message recieved", cham_i, _DB.arrayStr(p_wi, s));
-	_DB.printMsgTime("\tset move walls up: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_u_b));
-	_DB.printMsgTime("\tset move walls down: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_d_b));
+	_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
+	_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
+	_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
 
 	return 0;
 }

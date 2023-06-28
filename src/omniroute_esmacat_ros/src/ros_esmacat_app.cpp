@@ -71,11 +71,10 @@ void ros_esmacat_app::init()
  */
 void ros_esmacat_app::loop(){
 
-//     /*** Light Cue EASE  ***/
-
 //     // The ROS object created is used to read the current state of registers from the Esmacat slave object
 //     //      and store it in a shared memory location
-//     light_cue_ease.set_read_registers(&light_cue_ease_ecat_as);
+    maze_ard0_ease.set_read_registers(&maze_ard0_ease_ecat_as);
+
 
 //     // The newly modified write registers from the ROS Communication is returned from the shared memory 
     maze_ard0_ease_ros_message = maze_ard0_ease.get_write_registers();
