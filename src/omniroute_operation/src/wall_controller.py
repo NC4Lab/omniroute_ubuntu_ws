@@ -12,10 +12,9 @@ from colorama import Fore, Style
 
 # @brief Union class using ctype union for storing ethercat data shareable accross data types
 
-
 class Union:
     def __init__(self):
-        self.b = bytearray(2)  # 2 bytes
+        self.b = bytearray([0, 0])  # 2 bytes initialized with zeros
 
     @property
     def i16(self):
@@ -23,7 +22,21 @@ class Union:
 
     @i16.setter
     def i16(self, value):
-        self.b = bytearray(struct.pack("<H", value))
+        packed_value = struct.pack("<H", value)
+        self.b[0] = packed_value[0]
+        self.b[1] = packed_value[1]
+
+# class Union:
+#     def __init__(self):
+#         self.b = bytearray(2)  # 2 bytes
+
+#     @property
+#     def i16(self):
+#         return struct.unpack("<H", self.b)[0]
+
+#     @i16.setter
+#     def i16(self, value):
+#         self.b = bytearray(struct.pack("<H", value))
 
 # @brief WallController class
 ##
@@ -81,7 +94,7 @@ class WallController:
         self.wall_down_dt = rospy.Duration(5)
 
         # Track outgoing and incoming message id
-        self.msg_num_id_out = 0
+        self.msg_num_id_out = 1
 
         # # Make chamber and byte array lists
         # cw_list = [
@@ -113,14 +126,23 @@ class WallController:
 
         The outgoing register is structured arr[8] of 16 bit integers
         with each 16 bit value seperated into bytes 
-        [0]:    b1=254 b0=254           header       
-        [1:x]:  b1=chamber b0=wall_ind  wall config
-        [x+1]:  b1=255 b0=255           footer
+        [0]: message number
+            i16 [0-65535] 
+        [1]: message info
+            b0 message type [0-255] [see: MsgTypeID]
+            b1 arg length [0-255] [number of message args in bytes]           
+        [2:5] wall state bytes
+            b0 = wall x byte
+            b1 = wall x+1 byte  
+        [6]: footer  
+            b1=254
+            b0=254                            
 
         @return: None
         """
 
         currentTime = rospy.Time.now()
+        cw_list = [];
       
         # State: GET_CSV
         if self.run_state == RunState.GET_CSV:
@@ -165,10 +187,11 @@ class WallController:
 
         # State: WALL_UP
         elif self.run_state == RunState.WALL_UP:
+            return
             self.rosby_log_info(Fore.GREEN,"MOVING WALL DOWN")
 
             # Create registry message
-            reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_DOWN)
+            reg_arr = self.make_reg_msg(MsgTypeID.MOVE_WALLS_DOWN, cw_list)
             self.maze_ard0_pub.publish(*reg_arr) # Publish list to topic
             self.last_ts = rospy.Time.now()
             self.run_state = RunState.WALL_MOVING_DOWN
@@ -200,31 +223,43 @@ class WallController:
 
         return byte_value
 
-    def make_reg_msg(self, msg_type_id, cw_list=None):
+    def make_reg_msg(self, msg_type_id, msg_lng, cw_list=None):
 
         # Create a list 'reg' with 8 16-bit Union elements
         U_arr = [Union() for _ in range(8)]
-        u_ind = 0
+        u_ind_r = 0;
+
+        # Get message length
+        if cw_list is not None:
+            msg_lng = len(cw_list)
+        else: msg_lng = 0
 
         # Set message num and type id
-        self.msg_num_id_out = self.msg_num_id_out+1 if self.msg_num_id_out < 255 else 1
-        U_arr[u_ind].b[0] = self.msg_num_id_out
-        U_arr[u_ind].b[1] = msg_type_id.value
+        U_arr[u_ind_r].i16 = self.msg_num_id_out
+        u_ind_r += 1
+        U_arr[u_ind_r].b[0] = msg_type_id.value
+        U_arr[u_ind_r].b[1] = msg_lng
+        
+        
+
+        # Itterate message count
+        self.msg_num_id_out = self.msg_num_id_out+1 if self.msg_num_id_out < 65535 else 1
         
         # Update walls to move up
-        if msg_type_id == MsgTypeID.MOVE_WALLS_UP and cw_list is not None:
+        if (msg_type_id == MsgTypeID.MOVE_WALLS_UP or msg_type_id == MsgTypeID.MOVE_WALLS_DOWN) and cw_list is not None:
             # Update U_arr with corresponding chamber and wall byte
             for cw in cw_list:
-                u_ind += 1
                 chamber = cw[0]
+                u_ind_r = 2 + (chamber // 2)
                 wall_byte = self.set_wall_byte(cw[1])
-                U_arr[u_ind].b[0] = chamber
-                U_arr[u_ind].b[1] = wall_byte
+                u_ind_c = 0 if chamber % 2 == 0 else 1
+                U_arr[u_ind_r].b[u_ind_c] = wall_byte
+                self.rosby_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
+            u_ind_r = 5
 
         # Set footer
-        if u_ind < 7:
-            U_arr[u_ind + 1].b[0] = 254
-            U_arr[u_ind + 1].b[1] = 254
+        U_arr[u_ind_r+1].b[0] = 254
+        U_arr[u_ind_r+1].b[1] = 254
 
         # Store and return 16-bit values
         # cast as signed for use with ease_registers
