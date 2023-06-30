@@ -6,7 +6,12 @@
     <!-- output = screen displays the output on the terminal Default is ROS_LOG -->
     <!-- launch-prefix gives instructions as to how to launch the node -->
 
-    <param name="ethercat_adapter_name" type="str" value="enp4s0f1" />
+    <!-- Stout -->
+    <!-- <param name="ethercat_adapter_name" type="str" value="enp4s0f1" /> -->
+    
+    <!-- Gingerbeer -->
+    <param name="ethercat_adapter_name" type="str" value="enp11s0" />
+    
     <param name="maze_ard0_ease_slave_index" type="int" value="0" />
 
     <!-- Esmacat Node -->
