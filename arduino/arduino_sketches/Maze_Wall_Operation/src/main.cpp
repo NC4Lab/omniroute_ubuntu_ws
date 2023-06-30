@@ -83,7 +83,7 @@ void setup()
 	resp = W_OPR.setupWallPWM(pwmDuty);
 
 	// Test and reset all walls
-	//resp = W_OPR.initializeWalls();
+	resp = W_OPR.initializeWalls();
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 1 };
@@ -126,16 +126,21 @@ void setup()
 	// if (do_cham_arr[2])
 	// 	W_OPR.setWallCmdManual(2, 0, a_c3_wall, s3);
 	// resp = W_OPR.runWalls(dt_timout); // move walls down
-
 }
 
 //=============== LOOP ==================
 void loop()
 {
 
-	// Check for new message
-	if (W_OPR.getWallCmdEthercat() == 0)
-	{
+	// Check ethercat coms
+	resp = W_OPR.getWallCmdEthercat();
+
+	// Wait for initialization
+	if (!W_OPR.isEthercatInitialized)
+		return;
+
+	// Check for new wall move command
+	if (resp == 1)
 		W_OPR.runWalls(); // move walls
-	}
+
 }

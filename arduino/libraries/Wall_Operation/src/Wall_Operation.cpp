@@ -375,14 +375,13 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// <summary>
 /// Used to get incoming ROS ethercat msg data signalling which walls to raise.
 /// </summary>
-/// <returns>Success/error codes [0:new message, 1:no message, 2-3:error]</returns>
+/// <returns>Success/error codes [0:no message, 1:new wall message, 2-3:error]</returns>
 uint8_t Wall_Operation::getWallCmdEthercat()
 {
-	static uint8_t is_ethercat_init = 0;
 	static uint8_t msg_num_id_last = 0;
 	uint8_t msg_num_id_new;
 	uint8_t msg_type_id;
-	uint8_t msg_lng;
+	uint8_t arg_lng;
 	int buff_read[8];
 	uint8_t read_i = 0;
 	uint32_t ts_read = millis() + 500;
@@ -394,7 +393,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	// ESlave.write_reg_value(1, 2);
 	// ESlave.write_reg_value(2, 3);
 	// delay(1000);
-	// return 1;
+	// return 0;
 
 	// Read esmacat buffer
 	ESlave.get_ecat_registers(buff_read);
@@ -403,43 +402,29 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	msg_num_id_new = buff_read[read_i++];
 	U.i16[0] = buff_read[read_i++];
 	msg_type_id = U.b[0];
-	msg_lng = U.b[1];
-
-	// // TEMP
-	// if (msg_num_id_new != msg_num_id_last)
-	// {
-	// 	_DB.printMsgTime(" ");
-	// 	for (size_t i = 0; i < 8; i++)
-	// 	{
-	// 		int buff = buff_read[i];
-	// 		U.i16[0] = buff;
-	// 		_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
-	// 		//ESlave.write_reg_value(i, buff_read[i]);
-	// 	}
-	// 	msg_num_id_last = msg_num_id_new < 255 ? msg_num_id_new : 0;
-	// }
-	// return 1;
+	arg_lng = U.b[1];
 
 	// Check for initialzing msg_type_id = 0
-	if (!is_ethercat_init)
+	if (!isEthercatInitialized)
 	{
 		if (msg_num_id_new == 1 && msg_type_id == 128)
 		{
 			_DB.printMsgTime("Ethercat message initialized");
-			is_ethercat_init = 1;
+			isEthercatInitialized = 1;
 			msg_num_id_last = 1;
 		}
-		return 1;
+		return 0;
 	}
 
 	// Check for new message
-	if (msg_num_id_new == 255 && msg_type_id == 255) // skip garbage
-		return 1;
-	else if (msg_num_id_new == msg_num_id_last)
-		return 1;
-	else if (msg_num_id_new - msg_num_id_last != 1)
+	if (msg_num_id_new == 255 && msg_type_id == 255) // skip ethercat setup garbage
+		return 0;
+	else if (msg_num_id_new == msg_num_id_last) // skip redundant messages
+		return 0;
+	else if (msg_num_id_new - msg_num_id_last != 1) // check for skipped or out of sequence messages 
 	{
-		_DB.printMsgTime("!!ethercat message id missmatch: msg_id_last=%d msg_id_new = %d!!", msg_num_id_last, msg_num_id_new);
+		_DB.printMsgTime("!!ethercat message id missmatch: last=%d new = %d!!", msg_num_id_last, msg_num_id_new);
+		msg_num_id_last = msg_num_id_new; // set id last to new value (need better error handeling here)
 		return 2;
 	}
 	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_id_new);
@@ -447,66 +432,59 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	// Update message id last
 	msg_num_id_last = msg_num_id_new < 65535 ? msg_num_id_new : 0;
 
-	// TEMP
-	for (size_t i = 0; i < 8; i++)
-	{
-		int buff = buff_read[i];
-		//_DB.printMsg("%d: [buff]%d", i, buff);
-		U.i16[0] = buff;
-		_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
-	}
-	_DB.printMsg(" ");
-
-	_DB.printMsg("msg_lng = %d", msg_lng); // TEMP
+	// // TEMP
+	// for (size_t i = 0; i < 8; i++)
+	// {
+	// 	int buff = buff_read[i];
+	// 	//_DB.printMsg("%d: [buff]%d", i, buff);
+	// 	U.i16[0] = buff;
+	// 	_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
+	// }
+	// _DB.printMsg(" ");
 
 	// Parse message
-	if (msg_lng > 0)
+	if (arg_lng > 0)
 	{
-		uint8_t cham_i = 0;
-		bool is_even = msg_lng % 2 == 0;
-		uint8_t buff_n = is_even ? msg_lng / 2 : msg_lng / 2 + 1;
-
-		_DB.printMsg("buff_n = %d", buff_n); // TEMP
-		_DB.printMsg("is_even = %d", is_even); // TEMP
+		uint8_t cham_i = -1;
+		bool is_even = arg_lng % 2 == 0;
+		uint8_t buff_n = is_even ? arg_lng / 2 : arg_lng / 2 + 1;
 
 		for (size_t buff_i = 0; buff_i < buff_n; buff_i++)
 		{
 			// Get next entry
-			U.i16[0] = buff_read[buff_i + read_i++];
+			U.i16[0] = buff_read[read_i++];
 
 			// Store values
 			uint8_t byte_n = is_even || buff_i < buff_n - 1 ? 2 : 1;
 
-			_DB.printMsg("byte_n = %d", byte_n); // TEMP
-
 			for (size_t byte_i = 0; byte_i < byte_n; byte_i++)
 			{
 				uint8_t wall_b = U.b[byte_i];
-				uint8_t wall_u_b;
-				uint8_t wall_d_b;
-
-				if (msg_type_id == 1) // handle move walls up message
-				{
-					wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-					wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
-				}
-				else if (msg_type_id == 2) // handle move walls down message
-				{
-					wall_u_b = 0;									// dont move any wall up
-					wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
-				}
-				// Update move flag
-				C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
-
-				_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
-				_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
-				_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
-
-				_DB.printMsg("cham_i = %d", cham_i); // TEMP
-				if (cham_i>8)
-					return 3;
-
 				cham_i++;
+
+				// Check for empty entries
+				if (wall_b != 0)
+				{
+
+					uint8_t wall_u_b;
+					uint8_t wall_d_b;
+					if (msg_type_id == 1) // handle move walls up message
+					{
+						wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
+						//wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
+					}
+					else if (msg_type_id == 2) // handle move walls down message
+					{
+						//wall_u_b = 0;									// dont move any wall up
+						wall_d_b = C[cham_i].bitWallPosition & wall_b; // get walls to move down
+					}
+					// Update move flag
+					C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
+
+					_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
+					_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
+					_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
+				}
 			}
 		}
 	}
@@ -520,7 +498,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	}
 
 	// Return new message flag
-	return msg_type_id == 1 | msg_type_id == 2 ? 0 : 1;
+	return msg_type_id == 1 | msg_type_id == 2 ? 1 : 0;
 }
 
 /// <summary>

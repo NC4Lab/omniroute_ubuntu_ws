@@ -88,6 +88,7 @@ public:
 		uint16_t i16[1]; ///<(uint16_t) 2 byte
 	};
 	Union U;
+	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
 
 private:
 	Maze_Debug _DB;		  ///< local instance of Maze_Debug class
