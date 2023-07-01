@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 import os,sys,time
 import rospy
-import roslib
 from sensor_msgs.msg import Joy
-# from PyQt5.QtCore import *
-# from PyQt5.QtGui import *
-# from PyQt5.QtWidgets import *
 
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -62,9 +58,9 @@ class Interface(Plugin):
         # Custom signal connections
         # self.update_robot_position_signal.connect(self._handle_update_robot_position)
 	
-        os.chdir('catkin_ws/src/maze_interface/src/maze_interface/')
+        # os.chdir('catkin_ws/src/maze_interface/src/maze_interface/')
        
-        maze_config = loadmat('maze_config.mat')['involved_cd']
+        maze_config = loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maze_config.mat'))['involved_cd']
 
         # separating first (indicates number of polygons) and second column (indicates up and down walls).
         self.cell_number = [c[0] for c in maze_config]
@@ -74,12 +70,12 @@ class Interface(Plugin):
         self._widget = QWidget()
         # Get path to UI file which is a sibling of this file
         # in this example the .ui and .py file are in the same folder
-        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maze_interface.ui')
+        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'interface.ui')
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
         # Give QObjects reasonable names
 
-        rospy.logerr('Test Interface started')
+        rospy.logerr('Interface started')
 
         self._widget.setObjectName('InterfacePluginUi')
         # Show _widget.windowTitle on left-top of each plugin (when 

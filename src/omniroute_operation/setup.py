@@ -6,9 +6,9 @@ from catkin_pkg.python_setup import generate_distutils_setup
 d = generate_distutils_setup(
     ##  don't do this unless you want a globally visible script
     # scripts=['bin/myscript'], 
-    packages=['omniroute_interface'],
+    packages=['omniroute_interface', 'three_by_three_interface'],
     package_dir={'': 'src'},
-    scripts=['scripts/omniroute_interface']
+    scripts=['scripts/omniroute_interface', 'scripts/three_by_three_interface']
 )
 
 setup(**d)
