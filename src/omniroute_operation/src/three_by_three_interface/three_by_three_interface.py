@@ -62,7 +62,6 @@ class Interface(Plugin):
         # Custom signal connections
         # self.update_robot_position_signal.connect(self._handle_update_robot_position)
 	
-        # rospy.logerr(os.getcwd())
         os.chdir('catkin_ws/src/maze_interface/src/maze_interface/')
        
         maze_config = loadmat('maze_config.mat')['involved_cd']
