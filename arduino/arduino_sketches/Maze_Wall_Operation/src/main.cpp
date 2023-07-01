@@ -27,7 +27,7 @@ extern bool DB_VERBOSE = 1; //<set to control debugging behavior [0:silent, 1:ve
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
 uint8_t nCham = 3;	   ///< number of chambers being used [1-49]
-uint8_t pwmDuty = 180; ///< PWM duty for all walls [0-255]
+uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 
 // Initialize struct and class instances
 Maze_Debug DB;
@@ -46,6 +46,21 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 	DB.printMsgTime("SETUP START");
+
+	// // TEMP
+	// while (true)
+	// {
+	// 	// Check ethercat coms
+	// 	resp = W_OPR.getWallCmdEthercat();
+
+	// 	// Wait for initialization
+	// 	if (!W_OPR.isEthercatInitialized)
+	// 		return;
+
+	// 	// Check for new wall move command
+	// 	if (resp == 1)
+	// 		W_OPR.runWalls(); // move walls
+	// }
 
 	// TEMP
 	// C_COM.i2cScan();
@@ -142,5 +157,4 @@ void loop()
 	// Check for new wall move command
 	if (resp == 1)
 		W_OPR.runWalls(); // move walls
-
 }
