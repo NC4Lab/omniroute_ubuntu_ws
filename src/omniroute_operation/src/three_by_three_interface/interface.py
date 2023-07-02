@@ -51,26 +51,29 @@ def in_current_folder(file_name: str):
 
 
 class Wall(QGraphicsLineItem):
-    def __init__(self, num=-1, p0=(0,0), p1=(1,1), w=6, parent=None):
+    def __init__(self, p0=(0,0), p1=(1,1), wall_width=6, 
+                 chamber_num=-1, wall_num=-1, parent=None):
         super().__init__(parent)
 
-        self.num=num
+        self.chamber_num = chamber_num
+        self.wall_num = wall_num
         self.setLine(QLineF(p0[0], p0[1], p1[0], p1[1]))
         pen = QPen(Qt.red)
-        pen.setWidth(w)
+        pen.setWidth(wall_width)
         self.setPen(pen)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            print("Wall %d clicked!" % self.num)
+            print("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
 
 class Chamber(QGraphicsItemGroup):
-    def __init__(self, num=-1, center_x=0, center_y=0, chamber_width=100, parent=None):
+    def __init__(self, center_x=0, center_y=0, chamber_width=100, 
+                 chamber_num=-1, parent=None):
         super().__init__(parent)
-        self.x = center_x
-        self.y = center_y
-        self.w = chamber_width
-        self.num = num
+        self.center_x = center_x
+        self.center_y = center_y
+        self.chamber_width = chamber_width
+        self.chamber_num = chamber_num
 
         octagon_vertices = self.get_octagon_vertices(center_x, center_y, chamber_width/2)
         octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
@@ -78,12 +81,13 @@ class Chamber(QGraphicsItemGroup):
         self.octagon.setBrush(QBrush(QColor(180, 180, 180)))
         self.addToGroup(self.octagon)
 
-        self.label = QGraphicsTextItem(str(num))
+        self.label = QGraphicsTextItem(str(chamber_num))
         self.label.setFont(QFont("Arial", 20, QFont.Bold))
         self.label.setPos(center_x-10, center_y-20)
         self.addToGroup(self.label)
         
-        self.walls = [Wall(k, octagon_vertices[k], octagon_vertices[k+1]) for k in range(8)]
+        self.walls = [Wall(p0=octagon_vertices[k], p1=octagon_vertices[k+1],
+                           chamber_num=chamber_num, wall_num=k) for k in range(8)]
 
     def get_octagon_vertices(self, x, y, w):
         vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k))) for k in np.linspace(0, 2*math.pi, 9)+math.pi/8]
@@ -91,14 +95,16 @@ class Chamber(QGraphicsItemGroup):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            print("Chamber %d clicked!" % self.num)
+            print("Chamber %d clicked!" % self.chamber_num)
 
 class Maze:
     def __init__(self, num_rows=2, num_cols=2, chamber_width=100,
                   x_offset=0, y_offset=0):
+        
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.chamber_width = chamber_width
+        
         maze_width = self.chamber_width * self.num_cols
         maze_height = self.chamber_width * self.num_rows
         half_width = chamber_width/2
@@ -109,7 +115,8 @@ class Maze:
         k = 0
         for x in x_pos:
             for y in y_pos:
-                self.chambers.append(Chamber(num = k, center_x=x, center_y=y, chamber_width=chamber_width))
+                self.chambers.append(Chamber(center_x=x, center_y=y, 
+                                             chamber_num=k, chamber_width=chamber_width))
                 k = k+1
 
 class Interface(Plugin):
@@ -138,7 +145,7 @@ class Interface(Plugin):
         # Pixel measurements
         self.SCREEN_WIDTH = 720
         self.SCREEN_HEIGHT = 720
-        self.chamber_width = 100           ## Chamber width (in pixels)
+        # self.chamber_width = 100           ## Chamber width (in pixels)
        
         ## Load maze config
         # maze_config = loadmat(in_current_folder('maze_config.mat'))['involved_cd']
@@ -193,7 +200,7 @@ class Interface(Plugin):
         #         y = self.chamber_x_pos[j]
         #         self.all_vertices_list.append(old_octagon(x,y, self.chamber_width/2))              
                 
-        self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS)
+        self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS, chamber_width=CHAMBER_WIDTH)
 
         for k,c in enumerate(self.maze.chambers):
             self.scene.addItem(c)
@@ -212,7 +219,7 @@ class Interface(Plugin):
         #     self.scene.addItem(self.line)   
 
         robotMap = QPixmap(in_current_folder("robot.jpg"))
-        robot_dimension = round(self.chamber_width/2)
+        robot_dimension = round(CHAMBER_WIDTH/2)
         self.robot_pos_x = 50.0
         self.robot_pos_y = 50.0
         self.robot_vel_x = 0.0
