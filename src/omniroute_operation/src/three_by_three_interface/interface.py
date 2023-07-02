@@ -17,6 +17,101 @@ import math
 
 from std_msgs.msg import *
 
+norm = np.linalg.norm
+
+## GLOBAL VARS
+NUM_ROWS = 3
+NUM_COLS = 3
+CHAMBER_WIDTH = 100
+WALL_MAP = {
+    0: [0,1,2,3],
+    1: [0,1,2],
+    2: [3,4,5],
+    3: [3,4,5],
+    4: [3,4,5],
+    5: [3,4,5],
+    6: [3,4,5],
+    7: [3,4,5],
+    8: [3,4,5]
+}
+
+def in_current_folder(file_name: str):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
+
+## Returns vertices of an octagon
+# def old_octagon(x, y, w):
+#     n = np.arange(-7, 9, 2) / 8
+#     x_cor = [w * math.sin(math.pi * i) + x for i in n]
+#     y_cor = [w * math.cos(math.pi * i) + y for i in n]
+#     x_shift = x_cor[1:] + x_cor[:1]
+#     y_shift = y_cor[-3:] + y_cor[:-3]
+#     vertices_list = [(round(x_shift[k], 2), round(y_shift[k], 2)) for k in range(0, 8)]
+#     return vertices_list
+
+
+
+class Wall(QGraphicsLineItem):
+    def __init__(self, num=-1, p0=(0,0), p1=(1,1), w=6, parent=None):
+        super().__init__(parent)
+
+        self.num=num
+        self.setLine(QLineF(p0[0], p0[1], p1[0], p1[1]))
+        pen = QPen(Qt.red)
+        pen.setWidth(w)
+        self.setPen(pen)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            print("Wall %d clicked!" % self.num)
+
+class Chamber(QGraphicsItemGroup):
+    def __init__(self, num=-1, center_x=0, center_y=0, chamber_width=100, parent=None):
+        super().__init__(parent)
+        self.x = center_x
+        self.y = center_y
+        self.w = chamber_width
+        self.num = num
+
+        octagon_vertices = self.get_octagon_vertices(center_x, center_y, chamber_width/2)
+        octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
+        self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
+        self.octagon.setBrush(QBrush(QColor(180, 180, 180)))
+        self.addToGroup(self.octagon)
+
+        self.label = QGraphicsTextItem(str(num))
+        self.label.setFont(QFont("Arial", 20, QFont.Bold))
+        self.label.setPos(center_x-10, center_y-20)
+        self.addToGroup(self.label)
+        
+        self.walls = [Wall(k, octagon_vertices[k], octagon_vertices[k+1]) for k in range(8)]
+
+    def get_octagon_vertices(self, x, y, w):
+        vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k))) for k in np.linspace(0, 2*math.pi, 9)+math.pi/8]
+        return vertices_list
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            print("Chamber %d clicked!" % self.num)
+
+class Maze:
+    def __init__(self, num_rows=2, num_cols=2, chamber_width=100,
+                  x_offset=0, y_offset=0):
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.chamber_width = chamber_width
+        maze_width = self.chamber_width * self.num_cols
+        maze_height = self.chamber_width * self.num_rows
+        half_width = chamber_width/2
+        x_pos = x_offset + np.linspace(half_width, int(maze_width - half_width),  num_cols)
+        y_pos = y_offset + np.linspace(half_width, int(maze_height - half_width),  num_rows)
+        
+        self.chambers = []
+        k = 0
+        for x in x_pos:
+            for y in y_pos:
+                self.chambers.append(Chamber(num = k, center_x=x, center_y=y, chamber_width=chamber_width))
+                k = k+1
+
 class Interface(Plugin):
     # update_robot_position_signal = Signal()
 
@@ -40,39 +135,21 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
             
-	
+        # Pixel measurements
         self.SCREEN_WIDTH = 720
         self.SCREEN_HEIGHT = 720
-        self.line_width = 6
-        self.cell_wd = 100
-        self.n_cell = 49
-        xy_max = self.cell_wd * math.sqrt(self.n_cell)
-        self.octagon_side_length = self.cell_wd * math.sqrt(2) / (2 + math.sqrt(2))
-        self.x_pos_ind = np.linspace(int(self.cell_wd / 2), int(xy_max - self.cell_wd / 2),  int(math.sqrt(self.n_cell)))
-        self.px = 50.0
-        self.py = 50.0
-        self.vx = 0.0
-        self.vy = 0.0
-        norm = np.linalg.norm
+        self.chamber_width = 100           ## Chamber width (in pixels)
        
-        # Custom signal connections
-        # self.update_robot_position_signal.connect(self._handle_update_robot_position)
-	
-        # os.chdir('catkin_ws/src/maze_interface/src/maze_interface/')
-       
-        maze_config = loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maze_config.mat'))['involved_cd']
-
+        ## Load maze config
+        # maze_config = loadmat(in_current_folder('maze_config.mat'))['involved_cd']
         # separating first (indicates number of polygons) and second column (indicates up and down walls).
-        self.cell_number = [c[0] for c in maze_config]
-        self.wall_binary_code = [bin(c[1])[2:].zfill(8)[::-1] for c in maze_config]  
+        # self.cell_number = [c[0] for c in maze_config]
+        # self.wall_binary_code = [bin(c[1])[2:].zfill(8)[::-1] for c in maze_config]  
         
         # Create QWidget
         self._widget = QWidget()
-        # Get path to UI file which is a sibling of this file
-        # in this example the .ui and .py file are in the same folder
-        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'interface.ui')
         # Extend the widget with all attributes and children from UI file
-        loadUi(ui_file, self._widget)
+        loadUi(in_current_folder('interface.ui'), self._widget)
         # Give QObjects reasonable names
 
         rospy.logerr('Interface started')
@@ -101,47 +178,56 @@ class Interface(Plugin):
         self._widget.mazeView.setBackgroundBrush(QColor(0, 0, 0)) 
         
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
-        #self._widget.mazeView.update()
 
         self._widget.pathBrowseBtn.clicked.connect(self._handle_pathBrowseBtn_clicked)
         # self._widget.pathPreviousBtn.clicked.connect(self._handle_pathPreviousBtn_clicked)
         # self._widget.pathNextBtn.clicked.connect(self._handle_pathNextBtn_clicked)
 
-        self._widget.pathDirEdit.setText(os.path.expanduser(os.path.join('~','catkin_ws','src','maze_interface', 'src', 'maze_interface')))
-                
-        self.vertices = []
-        for i in range(0, 7):
-            for j in range(0, 7):
-                x = self.x_pos_ind[j]
-                y = self.x_pos_ind[i]
-                vertices_list = self.octagon(x, y, self.cell_wd / 2)
-                self.vertices.append(vertices_list)              
-                self.polygon_vertices = [QPointF(i[0], i[1]) for i in vertices_list]
-                self.polygon = QPolygonF(self.polygon_vertices)
-                self.polygon_item = QGraphicsPolygonItem(self.polygon)
-                self.polygon_item.setBrush(QBrush(QColor(180, 180, 180)))
-                self.scene.addItem(self.polygon_item)                
-                
-        self.wall_coord = self.up_walls(self.vertices)
-        for w in self.wall_coord:
-            self.line = QGraphicsLineItem(w[0][0], w[0][1], w[1][0], w[1][1]) 
-            self.pen = QPen(Qt.red)
-            self.pen.setWidth(self.line_width)
-            self.line.setPen(self.pen)
-            self.scene.addItem(self.line)   
+        self._widget.pathDirEdit.setText(in_current_folder('.'))
 
-        self.image = QPixmap("robot.jpg")
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.image_dimension = round(self.octagon_side_length - 30)
-        self.imageItem.setPixmap(self.image.scaled(self.image_dimension,self.image_dimension))
-        self.imageItem.setPos(self.px, self.py)
-        self.scene.addItem(self.imageItem)   
+        # Make all chambers and walls
+        # self.all_vertices_list = []
+        # for i in range(0, self.chambers_per_side):
+        #     for j in range(0, self.chambers_per_side):
+        #         x = self.chamber_x_pos[i]
+        #         y = self.chamber_x_pos[j]
+        #         self.all_vertices_list.append(old_octagon(x,y, self.chamber_width/2))              
+                
+        self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS)
+
+        for k,c in enumerate(self.maze.chambers):
+            self.scene.addItem(c)
+            for j,w in enumerate(c.walls):
+                if j not in WALL_MAP[k]:
+                    w.setEnabled(False)
+                    w.setVisible(False)
+                self.scene.addItem(w)
+
+        # self.wall_coord = self.up_walls(self.all_vertices_list)
+        # for w in self.wall_coord:
+        #     self.line = QGraphicsLineItem(w[0][0], w[0][1], w[1][0], w[1][1]) 
+        #     self.pen = QPen(Qt.red)
+        #     self.pen.setWidth(self.wall_width)
+        #     self.line.setPen(self.pen)
+        #     self.scene.addItem(self.line)   
+
+        robotMap = QPixmap(in_current_folder("robot.jpg"))
+        robot_dimension = round(self.chamber_width/2)
+        self.robot_pos_x = 50.0
+        self.robot_pos_y = 50.0
+        self.robot_vel_x = 0.0
+        self.robot_vel_y = 0.0
+        self.robot = QGraphicsPixmapItem(robotMap)
+        self.robot.setPixmap(robotMap.scaled(robot_dimension,robot_dimension))
+        self.robot.setPos(self.robot_pos_x, self.robot_pos_y)
+        self.scene.addItem(self.robot)   
+
+        self._widget.mazeView.update()
         
         self.joystick_velocity_scale = 1
         rospy.Subscriber("joy", Joy, self.ros_joystick_callback)
         
-        #self._widget.mazeView.update()
-        
+        # Start timer
         self.timer=QTimer()
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
@@ -159,38 +245,36 @@ class Interface(Plugin):
         self.scene.update()
         self._widget.mazeView.update()
 
-        self.imageCenter = self.imageItem.mapToScene(self.imageItem.boundingRect().center())
+        self.imageCenter = self.robot.mapToScene(self.robot.boundingRect().center())
         self.imageCenterx = self.imageCenter.x()
         self.imageCentery = self.imageCenter.y()   
       
-        for i in self.wall_coord:
-            force, dist = self.force_from_line(i[0], i[1], (self.imageCenterx, self.imageCentery),
-                                    thresh_dist, spring_k)
-            force_ave_x += force[0]
-            force_ave_y += force[1]
+        # for i in self.wall_coord:
+        #     force, dist = self.force_from_line(i[0], i[1], (self.imageCenterx, self.imageCentery),
+        #                             thresh_dist, spring_k)
+        #     force_ave_x += force[0]
+        #     force_ave_y += force[1]
         
-        self.vx = (self.vel_x + force_ave_x)
-        self.vy = (self.vel_y + force_ave_y)
+        self.robot_vel_x = (self.robot_vel_x + force_ave_x)
+        self.robot_vel_y = (self.robot_vel_y + force_ave_y)
 
-        self.px += self.vx
-        self.py += self.vy
+        self.robot_pos_x += self.robot_vel_x
+        self.robot_pos_y += self.robot_vel_y
 
-        if self.px < 0:
-            self.px = 0
-        if self.px > self.SCREEN_WIDTH:
-            self.px = self.SCREEN_WIDTH
-        if self.py < 0:
-            self.py = 0
-        if self.py >= self.SCREEN_HEIGHT:
-            self.py = self.SCREEN_HEIGHT   
+        if self.robot_pos_x < 0:
+            self.robot_pos_x = 0
+        if self.robot_pos_x > self.SCREEN_WIDTH:
+            self.robot_pos_x = self.SCREEN_WIDTH
+        if self.robot_pos_y < 0:
+            self.robot_pos_y = 0
+        if self.robot_pos_y >= self.SCREEN_HEIGHT:
+            self.robot_pos_y = self.SCREEN_HEIGHT   
 
-        self.imageItem.setPos(self.px, self.py)
-
+        self.robot.setPos(self.robot_pos_x, self.robot_pos_y)
 
     def _handle_pathBrowseBtn_clicked(self):
-        pathDir = os.path.expanduser(os.path.join('~','catkin_ws','src','maze_interface', 'src', 'maze_interface'))
         filter = "Text Files (*.py)"  # Change this to the file type you want to allow
-        files, _ = QFileDialog.getOpenFileNames(None, "Select files to add", pathDir, filter)
+        files, _ = QFileDialog.getOpenFileNames(None, "Select files to add", in_current_folder('.'), filter)
 
         if files:
             # Clear the list widget to remove any previous selections
@@ -238,17 +322,7 @@ class Interface(Plugin):
 
         # Set the current file in the list widget
         self._widget.listWidget.setCurrentRow(self.current_file_index)
-
-        
-    def octagon(self, x, y, w):
-        n = np.arange(-7, 9, 2) / 8
-        x_cor = [w * math.sin(math.pi * i) + x for i in n]
-        y_cor = [w * math.cos(math.pi * i) + y for i in n]
-        x_shift = x_cor[1:] + x_cor[:1]
-        y_shift = y_cor[-3:] + y_cor[:-3]
-        vertices_list = [(round(x_shift[k], 2), round(y_shift[k], 2)) for k in range(0, 8)]
-        return vertices_list
-        
+    
     def up_walls(self, vertices):
         wall_coordinates = []
         for i in range(len(self.cell_number)):
@@ -275,10 +349,10 @@ class Interface(Plugin):
         p3 = np.array(point)
         r1 = p3 - p1
         r2 = p3 - p2
-        r1_magnitude = np.linalg.norm(r1)
-        r2_magnitude = np.linalg.norm(r2)
+        r1_magnitude = norm(r1)
+        r2_magnitude = norm(r2)
         direction_line = p2 - p1
-        n = 1 / np.linalg.norm(direction_line) * (
+        n = 1 / norm(direction_line) * (
             np.array((direction_line[1], -direction_line[0])))
         d = np.dot(r1, n)
         x3, y3 = self.intersecting_point(line_start, line_end, point)
