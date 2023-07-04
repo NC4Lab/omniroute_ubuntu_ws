@@ -39,7 +39,7 @@ WALL_MAP = {
 def in_current_folder(file_name: str):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
 
-class Wall(QGraphicsLineItem):
+class Wall(QGraphicsItemGroup):
     def __init__(self, p0=(0,0), p1=(1,1), wall_width=8, 
                  chamber_num=-1, wall_num=-1, parent=None, state=True):
         super().__init__(parent)
@@ -48,17 +48,42 @@ class Wall(QGraphicsLineItem):
         self.wall_num = wall_num
         self.state = state
 
-        self.setLine(QLineF(p0[0], p0[1], p1[0], p1[1]))
-        pen = QPen(Qt.red)
-        pen.setWidth(wall_width)
-        self.setPen(pen)
+        self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
+
+        self.upPen = QPen(Qt.red)
+        self.upPen.setWidth(wall_width)
+
+        self.downPen = QPen(Qt.gray)
+        self.downPen.setWidth(wall_width)
+
+        self.setState(state)
+
+        self.addToGroup(self.line)
+
+        self.label = QGraphicsTextItem(str(wall_num))
+        self.label.setFont(QFont("Arial", 10, QFont.Bold))
+        label_x = (p0[0]+p1[0])/2
+        label_y = (p0[1]+p1[1])/2
+        self.label.setPos(label_x, label_y)
+        self.addToGroup(self.label)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            print("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
+            rospy.loginfo("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
 
-            self.state = not self.state
+            self.setState(not self.state)
+
             wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
+    
+    def setState(self, state: bool):
+        if state:
+            self.line.setPen(self.upPen)
+        else:
+            self.line.setPen(self.downPen)
+        
+        self.state = state
+        
+
 
 
 class Chamber(QGraphicsItemGroup):
@@ -90,7 +115,7 @@ class Chamber(QGraphicsItemGroup):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            print("Chamber %d clicked!" % self.chamber_num)
+            rospy.loginfo("Chamber %d clicked!" % self.chamber_num)
 
 class Maze:
     def __init__(self, num_rows=2, num_cols=2, chamber_width=100,
@@ -149,9 +174,8 @@ class Interface(Plugin):
         self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
         loadUi(in_current_folder('interface.ui'), self._widget)
-        # Give QObjects reasonable names
 
-        rospy.logerr('Interface started')
+        rospy.loginfo('Interface started')
 
         self._widget.setObjectName('InterfacePluginUi')
         # Show _widget.windowTitle on left-top of each plugin (when 
