@@ -15,10 +15,12 @@ from scipy.io import loadmat
 import math
 
 from std_msgs.msg import *
-
-norm = np.linalg.norm
+from omniroute_operation.msg import *
 
 ## GLOBAL VARS
+norm = np.linalg.norm
+wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
+
 NUM_ROWS = 3
 NUM_COLS = 3
 CHAMBER_WIDTH = 100
@@ -39,11 +41,13 @@ def in_current_folder(file_name: str):
 
 class Wall(QGraphicsLineItem):
     def __init__(self, p0=(0,0), p1=(1,1), wall_width=8, 
-                 chamber_num=-1, wall_num=-1, parent=None):
+                 chamber_num=-1, wall_num=-1, parent=None, state=True):
         super().__init__(parent)
 
         self.chamber_num = chamber_num
         self.wall_num = wall_num
+        self.state = state
+
         self.setLine(QLineF(p0[0], p0[1], p1[0], p1[1]))
         pen = QPen(Qt.red)
         pen.setWidth(wall_width)
@@ -52,6 +56,10 @@ class Wall(QGraphicsLineItem):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             print("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
+
+            self.state = not self.state
+            wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
+
 
 class Chamber(QGraphicsItemGroup):
     def __init__(self, center_x=0, center_y=0, chamber_width=100, 

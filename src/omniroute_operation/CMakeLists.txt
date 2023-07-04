@@ -55,6 +55,7 @@ add_message_files(
 	DIRECTORY
 	msg
 	FILES
+  WallState.msg
 )
 
 ## Generate services in the 'srv' folder
