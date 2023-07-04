@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-import os,sys,time
+import os
 import rospy
-from sensor_msgs.msg import Joy
 
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -38,20 +37,8 @@ WALL_MAP = {
 def in_current_folder(file_name: str):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
 
-## Returns vertices of an octagon
-# def old_octagon(x, y, w):
-#     n = np.arange(-7, 9, 2) / 8
-#     x_cor = [w * math.sin(math.pi * i) + x for i in n]
-#     y_cor = [w * math.cos(math.pi * i) + y for i in n]
-#     x_shift = x_cor[1:] + x_cor[:1]
-#     y_shift = y_cor[-3:] + y_cor[:-3]
-#     vertices_list = [(round(x_shift[k], 2), round(y_shift[k], 2)) for k in range(0, 8)]
-#     return vertices_list
-
-
-
 class Wall(QGraphicsLineItem):
-    def __init__(self, p0=(0,0), p1=(1,1), wall_width=6, 
+    def __init__(self, p0=(0,0), p1=(1,1), wall_width=8, 
                  chamber_num=-1, wall_num=-1, parent=None):
         super().__init__(parent)
 
@@ -68,7 +55,7 @@ class Wall(QGraphicsLineItem):
 
 class Chamber(QGraphicsItemGroup):
     def __init__(self, center_x=0, center_y=0, chamber_width=100, 
-                 chamber_num=-1, parent=None):
+                 chamber_num=-1, wall_width=8, parent=None):
         super().__init__(parent)
         self.center_x = center_x
         self.center_y = center_y
@@ -87,7 +74,7 @@ class Chamber(QGraphicsItemGroup):
         self.addToGroup(self.label)
         
         self.walls = [Wall(p0=octagon_vertices[k], p1=octagon_vertices[k+1],
-                           chamber_num=chamber_num, wall_num=k) for k in range(8)]
+                           chamber_num=chamber_num, wall_width=wall_width, wall_num=k) for k in range(8)]
 
     def get_octagon_vertices(self, x, y, w):
         vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k))) for k in np.linspace(0, 2*math.pi, 9)+math.pi/8]
@@ -120,8 +107,6 @@ class Maze:
                 k = k+1
 
 class Interface(Plugin):
-    # update_robot_position_signal = Signal()
-
     def __init__(self, context):
         super(Interface, self).__init__(context)
         
@@ -178,8 +163,10 @@ class Interface(Plugin):
         self._widget.mazeView.setScene(self.scene)
          
         # Set the size of the scene and the view
-        self._widget.mazeView.setFixedSize(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
-        self._widget.mazeView.setSceneRect(0, 0, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        sceneWidth = CHAMBER_WIDTH*NUM_COLS + CHAMBER_WIDTH/2 
+        sceneHeight = CHAMBER_WIDTH*NUM_ROWS + CHAMBER_WIDTH/2 
+        self._widget.mazeView.setFixedSize(sceneWidth*1.1, sceneHeight*1.1)
+        self._widget.mazeView.setSceneRect(0, 0, sceneWidth, sceneHeight)
 
         # Set the background color of the scene to gray
         self._widget.mazeView.setBackgroundBrush(QColor(0, 0, 0)) 
@@ -191,16 +178,9 @@ class Interface(Plugin):
         # self._widget.pathNextBtn.clicked.connect(self._handle_pathNextBtn_clicked)
 
         self._widget.pathDirEdit.setText(in_current_folder('.'))
-
-        # Make all chambers and walls
-        # self.all_vertices_list = []
-        # for i in range(0, self.chambers_per_side):
-        #     for j in range(0, self.chambers_per_side):
-        #         x = self.chamber_x_pos[i]
-        #         y = self.chamber_x_pos[j]
-        #         self.all_vertices_list.append(old_octagon(x,y, self.chamber_width/2))              
                 
-        self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS, chamber_width=CHAMBER_WIDTH)
+        self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS, chamber_width=CHAMBER_WIDTH, 
+                         x_offset=CHAMBER_WIDTH/4, y_offset=CHAMBER_WIDTH/4)
 
         for k,c in enumerate(self.maze.chambers):
             self.scene.addItem(c)
@@ -209,75 +189,18 @@ class Interface(Plugin):
                     w.setEnabled(False)
                     w.setVisible(False)
                 self.scene.addItem(w)
-
-        # self.wall_coord = self.up_walls(self.all_vertices_list)
-        # for w in self.wall_coord:
-        #     self.line = QGraphicsLineItem(w[0][0], w[0][1], w[1][0], w[1][1]) 
-        #     self.pen = QPen(Qt.red)
-        #     self.pen.setWidth(self.wall_width)
-        #     self.line.setPen(self.pen)
-        #     self.scene.addItem(self.line)   
-
-        robotMap = QPixmap(in_current_folder("robot.jpg"))
-        robot_dimension = round(CHAMBER_WIDTH/2)
-        self.robot_pos_x = 50.0
-        self.robot_pos_y = 50.0
-        self.robot_vel_x = 0.0
-        self.robot_vel_y = 0.0
-        self.robot = QGraphicsPixmapItem(robotMap)
-        self.robot.setPixmap(robotMap.scaled(robot_dimension,robot_dimension))
-        self.robot.setPos(self.robot_pos_x, self.robot_pos_y)
-        self.scene.addItem(self.robot)   
-
-        self._widget.mazeView.update()
-        
-        self.joystick_velocity_scale = 1
-        rospy.Subscriber("joy", Joy, self.ros_joystick_callback)
         
         # Start timer
         self.timer=QTimer()
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
     
-    # def _handle_update_robot_position(self):
-    #     self.imageItem.setPos(self.px, self.py)
+    def _handle_chamberClicked(self, chamber : Chamber):
+        rospy.logerr(chamber.chamber_num)
     
     def updateScene(self):
-        thresh_dist = 10
-        spring_k = 2.5
-        max_vel = 10
-        force_ave_x = 0
-        force_ave_y = 0
-
         self.scene.update()
         self._widget.mazeView.update()
-
-        self.imageCenter = self.robot.mapToScene(self.robot.boundingRect().center())
-        self.imageCenterx = self.imageCenter.x()
-        self.imageCentery = self.imageCenter.y()   
-      
-        # for i in self.wall_coord:
-        #     force, dist = self.force_from_line(i[0], i[1], (self.imageCenterx, self.imageCentery),
-        #                             thresh_dist, spring_k)
-        #     force_ave_x += force[0]
-        #     force_ave_y += force[1]
-        
-        self.robot_vel_x = (self.robot_vel_x + force_ave_x)
-        self.robot_vel_y = (self.robot_vel_y + force_ave_y)
-
-        self.robot_pos_x += self.robot_vel_x
-        self.robot_pos_y += self.robot_vel_y
-
-        if self.robot_pos_x < 0:
-            self.robot_pos_x = 0
-        if self.robot_pos_x > self.SCREEN_WIDTH:
-            self.robot_pos_x = self.SCREEN_WIDTH
-        if self.robot_pos_y < 0:
-            self.robot_pos_y = 0
-        if self.robot_pos_y >= self.SCREEN_HEIGHT:
-            self.robot_pos_y = self.SCREEN_HEIGHT   
-
-        self.robot.setPos(self.robot_pos_x, self.robot_pos_y)
 
     def _handle_pathBrowseBtn_clicked(self):
         filter = "Text Files (*.py)"  # Change this to the file type you want to allow
