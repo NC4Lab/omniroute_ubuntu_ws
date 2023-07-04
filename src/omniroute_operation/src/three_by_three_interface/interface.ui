@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1325</width>
-    <height>903</height>
+    <width>1031</width>
+    <height>530</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,14 +19,14 @@
   <widget class="QGraphicsView" name="mazeView">
    <property name="geometry">
     <rect>
-     <x>530</x>
-     <y>230</y>
-     <width>791</width>
-     <height>671</height>
+     <x>520</x>
+     <y>20</y>
+     <width>500</width>
+     <height>500</height>
     </rect>
    </property>
   </widget>
-  <widget class="QGroupBox" name="groupBox">
+  <widget class="QGroupBox" name="pathSelectorGroupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -36,7 +36,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>GroupBox</string>
+    <string>Path Selector</string>
    </property>
    <widget class="QLineEdit" name="pathDirEdit">
     <property name="geometry">
@@ -48,7 +48,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="pathConfigsLabel">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -100,7 +100,7 @@
      <string>next</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="listWidget">
+   <widget class="QListWidget" name="pathListWidget">
     <property name="geometry">
      <rect>
       <x>10</x>

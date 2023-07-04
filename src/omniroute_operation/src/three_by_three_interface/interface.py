@@ -25,15 +25,15 @@ NUM_ROWS = 3
 NUM_COLS = 3
 CHAMBER_WIDTH = 100
 WALL_MAP = {
-    0: [0,1,2,3],
-    1: [0,1,2],
-    2: [3,4,5],
-    3: [3,4,5],
-    4: [3,4,5],
-    5: [3,4,5],
-    6: [3,4,5],
-    7: [3,4,5],
-    8: [3,4,5]
+    0: [0,1,2,3,4,5,6,7],
+    1: [1,3,5,7,2],
+    2: [0,1,2,3,4,5,6,7],
+    3: [1,3,5,7,0],
+    4: [0,1,2,3,4,5,6,7],
+    5: [1,3,5,7,4],
+    6: [0,1,2,3,4,5,6,7],
+    7: [1,3,5,7,6],
+    8: [0,1,2,3,4,5,6,7]
 }
 
 def in_current_folder(file_name: str):
@@ -41,7 +41,7 @@ def in_current_folder(file_name: str):
 
 class Wall(QGraphicsItemGroup):
     def __init__(self, p0=(0,0), p1=(1,1), wall_width=8, 
-                 chamber_num=-1, wall_num=-1, parent=None, state=True):
+                 chamber_num=-1, wall_num=-1, state=True, label_pos=None, parent=None):
         super().__init__(parent)
 
         self.chamber_num = chamber_num
@@ -49,10 +49,8 @@ class Wall(QGraphicsItemGroup):
         self.state = state
 
         self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
-
         self.upPen = QPen(Qt.red)
         self.upPen.setWidth(wall_width)
-
         self.downPen = QPen(Qt.gray)
         self.downPen.setWidth(wall_width)
 
@@ -62,17 +60,16 @@ class Wall(QGraphicsItemGroup):
 
         self.label = QGraphicsTextItem(str(wall_num))
         self.label.setFont(QFont("Arial", 10, QFont.Bold))
-        label_x = (p0[0]+p1[0])/2
-        label_y = (p0[1]+p1[1])/2
-        self.label.setPos(label_x, label_y)
+
+        if label_pos==None:
+            label_pos = ((p0[0]+p1[0])/2, (p0[1]+p1[1])/2)
+        self.label.setPos(label_pos[0], label_pos[1])
         self.addToGroup(self.label)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             rospy.loginfo("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
-
             self.setState(not self.state)
-
             wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
     
     def setState(self, state: bool):
@@ -83,9 +80,6 @@ class Wall(QGraphicsItemGroup):
         
         self.state = state
         
-
-
-
 class Chamber(QGraphicsItemGroup):
     def __init__(self, center_x=0, center_y=0, chamber_width=100, 
                  chamber_num=-1, wall_width=8, parent=None):
@@ -95,7 +89,7 @@ class Chamber(QGraphicsItemGroup):
         self.chamber_width = chamber_width
         self.chamber_num = chamber_num
 
-        octagon_vertices = self.get_octagon_vertices(center_x, center_y, chamber_width/2)
+        octagon_vertices = self.get_octagon_vertices(center_x, center_y, chamber_width/2, -math.pi/8)
         octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
         self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
         self.octagon.setBrush(QBrush(QColor(180, 180, 180)))
@@ -105,12 +99,19 @@ class Chamber(QGraphicsItemGroup):
         self.label.setFont(QFont("Arial", 20, QFont.Bold))
         self.label.setPos(center_x-10, center_y-20)
         self.addToGroup(self.label)
-        
-        self.walls = [Wall(p0=octagon_vertices[k], p1=octagon_vertices[k+1],
-                           chamber_num=chamber_num, wall_width=wall_width, wall_num=k) for k in range(8)]
 
-    def get_octagon_vertices(self, x, y, w):
-        vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k))) for k in np.linspace(0, 2*math.pi, 9)+math.pi/8]
+        wall_angular_offset = 2*math.pi/32  ## This decides the angular width of the wall
+        wall_vertices_0 = self.get_octagon_vertices(center_x, center_y, chamber_width/2, -math.pi/8+wall_angular_offset)
+        wall_vertices_1 = self.get_octagon_vertices(center_x, center_y, chamber_width/2, -math.pi/8-wall_angular_offset)
+        wall_label_pos = self.get_octagon_vertices(center_x-8, center_y-10, chamber_width/3, 0)
+        
+        self.walls = [Wall(p0=wall_vertices_0[k], p1=wall_vertices_1[k+1], chamber_num=chamber_num, 
+                           wall_num=k, wall_width=wall_width, label_pos=wall_label_pos[k]) 
+                           for k in range(8)]
+
+    def get_octagon_vertices(self, x, y, w, offset):
+        vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k))) 
+                         for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
         return vertices_list
 
     def mousePressEvent(self, event):
@@ -133,8 +134,8 @@ class Maze:
         
         self.chambers = []
         k = 0
-        for x in x_pos:
-            for y in y_pos:
+        for y in y_pos:
+            for x in x_pos:
                 self.chambers.append(Chamber(center_x=x, center_y=y, 
                                              chamber_num=k, chamber_width=chamber_width))
                 k = k+1
@@ -212,13 +213,19 @@ class Interface(Plugin):
         self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS, chamber_width=CHAMBER_WIDTH, 
                          x_offset=CHAMBER_WIDTH/4, y_offset=CHAMBER_WIDTH/4)
 
+        # Add chambers and disable walls not connected
         for k,c in enumerate(self.maze.chambers):
             self.scene.addItem(c)
             for j,w in enumerate(c.walls):
                 if j not in WALL_MAP[k]:
                     w.setEnabled(False)
                     w.setVisible(False)
+        
+        # Add walls - this is a new loop so that they are drawn above the chambers
+        for c in self.maze.chambers:
+            for w in c.walls:
                 self.scene.addItem(w)
+                
         
         # Start timer
         self.timer=QTimer()
