@@ -138,7 +138,6 @@ class Interface(Plugin):
         # Pixel measurements
         self.SCREEN_WIDTH = 720
         self.SCREEN_HEIGHT = 720
-        # self.chamber_width = 100           ## Chamber width (in pixels)
        
         ## Load maze config
         # maze_config = loadmat(in_current_folder('maze_config.mat'))['involved_cd']
@@ -165,7 +164,6 @@ class Interface(Plugin):
 
         # Add widget to the user interface
         context.add_widget(self._widget)
-        
         self._widget.mazeView.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.scene = QGraphicsScene()
         self._widget.mazeView.setScene(self.scene)
@@ -178,15 +176,15 @@ class Interface(Plugin):
 
         # Set the background color of the scene to gray
         self._widget.mazeView.setBackgroundBrush(QColor(0, 0, 0)) 
-        
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
 
+        # CSV browser
         self._widget.pathBrowseBtn.clicked.connect(self._handle_pathBrowseBtn_clicked)
-        # self._widget.pathPreviousBtn.clicked.connect(self._handle_pathPreviousBtn_clicked)
-        # self._widget.pathNextBtn.clicked.connect(self._handle_pathNextBtn_clicked)
-
+        self._widget.pathPreviousBtn.clicked.connect(self._handle_pathPreviousBtn_clicked)
+        self._widget.pathNextBtn.clicked.connect(self._handle_pathNextBtn_clicked)
         self._widget.pathDirEdit.setText(in_current_folder('.'))
                 
+        ## Create Maze and populate walls according to WALL_MAP
         self.maze = Maze(num_rows=NUM_ROWS, num_cols=NUM_COLS, chamber_width=CHAMBER_WIDTH, 
                          x_offset=CHAMBER_WIDTH/4, y_offset=CHAMBER_WIDTH/4)
 
@@ -203,15 +201,12 @@ class Interface(Plugin):
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
     
-    def _handle_chamberClicked(self, chamber : Chamber):
-        rospy.logerr(chamber.chamber_num)
-    
     def updateScene(self):
         self.scene.update()
         self._widget.mazeView.update()
 
     def _handle_pathBrowseBtn_clicked(self):
-        filter = "Text Files (*.py)"  # Change this to the file type you want to allow
+        filter = "CSV Files (*.csv)"  # Change this to the file type you want to allow
         files, _ = QFileDialog.getOpenFileNames(None, "Select files to add", in_current_folder('.'), filter)
 
         if files:
