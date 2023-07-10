@@ -4,3 +4,4 @@ build/
 src/esmacat_master_software/build/
 src/plog/build/
 .vscode/
+src/CMakeLists.txt
