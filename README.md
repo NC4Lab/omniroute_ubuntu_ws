@@ -1,7 +1,8 @@
-# omniroute_operation_ws
+# start in omniroute_operation_ws
+# Need to run this with each local repo clone
 
 ```
-cd esmacat_master_software
+cd src/esmacat_master_software
 
 mkdir build
 cd build
