@@ -29,7 +29,7 @@ uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:succ
 uint8_t nCham = 3;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 180; ///< PWM duty for all walls [0-255]
 
-// Initialize struct and class instances
+// Initialize class instances for local libraries
 Maze_Debug DB;
 Cypress_Com C_COM;
 Wall_Operation W_OPR(nCham);
@@ -65,12 +65,10 @@ void setup()
 	// Setup cypress chips
 	for (size_t ch_i = 0; ch_i < W_OPR.nCham; ch_i++)
 	{
-		// setup cypress chip
 		resp = C_COM.setupCypress(W_OPR.C[ch_i].addr);
 		if (resp != 0)
 			DB.printMsgTime("!!Failed Cypress setup: chamber=%d address=%s!!", ch_i, DB.hexStr(W_OPR.C[ch_i].addr));
 		if (resp == 0 && ch_i == W_OPR.nCham - 1)
-			;
 		{ // print success for last itteration
 			DB.printMsgTime("Finished Cypress setup: chamber=%d address=%s", ch_i, DB.hexStr(W_OPR.C[ch_i].addr));
 		}
