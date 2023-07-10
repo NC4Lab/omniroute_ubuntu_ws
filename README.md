@@ -31,4 +31,9 @@ sudo cp devel/lib/ethercat_grant/ethercat_grant /usr/local/bin
 sudo chmod +s /usr/local/bin/ethercat_grant
 ```
 
+Three packages may need to be installed:
+```
+sudo apt install libxmlrpcpp-dev liblog4cxx-dev librosconsole-dev
+```
+
 

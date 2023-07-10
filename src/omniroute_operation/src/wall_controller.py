@@ -86,15 +86,22 @@ class WallController:
         self.cw_config_list = []
 
         # Option to automatically load csv
-        self.do_auto_load_csv = False
-        self.csv_file_path = "/media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/config/path_1x3_1.csv"
+        self.do_auto_load_csv = True
+        self.csv_file_path = "/home/nc4lab/omniroute_operation_ws/config/path_1x3_1.csv"
 
         # Option to hard code wall/chamber config list
-        self.do_hardcode_cw_config_list = False
+        self.do_hardcode_cw_config_list = True
+        # self.cw_config_list = [
+        #     [0, [1, 2]],
+        #     [1, [1, 3]],
+        #     [2, [5, 7]],
+        #     [3, [1, 7]],
+        #     [4, [2, 5]],
+        #     [5, [1, 5]]
+        # ]
         self.cw_config_list = [
-            [0, [1, 3]],
-            [1, [2, 3, 5, 6]],
-            [2, [5, 7]]
+            [0, [1, 2]],
+            [1, [1, 3]]
         ]
 
         # State machine variables
@@ -149,7 +156,7 @@ class WallController:
 
         # State: INITIALIZE
         elif self.run_state == RunState.INITIALIZE:
-            self.rosby_log_info(Fore.GREEN, "INITIALIZE")
+            self.rospy_log_info(Fore.GREEN, "INITIALIZE")
 
             # Send empty init message
             reg_arr = self.make_reg_msg(MsgTypeID.INITIALIZE, 0)
@@ -161,11 +168,11 @@ class WallController:
         # State: START_MOVE
         elif self.run_state == RunState.START_MOVE:
             if currentTime >= (self.last_ts + self.init_dt):
-                self.rosby_log_info(Fore.GREEN, "MOVE WALL UP")
+                self.rospy_log_info(Fore.GREEN, "MOVE WALL UP")
 
-                self.rosby_log_info(Fore.BLUE, "Chamber and wall configuration list:")
+                self.rospy_log_info(Fore.BLUE, "Chamber and wall configuration list:")
                 for chamber, walls in self.cw_config_list:
-                    self.rosby_log_info(
+                    self.rospy_log_info(
                         Fore.BLUE, "Chamber %d: Walls %s", chamber, walls)
 
                 # Parse the csv file
@@ -189,7 +196,7 @@ class WallController:
 
         # State: WALL_UP
         elif self.run_state == RunState.WALL_UP:
-            self.rosby_log_info(Fore.GREEN, "MOVING WALL DOWN")
+            self.rospy_log_info(Fore.GREEN, "MOVING WALL DOWN")
 
             # Create registry message
             reg_arr = self.make_reg_msg(
@@ -205,7 +212,7 @@ class WallController:
 
         # State: WALL_DOWN
         elif self.run_state == RunState.WALL_DOWN:
-            self.rosby_log_info(Fore.GREEN, "CHECK_REPLY")
+            self.rospy_log_info(Fore.GREEN, "CHECK_REPLY")
             self.run_state = RunState.CHECK_REPLY
 
         # State: CHECK_REPLY
@@ -261,7 +268,7 @@ class WallController:
 
         # Print reg message
         for index, U in enumerate(U_arr):
-            self.rosby_log_info(Fore.BLUE, "%d %d", U.b[0], U.b[1])
+            self.rospy_log_info(Fore.BLUE, "%d %d", U.b[0], U.b[1])
 
         # # Print the cw_list
         # if cw_list is not None:
@@ -304,7 +311,7 @@ class WallController:
 
         return cw_list
 
-    def rosby_log_info(self, color, message, *args):
+    def rospy_log_info(self, color, message, *args):
         colored_message = f"{color}{message}{Style.RESET_ALL}"
         formatted_message = colored_message % args
         rospy.loginfo(formatted_message)
