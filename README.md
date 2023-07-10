@@ -9,9 +9,7 @@ cd build
 cmake ..
 make
 
-cd ../..
-
-cd plog
+cd ../../plog
 
 mkdir build
 cd build
@@ -22,6 +20,8 @@ cd ../../..
 
 catkin_make
 ```
+
+# Need to perform only once on a given OS
 For ethercat_grant, you will likely need to install library libcap-dev
 ```
 sudo apt install libcap-dev
