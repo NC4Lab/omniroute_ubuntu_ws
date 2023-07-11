@@ -1,5 +1,3 @@
-#include <Arduino.h>
-
 // ######################################
 
 //====== QC_Testing.ino ======
@@ -10,6 +8,7 @@
 //============= INCLUDE ================
 
 // GENERAL
+#include <Arduino.h>
 #include <Wire.h>
 #include <LiquidCrystal.h> // include the LiquidCrystal library
 
@@ -17,7 +16,6 @@
 #include <Safe_Vector.h>
 #include <Maze_Debug.h>
 #include <Cypress_Com.h>
-#include <Cypress_Com_Base.h>
 #include <Wall_Operation.h>
 
 //============ VARIABLES ===============
@@ -131,6 +129,13 @@ void setup()
 //=============== LOOP ==================
 void loop()
 {
+
+  // TEMP
+  DB.printMsgTime("TEST");
+  digitalWrite(LED_DWN, HIGH);
+  digitalWrite(LED_UP, LOW);
+  delay(1000);
+  return;
 
   // Read DIP switch address
   for (int i = 0; i < 7; i++)

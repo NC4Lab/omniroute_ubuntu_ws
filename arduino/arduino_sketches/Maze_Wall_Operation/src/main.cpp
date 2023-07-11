@@ -16,7 +16,6 @@
 #include <Safe_Vector.h>
 #include <Maze_Debug.h>
 #include <Cypress_Com.h>
-#include <Cypress_Com_Base.h>
 #include <Wall_Operation.h>
 
 //============ VARIABLES ===============
