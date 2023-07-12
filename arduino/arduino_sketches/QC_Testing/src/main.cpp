@@ -31,17 +31,18 @@ int DswitchVal[8];     // track down switch states
 // Initialize struct and class instances
 Maze_Debug DB;
 Cypress_Com C_COM;
-Wall_Operation W_OPR(1);
+Wall_Operation W_OPR(1, 0);
 const int rs = 52, en = 50, d4 = 46, d5 = 44, d6 = 42, d7 = 48;
+// const int rs = 53, en = 51, d4 = 47, d5 = 45, d6 = 43, d7 = 49;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
-//LiquidCrystal lcd(52, 50, 46, 44, 42, 48); // initialize the LCD display with the appropriate pins
+// LiquidCrystal lcd(52, 50, 46, 44, 42, 48); // initialize the LCD display with the appropriate pins
 
 // Global
 extern bool DB_VERBOSE = 1;                       //<set to control debugging behavior [0:silent, 1:verbose]
 int potPin = A15;                                 // potentiometer pin
-int LED_DOWN = 43;                                // LED for down switch pin
-int LED_UP = 45;                                  // LED for up switch pin
-int MTR_dirPin = 47;                              // Switch for motor direction pin
+int LED_DOWN = 37;                                // LED for down switch pin
+int LED_UP = 39;                                  // LED for up switch pin
+int MTR_dirPin = 41;                              // Switch for motor direction pin
 uint8_t AddPin[7] = {23, 25, 27, 29, 31, 33, 35}; // Array of DIP switch pin
 uint8_t AddBin = 0;                               // Address binary value
 uint8_t add_expect = 0x00;                        // address from DIP switches
@@ -50,14 +51,6 @@ uint8_t add_measure = 0x00;                       // address from I2C scanner
 //=============== SETUP =================
 void setup()
 {
-    lcd.begin(16, 2); // initialize the LCD display with 16 columns and 2 rows
-  //lcd.clear();      // clear the LCD display
-
-  lcd.setCursor(0, 0);
-  lcd.print("TEST3");
-  delay(100);
-  while(true);
-
   // Setup serial coms
   Serial.begin(115200);
   Serial1.begin(115200);
@@ -66,11 +59,7 @@ void setup()
 
   Wire.begin();     // join I2C bus
   lcd.begin(16, 2); // initialize the LCD display with 16 columns and 2 rows
-  //lcd.clear();      // clear the LCD display
-
-  //lcd.setCursor(0, 0);
-  lcd.print("Expected: 0x");
-  while(true);
+  lcd.clear();      // clear the LCD display
 
   // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO

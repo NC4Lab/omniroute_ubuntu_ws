@@ -17,7 +17,8 @@
 /// Constructor
 /// </summary>
 /// <param name="_nCham">Spcify number of chambers to track [1-49]</param>
-Wall_Operation::Wall_Operation(uint8_t _nCham)
+/// <param name="do_spi">OPTIONAL: spcify if SPI should be strated, will interfere with LiquidCrystal library</param>
+Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t do_spi)
 {
 	nCham = _nCham;									  // store number of chambers
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
@@ -25,7 +26,8 @@ Wall_Operation::Wall_Operation(uint8_t _nCham)
 		C[cham_i].num = cham_i;
 		C[cham_i].addr = _C_COM.ADDR_LIST[cham_i];
 		// Start SPI for Ethercat
-		ESlave.start_spi();
+		if (do_spi)
+			ESlave.start_spi();
 	}
 	// Create WallMapStruct lists for each function
 	_makePMS(pmsAllIO, wms.ioDown[0], wms.ioDown[1], wms.ioUp[0], wms.ioUp[1]);		 // all io pins
@@ -421,7 +423,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 		return 0;
 	else if (msg_num_id_new == msg_num_id_last) // skip redundant messages
 		return 0;
-	else if (msg_num_id_new - msg_num_id_last != 1) // check for skipped or out of sequence messages 
+	else if (msg_num_id_new - msg_num_id_last != 1) // check for skipped or out of sequence messages
 	{
 		_DB.printMsgTime("!!ethercat message id missmatch: last=%d new = %d!!", msg_num_id_last, msg_num_id_new);
 		msg_num_id_last = msg_num_id_new; // set id last to new value (need better error handeling here)
@@ -471,11 +473,11 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 					if (msg_type_id == 1) // handle move walls up message
 					{
 						wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-						//wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
+																		// wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
 					}
 					else if (msg_type_id == 2) // handle move walls down message
 					{
-						//wall_u_b = 0;									// dont move any wall up
+						// wall_u_b = 0;									// dont move any wall up
 						wall_d_b = C[cham_i].bitWallPosition & wall_b; // get walls to move down
 					}
 					// Update move flag

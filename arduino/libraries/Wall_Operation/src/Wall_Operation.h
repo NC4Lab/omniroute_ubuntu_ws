@@ -97,7 +97,7 @@ private:
 
 	// -----------METHODS-----------------
 public:
-	Wall_Operation(uint8_t);
+	Wall_Operation(uint8_t, uint8_t = 1);
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);

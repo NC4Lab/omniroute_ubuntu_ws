@@ -100,6 +100,7 @@ void setup()
 	// // Test input pins
 	// uint8_t a_wall[1] = { 1 };
 	// resp = W_OPR.testWallIO(0, a_wall, 1);
+	resp = W_OPR.testWallIO(0);
 
 	// // Test PWM output
 	// uint8_t a_wall[1] = { 1 };
