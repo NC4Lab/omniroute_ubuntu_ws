@@ -13,6 +13,8 @@
 
 //========CLASS: Wall_Operation==========
 
+// TEMP COMMIT TEST
+
 /// <summary>
 /// Constructor
 /// </summary>
@@ -571,7 +573,7 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 /// <returns>Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]</returns>
 uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
 {
-	// Local vars
+	// Local vars// TEMP COMMIT TEST
 	uint8_t resp = 0;
 	uint8_t run_error = 0;						// store run errors
 	uint8_t is_timedout = 0;					// flag timeout
