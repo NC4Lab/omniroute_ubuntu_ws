@@ -188,6 +188,7 @@ void loop()
       digitalWrite(LED_UP, HIGH);
     else
       digitalWrite(LED_UP, LOW);
+
   }
 
   // Read potentiometer and set duty cycle
