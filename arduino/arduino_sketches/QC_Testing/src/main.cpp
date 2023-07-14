@@ -148,6 +148,27 @@ void setup()
 void loop()
 {
 
+  // READ DOWN SWITCH FROM CYPRESS, NEED TO READ FROM ALL 8 WALLS AND IF ONE OF THEM IS HIGH -> TURN ON LED
+  bool do_d_switch_update = false;
+  bool is_d_switch_closed = false;
+  for (int i = 0; i < 8; i++)
+  {
+    C_COM.ioReadPin(add_measure, W_OPR.wms.ioDown[0][i], W_OPR.wms.ioDown[1][i], r_bit_out);
+    if (DswitchVal[i] != r_bit_out)
+      do_d_switch_update = true;
+    if (r_bit_out == 1)
+      is_d_switch_closed = true;
+    DswitchVal[i] = r_bit_out; // read pin value and store it in array
+  }
+  if (do_d_switch_update)
+  {
+    DB.printMsgTime("Down switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", DswitchVal[0], DswitchVal[1], DswitchVal[2], DswitchVal[3], DswitchVal[4], DswitchVal[5], DswitchVal[6], DswitchVal[7]);
+    if (is_d_switch_closed)
+      digitalWrite(LED_DOWN, HIGH);
+    else
+      digitalWrite(LED_DOWN, LOW);
+  }
+
   // READ UP SWITCH FROM CYPRESS, NEED TO READ FROM ALL 8 WALLS AND IF ONE OF THEM IS HIGH -> TURN ON LED
   bool do_u_switch_update = false;
   bool is_u_switch_closed = false;
@@ -167,27 +188,6 @@ void loop()
       digitalWrite(LED_UP, HIGH);
     else
       digitalWrite(LED_UP, LOW);
-  }
-
-  // READ DOWN SWITCH FROM CYPRESS, NEED TO READ FROM ALL 8 WALLS AND IF ONE OF THEM IS HIGH -> TURN ON LED
-  bool do_d_switch_update = false;
-  bool is_d_switch_closed = false;
-  for (int i = 0; i < 8; i++)
-  {
-    C_COM.ioReadPin(add_measure, W_OPR.wms.ioUp[0][i], W_OPR.wms.ioUp[1][i], r_bit_out);
-    if (DswitchVal[i] != r_bit_out)
-      do_d_switch_update = true;
-    if (r_bit_out == 1)
-      is_d_switch_closed = true;
-    DswitchVal[i] = r_bit_out; // read pin value and store it in array
-  }
-  if (do_d_switch_update)
-  {
-    DB.printMsgTime("Down switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", DswitchVal[0], DswitchVal[1], DswitchVal[2], DswitchVal[3], DswitchVal[4], DswitchVal[5], DswitchVal[6], DswitchVal[7]);
-    if (is_d_switch_closed)
-      digitalWrite(LED_DOWN, HIGH);
-    else
-      digitalWrite(LED_DOWN, LOW);
   }
 
   // Read potentiometer and set duty cycle
