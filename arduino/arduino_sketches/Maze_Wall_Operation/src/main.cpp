@@ -85,6 +85,17 @@ void setup()
 	// resp = W_OPR.initializeWalls();
 
 	// // TEMP
+	// while (true)
+	// {
+	// 	byte r_bit_out;
+	// 	uint8_t wall_n = 2;
+	// 	// Check down pins
+	// 	uint8_t resp = C_COM.ioReadPin(W_OPR.C[0].addr, W_OPR.wms.ioUp[0][wall_n], W_OPR.wms.ioUp[1][wall_n], r_bit_out);
+	// 	DB.printMsgTime("state=%d", r_bit_out);
+	// 	delay(500);
+	// }
+
+	// // TEMP
 	// int cnt = 0;
 	// const uint8_t nbyte = 6;
 	// byte io_all_reg_1[nbyte];
@@ -101,9 +112,9 @@ void setup()
 	// }
 
 	// // Test input pins
-	// uint8_t a_wall[1] = { 1 };
-	// resp = W_OPR.testWallIO(0, a_wall, 1);
-	resp = W_OPR.testWallIO(0);
+	uint8_t a_wall[1] = { 2 };
+	resp = W_OPR.testWallIO(0, a_wall, 1);
+	// resp = W_OPR.testWallIO(0);
 
 	// // Test PWM output
 	// uint8_t a_wall[1] = { 1 };

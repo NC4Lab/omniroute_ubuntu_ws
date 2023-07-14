@@ -802,27 +802,27 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 		for (size_t i = 0; i < s; i++)
 		{ // loop walls
 			uint8_t wall_n = p_wi[i];
+
 			// Check down pins
-			uint8_t resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
-			if (resp != 0)
-				// break;
-				Serial.println(r_bit_out);
+			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
+			if (resp != 0) //break out of loop if error returned
+				break;
 			if (r_bit_out == 1)
 				_DB.printMsgTime("\tWall %d: down", wall_n);
 
 			// Check up pins
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
-			if (resp != 0)
-				// break;
-				if (r_bit_out == 1)
-					_DB.printMsgTime("\tWall %d: up", wall_n);
+			if (resp != 0) //break out of loop if error returned
+				break;
+			if (r_bit_out == 1)
+				_DB.printMsgTime("\tWall %d: up", wall_n);
 
 			// Add small delay
 			delay(10);
 		}
 	}
-	if (resp != 0)
-		_DB.printMsgTime("!!Failed test IO switches: chamber=%d wall=%s!!", cham_i, _DB.arrayStr(p_wi, s));
+	// Print failure message if while loop is broken out of because of I2C coms issues
+	_DB.printMsgTime("!!Failed test IO switches: chamber=%d wall=%s!!", cham_i, _DB.arrayStr(p_wi, s));
 	return resp;
 }
 
