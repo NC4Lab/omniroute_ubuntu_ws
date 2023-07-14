@@ -16,8 +16,9 @@
 #include <Safe_Vector.h>
 #include <Maze_Debug.h>
 #include <Cypress_Com.h>
-#include <Cypress_Com_Base.h>
 #include <Wall_Operation.h>
+
+// TEMP COMMIT TEST
 
 //============ VARIABLES ===============
 
@@ -26,7 +27,7 @@ extern bool DB_VERBOSE = 1; //<set to control debugging behavior [0:silent, 1:ve
 
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-uint8_t nCham = 3;	   ///< number of chambers being used [1-49]
+uint8_t nCham = 1;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
@@ -46,21 +47,6 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 	DB.printMsgTime("SETUP START");
-
-	// // TEMP
-	// while (true)
-	// {
-	// 	// Check ethercat coms
-	// 	resp = W_OPR.getWallCmdEthercat();
-
-	// 	// Wait for initialization
-	// 	if (!W_OPR.isEthercatInitialized)
-	// 		return;
-
-	// 	// Check for new wall move command
-	// 	if (resp == 1)
-	// 		W_OPR.runWalls(); // move walls
-	// }
 
 	// TEMP
 	// C_COM.i2cScan();
@@ -96,11 +82,12 @@ void setup()
 	resp = W_OPR.setupWallPWM(pwmDuty);
 
 	// Test and reset all walls
-	resp = W_OPR.initializeWalls();
+	// resp = W_OPR.initializeWalls();
 
 	// // Test input pins
-	// uint8_t a_wall[1] = { 1 };
+	// uint8_t a_wall[1] = { 2 };
 	// resp = W_OPR.testWallIO(0, a_wall, 1);
+	// resp = W_OPR.testWallIO(0);
 
 	// // Test PWM output
 	// uint8_t a_wall[1] = { 1 };
@@ -115,7 +102,7 @@ void setup()
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
-	// // Move chambers
+	// TEMP Move chambers
 	// bool do_cham_arr[3] = {true, true, true};
 	// uint32_t dt_timout = 1500;
 	// const uint8_t s1 = 8;

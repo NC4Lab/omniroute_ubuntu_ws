@@ -12,6 +12,8 @@
 #include "Cypress_Com.h"
 #include "Cypress_Com_Base.h"
 
+// TEMP COMMIT TEST
+
 //========CLASS: Cypress_Com==========
 
 /// <summary>
@@ -248,7 +250,7 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 	if (s > 16)
 		return -1;
 
-    // Handle missing old registry values
+	// Handle missing old registry values
 	uint8_t p_byte_val[s]; // initialize array to handle null array argument
 	if (p_reg_last_byte_arr == nullptr)
 	{
@@ -257,12 +259,12 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 			return resp;
 	}
 	else
-	{ // copy over inputed old registry values 
+	{ // copy over inputed old registry values
 		for (size_t i = 0; i < s; i++)
 			p_byte_val[i] = p_reg_last_byte_arr[i];
 	}
 
-    // Update registry values with new values
+	// Update registry values with new values
 	for (size_t i = 0; i < s; i++)
 	{
 		_updateRegByte(p_byte_val[i], p_byte_mask_arr[i], bit_val_set);

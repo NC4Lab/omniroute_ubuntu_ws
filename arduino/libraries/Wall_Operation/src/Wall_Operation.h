@@ -17,6 +17,8 @@
 #include "Cypress_Com.h"
 #include "Esmacatshield.h"
 
+// TEMP COMMIT TEST
+
 /// <summary>
 /// This class handles the actual opperation of the maze walls.
 /// </summary>
@@ -97,7 +99,7 @@ private:
 
 	// -----------METHODS-----------------
 public:
-	Wall_Operation(uint8_t);
+	Wall_Operation(uint8_t, uint8_t = 1);
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);

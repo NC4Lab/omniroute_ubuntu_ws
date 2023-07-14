@@ -1,16 +1,15 @@
-# omniroute_operation_ws
+# start in omniroute_operation_ws
+# Need to run this with each local repo clone
 
 ```
-cd esmacat_master_software
+cd src/esmacat_master_software
 
 mkdir build
 cd build
 cmake ..
 make
 
-cd ../..
-
-cd plog
+cd ../../plog
 
 mkdir build
 cd build
@@ -21,6 +20,8 @@ cd ../../..
 
 catkin_make
 ```
+
+# Need to perform only once on a given OS
 For ethercat_grant, you will likely need to install library libcap-dev
 ```
 sudo apt install libcap-dev
