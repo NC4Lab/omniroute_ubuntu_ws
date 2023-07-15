@@ -21,7 +21,9 @@
     <node name = "wall_controller_test_node" pkg = "omniroute_operation" type = "wall_controller.py" output = "screen"/>
 
      <!-- Omniroute interface test -->
-    <node name = "interface_test_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/>
+    <!-- <node name = "interface_test_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/> -->
+    <node name = "interface_test_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
+
 
 
 </launch>
