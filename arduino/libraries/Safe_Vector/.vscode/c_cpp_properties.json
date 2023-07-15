@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Safe_Vector_Configuration",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${env:HOME}/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "${env:HOME}/.platformio/packages/toolchain-atmelavr/avr/include",
+                "${env:HOME}/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/7.3.0/include",
+                "${env:HOME}/.platformio/packages/framework-arduino-avr/variants/mega",
+                "${env:HOME}/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                "${env:HOME}/.platformio/packages/framework-arduino-avr/libraries/SPI/src"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

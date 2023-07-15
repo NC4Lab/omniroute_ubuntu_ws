@@ -82,7 +82,7 @@ void setup()
 	resp = W_OPR.setupWallPWM(pwmDuty);
 
 	// Test and reset all walls
-	// resp = W_OPR.initializeWalls();
+	resp = W_OPR.initializeWalls();
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
