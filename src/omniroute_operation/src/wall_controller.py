@@ -144,6 +144,9 @@ class WallController:
         @return: None
         """
 
+        #TEMP
+        return
+
         currentTime = rospy.Time.now()
 
         # State: GET_CSV
@@ -220,11 +223,11 @@ class WallController:
             return
 
     # @brief Create a byte with bits set to 1 based on wall_up_arr
-    def set_wall_byte(self, wall_up_arr):
+    def set_wall_byte(self, wall_arr):
         byte_value = 0  # Initialize the byte value
 
         # Iterate over the array of values
-        for index in wall_up_arr:
+        for index in wall_arr:
             if 0 <= index <= 7:
                 # Set the corresponding bit to 1 using bitwise OR
                 byte_value |= (1 << index)
