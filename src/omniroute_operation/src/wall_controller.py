@@ -144,9 +144,6 @@ class WallController:
         @return: None
         """
 
-        #TEMP
-        return
-
         currentTime = rospy.Time.now()
 
         # State: GET_CSV
@@ -223,11 +220,11 @@ class WallController:
             return
 
     # @brief Create a byte with bits set to 1 based on wall_up_arr
-    def set_wall_byte(self, wall_arr):
+    def set_wall_byte(self, wall_up_arr):
         byte_value = 0  # Initialize the byte value
 
         # Iterate over the array of values
-        for index in wall_arr:
+        for index in wall_up_arr:
             if 0 <= index <= 7:
                 # Set the corresponding bit to 1 using bitwise OR
                 byte_value |= (1 << index)
@@ -259,7 +256,7 @@ class WallController:
                 wall_byte = self.set_wall_byte(cw[1])
                 u_ind_c = 0 if chamber % 2 == 0 else 1
                 U_arr[u_ind_r].b[u_ind_c] = wall_byte
-                # self.rosby_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
+                # self.rospy_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
             u_ind_r = 5
 
         # Set footer
@@ -275,9 +272,9 @@ class WallController:
 
         # # Print the cw_list
         # if cw_list is not None:
-        #     self.rosby_log_info(Fore.BLUE, "Chamber and wall configuration list:")
+        #     self.rospy_log_info(Fore.BLUE, "Chamber and wall configuration list:")
         #     for chamber, walls in cw_list:
-        #         self.rosby_log_info(
+        #         self.rospy_log_info(
         #             Fore.BLUE, "Chamber %d: Walls %s", chamber, walls)
 
         return reg_arr
@@ -308,9 +305,9 @@ class WallController:
             rospy.logerr("Error reading CSV file: %s", str(e))
 
         # # Print the cw_list
-        # self.rosby_log_info(Fore.BLUE,"Chamber and wall configuration list:")
+        # self.rospy_log_info(Fore.BLUE,"Chamber and wall configuration list:")
         # for chamber, walls in cw_list:
-        #     self.rosby_log_info(Fore.BLUE,"Chamber %d: Walls %s", chamber, walls)
+        #     self.rospy_log_info(Fore.BLUE,"Chamber %d: Walls %s", chamber, walls)
 
         return cw_list
 

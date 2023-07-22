@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import rospy
+from omniroute_esmacat_ros.msg import *
 
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -13,13 +14,35 @@ from qt_gui.plugin import Plugin
 import numpy as np
 from scipy.io import loadmat
 import math
+from colorama import Fore, Style
+import ctypes
+from enum import Enum
 
 from std_msgs.msg import *
 from omniroute_operation.msg import *
 
+"""
+The outgoing register is structured arr[8] of 16 bit integers
+with each 16 bit value seperated into bytes 
+[0]: message number
+    i16 [0-65535] 
+[1]: message info
+    b0 message type [0-255] [see: MsgTypeID]
+    b1 arg length [0-255] [number of message args in bytes]           
+[2:5] wall state bytes
+    b0 = wall x byte
+    b1 = wall x+1 byte  
+[x-8]: footer  
+    b1=254
+    b0=254                            
+
+@return: None
+"""
+
 # GLOBAL VARS
 norm = np.linalg.norm
 wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
+maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
 
 NUM_ROWS_COLS = 3
 WALL_MAP = {
@@ -34,6 +57,20 @@ WALL_MAP = {
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
+# Enum for message type ID
+class MsgTypeID(Enum):
+    INITIALIZE = 128
+    MOVE_WALLS_UP = 1
+    MOVE_WALLS_DOWN = 2
+
+# Initialize colorama
+Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
+
+# Log to ROS in color
+def rospy_log_info(color, message, *args):
+    colored_message = f"{color}{message}{Style.RESET_ALL}"
+    formatted_message = colored_message % args
+    rospy.loginfo(formatted_message)
 
 def in_current_folder(file_name: str):
     # Get the absolute path of the current script file
@@ -42,6 +79,144 @@ def in_current_folder(file_name: str):
     return os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
     # return os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
 
+def center_text(text_item, center_x, center_y):
+    # Set the text item's position relative to its bounding rectangle
+    text_item.setTextWidth(0)  # Allow the text item to resize its width automatically
+    text_item.setHtml('<div style="text-align: center; vertical-align: middle;">{}</div>'.format(text_item.toPlainText()))
+
+    # Get the bounding rectangle of the text item
+    text_rect = text_item.boundingRect()
+
+    # Center the text both vertically and horizontally over the given coordinates
+    x_pos = center_x - text_rect.width() / 2
+    y_pos = center_y - text_rect.height() / 2
+    text_item.setPos(x_pos, y_pos)
+
+# Create a byte with bits set to 1 based on wall_up_arr
+def set_wall_byte(wall_arr):
+    byte_value = 0  # Initialize the byte value
+
+    # Iterate over the array of values
+    for index in wall_arr:
+        if 0 <= index <= 7:
+            # Set the corresponding bit to 1 using bitwise OR
+            byte_value |= (1 << index)
+
+    return byte_value
+
+# Make msg for Ethercat registry
+def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
+    # Initialize the function attribute if not already present
+    if not hasattr(make_reg_msg, "msg_num_id"):
+        make_reg_msg.msg_num_id = 0
+
+    # Itterate message count
+    make_reg_msg.msg_num_id = make_reg_msg.msg_num_id + \
+        1 if make_reg_msg.msg_num_id < 65535 else 1
+
+    # Create a list 'reg' with 8 16-bit Union elements
+    U_arr = [Union() for _ in range(8)]
+    u_ind_r = 0
+
+    # Set message num and type id
+    U_arr[u_ind_r].i16 = make_reg_msg.msg_num_id
+    u_ind_r += 1
+    U_arr[u_ind_r].b[0] = msg_type_id.value
+    U_arr[u_ind_r].b[1] = msg_lng
+
+    # Update walls to move up
+    if (msg_type_id == MsgTypeID.MOVE_WALLS_UP or msg_type_id == MsgTypeID.MOVE_WALLS_DOWN) and cw_list is not None:
+        # Update U_arr with corresponding chamber and wall byte
+        for cw in cw_list:
+            chamber = cw[0]
+            u_ind_r = 2 + (chamber // 2)
+            wall_byte = set_wall_byte(cw[1])
+            u_ind_c = 0 if chamber % 2 == 0 else 1
+            U_arr[u_ind_r].b[u_ind_c] = wall_byte
+            #rospy_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
+
+    # Set footer
+    u_ind_r = 2 + math.ceil(msg_lng/2)
+    U_arr[u_ind_r].b[0] = 254
+    U_arr[u_ind_r].b[1] = 254
+
+    # TEMP
+    #rospy_log_info(Fore.RED,"u_ind_r=%d msg_lng=%d msg_lng/2=%d", u_ind_r, msg_lng, math.ceil(msg_lng/2))
+
+    # Store and return 16-bit values cast as signed for use with ease_registers
+    reg_arr = [ctypes.c_int16(U.i16).value for U in U_arr]
+
+    # Print reg message
+    for index, U in enumerate(U_arr):
+        rospy_log_info(Fore.BLUE, "%d %d", U.b[0], U.b[1])
+
+    # # Print the cw_list
+    # if cw_list is not None:
+    #     rospy_log_info(Fore.BLUE, "Chamber and wall configuration list:")
+    #     for chamber, walls in cw_list:
+    #         rospy_log_info(
+    #             Fore.BLUE, "Chamber %d: Walls %s", chamber, walls)
+
+    return reg_arr
+
+# Union class using ctype union for storing ethercat data shareable accross data types
+class Union:
+    def __init__(self):
+        self.b = bytearray([0, 0])  # 2 bytes initialized with zeros
+
+    @property
+    def i16(self):
+        return struct.unpack("<H", self.b)[0]
+
+    @i16.setter
+    def i16(self, value):
+        packed_value = struct.pack("<H", value)
+        self.b[0] = packed_value[0]
+        self.b[1] = packed_value[1]
+
+# The shared ConfigHolder class to store the wall_config_list
+class ConfigHolder:
+    def __init__(self):
+        self.wall_config_list = []
+
+    def add_wall(self, chamber_num, wall_num):
+        for item in self.wall_config_list:
+            if item[0] == chamber_num:
+                item[1].append(wall_num)
+                return
+        self.wall_config_list.append([chamber_num, [wall_num]])
+
+    def remove_wall(self, chamber_num, wall_num):
+        for item in self.wall_config_list:
+            if item[0] == chamber_num:
+                item[1].remove(wall_num)
+                if not item[1]:  # If the second column is empty, remove the entire row
+                    self.wall_config_list.remove(item)
+                return
+
+    def sort_entries(self):
+        # Sort the rows by the entries in the based on the first chamber number
+        self.wall_config_list.sort(key=lambda row: row[0])
+
+        # Sort the arrays in the second column
+        for row in self.wall_config_list:
+            row[1].sort()
+
+    def reset(self):
+        self.wall_config_list = []
+
+    def get_len(self):
+        return len(self.wall_config_list)
+    
+    def __iter__(self):
+        return iter(self.wall_config_list)
+
+    def __str__(self):
+        return str(self.wall_config_list)
+
+
+# Create a shared instance of ConfigHolder
+CW_LIST = ConfigHolder()
 
 class Wall(QGraphicsItemGroup):
     def __init__(self, p0=(0, 0), p1=(1, 1), wall_width=-1, chamber_num=-1, wall_num=-1, state=False, label_pos=None, parent=None):
@@ -71,13 +246,18 @@ class Wall(QGraphicsItemGroup):
         self.label.setPos(label_pos[0], label_pos[1])
         self.addToGroup(self.label)
 
-        self.center_text(self.label, label_pos[0], label_pos[1])
+        center_text(self.label, label_pos[0], label_pos[1])
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             rospy.loginfo("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
             self.setState(not self.state)
             wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
+            if self.state: # add list entry
+                CW_LIST.add_wall(self.chamber_num, self.wall_num)
+            else: # remove list entry
+                CW_LIST.remove_wall(self.chamber_num, self.wall_num)
+            print(CW_LIST)
 
     def setState(self, state: bool):
         if state:
@@ -86,20 +266,6 @@ class Wall(QGraphicsItemGroup):
             self.line.setPen(self.downPen)
 
         self.state = state
-
-    def center_text(self, text_item, center_x, center_y):
-        # Set the text item's position relative to its bounding rectangle
-        text_item.setTextWidth(0)  # Allow the text item to resize its width automatically
-        text_item.setHtml('<div style="text-align: center; vertical-align: middle;">{}</div>'.format(text_item.toPlainText()))
-
-        # Get the bounding rectangle of the text item
-        text_rect = text_item.boundingRect()
-
-        # Center the text both vertically and horizontally over the given coordinates
-        x_pos = center_x - text_rect.width() / 2
-        y_pos = center_y - text_rect.height() / 2
-        text_item.setPos(x_pos, y_pos)
-
 
 class Chamber(QGraphicsItemGroup):
     def __init__(self, center_x, center_y, chamber_width, chamber_num, wall_width, parent=None):
@@ -123,7 +289,7 @@ class Chamber(QGraphicsItemGroup):
         self.addToGroup(self.label)
 
         # Call the center_text method to center the text over the chamber's center
-        self.center_text(self.label, center_x, center_y)
+        center_text(self.label, center_x, center_y)
 
         wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
         wall_vertices_0 = self.get_octagon_vertices(
@@ -150,19 +316,6 @@ class Chamber(QGraphicsItemGroup):
         if event.button() == Qt.LeftButton:
             rospy.loginfo("Chamber %d clicked!" % self.chamber_num)
 
-    def center_text(self, text_item, center_x, center_y):
-        # Set the text item's position relative to its bounding rectangle
-        text_item.setTextWidth(0)  # Allow the text item to resize its width automatically
-        text_item.setHtml('<div style="text-align: center; vertical-align: middle;">{}</div>'.format(text_item.toPlainText()))
-
-        # Get the bounding rectangle of the text item
-        text_rect = text_item.boundingRect()
-
-        # Center the text both vertically and horizontally over the given coordinates
-        x_pos = center_x - text_rect.width() / 2
-        y_pos = center_y - text_rect.height() / 2
-        text_item.setPos(x_pos, y_pos)
-
 
 
 class Maze:
@@ -185,6 +338,11 @@ class Maze:
                 self.chambers.append(
                     Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
                 k = k+1
+
+    def reset_walls(self):
+        for chamber in self.chambers:
+            for wall in chamber.walls:
+                wall.setState(False)
 
 
 class Interface(Plugin):
@@ -248,13 +406,6 @@ class Interface(Plugin):
         self._widget.window().setMinimumSize(main_window_width, main_window_height)
         self._widget.window().setMaximumSize(main_window_width, main_window_height)
 
-        # # Set the size of the scene and the view
-        # sceneWidth = 500
-        # sceneHeight = 500
-        # scale = 1
-        # self._widget.mazeView.setFixedSize(sceneWidth*scale, sceneHeight*scale)
-        # self._widget.mazeView.setSceneRect(0, 0, sceneWidth, sceneHeight)
-
         # Set the background color of the scene to white
         self._widget.mazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
@@ -267,6 +418,14 @@ class Interface(Plugin):
         self._widget.pathNextBtn.clicked.connect(
             self._handle_pathNextBtn_clicked)
         self._widget.pathDirEdit.setText(in_current_folder('.'))
+
+        # Other buttons
+        self._widget.plotClearBtn.clicked.connect(
+            self._handle_plotClearBtn_clicked)
+        self._widget.plotSaveBtn.clicked.connect(
+            self._handle_plotSaveBtn_clicked)
+        self._widget.plotSendBtn.clicked.connect(
+            self._handle_plotSendBtn_clicked)
 
          # Calculate chamber width and wall line width and offset
         maze_view_size = self._widget.mazeView.width()
@@ -296,6 +455,12 @@ class Interface(Plugin):
         self.timer = QTimer()
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
+
+        # Send initialization message
+        rospy_log_info(Fore.GREEN, "INITIALIZE")
+        reg_arr = make_reg_msg(MsgTypeID.INITIALIZE, 0)
+        maze_ard0_pub.publish(*reg_arr)
+        
 
     def updateScene(self):
         self.scene.update()
@@ -355,3 +520,17 @@ class Interface(Plugin):
 
         # Set the current file in the list widget
         self._widget.pathListWidget.setCurrentRow(self.current_file_index)
+
+    def _handle_plotClearBtn_clicked(self):
+        self.maze.reset_walls()
+        CW_LIST.reset()
+
+    def _handle_plotSaveBtn_clicked(self):
+        self.maze.reset_walls()
+
+    def _handle_plotSendBtn_clicked(self):
+        # Sort entries
+        CW_LIST.sort_entries()
+        print(CW_LIST)
+        reg_arr = make_reg_msg(MsgTypeID.MOVE_WALLS_UP, 9, CW_LIST)
+        maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
