@@ -390,15 +390,6 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	uint8_t read_i = 0;
 	uint32_t ts_read = millis() + 500;
 
-	// // TEMP
-	// int add = 0;
-	// int val = 1;
-	// ESlave.write_reg_value(add, val);
-	// ESlave.write_reg_value(1, 2);
-	// ESlave.write_reg_value(2, 3);
-	// delay(1000);
-	// return 0;
-
 	// Read esmacat buffer
 	ESlave.get_ecat_registers(buff_read);
 
@@ -407,6 +398,9 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	U.i16[0] = buff_read[read_i++];
 	msg_type_id = U.b[0];
 	arg_lng = U.b[1];
+
+	// TEMP
+	Serial.println(msg_num_id_new);
 
 	// Check for initialzing msg_type_id = 0
 	if (!isEthercatInitialized)
@@ -461,33 +455,27 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 			// Store values
 			uint8_t byte_n = is_even || buff_i < buff_n - 1 ? 2 : 1;
 
-			for (size_t byte_i = 0; byte_i < byte_n; byte_i++)
+			// Handle wall move
+			if (msg_type_id == 1) // check for move walls message
 			{
-				uint8_t wall_b = U.b[byte_i];
-				cham_i++;
-
-				// Check for empty entries
-				if (wall_b != 0)
+				for (size_t byte_i = 0; byte_i < byte_n; byte_i++)
 				{
+					uint8_t wall_b = U.b[byte_i];
+					cham_i++;
 
-					uint8_t wall_u_b;
-					uint8_t wall_d_b;
-					if (msg_type_id == 1) // handle move walls up message
-					{
-						wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-																		// wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
-					}
-					else if (msg_type_id == 2) // handle move walls down message
-					{
-						// wall_u_b = 0;									// dont move any wall up
-						wall_d_b = C[cham_i].bitWallPosition & wall_b; // get walls to move down
-					}
+					uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
+					uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
+
 					// Update move flag
 					C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
 
 					_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
 					_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
 					_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
+
+					// TEMP
+					_DB.printMsgTime("\t\twall_b=%s", _DB.bitIndStr(wall_b));
+					_DB.printMsgTime("\t\tC[cham_i].bitWallPosition=%s", _DB.bitIndStr(C[cham_i].bitWallPosition));
 				}
 			}
 		}
@@ -502,7 +490,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	}
 
 	// Return new message flag
-	return msg_type_id == 1 | msg_type_id == 2 ? 1 : 0;
+	return msg_type_id == 1 ? 1 : 0;
 }
 
 /// <summary>
@@ -805,14 +793,14 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 
 			// Check down pins
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioDown[0][wall_n], wms.ioDown[1][wall_n], r_bit_out);
-			if (resp != 0) //break out of loop if error returned
+			if (resp != 0) // break out of loop if error returned
 				break;
 			if (r_bit_out == 1)
 				_DB.printMsgTime("\tWall %d: down", wall_n);
 
 			// Check up pins
 			resp = _C_COM.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
-			if (resp != 0) //break out of loop if error returned
+			if (resp != 0) // break out of loop if error returned
 				break;
 			if (r_bit_out == 1)
 				_DB.printMsgTime("\tWall %d: up", wall_n);
