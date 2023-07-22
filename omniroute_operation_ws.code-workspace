@@ -5,6 +5,10 @@
 		}
 	],
 	"settings": {
-		"platformio-ide.useBuiltinPython": false
+		"platformio-ide.useBuiltinPython": false,
+		"[python]": {
+			"editor.defaultFormatter": "ms-python.autopep8"
+		},
+		"python.formatting.provider": "none"
 	}
 }
