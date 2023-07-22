@@ -27,7 +27,7 @@ extern bool DB_VERBOSE = 1; //<set to control debugging behavior [0:silent, 1:ve
 
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-uint8_t nCham = 1;	   ///< number of chambers being used [1-49]
+uint8_t nCham = 2;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries

@@ -38,7 +38,7 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 // LiquidCrystal lcd(52, 50, 46, 44, 42, 48); // initialize the LCD display with the appropriate pins
 
 // Global
-extern bool DB_VERBOSE = 1;                       //<set to control debugging behavior [0:silent, 1:verbose]
+extern bool DB_VERBOSE = 0;                       //<set to control debugging behavior [0:silent, 1:verbose]
 int potPin = A15;                                 // potentiometer pin
 int LED_DOWN = 37;                                // LED for down switch pin
 int LED_UP = 39;                                  // LED for up switch pin
