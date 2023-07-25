@@ -527,7 +527,36 @@ class Interface(Plugin):
         CW_LIST.reset()
 
     def _handle_plotSaveBtn_clicked(self):
-        self.maze.reset_walls()
+        # Open the folder specified by in_current_folder('.') in an explorer window
+        folder_path = in_current_folder('.')
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getSaveFileName(
+            None, "Save CSV File", folder_path, "CSV Files (*.csv);;All Files (*)", options=options)
+
+        if file_name:
+            # The user has specified a file name, you can perform additional actions here
+            print("Selected file:", file_name)
+            # Run the function to save data to the CSV file
+            self.save_path_csv(file_name)
+
+    def save_path_csv(self, file_name: str):
+        # Replace this with the data you want to save to the CSV file
+        # For example, let's save some dummy data as an example
+        data = [
+            ['Time', 'X', 'Y'],
+            [0, 1.0, 2.0],
+            [1, 2.0, 3.0],
+            [2, 3.0, 4.0],
+            # Add more rows of data as needed
+        ]
+
+        # Save the data to the specified CSV file
+        with open(file_name, 'w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerows(data)
+
+        print("Data saved to CSV file:", file_name)
 
     def _handle_plotSendBtn_clicked(self):
         # Sort entries
