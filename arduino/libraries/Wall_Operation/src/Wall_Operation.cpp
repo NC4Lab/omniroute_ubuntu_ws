@@ -400,7 +400,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	arg_lng = U.b[1];
 
 	// TEMP
-	Serial.println(msg_num_id_new);
+	//Serial.println(msg_num_id_new);
 
 	// Check for initialzing msg_type_id = 0
 	if (!isEthercatInitialized)

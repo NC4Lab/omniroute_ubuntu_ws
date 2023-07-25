@@ -26,7 +26,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QGroupBox" name="pathSelectorGroupBox">
+  <widget class="QGroupBox" name="fileSelectorGroupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -38,7 +38,7 @@
    <property name="title">
     <string/>
    </property>
-   <widget class="QLineEdit" name="pathDirEdit">
+   <widget class="QLineEdit" name="fileDirEdit">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -48,7 +48,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="pathConfigsLabel">
+   <widget class="QLabel" name="fileConfigsLabel">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -61,7 +61,7 @@
      <string>Path Configurations</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pathBrowseBtn">
+   <widget class="QPushButton" name="fileBrowseBtn">
     <property name="geometry">
      <rect>
       <x>410</x>
@@ -74,7 +74,7 @@
      <string>Browse</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pathPreviousBtn">
+   <widget class="QPushButton" name="filePreviousBtn">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -87,7 +87,7 @@
      <string>previous</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pathNextBtn">
+   <widget class="QPushButton" name="fileNextBtn">
     <property name="geometry">
      <rect>
       <x>400</x>
@@ -100,7 +100,7 @@
      <string>next</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="pathListWidget">
+   <widget class="QListWidget" name="fileListWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -149,8 +149,21 @@
      <string>Save</string>
     </property>
    </widget>
+   <widget class="QRadioButton" name="sysInitEtherBtn">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>30</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Initialize Ethercat</string>
+    </property>
+   </widget>
   </widget>
-  <zorder>pathSelectorGroupBox</zorder>
+  <zorder>fileSelectorGroupBox</zorder>
   <zorder>mazeView</zorder>
  </widget>
  <resources/>

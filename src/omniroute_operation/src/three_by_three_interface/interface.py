@@ -410,16 +410,16 @@ class Interface(Plugin):
         self._widget.mazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
 
-        # CSV browser
-        self._widget.pathBrowseBtn.clicked.connect(
-            self._handle_pathBrowseBtn_clicked)
-        self._widget.pathPreviousBtn.clicked.connect(
-            self._handle_pathPreviousBtn_clicked)
-        self._widget.pathNextBtn.clicked.connect(
-            self._handle_pathNextBtn_clicked)
-        self._widget.pathDirEdit.setText(in_current_folder('.'))
-
-        # Other buttons
+        # QT UI objects
+        self._widget.sysInitEtherBtn.clicked.connect(
+            self._handle_sysInitEtherBtn_clicked)
+        self._widget.fileBrowseBtn.clicked.connect(
+            self._handle_fileBrowseBtn_clicked)
+        self._widget.filePreviousBtn.clicked.connect(
+            self._handle_filePreviousBtn_clicked)
+        self._widget.fileNextBtn.clicked.connect(
+            self._handle_fileNextBtn_clicked)
+        self._widget.fileDirEdit.setText(in_current_folder('.'))
         self._widget.plotClearBtn.clicked.connect(
             self._handle_plotClearBtn_clicked)
         self._widget.plotSaveBtn.clicked.connect(
@@ -455,18 +455,19 @@ class Interface(Plugin):
         self.timer = QTimer()
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
-
-        # Send initialization message
-        rospy_log_info(Fore.GREEN, "INITIALIZE")
-        reg_arr = make_reg_msg(MsgTypeID.INITIALIZE, 0)
-        maze_ard0_pub.publish(*reg_arr)
         
 
     def updateScene(self):
         self.scene.update()
         self._widget.mazeView.update()
 
-    def _handle_pathBrowseBtn_clicked(self):
+    def _handle_sysInitEtherBtn_clicked(self):
+        # Send initialization message to arduino
+        rospy_log_info(Fore.GREEN, "INITIALIZE")
+        reg_arr = make_reg_msg(MsgTypeID.INITIALIZE, 0)
+        maze_ard0_pub.publish(*reg_arr)
+
+    def _handle_fileBrowseBtn_clicked(self):
         # Change this to the file type you want to allow
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
@@ -474,32 +475,32 @@ class Interface(Plugin):
 
         if files:
             # Clear the list widget to remove any previous selections
-            self._widget.pathListWidget.clear()
+            self._widget.fileListWidget.clear()
 
             # Extract the file names from the full paths and store them in self.files
             self.files = [os.path.basename(file) for file in files]
 
             # Add the selected file names to the list widget
-            self._widget.pathListWidget.addItems(self.files)
+            self._widget.fileListWidget.addItems(self.files)
 
             # Enable the "Next" and "Previous" buttons if there is more than one file
             if len(self.files) > 1:
-                self._widget.pathNextBtn.setEnabled(True)
-                self._widget.pathPreviousBtn.setEnabled(True)
+                self._widget.fileNextBtn.setEnabled(True)
+                self._widget.filePreviousBtn.setEnabled(True)
             else:
-                self._widget.pathNextBtn.setEnabled(False)
-                self._widget.pathPreviousBtn.setEnabled(False)
+                self._widget.fileNextBtn.setEnabled(False)
+                self._widget.filePreviousBtn.setEnabled(False)
 
             # Save the list of selected files as an attribute of the class
             self.current_file_index = 0
 
             # Connect the "Next" and "Previous" buttons to their respective callback functions
-            self._widget.pathPreviousBtn.clicked.connect(
-                self._handle_pathPreviousBtn_clicked)
-            self._widget.pathNextBtn.clicked.connect(
-                self._handle_pathNextBtn_clicked)
+            self._widget.filePreviousBtn.clicked.connect(
+                self._handle_filePreviousBtn_clicked)
+            self._widget.fileNextBtn.clicked.connect(
+                self._handle_fileNextBtn_clicked)
             
-    def _handle_pathNextBtn_clicked(self):
+    def _handle_fileNextBtn_clicked(self):
         # Decrement the current file index
         self.current_file_index -= 1
 
@@ -508,9 +509,9 @@ class Interface(Plugin):
             self.current_file_index = len(self.files) - 1
 
         # Set the current file in the list widget
-        self._widget.pathListWidget.setCurrentRow(self.current_file_index)
+        self._widget.fileListWidget.setCurrentRow(self.current_file_index)
     
-    def _handle_pathPreviousBtn_clicked(self):
+    def _handle_filePreviousBtn_clicked(self):
         # Increment the current file index
         self.current_file_index += 1
 
@@ -519,7 +520,7 @@ class Interface(Plugin):
             self.current_file_index = 0
 
         # Set the current file in the list widget
-        self._widget.pathListWidget.setCurrentRow(self.current_file_index)
+        self._widget.fileListWidget.setCurrentRow(self.current_file_index)
 
     def _handle_plotClearBtn_clicked(self):
         self.maze.reset_walls()

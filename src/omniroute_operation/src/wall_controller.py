@@ -100,8 +100,8 @@ class WallController:
         #     [5, [1, 5]]
         # ]
         self.cw_config_list = [
-            [0, [3]],
-            [1, [1, 3]]
+            [0, [1]],
+            [1, [3]]
         ]
 
         # State machine variables
