@@ -399,6 +399,7 @@ uint8_t Wall_Operation::checkEthercatComms()
 {
 	int msg_num_id_new;
 	uint8_t msg_arg_lng;
+	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
 	int buff_read[8];
 	uint8_t read_i = 0;
 	uint32_t ts_read = millis() + 500;
@@ -442,58 +443,23 @@ uint8_t Wall_Operation::checkEthercatComms()
 	py2ardMsgTypeID = static_cast<Wall_Operation::Py2ArdMsgTypeID>(msg_type_id);
 	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_id_new);
 
-	// Check for and handle initialzation message first
-	if (!isEthercatInitialized)
-	{
-		if (msg_num_id_new == 1 && py2ardMsgTypeID == Py2ArdMsgTypeID::INITIALIZE_COMMS)
-		{
-			_DB.printMsgTime("Ethercat message initialized");
-			isEthercatInitialized = true;
-			etherMsgNumID = 1;
-		}
-
-		// Bail early
-		return 0;
-	}
-
-	// Parse message
+	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
 	{
-		uint8_t cham_i = -1;
+		// Compute 16 bit to 8 bit conversion stuff
 		bool is_even = msg_arg_lng % 2 == 0;
-		uint8_t buff_n = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1;
+		uint8_t msg_arg_lng_round = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1; // round message length up
 
-		for (size_t buff_i = 0; buff_i < buff_n; buff_i++)
+		// Loop through buffer
+		uint8_t byte_i = 0;
+		for (size_t buff_i = 0; buff_i < msg_arg_lng_round; buff_i++)
 		{
 			// Get next entry
 			U.i16[0] = buff_read[read_i++];
 
-			// Store values
-			uint8_t byte_n = is_even || buff_i < buff_n - 1 ? 2 : 1;
-
-			// Handle wall move
-			if (msg_type_id == Py2ArdMsgTypeID::MOVE_WALLS) // check for move walls message
-			{
-				for (size_t byte_i = 0; byte_i < byte_n; byte_i++)
-				{
-					uint8_t wall_b = U.b[byte_i];
-					cham_i++;
-
-					uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-					uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
-
-					// Update move flag
-					C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
-
-					_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
-					_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
-					_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
-
-					// TEMP
-					_DB.printMsgTime("\t\twall_b=%s", _DB.bitIndStr(wall_b));
-					_DB.printMsgTime("\t\tC[cham_i].bitWallPosition=%s", _DB.bitIndStr(C[cham_i].bitWallPosition));
-				}
-			}
+			// Loop through bytes in 16 bit entry and store
+			for (size_t b_ii = 0; b_ii < 2; b_ii++)
+				msg_arg_data[byte_i++] = U.b[b_ii];
 		}
 	}
 
@@ -502,10 +468,54 @@ uint8_t Wall_Operation::checkEthercatComms()
 	if (U.b[0] != 254 && U.b[1] != 254)
 	{
 		_DB.printMsgTime("!!Missing message footer!!");
-		return 3;
+		runErrorTypeEnum = RunErrorType::MISSING_FOOTER;
+		return 1;
 	}
 
-	// Update message id last
+	// Handle different messages
+	switch (py2ardMsgTypeID)
+	{
+
+	// 	INITIALIZE_COMMS
+	case Py2ArdMsgTypeID::INITIALIZE_COMMS:
+		if (!isEthercatInitialized)
+		{
+			_DB.printMsgTime("Ethercat comms initialized");
+			isEthercatInitialized = true;
+		}
+
+		break;
+
+	// 	MOVE_WALLS
+	case Py2ArdMsgTypeID::MOVE_WALLS:
+
+		// Loop through arguments
+		for (size_t cham_i = 0; cham_i < msg_arg_lng; cham_i++)
+		{
+			uint8_t wall_b = msg_arg_data[cham_i];
+
+			uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
+			uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
+
+			// Update move flag
+			C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
+
+			_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
+			_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
+			_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
+
+			// TEMP
+			_DB.printMsgTime("\t\twall_b=%s", _DB.bitIndStr(wall_b));
+			_DB.printMsgTime("\t\tC[cham_i].bitWallPosition=%s", _DB.bitIndStr(C[cham_i].bitWallPosition));
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	// Update message id
 	etherMsgNumID = msg_num_id_new < 65535 ? msg_num_id_new : 0;
 
 	// Return new message flag

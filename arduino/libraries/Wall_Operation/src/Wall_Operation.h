@@ -111,8 +111,8 @@ public:
 	enum RunErrorType
 	{
 		ERROR_NONE = 0,
-		MESSAGE_ID_DISORDERED = 2,
-		MISSING_FOOTER = 3
+		MESSAGE_ID_DISORDERED = 1,
+		MISSING_FOOTER = 2
 	};
 	RunErrorType runErrorTypeEnum = RunErrorType::ERROR_NONE;
 
