@@ -74,13 +74,18 @@ def rospy_log_info(color, message, *args):
     rospy.loginfo(formatted_message)
 
 # FUNCTION: Get directory path to a given file in the path config directory
-def get_path_config_dir(file_name: str):
+def get_path_config_dir(file_name=None):
     # Get the absolute path of the current script file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Create the path to the "config" directory four levels up
-    return os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
-    # return os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
+    dir_path =  os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
+    # Return file or dir path
+    if file_name is not None:
+        return os.path.join(dir_path, file_name)
+    else:
+        return dir_path
 
+# FUNCTION: Cetner plotted text 
 def center_text(text_item, center_x, center_y):
     # Set the text item's position relative to its bounding rectangle
     text_item.setTextWidth(0)  # Allow the text item to resize its width automatically
@@ -177,7 +182,7 @@ class Union:
         self.b[0] = packed_value[0]
         self.b[1] = packed_value[1]
 
-# CLASS: The shared ConfigHolder class to store the wall_config_list
+# CLASS: The shared ConfigHolder class to store the wall configuration 
 class ConfigHolder:
     def __init__(self):
         self.wall_config_list = []
@@ -206,7 +211,7 @@ class ConfigHolder:
             wall_byte_config_list.append([chamber_num, byte_value])
         return wall_byte_config_list
     
-    def set_byte_list(self, wall_byte_config_list):
+    def convert_byte_list(self, wall_byte_config_list):
         # Clear the existing wall_config_list
         self.wall_config_list = []
 
@@ -316,7 +321,7 @@ class Chamber(QGraphicsItemGroup):
         self.label.setFont(QFont("Arial", font_size, QFont.Bold))
         self.addToGroup(self.label)
 
-        # Call the center_text method to center the text over the chamber's center
+        # Center the text over the chamber's center
         center_text(self.label, center_x, center_y)
 
         wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
@@ -366,10 +371,18 @@ class Maze:
                     Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
                 k = k+1
 
-    def reset_walls(self):
+    def update_walls(self):
+        cw_list = CW_LIST.wall_config_list 
+
         for chamber in self.chambers:
             for wall in chamber.walls:
-                wall.setState(False)
+                # Check if there is an entry for the current chamber and wall in CW_LIST
+                chamber_num = chamber.chamber_num
+                wall_num = wall.wall_num
+                entry_found = any(chamber_num == entry[0] and wall_num in entry[1] for entry in cw_list)
+
+                # Set the wall state based on whether the entry is found or not
+                wall.setState(entry_found)
 
 # CLASS: Interface
 class Interface(Plugin):
@@ -392,12 +405,6 @@ class Interface(Plugin):
         if not args.quiet:
             print('arguments: ', args)
             print('unknowns: ', unknowns)
-
-        # Load maze config
-        # maze_config = loadmat(get_path_config_dir('maze_config.mat'))['involved_cd']
-        # separating first (indicates number of polygons) and second column (indicates up and down walls).
-        # self.cell_number = [c[0] for c in maze_config]
-        # self.wall_binary_code = [bin(c[1])[2:].zfill(8)[::-1] for c in maze_config]
 
         # Create QWidget
         self._widget = QWidget()
@@ -437,16 +444,18 @@ class Interface(Plugin):
         self._widget.mazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
 
-        # QT UI objects
+        # QT UI object setup
         self._widget.sysInitEtherBtn.clicked.connect(
             self._handle_sysInitEtherBtn_clicked)
+        self._widget.fileListWidget.itemClicked.connect(
+            self._handle_fileListWidget_clicked)
         self._widget.fileBrowseBtn.clicked.connect(
             self._handle_fileBrowseBtn_clicked)
         self._widget.filePreviousBtn.clicked.connect(
             self._handle_filePreviousBtn_clicked)
         self._widget.fileNextBtn.clicked.connect(
             self._handle_fileNextBtn_clicked)
-        self._widget.fileDirEdit.setText(get_path_config_dir('.'))
+        self._widget.fileDirEdit.setText(get_path_config_dir())
         self._widget.plotClearBtn.clicked.connect(
             self._handle_plotClearBtn_clicked)
         self._widget.plotSaveBtn.clicked.connect(
@@ -478,14 +487,58 @@ class Interface(Plugin):
             for w in c.walls:
                 self.scene.addItem(w)
 
+        # Initialize file index to zero
+        self.current_file_index = 0
+        
         # Start timer
         self.timer = QTimer()
-        self.timer.timeout.connect(self.updateScene)
+        self.timer.timeout.connect(self.auto_update_graphics)
         self.timer.start(20)
         
-    def updateScene(self):
+    def auto_update_graphics(self):
         self.scene.update()
         self._widget.mazeView.update()
+
+    def save_data_to_csv(self, file_name, data):
+        try:
+            with open(file_name, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                for row in data:
+                    csv_writer.writerow(row)
+            print("Data saved to:", file_name)
+        except Exception as e:
+            print("Error saving data to CSV:", str(e))
+
+    def load_csv_data(self, list_increment):
+        # Update the current file index
+        self.current_file_index += list_increment
+
+        # Loop back to the end or start if start or end reached, respectively
+        if list_increment < 0 and self.current_file_index < 0:
+            self.current_file_index = len(self.files) - 1 # set to end
+        elif list_increment > 0 and self.current_file_index >= len(self.files):
+            self.current_file_index = 0 # set to start
+
+        # Set the current file in the list widget
+        self._widget.fileListWidget.setCurrentRow(self.current_file_index)
+
+        # Get the currently selected file path
+        file_name = self.files[self.current_file_index]
+        folder_path = get_path_config_dir()
+        file_path = os.path.join(folder_path, file_name)
+
+        # Load and store CSV data
+        try:
+            with open(file_path, 'r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                wall_byte_config_list = [[int(row[0]), int(row[1])] for row in csv_reader]
+                CW_LIST.convert_byte_list(wall_byte_config_list)
+                print("Data loaded successfully.")
+        except Exception as e:
+            print("Error loading data from CSV:", str(e))
+
+        # Update plot walls
+        self.maze.update_walls()
 
     def _handle_sysInitEtherBtn_clicked(self):
         # Send initialization message to arduino
@@ -494,10 +547,10 @@ class Interface(Plugin):
         maze_ard0_pub.publish(*reg_arr)
 
     def _handle_fileBrowseBtn_clicked(self):
-        # Change this to the file type you want to allow
+        # Filter only CSV files
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
-            None, "Select files to add", get_path_config_dir('.'), filter)
+            None, "Select files to add", get_path_config_dir(), filter)
 
         if files:
             # Clear the list widget to remove any previous selections
@@ -517,47 +570,31 @@ class Interface(Plugin):
                 self._widget.fileNextBtn.setEnabled(False)
                 self._widget.filePreviousBtn.setEnabled(False)
 
-            # Save the list of selected files as an attribute of the class
-            self.current_file_index = 0
+            # Update file index and load csv
+            self.load_csv_data(0)
 
-            # Set the current file in the list widget
-            self._widget.fileListWidget.setCurrentRow(self.current_file_index)
-
-            # Connect the "Next" and "Previous" buttons to their respective callback functions
-            self._widget.filePreviousBtn.clicked.connect(
-                self._handle_filePreviousBtn_clicked)
-            self._widget.fileNextBtn.clicked.connect(
-                self._handle_fileNextBtn_clicked)
+    def _handle_fileListWidget_clicked(self, item):
+        # Get the index of the clicked item and set it as the current file index
+        self.current_file_index = self._widget.fileListWidget.currentRow()
+        
+        # Update file index and load csv
+        self.load_csv_data(0)
             
     def _handle_fileNextBtn_clicked(self):
-        # Decrement the current file index
-        self.current_file_index -= 1
-
-        # If we've reached the beginning of the list, loop back to the end
-        if self.current_file_index < 0:
-            self.current_file_index = len(self.files) - 1
-
-        # Set the current file in the list widget
-        self._widget.fileListWidget.setCurrentRow(self.current_file_index)
+        # Update file index and load csv
+        self.load_csv_data(1)
     
     def _handle_filePreviousBtn_clicked(self):
-        # Increment the current file index
-        self.current_file_index += 1
-
-        # If we've reached the end of the list, loop back to the beginning
-        if self.current_file_index >= len(self.files):
-            self.current_file_index = 0
-
-        # Set the current file in the list widget
-        self._widget.fileListWidget.setCurrentRow(self.current_file_index)
+        # Update file index and load csv
+        self.load_csv_data(-1)
 
     def _handle_plotClearBtn_clicked(self):
-        self.maze.reset_walls()
-        CW_LIST.reset()
+        CW_LIST.reset() # reset all values in list
+        self.maze.update_walls() # update walls
 
     def _handle_plotSaveBtn_clicked(self):
-        # Open the folder specified by get_path_config_dir('.') in an explorer window
-        folder_path = get_path_config_dir('.')
+        # Open the folder specified by get_path_config_dir() in an explorer window
+        folder_path = get_path_config_dir()
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(
@@ -573,16 +610,6 @@ class Interface(Plugin):
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
             self.save_data_to_csv(file_name, CW_LIST.get_byte_list())
-
-    def save_data_to_csv(self, file_name, data):
-        try:
-            with open(file_name, 'w', newline='') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                for row in data:
-                    csv_writer.writerow(row)
-            print("Data saved to:", file_name)
-        except Exception as e:
-            print("Error saving data to CSV:", str(e))
 
     def _handle_plotSendBtn_clicked(self):
         # Sort entries
