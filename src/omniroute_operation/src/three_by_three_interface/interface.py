@@ -58,11 +58,11 @@ WALL_MAP = {
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
-# Enum for message type ID
-class MsgTypeID(Enum):
-    INITIALIZE = 128
-    MOVE_WALLS_UP = 1
-    MOVE_WALLS_DOWN = 2
+# Enum for ethercat python to arduino message type ID
+class Py2ArdMsgTypeID(Enum):
+    INITIALIZE_COMMS = 128
+    MOVE_WALLS = 1
+    RESET_SYSTEM = 2
 
 # Initialize colorama
 Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
@@ -133,7 +133,7 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
     U_arr[u_ind_r].b[1] = msg_lng
 
     # Update walls to move up
-    if (msg_type_id == MsgTypeID.MOVE_WALLS_UP or msg_type_id == MsgTypeID.MOVE_WALLS_DOWN) and cw_list is not None:
+    if (msg_type_id == Py2ArdMsgTypeID.MOVE_WALLS) and cw_list is not None:
         # Update U_arr with corresponding chamber and wall byte
         for cw in cw_list:
             chamber = cw[0]
@@ -542,8 +542,8 @@ class Interface(Plugin):
 
     def _handle_sysInitEtherBtn_clicked(self):
         # Send initialization message to arduino
-        rospy_log_info(Fore.GREEN, "INITIALIZE")
-        reg_arr = make_reg_msg(MsgTypeID.INITIALIZE, 0)
+        rospy_log_info(Fore.GREEN, "COMS INITIALIZED")
+        reg_arr = make_reg_msg(Py2ArdMsgTypeID.INITIALIZE_COMMS, 0)
         maze_ard0_pub.publish(*reg_arr)
 
     def _handle_fileBrowseBtn_clicked(self):
@@ -615,5 +615,5 @@ class Interface(Plugin):
         # Sort entries
         CW_LIST.sort_entries()
         print(CW_LIST)
-        reg_arr = make_reg_msg(MsgTypeID.MOVE_WALLS_UP, 9, CW_LIST.get_byte_list())
+        reg_arr = make_reg_msg(Py2ArdMsgTypeID.MOVE_WALLS, 9, CW_LIST.get_byte_list())
         maze_ard0_pub.publish(*reg_arr)  # Publish list to topic

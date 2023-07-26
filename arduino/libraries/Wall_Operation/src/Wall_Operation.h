@@ -73,15 +73,15 @@ public:
 	PinMapStruct pmsDownPWM;  ///< pwm down pins
 	struct ChamberTrackStruct ///< struct for tracking each chamber
 	{
-		uint8_t num = 0;			  ///< chamber number
-		uint8_t addr = 0;			  ///< chamber I2C address
-		uint8_t bitWallMoveFlag = 0;  ///< bitwise variable, current wall active flag [0:inactive, 1:active]
-		uint8_t bitWallPosition = 0;  ///< bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallErrorFlag = 0; ///< bitwise variable, flag move errors for a given wall
-		uint8_t bitWallUpdateFlag = 0;///< bitwise variable, flag that wall position should be updated
-		uint8_t bitOutRegLast[6];	  ///< stores output registry values
-		PinMapStruct pmsDynPWM;		  ///< reusable dynamic instance for active PWM
-		PinMapStruct pmsDynIO;		  ///< reusable dynamic instance for active IO
+		uint8_t num = 0;			   ///< chamber number
+		uint8_t addr = 0;			   ///< chamber I2C address
+		uint8_t bitWallMoveFlag = 0;   ///< bitwise variable, current wall active flag [0:inactive, 1:active]
+		uint8_t bitWallPosition = 0;   ///< bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallErrorFlag = 0;  ///< bitwise variable, flag move errors for a given wall
+		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be updated
+		uint8_t bitOutRegLast[6];	   ///< stores output registry values
+		PinMapStruct pmsDynPWM;		   ///< reusable dynamic instance for active PWM
+		PinMapStruct pmsDynIO;		   ///< reusable dynamic instance for active IO
 	};
 	ChamberTrackStruct C[9]; ///< initialize with max number of chambers for 3x3
 	union Union
@@ -91,7 +91,30 @@ public:
 	};
 	Union U;
 	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
-	uint8_t isMazeReset = false; ///< flag to track if maze system has been reset
+	uint8_t isMazeReset = false;		   ///< flag to track if maze system has been reset
+	int etherMsgNumID = 0;				   ///< tracks the message ethercat message number
+	enum Py2ArdMsgTypeID
+	{
+		PY2ARD_NONE = 0,
+		INITIALIZE_COMMS = 128,
+		MOVE_WALLS = 1,
+		RESET_SYSTEM = 2,
+		ERROR = 254,
+		JUNK = 255
+	};
+	Py2ArdMsgTypeID py2ardMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
+	enum Ard2PyMsgTypeID
+	{
+		ARD2PY_NONE = 0
+	};
+	Ard2PyMsgTypeID ard2PyMsgTypeID = Ard2PyMsgTypeID::ARD2PY_NONE;
+	enum RunErrorType
+	{
+		ERROR_NONE = 0,
+		MESSAGE_ID_DISORDERED = 2,
+		MISSING_FOOTER = 3
+	};
+	RunErrorType runErrorTypeEnum = RunErrorType::ERROR_NONE;
 
 private:
 	Maze_Debug _DB;		  ///< local instance of Maze_Debug class
@@ -139,7 +162,7 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	uint8_t getWallCmdEthercat();
+	uint8_t checkEthercatComms();
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);

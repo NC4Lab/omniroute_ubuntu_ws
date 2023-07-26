@@ -46,7 +46,6 @@ void setup()
 	delay(100);
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
-	DB.printMsgTime("SETUP START");
 
 	// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
@@ -73,9 +72,6 @@ void setup()
 	// uint8_t a_wall[2] = { 1, 3 };
 	// W_OPR.testWallOperation(0, a_wall, 2);
 	// while (true);//TEMP
-
-	// Print done
-	DB.printMsgTime("SETUP DONE");
 }
 
 //=============== LOOP ==================
@@ -84,6 +80,8 @@ void loop()
 	// Check if cypress is setup
 	if (!W_OPR.isMazeReset)
 	{
+		DB.printMsgTime("SETUP/RESET START");
+
 		// Reset wall flags
 		W_OPR.resetWallFlags();
 
@@ -110,16 +108,18 @@ void loop()
 
 		// Set flag
 		W_OPR.isMazeReset = true;
+
+		DB.printMsgTime("SETUP/RESET DONE");
 	}
 
 	// Check ethercat coms
-	resp = W_OPR.getWallCmdEthercat();
+	resp = W_OPR.checkEthercatComms();
 
 	// Wait for initialization message
 	if (!W_OPR.isEthercatInitialized)
 		return;
 
 	// Check for new wall move command
-	if (resp == 1)
+	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::MOVE_WALLS)
 		W_OPR.runWalls(); // move walls
 }

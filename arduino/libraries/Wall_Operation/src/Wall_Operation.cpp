@@ -394,13 +394,11 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// <summary>
 /// Used to get incoming ROS ethercat msg data signalling which walls to raise.
 /// </summary>
-/// <returns>Success/error codes [0:no message, 1:new wall message, 2-3:error]</returns>
-uint8_t Wall_Operation::getWallCmdEthercat()
+/// <returns>Success/error codes [0:no error, 1:error]</returns>
+uint8_t Wall_Operation::checkEthercatComms()
 {
-	static uint8_t msg_num_id_last = 0;
-	uint8_t msg_num_id_new;
-	uint8_t msg_type_id;
-	uint8_t arg_lng;
+	int msg_num_id_new;
+	uint8_t msg_arg_lng;
 	int buff_read[8];
 	uint8_t read_i = 0;
 	uint32_t ts_read = millis() + 500;
@@ -411,43 +409,59 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	// Check first register entry for msg id
 	msg_num_id_new = buff_read[read_i++];
 	U.i16[0] = buff_read[read_i++];
-	msg_type_id = U.b[0];
-	arg_lng = U.b[1];
+	uint8_t msg_type_id = U.b[0];
+	msg_arg_lng = U.b[1];
 
-	// Check for initialzing msg_type_id = 0
-	if (!isEthercatInitialized)
+	// Skip ethercat setup junk (255)
+	if (msg_num_id_new == Py2ArdMsgTypeID::JUNK || msg_type_id == Py2ArdMsgTypeID::JUNK)
+		return 0;
+
+	// skip redundant messages and reset message type to NONE
+	if (msg_num_id_new == etherMsgNumID)
 	{
-		if (msg_num_id_new == 1 && msg_type_id == 128)
+		py2ardMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
+		return 0;
+	}
+
+	// Check for skipped or out of sequence messages
+	if (msg_num_id_new - etherMsgNumID != 1)
+	{
+		if (isEthercatInitialized)
 		{
-			_DB.printMsgTime("Ethercat message initialized");
-			isEthercatInitialized = 1;
-			msg_num_id_last = 1;
+			if (runErrorTypeEnum != RunErrorType::MESSAGE_ID_DISORDERED) // only run once
+			{
+				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", etherMsgNumID, msg_num_id_new);
+				etherMsgNumID = msg_num_id_new; // set id last to new value (need better error handeling here)
+				runErrorTypeEnum = RunErrorType::MESSAGE_ID_DISORDERED;
+			}
 		}
-		return 0;
+		return 1;
 	}
 
-	// Check for new message
-	if (msg_num_id_new == 255 && msg_type_id == 255) // skip ethercat setup garbage
-		return 0;
-	else if (msg_num_id_new == msg_num_id_last) // skip redundant messages
-		return 0;
-	else if (msg_num_id_new - msg_num_id_last != 1) // check for skipped or out of sequence messages
-	{
-		_DB.printMsgTime("!!ethercat message id missmatch: last=%d new = %d!!", msg_num_id_last, msg_num_id_new);
-		msg_num_id_last = msg_num_id_new; // set id last to new value (need better error handeling here)
-		return 2;
-	}
+	// Update dynamic enum instance
+	py2ardMsgTypeID = static_cast<Wall_Operation::Py2ArdMsgTypeID>(msg_type_id);
 	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_id_new);
 
-	// Update message id last
-	msg_num_id_last = msg_num_id_new < 65535 ? msg_num_id_new : 0;
+	// Check for and handle initialzation message first
+	if (!isEthercatInitialized)
+	{
+		if (msg_num_id_new == 1 && py2ardMsgTypeID == Py2ArdMsgTypeID::INITIALIZE_COMMS)
+		{
+			_DB.printMsgTime("Ethercat message initialized");
+			isEthercatInitialized = true;
+			etherMsgNumID = 1;
+		}
+
+		// Bail early
+		return 0;
+	}
 
 	// Parse message
-	if (arg_lng > 0)
+	if (msg_arg_lng > 0)
 	{
 		uint8_t cham_i = -1;
-		bool is_even = arg_lng % 2 == 0;
-		uint8_t buff_n = is_even ? arg_lng / 2 : arg_lng / 2 + 1;
+		bool is_even = msg_arg_lng % 2 == 0;
+		uint8_t buff_n = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1;
 
 		for (size_t buff_i = 0; buff_i < buff_n; buff_i++)
 		{
@@ -458,7 +472,7 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 			uint8_t byte_n = is_even || buff_i < buff_n - 1 ? 2 : 1;
 
 			// Handle wall move
-			if (msg_type_id == 1) // check for move walls message
+			if (msg_type_id == Py2ArdMsgTypeID::MOVE_WALLS) // check for move walls message
 			{
 				for (size_t byte_i = 0; byte_i < byte_n; byte_i++)
 				{
@@ -487,12 +501,15 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	U.i16[0] = buff_read[read_i++];
 	if (U.b[0] != 254 && U.b[1] != 254)
 	{
-		_DB.printMsgTime("!!missing message footer!!");
+		_DB.printMsgTime("!!Missing message footer!!");
 		return 3;
 	}
 
+	// Update message id last
+	etherMsgNumID = msg_num_id_new < 65535 ? msg_num_id_new : 0;
+
 	// Return new message flag
-	return msg_type_id == 1 ? 1 : 0;
+	return 0;
 }
 
 /// <summary>
