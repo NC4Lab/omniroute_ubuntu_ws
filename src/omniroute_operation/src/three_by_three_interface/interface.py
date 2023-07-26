@@ -17,6 +17,7 @@ import math
 from colorama import Fore, Style
 import ctypes
 from enum import Enum
+import csv
 
 from std_msgs.msg import *
 from omniroute_operation.msg import *
@@ -66,13 +67,14 @@ class MsgTypeID(Enum):
 # Initialize colorama
 Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
 
-# Log to ROS in color
+# FUNCTION: Log to ROS in color
 def rospy_log_info(color, message, *args):
     colored_message = f"{color}{message}{Style.RESET_ALL}"
     formatted_message = colored_message % args
     rospy.loginfo(formatted_message)
 
-def in_current_folder(file_name: str):
+# FUNCTION: Get directory path to a given file in the path config directory
+def get_path_config_dir(file_name: str):
     # Get the absolute path of the current script file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Create the path to the "config" directory four levels up
@@ -92,7 +94,7 @@ def center_text(text_item, center_x, center_y):
     y_pos = center_y - text_rect.height() / 2
     text_item.setPos(x_pos, y_pos)
 
-# Create a byte with bits set to 1 based on wall_up_arr
+# FUNCTION: Create a byte with bits set to 1 based on wall_up_arr
 def set_wall_byte(wall_arr):
     byte_value = 0  # Initialize the byte value
 
@@ -104,8 +106,9 @@ def set_wall_byte(wall_arr):
 
     return byte_value
 
-# Make msg for Ethercat registry
+# FUNCTION: Make msg for Ethercat registry
 def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
+
     # Initialize the function attribute if not already present
     if not hasattr(make_reg_msg, "msg_num_id"):
         make_reg_msg.msg_num_id = 0
@@ -130,7 +133,7 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
         for cw in cw_list:
             chamber = cw[0]
             u_ind_r = 2 + (chamber // 2)
-            wall_byte = set_wall_byte(cw[1])
+            wall_byte = cw[1]
             u_ind_c = 0 if chamber % 2 == 0 else 1
             U_arr[u_ind_r].b[u_ind_c] = wall_byte
             #rospy_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
@@ -159,7 +162,7 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
 
     return reg_arr
 
-# Union class using ctype union for storing ethercat data shareable accross data types
+# CLASS: Union class using ctype union for storing ethercat data shareable accross data types
 class Union:
     def __init__(self):
         self.b = bytearray([0, 0])  # 2 bytes initialized with zeros
@@ -174,7 +177,7 @@ class Union:
         self.b[0] = packed_value[0]
         self.b[1] = packed_value[1]
 
-# The shared ConfigHolder class to store the wall_config_list
+# CLASS: The shared ConfigHolder class to store the wall_config_list
 class ConfigHolder:
     def __init__(self):
         self.wall_config_list = []
@@ -193,6 +196,29 @@ class ConfigHolder:
                 if not item[1]:  # If the second column is empty, remove the entire row
                     self.wall_config_list.remove(item)
                 return
+
+    def get_byte_list(self):
+        wall_byte_config_list = []
+        for row in self.wall_config_list:
+            chamber_num = row[0]
+            wall_numbers = row[1]
+            byte_value = set_wall_byte(wall_numbers)
+            wall_byte_config_list.append([chamber_num, byte_value])
+        return wall_byte_config_list
+    
+    def set_byte_list(self, wall_byte_config_list):
+        # Clear the existing wall_config_list
+        self.wall_config_list = []
+
+        # Convert the byte values to arrays and update the wall_config_list
+        for row in wall_byte_config_list:
+            chamber_num = row[0]
+            byte_value = row[1]
+
+            # Convert the byte_value back to an array of wall numbers
+            wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
+
+            self.wall_config_list.append([chamber_num, wall_numbers])
 
     def sort_entries(self):
         # Sort the rows by the entries in the based on the first chamber number
@@ -218,6 +244,7 @@ class ConfigHolder:
 # Create a shared instance of ConfigHolder
 CW_LIST = ConfigHolder()
 
+# CLASS: Wall
 class Wall(QGraphicsItemGroup):
     def __init__(self, p0=(0, 0), p1=(1, 1), wall_width=-1, chamber_num=-1, wall_num=-1, state=False, label_pos=None, parent=None):
         super().__init__(parent)
@@ -267,6 +294,7 @@ class Wall(QGraphicsItemGroup):
 
         self.state = state
 
+# CLASS: Chamber
 class Chamber(QGraphicsItemGroup):
     def __init__(self, center_x, center_y, chamber_width, chamber_num, wall_width, parent=None):
         super().__init__(parent)
@@ -316,8 +344,7 @@ class Chamber(QGraphicsItemGroup):
         if event.button() == Qt.LeftButton:
             rospy.loginfo("Chamber %d clicked!" % self.chamber_num)
 
-
-
+# CLASS: Maze
 class Maze:
     def __init__(self, num_rows, num_cols, chamber_width, wall_width):
 
@@ -344,7 +371,7 @@ class Maze:
             for wall in chamber.walls:
                 wall.setState(False)
 
-
+# CLASS: Interface
 class Interface(Plugin):
     def __init__(self, context):
         super(Interface, self).__init__(context)
@@ -367,7 +394,7 @@ class Interface(Plugin):
             print('unknowns: ', unknowns)
 
         # Load maze config
-        # maze_config = loadmat(in_current_folder('maze_config.mat'))['involved_cd']
+        # maze_config = loadmat(get_path_config_dir('maze_config.mat'))['involved_cd']
         # separating first (indicates number of polygons) and second column (indicates up and down walls).
         # self.cell_number = [c[0] for c in maze_config]
         # self.wall_binary_code = [bin(c[1])[2:].zfill(8)[::-1] for c in maze_config]
@@ -419,7 +446,7 @@ class Interface(Plugin):
             self._handle_filePreviousBtn_clicked)
         self._widget.fileNextBtn.clicked.connect(
             self._handle_fileNextBtn_clicked)
-        self._widget.fileDirEdit.setText(in_current_folder('.'))
+        self._widget.fileDirEdit.setText(get_path_config_dir('.'))
         self._widget.plotClearBtn.clicked.connect(
             self._handle_plotClearBtn_clicked)
         self._widget.plotSaveBtn.clicked.connect(
@@ -456,7 +483,6 @@ class Interface(Plugin):
         self.timer.timeout.connect(self.updateScene)
         self.timer.start(20)
         
-
     def updateScene(self):
         self.scene.update()
         self._widget.mazeView.update()
@@ -471,7 +497,7 @@ class Interface(Plugin):
         # Change this to the file type you want to allow
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
-            None, "Select files to add", in_current_folder('.'), filter)
+            None, "Select files to add", get_path_config_dir('.'), filter)
 
         if files:
             # Clear the list widget to remove any previous selections
@@ -493,6 +519,9 @@ class Interface(Plugin):
 
             # Save the list of selected files as an attribute of the class
             self.current_file_index = 0
+
+            # Set the current file in the list widget
+            self._widget.fileListWidget.setCurrentRow(self.current_file_index)
 
             # Connect the "Next" and "Previous" buttons to their respective callback functions
             self._widget.filePreviousBtn.clicked.connect(
@@ -527,40 +556,37 @@ class Interface(Plugin):
         CW_LIST.reset()
 
     def _handle_plotSaveBtn_clicked(self):
-        # Open the folder specified by in_current_folder('.') in an explorer window
-        folder_path = in_current_folder('.')
+        # Open the folder specified by get_path_config_dir('.') in an explorer window
+        folder_path = get_path_config_dir('.')
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(
             None, "Save CSV File", folder_path, "CSV Files (*.csv);;All Files (*)", options=options)
 
         if file_name:
+            # Ensure the file name ends with ".csv"
+            if not file_name.endswith(".csv"):
+                file_name += ".csv"
+
             # The user has specified a file name, you can perform additional actions here
             print("Selected file:", file_name)
-            # Run the function to save data to the CSV file
-            self.save_path_csv(file_name)
 
-    def save_path_csv(self, file_name: str):
-        # Replace this with the data you want to save to the CSV file
-        # For example, let's save some dummy data as an example
-        data = [
-            ['Time', 'X', 'Y'],
-            [0, 1.0, 2.0],
-            [1, 2.0, 3.0],
-            [2, 3.0, 4.0],
-            # Add more rows of data as needed
-        ]
+            # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
+            self.save_data_to_csv(file_name, CW_LIST.get_byte_list())
 
-        # Save the data to the specified CSV file
-        with open(file_name, 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerows(data)
-
-        print("Data saved to CSV file:", file_name)
+    def save_data_to_csv(self, file_name, data):
+        try:
+            with open(file_name, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                for row in data:
+                    csv_writer.writerow(row)
+            print("Data saved to:", file_name)
+        except Exception as e:
+            print("Error saving data to CSV:", str(e))
 
     def _handle_plotSendBtn_clicked(self):
         # Sort entries
         CW_LIST.sort_entries()
         print(CW_LIST)
-        reg_arr = make_reg_msg(MsgTypeID.MOVE_WALLS_UP, 9, CW_LIST)
+        reg_arr = make_reg_msg(MsgTypeID.MOVE_WALLS_UP, 9, CW_LIST.get_byte_list())
         maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
