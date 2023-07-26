@@ -13,8 +13,6 @@
 
 //========CLASS: Wall_Operation==========
 
-// TEMP COMMIT TEST
-
 /// <summary>
 /// Constructor
 /// </summary>
@@ -49,6 +47,23 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t do_spi)
 }
 
 //++++++++++++ Setup Methods +++++++++++++
+
+/// <summary>
+/// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
+/// the wall states and errors
+/// </summary>
+void Wall_Operation::resetWallFlags()
+{
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
+	{
+		C[cham_i].bitWallMoveFlag = 0;
+		C[cham_i].bitWallPosition = 0;
+		C[cham_i].bitWallErrorFlag = 0;
+		C[cham_i].bitWallUpdateFlag = 0;
+		for (size_t i = 0; i < 6; i++)
+			C[cham_i].bitOutRegLast[i] = 0;
+	}
+}
 
 /// <summary>
 /// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information
@@ -399,9 +414,6 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 	msg_type_id = U.b[0];
 	arg_lng = U.b[1];
 
-	// TEMP
-	//Serial.println(msg_num_id_new);
-
 	// Check for initialzing msg_type_id = 0
 	if (!isEthercatInitialized)
 	{
@@ -429,16 +441,6 @@ uint8_t Wall_Operation::getWallCmdEthercat()
 
 	// Update message id last
 	msg_num_id_last = msg_num_id_new < 65535 ? msg_num_id_new : 0;
-
-	// // TEMP
-	// for (size_t i = 0; i < 8; i++)
-	// {
-	// 	int buff = buff_read[i];
-	// 	//_DB.printMsg("%d: [buff]%d", i, buff);
-	// 	U.i16[0] = buff;
-	// 	_DB.printMsg("%d: [0]%d [1]%d", i, U.b[0], U.b[1]);
-	// }
-	// _DB.printMsg(" ");
 
 	// Parse message
 	if (arg_lng > 0)

@@ -91,6 +91,7 @@ public:
 	};
 	Union U;
 	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
+	uint8_t isMazeReset = false; ///< flag to track if maze system has been reset
 
 private:
 	Maze_Debug _DB;		  ///< local instance of Maze_Debug class
@@ -98,6 +99,9 @@ private:
 	Esmacatshield ESlave; //<instance of Esmacatshield class
 
 	// -----------METHODS-----------------
+public:
+	void resetWallFlags();
+
 public:
 	Wall_Operation(uint8_t, uint8_t = 1);
 
