@@ -33,7 +33,7 @@ uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 // Initialize class instances for local libraries
 Maze_Debug DB;
 Cypress_Com C_COM;
-Wall_Operation W_OPR(nCham);
+Wall_Operation W_OPR(nCham, pwmDuty);
 
 //=============== SETUP =================
 void setup()
@@ -77,49 +77,24 @@ void setup()
 //=============== LOOP ==================
 void loop()
 {
-	// Check if cypress is setup
-	if (!W_OPR.isMazeReset)
-	{
-		DB.printMsgTime("SETUP/RESET START");
-
-		// Reset wall flags
-		W_OPR.resetWallFlags();
-
-		// Setup cypress chips
-		for (size_t ch_i = 0; ch_i < W_OPR.nCham; ch_i++)
-		{
-			resp = C_COM.setupCypress(W_OPR.C[ch_i].addr);
-			if (resp != 0)
-				DB.printMsgTime("!!Failed Cypress setup: chamber=%d address=%s!!", ch_i, DB.hexStr(W_OPR.C[ch_i].addr));
-			if (resp == 0 && ch_i == W_OPR.nCham - 1)
-			{ // print success for last itteration
-				DB.printMsgTime("Finished Cypress setup: chamber=%d address=%s", ch_i, DB.hexStr(W_OPR.C[ch_i].addr));
-			}
-		}
-
-		// Setup IO pins for each chamber
-		resp = W_OPR.setupWallIO();
-
-		// Setup PWM pins for each chamber
-		resp = W_OPR.setupWallPWM(pwmDuty);
-
-		// Test and reset all walls
-		resp = W_OPR.initializeWalls();
-
-		// Set flag
-		W_OPR.isMazeReset = true;
-
-		DB.printMsgTime("SETUP/RESET DONE");
-	}
 
 	// Check ethercat coms
-	resp = W_OPR.checkEthercatComms();
+	resp = W_OPR.getProcEthercatComms();
 
 	// Wait for initialization message
 	if (!W_OPR.isEthercatInitialized)
 		return;
 
+	// Setup maze
+	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::START_SESSION)
+		W_OPR.resetMaze(false);
+
+	// Reset maze
+	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::END_SESSION)
+		W_OPR.resetMaze(true);
+
 	// Check for new wall move command
 	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::MOVE_WALLS)
-		W_OPR.runWalls(); // move walls
+		W_OPR.moveWalls(); // move walls
+
 }

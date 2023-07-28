@@ -33,7 +33,7 @@ class Union:
 
 #     @property
 #     def i16(self):
-#         return struct.unpack("<H", self.b)[0]
+#         return struct.unpack("<H", self.b)[0]path
 
 #     @i16.setter
 #     def i16(self, value):
@@ -73,8 +73,7 @@ class WallController:
     def __init__(self):
 
         # @brief Initialize the publisher for writing to '/Esmacat_write_maze_ard0_ease' topic
-        self.maze_ard0_pub = rospy.Publisher(
-            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
+        self.maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
 
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
         # rospy.Subscriber('/Esmacat_read_maze_ard0_ease', ease_registers, self.callback_get_response, queue_size=1, tcp_nodelay=True)

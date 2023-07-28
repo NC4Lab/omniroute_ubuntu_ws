@@ -31,7 +31,8 @@ class Wall_Operation
 
 	// ---------VARIABLES-----------------
 public:
-	uint8_t nCham;		 ///< number of chambers
+	uint8_t nCham;		 ///< number of chambers [1-9]
+	uint8_t pwmDuty;	 ///< pwm duty cycle [0-255]
 	struct WallMapStruct ///< pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -91,14 +92,14 @@ public:
 	};
 	Union U;
 	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
-	uint8_t isMazeReset = false;		   ///< flag to track if maze system has been reset
+	uint8_t doMazeReset = false;		   ///< flag to track if maze system has been reset
 	int etherMsgNumID = 0;				   ///< tracks the message ethercat message number
 	enum Py2ArdMsgTypeID
 	{
 		PY2ARD_NONE = 0,
-		INITIALIZE_COMMS = 128,
+		START_SESSION = 128,
+		END_SESSION = 129,
 		MOVE_WALLS = 1,
-		RESET_SYSTEM = 2,
 		ERROR = 254,
 		JUNK = 255
 	};
@@ -122,11 +123,9 @@ private:
 	Esmacatshield ESlave; //<instance of Esmacatshield class
 
 	// -----------METHODS-----------------
-public:
-	void resetWallFlags();
 
 public:
-	Wall_Operation(uint8_t, uint8_t = 1);
+	Wall_Operation(uint8_t, uint8_t, uint8_t = 1);
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);
@@ -143,18 +142,6 @@ private:
 private:
 	void _sortArr(uint8_t[], size_t s, uint8_t[] = nullptr);
 
-public:
-	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
-
-public:
-	uint8_t setupWallIO();
-
-public:
-	uint8_t setupWallPWM(uint8_t);
-
-public:
-	uint8_t initializeWalls();
-
 private:
 	void _resetPMS(PinMapStruct &);
 
@@ -162,13 +149,28 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	uint8_t checkEthercatComms();
+	void resetMaze(uint8_t);
+
+private:
+	uint8_t _setupCypressIO();
+
+private:
+	uint8_t _setupCypressPWM(uint8_t);
+
+private:
+	uint8_t _setupWalls();
+
+public:
+	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
+
+public:
+	uint8_t getProcEthercatComms();
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
 public:
-	uint8_t runWalls(uint32_t = 1000);
+	uint8_t moveWalls(uint32_t = 1000);
 
 public:
 	uint8_t forceStopWalls();

@@ -11,16 +11,17 @@
 //============= INCLUDE ================
 #include "Wall_Operation.h"
 
-//========CLASS: Wall_Operation==========
+//======== CLASS: Wall_Operation ==========
 
 /// <summary>
 /// Constructor
 /// </summary>
 /// <param name="_nCham">Spcify number of chambers to track [1-49]</param>
 /// <param name="do_spi">OPTIONAL: spcify if SPI should be strated, will interfere with LiquidCrystal library</param>
-Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t do_spi)
+Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 {
 	nCham = _nCham;									  // store number of chambers
+	pwmDuty = _pwmDuty;								  // store pwm duty cycle
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
 	{
 		C[cham_i].num = cham_i;
@@ -46,24 +47,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t do_spi)
 	}
 }
 
-//++++++++++++ Setup Methods +++++++++++++
-
-/// <summary>
-/// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
-/// the wall states and errors
-/// </summary>
-void Wall_Operation::resetWallFlags()
-{
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
-	{
-		C[cham_i].bitWallMoveFlag = 0;
-		C[cham_i].bitWallPosition = 0;
-		C[cham_i].bitWallErrorFlag = 0;
-		C[cham_i].bitWallUpdateFlag = 0;
-		for (size_t i = 0; i < 6; i++)
-			C[cham_i].bitOutRegLast[i] = 0;
-	}
-}
+//++++++++++++ Data Handeling +++++++++++++
 
 /// <summary>
 /// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information
@@ -193,144 +177,6 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 }
 
 /// <summary>
-/// Option to change the PWM duty cycle for a given wall.
-/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
-/// Could be useful if some walls are running at different speeds.
-/// </summary>
-/// <param name="cham_i">Index of the chamber to set [0-48]</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
-{
-	if (cham_i > 48 || wall_i > 7 || duty > 255)
-		return -1;
-	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
-	return resp;
-}
-
-/// /// <summary>
-/// Setup IO pins for each chamber including the pin direction (input) a
-/// and the type of drive mode (high impedance).
-/// Note, have to do some silly stuff with the output pins as well based on
-/// page 11 of the Cypress datasheet "To  allow  input  operations  without
-/// reconfiguration, these registers [output] have to store �1�s."
-/// </summary>
-/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
-uint8_t Wall_Operation::setupWallIO()
-{
-	_DB.printMsgTime("Running IO pin setup");
-	uint8_t resp = 0;
-
-	// Setup wall io pins
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-	{
-		// Set entire output register to off
-		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-		resp = _C_COM.ioWriteReg(C[cham_i].addr, p_byte_mask_in, 6, 0);
-
-		if (resp == 0)
-		{
-			for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
-			{ // loop through port list
-				// Set input pins as input
-				resp = _C_COM.setPortRegister(C[cham_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-				if (resp == 0)
-				{
-					// Set pins as pull down
-					resp = _C_COM.setPortRegister(C[cham_i].addr, DRIVE_PULLDOWN, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-					if (resp == 0)
-					{
-						// Set corrisponding output register entries to 1 as per datasheet
-						resp = _C_COM.ioWritePort(C[cham_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-						if (resp != 0)
-							return resp;
-					}
-				}
-			}
-		}
-		if (resp != 0)
-			_DB.printMsgTime("\t!!failed IO pin setup: chamber=%d", cham_i);
-	}
-	_DB.printMsgTime("Finished IO pin setup");
-	return resp;
-}
-
-/// <summary>
-/// Setup PWM pins for each chamber including the specifying them as PWM outputs
-/// and also detting the drive mode to "Strong Drive". This also sets up the PWM
-/// Source using @ref Cypress_Com::setupSourcePWM()
-/// </summary>
-/// <param name="pwm_duty">Duty cycle for the pwm [0-255]</param>
-/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
-uint8_t Wall_Operation::setupWallPWM(uint8_t pwm_duty)
-{
-	_DB.printMsgTime("Running PWM setup");
-	uint8_t resp = 0;
-
-	// Setup pwm
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-	{
-		// Setup source
-		for (size_t src_i = 0; src_i < 8; src_i++)
-		{
-			resp = _C_COM.setupSourcePWM(C[cham_i].addr, wms.pwmSrc[src_i], pwm_duty);
-			if (resp != 0)
-				_DB.printMsgTime("\t!!failed PWM source setup: source=%d", src_i);
-		}
-
-		// Setup wall pwm pins
-		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
-		{ // loop through port list
-			// Set pwm pins as pwm output
-			resp = _C_COM.setPortRegister(C[cham_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp == 0)
-			{
-				// Set pins as strong drive
-				resp = _C_COM.setPortRegister(C[cham_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			}
-		}
-		if (resp != 0)
-			_DB.printMsgTime("\t!!failed PWM pin setup: chamber=%d", cham_i);
-	}
-	_DB.printMsgTime("Finished PWM setup");
-	return resp;
-}
-
-/// <summary>
-/// Test up and down movment using @ref Wall_Operation::setWallCmdManual()
-/// and @ref Wall_Operation::runWalls()
-/// <returns>Success/error codes from @ref Wall_Operation::runWalls().</returns>
-/// </summary>
-uint8_t Wall_Operation::initializeWalls()
-{
-	_DB.printMsgTime("Running wall initialization");
-
-	// Run all walls up then down for each chamber
-	uint8_t resp = 0;
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-	{
-
-		// Run walls up
-		setWallCmdManual(cham_i, 1);
-		resp = runWalls(); // move walls up
-
-		// Run walls down
-		setWallCmdManual(cham_i, 0);
-		resp = runWalls(); // move walls down
-
-		if (resp != 0)
-			_DB.printMsgTime("\t!!failed wall initialization: chamber=%d", cham_i);
-	}
-
-	// Set resp to any non-zero flag and return
-	_DB.printMsgTime("Finished wall initialization");
-	return resp;
-}
-
-//++++++++++++ Runtime Methods +++++++++++++
-
-/// <summary>
 /// Resets most entries in a dynamic PMS struct to there default values.
 /// </summary>
 /// <param name="r_pms">Reference to PMS struct to be reset</param>
@@ -391,11 +237,205 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 	}
 }
 
+//++++++++++++ Setup Methods +++++++++++++
+
+/// <summary>
+/// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
+/// the wall states and errors
+/// </summary>
+void Wall_Operation::resetMaze(uint8_t do_full_reset)
+{
+	_DB.printMsgTime("MAZE SETUP/RESET START");
+	uint8_t resp = 0;
+
+	// Setup cypress chips
+	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
+	{
+		resp = _C_COM.setupCypress(C[ch_i].addr);
+		if (resp != 0)
+			_DB.printMsgTime("!!Failed Cypress setup: chamber=%d address=%s!!", ch_i, _DB.hexStr(C[ch_i].addr));
+		if (resp == 0 && ch_i == nCham - 1)
+		{ // print success for last itteration
+			_DB.printMsgTime("Finished Cypress setup: chamber=%d address=%s", ch_i, _DB.hexStr(C[ch_i].addr));
+		}
+	}
+
+	// Setup IO pins for each chamber
+	resp = _setupCypressIO();
+
+	// Setup PWM pins for each chamber
+	resp = _setupCypressPWM(pwmDuty);
+
+	// Reset to starting state
+	if (do_full_reset)
+	{
+		// Reset all chamber flags
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
+		{
+			C[cham_i].bitWallMoveFlag = 0;
+			C[cham_i].bitWallPosition = 0;
+			C[cham_i].bitWallErrorFlag = 0;
+			C[cham_i].bitWallUpdateFlag = 0;
+			for (size_t i = 0; i < 6; i++)
+				C[cham_i].bitOutRegLast[i] = 0;
+		}
+
+		// Reset Ethercat initialization flag
+		isEthercatInitialized = false;
+	}
+
+	// Test and reset all walls
+	resp = _setupWalls();
+
+	// Unset flag
+	doMazeReset = false;
+
+	_DB.printMsgTime("MAZE SETUP/RESET DONE");
+}
+
+/// /// <summary>
+/// Setup IO pins for each chamber including the pin direction (input) a
+/// and the type of drive mode (high impedance).
+/// Note, have to do some silly stuff with the output pins as well based on
+/// page 11 of the Cypress datasheet "To  allow  input  operations  without
+/// reconfiguration, these registers [output] have to store �1�s."
+/// </summary>
+/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
+uint8_t Wall_Operation::_setupCypressIO()
+{
+	_DB.printMsgTime("Running IO pin setup");
+	uint8_t resp = 0;
+
+	// Setup wall io pins
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+	{
+		// Set entire output register to off
+		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+		resp = _C_COM.ioWriteReg(C[cham_i].addr, p_byte_mask_in, 6, 0);
+
+		if (resp == 0)
+		{
+			for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
+			{ // loop through port list
+				// Set input pins as input
+				resp = _C_COM.setPortRegister(C[cham_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+				if (resp == 0)
+				{
+					// Set pins as pull down
+					resp = _C_COM.setPortRegister(C[cham_i].addr, DRIVE_PULLDOWN, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+					if (resp == 0)
+					{
+						// Set corrisponding output register entries to 1 as per datasheet
+						resp = _C_COM.ioWritePort(C[cham_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+						if (resp != 0)
+							return resp;
+					}
+				}
+			}
+		}
+		if (resp != 0)
+			_DB.printMsgTime("\t!!failed IO pin setup: chamber=%d", cham_i);
+	}
+	_DB.printMsgTime("Finished IO pin setup");
+	return resp;
+}
+
+/// <summary>
+/// Setup PWM pins for each chamber including the specifying them as PWM outputs
+/// and also detting the drive mode to "Strong Drive". This also sets up the PWM
+/// Source using @ref Cypress_Com::setupSourcePWM()
+/// </summary>
+/// <param name="pwm_duty">Duty cycle for the pwm [0-255]</param>
+/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
+uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
+{
+	_DB.printMsgTime("Running PWM setup");
+	uint8_t resp = 0;
+
+	// Setup pwm
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+	{
+		// Setup source
+		for (size_t src_i = 0; src_i < 8; src_i++)
+		{
+			resp = _C_COM.setupSourcePWM(C[cham_i].addr, wms.pwmSrc[src_i], pwm_duty);
+			if (resp != 0)
+				_DB.printMsgTime("\t!!failed PWM source setup: source=%d", src_i);
+		}
+
+		// Setup wall pwm pins
+		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
+		{ // loop through port list
+			// Set pwm pins as pwm output
+			resp = _C_COM.setPortRegister(C[cham_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
+			if (resp == 0)
+			{
+				// Set pins as strong drive
+				resp = _C_COM.setPortRegister(C[cham_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
+			}
+		}
+		if (resp != 0)
+			_DB.printMsgTime("\t!!failed PWM pin setup: chamber=%d", cham_i);
+	}
+	_DB.printMsgTime("Finished PWM setup");
+	return resp;
+}
+
+/// <summary>
+/// Test up and down movment using @ref Wall_Operation::setWallCmdManual()
+/// and @ref Wall_Operation::moveWalls()
+/// <returns>Success/error codes from @ref Wall_Operation::moveWalls().</returns>
+/// </summary>
+uint8_t Wall_Operation::_setupWalls()
+{
+	_DB.printMsgTime("Running wall initialization");
+
+	// Run all walls up then down for each chamber
+	uint8_t resp = 0;
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+	{
+
+		// Run walls up
+		setWallCmdManual(cham_i, 1);
+		resp = moveWalls(); // move walls up
+
+		// Run walls down
+		setWallCmdManual(cham_i, 0);
+		resp = moveWalls(); // move walls down
+
+		if (resp != 0)
+			_DB.printMsgTime("\t!!failed wall initialization: chamber=%d", cham_i);
+	}
+
+	// Set resp to any non-zero flag and return
+	_DB.printMsgTime("Finished wall initialization");
+	return resp;
+}
+
+//++++++++++++ Runtime Methods +++++++++++++
+
+/// <summary>
+/// Option to change the PWM duty cycle for a given wall.
+/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
+/// Could be useful if some walls are running at different speeds.
+/// </summary>
+/// <param name="cham_i">Index of the chamber to set [0-48]</param>
+/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
+/// <param name="duty">PWM duty cycle [0-255].</param>
+/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
+{
+	if (cham_i > 48 || wall_i > 7 || duty > 255)
+		return -1;
+	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
+	return resp;
+}
+
 /// <summary>
 /// Used to get incoming ROS ethercat msg data signalling which walls to raise.
 /// </summary>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-uint8_t Wall_Operation::checkEthercatComms()
+uint8_t Wall_Operation::getProcEthercatComms()
 {
 	int msg_num_id_new;
 	uint8_t msg_arg_lng;
@@ -476,11 +516,11 @@ uint8_t Wall_Operation::checkEthercatComms()
 	switch (py2ardMsgTypeID)
 	{
 
-	// 	INITIALIZE_COMMS
-	case Py2ArdMsgTypeID::INITIALIZE_COMMS:
+	// 	START_SESSION
+	case Py2ArdMsgTypeID::START_SESSION:
 		if (!isEthercatInitialized)
 		{
-			_DB.printMsgTime("Ethercat comms initialized");
+			_DB.printMsgTime("START_SESSION: ethercat comms initialized");
 			isEthercatInitialized = true;
 		}
 
@@ -508,6 +548,14 @@ uint8_t Wall_Operation::checkEthercatComms()
 			_DB.printMsgTime("\t\twall_b=%s", _DB.bitIndStr(wall_b));
 			_DB.printMsgTime("\t\tC[cham_i].bitWallPosition=%s", _DB.bitIndStr(C[cham_i].bitWallPosition));
 		}
+
+		break;
+
+	// 	END_SESSION
+	case Py2ArdMsgTypeID::END_SESSION:
+
+		// Unset flag
+		doMazeReset = false;
 
 		break;
 
@@ -544,7 +592,7 @@ uint8_t Wall_Operation::checkEthercatComms()
 /// uint8_t bit_val_set = 0; //set walls not to move up, which will result in them being moved down
 /// Wall_Operation::setWallCmdManual(cham_i, 0, p_wall_inc, s); //this will lower all the walls specified in "p_wall_inc"
 /// Wall_Operation::W_OPR.setWallCmdManual(0, 0); //this will lower all walls in chamber 0
-/// Wall_Operation::runWalls(); //note that @ref Wall_Operation::runWalls() must be run after all settings complete
+/// Wall_Operation::moveWalls(); //note that @ref Wall_Operation::moveWalls() must be run after all settings complete
 /// </code>
 /// </example>
 uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, uint8_t p_wall_inc[], uint8_t s)
@@ -588,7 +636,7 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 /// </summary>
 /// <param name="dt_timout">Time to attemp movement (ms) DEFAULT:[1000]</param>
 /// <returns>Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]</returns>
-uint8_t Wall_Operation::runWalls(uint32_t dt_timout)
+uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
 	// Local vars// TEMP COMMIT TEST
 	uint8_t resp = 0;

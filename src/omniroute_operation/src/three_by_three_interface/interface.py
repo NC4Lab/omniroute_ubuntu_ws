@@ -30,10 +30,11 @@ with each 16 bit value seperated into bytes
 [1]: message info
     b0 message type [0-255] [see: MsgTypeID]
     b1 arg length [0-255] [number of message args in bytes]           
-[2:5] wall state bytes
-    b0 = wall x byte
-    b1 = wall x+1 byte  
-[x-8]: footer  
+[none or 2:2-6] data
+    wall state bytes
+        b0 = wall x byte
+        b1 = wall x+1 byte  
+[x-7]: footer  
     b1=254
     b0=254                            
 
@@ -41,10 +42,7 @@ with each 16 bit value seperated into bytes
 """
 
 # GLOBAL VARS
-norm = np.linalg.norm
-wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
-maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
-
+norm = np.linalg.norm # used to calculate Euclidian norm
 NUM_ROWS_COLS = 3
 WALL_MAP = {
     0: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -58,20 +56,18 @@ WALL_MAP = {
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
-# Enum for ethercat python to arduino message type ID
+#CLASS: Enum for ethercat python to arduino message type ID
 class Py2ArdMsgTypeID(Enum):
-    INITIALIZE_COMMS = 128
+    START_SESSION = 128
+    END_SESSION = 129
     MOVE_WALLS = 1
-    RESET_SYSTEM = 2
-
-# Initialize colorama
-Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
 
 # FUNCTION: Log to ROS in color
 def rospy_log_info(color, message, *args):
     colored_message = f"{color}{message}{Style.RESET_ALL}"
     formatted_message = colored_message % args
     rospy.loginfo(formatted_message)
+Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW  # Set the desired colors
 
 # FUNCTION: Get directory path to a given file in the path config directory
 def get_path_config_dir(file_name=None):
@@ -167,7 +163,7 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
 
     return reg_arr
 
-# CLASS: Union class using ctype union for storing ethercat data shareable accross data types
+# CLASS: Union class using c++ union for storing ethercat data shareable accross data types
 class Union:
     def __init__(self):
         self.b = bytearray([0, 0])  # 2 bytes initialized with zeros
@@ -282,9 +278,9 @@ class Wall(QGraphicsItemGroup):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            rospy.loginfo("Chamber %d wall %d clicked!" % (self.chamber_num, self.wall_num))
+            rospy.loginfo("\tchamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
             self.setState(not self.state)
-            wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
+            #wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
             if self.state: # add list entry
                 CW_LIST.add_wall(self.chamber_num, self.wall_num)
             else: # remove list entry
@@ -347,7 +343,7 @@ class Chamber(QGraphicsItemGroup):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            rospy.loginfo("Chamber %d clicked!" % self.chamber_num)
+            rospy.loginfo("\tchamber %d clicked in UI" % self.chamber_num)
 
 # CLASS: Maze
 class Maze:
@@ -386,6 +382,10 @@ class Maze:
 
 # CLASS: Interface
 class Interface(Plugin):
+
+    # Define signals
+    signal_Esmacat_read_maze_ard0_ease = Signal()
+
     def __init__(self, context):
         super(Interface, self).__init__(context)
 
@@ -444,25 +444,6 @@ class Interface(Plugin):
         self._widget.mazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
 
-        # QT UI object setup
-        self._widget.sysInitEtherBtn.clicked.connect(
-            self._handle_sysInitEtherBtn_clicked)
-        self._widget.fileListWidget.itemClicked.connect(
-            self._handle_fileListWidget_clicked)
-        self._widget.fileBrowseBtn.clicked.connect(
-            self._handle_fileBrowseBtn_clicked)
-        self._widget.filePreviousBtn.clicked.connect(
-            self._handle_filePreviousBtn_clicked)
-        self._widget.fileNextBtn.clicked.connect(
-            self._handle_fileNextBtn_clicked)
-        self._widget.fileDirEdit.setText(get_path_config_dir())
-        self._widget.plotClearBtn.clicked.connect(
-            self._handle_plotClearBtn_clicked)
-        self._widget.plotSaveBtn.clicked.connect(
-            self._handle_plotSaveBtn_clicked)
-        self._widget.plotSendBtn.clicked.connect(
-            self._handle_plotSendBtn_clicked)
-
          # Calculate chamber width and wall line width and offset
         maze_view_size = self._widget.mazeView.width()
         chamber_width = self._widget.mazeView.width()*0.9/NUM_ROWS_COLS
@@ -487,17 +468,34 @@ class Interface(Plugin):
             for w in c.walls:
                 self.scene.addItem(w)
 
-        # Initialize file index to zero
+        # Initialize file list index to zero and set 
         self.current_file_index = 0
+        self._widget.fileDirEdit.setText(get_path_config_dir())
+
+        # QT UI object callback setup
+        self._widget.sysInitEtherBtn.clicked.connect(self.qt_callback_sysInitEtherBtn_clicked)
+        self._widget.fileListWidget.itemClicked.connect(self.qt_callback_fileListWidget_clicked)
+        self._widget.fileBrowseBtn.clicked.connect(self.qt_callback_fileBrowseBtn_clicked)
+        self._widget.filePreviousBtn.clicked.connect(self.qt_callback_filePreviousBtn_clicked)
+        self._widget.fileNextBtn.clicked.connect(self.qt_callback_fileNextBtn_clicked)
+        self._widget.plotClearBtn.clicked.connect(self.qt_callback_plotClearBtn_clicked)
+        self._widget.plotSaveBtn.clicked.connect(self.qt_callback_plotSaveBtn_clicked)
+        self._widget.plotSendBtn.clicked.connect(self.qt_callback_plotSendBtn_clicked)
         
-        # Start timer
+        # QT timer object setup
         self.timer = QTimer()
-        self.timer.timeout.connect(self.auto_update_graphics)
-        self.timer.start(20)
-        
-    def auto_update_graphics(self):
-        self.scene.update()
-        self._widget.mazeView.update()
+        self.timer.timeout.connect(self.qt_callback_timer)
+        self.timer.start(20) # set timer to 20 ms
+
+        # ROS publisher stuff
+        #wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1) 
+        self.maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1) # Esmacat write maze ard0 ease
+
+        # ROS subscriber stuff
+        rospy.Subscriber('Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, tcp_nodelay=True)
+
+        # Signal callback setup
+        self.signal_Esmacat_read_maze_ard0_ease.connect(self.sig_callback_Esmacat_read_maze_ard0_ease)
 
     def save_data_to_csv(self, file_name, data):
         try:
@@ -540,13 +538,25 @@ class Interface(Plugin):
         # Update plot walls
         self.maze.update_walls()
 
-    def _handle_sysInitEtherBtn_clicked(self):
+    def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
+        # emit signal to update plot
+        self.signal_Esmacat_read_maze_ard0_ease.emit() 
+
+    def sig_callback_Esmacat_read_maze_ard0_ease(self):
+        pass
+    
+    def qt_callback_timer(self):
+        # Update graphics
+        self.scene.update()
+        self._widget.mazeView.update()
+
+    def qt_callback_sysInitEtherBtn_clicked(self):
         # Send initialization message to arduino
         rospy_log_info(Fore.GREEN, "COMS INITIALIZED")
-        reg_arr = make_reg_msg(Py2ArdMsgTypeID.INITIALIZE_COMMS, 0)
-        maze_ard0_pub.publish(*reg_arr)
+        reg_arr = make_reg_msg(Py2ArdMsgTypeID.START_SESSION, 0)
+        self.maze_ard0_pub.publish(*reg_arr)
 
-    def _handle_fileBrowseBtn_clicked(self):
+    def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
@@ -573,26 +583,26 @@ class Interface(Plugin):
             # Update file index and load csv
             self.load_csv_data(0)
 
-    def _handle_fileListWidget_clicked(self, item):
+    def qt_callback_fileListWidget_clicked(self, item):
         # Get the index of the clicked item and set it as the current file index
         self.current_file_index = self._widget.fileListWidget.currentRow()
         
         # Update file index and load csv
         self.load_csv_data(0)
             
-    def _handle_fileNextBtn_clicked(self):
+    def qt_callback_fileNextBtn_clicked(self):
         # Update file index and load csv
         self.load_csv_data(1)
     
-    def _handle_filePreviousBtn_clicked(self):
+    def qt_callback_filePreviousBtn_clicked(self):
         # Update file index and load csv
         self.load_csv_data(-1)
 
-    def _handle_plotClearBtn_clicked(self):
+    def qt_callback_plotClearBtn_clicked(self):
         CW_LIST.reset() # reset all values in list
         self.maze.update_walls() # update walls
 
-    def _handle_plotSaveBtn_clicked(self):
+    def qt_callback_plotSaveBtn_clicked(self):
         # Open the folder specified by get_path_config_dir() in an explorer window
         folder_path = get_path_config_dir()
         options = QFileDialog.Options()
@@ -611,9 +621,9 @@ class Interface(Plugin):
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
             self.save_data_to_csv(file_name, CW_LIST.get_byte_list())
 
-    def _handle_plotSendBtn_clicked(self):
+    def qt_callback_plotSendBtn_clicked(self):
         # Sort entries
         CW_LIST.sort_entries()
         print(CW_LIST)
         reg_arr = make_reg_msg(Py2ArdMsgTypeID.MOVE_WALLS, 9, CW_LIST.get_byte_list())
-        maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
+        self.maze_ard0_pub.publish(*reg_arr)  # Publish list to topic
