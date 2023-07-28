@@ -280,8 +280,8 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 		}
 
 		// Reset message counters
-		p2aEtherMsgNum = 0;
-		a2pEtherMsgNum = 0;
+		p2aEtherMsgID = 0;
+		a2pEtherMsgID = 0;
 
 		// Reset Ethercat initialization flag
 		isEthercatInitialized = false;
@@ -291,9 +291,9 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 	resp = _setupWalls();
 
 	if (do_full_reset)
-		_DB.printMsgTime("Finished maze reset");
+		_DB.printMsgTime("MAZE RESET COMPLETE");
 	else
-		_DB.printMsgTime("Finished maze setup");
+		_DB.printMsgTime("MAZE SETUP COMPLETE");
 }
 
 /// /// <summary>
@@ -423,8 +423,8 @@ uint8_t Wall_Operation::_setupWalls()
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
 uint8_t Wall_Operation::getEthercatMessage()
 {
-	int msg_num_new;		  // incoming msg id number
-	uint8_t p2a_msg_type_id;  // incoming msg type id
+	int p2a_msg_id;		  // incoming msg id number
+	uint8_t p2a_msg_type;  // incoming msg type id
 	uint8_t msg_arg_lng;	  // incoming msg argument length
 	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
 	int reg_dat[8];			  // buffer for reading ethercat registers
@@ -434,44 +434,45 @@ uint8_t Wall_Operation::getEthercatMessage()
 	ESlave.get_ecat_registers(reg_dat);
 
 	// Check first register entry for msg id
-	msg_num_new = reg_dat[reg_i++];
+	p2a_msg_id = reg_dat[reg_i++];
 	U.ui16[0] = reg_dat[reg_i++];
-	p2a_msg_type_id = U.ui8[0];
+	p2a_msg_type = U.ui8[0];
 	msg_arg_lng = U.ui8[1];
 
 	// Skip ethercat setup junk (65535)
-	if (msg_num_new == 65535 || p2a_msg_type_id == 65535)
+	if (p2a_msg_id == 65535 || p2a_msg_type == 65535)
 		return 0;
 
 	// skip redundant messages and reset message type to NONE
-	if (msg_num_new == p2aEtherMsgNum)
+	if (p2a_msg_id == p2aEtherMsgID)
 	{
-		p2aTypeID = P2A_Type_ID::P2A_NONE;
+		p2aEtherMsgType = P2A_Type_ID::P2A_NONE;
 		return 0;
 	}
 
 	// Check for skipped or out of sequence messages
-	if (msg_num_new - p2aEtherMsgNum != 1)
+	if (p2a_msg_id - p2aEtherMsgID != 1)
 	{
 		if (isEthercatInitialized)
 		{
 			if (errorType != Error_Type::MESSAGE_ID_DISORDERED) // only run once
 			{
-				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgNum, msg_num_new);
-				p2aEtherMsgNum = msg_num_new; // set id last to new value (need better error handeling here)
+				// Set id last to new value on first error and set error type (need better error handeling here)
+				p2aEtherMsgID = p2a_msg_id; 
 				errorType = Error_Type::MESSAGE_ID_DISORDERED;
+				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgID, p2a_msg_id);
 			}
 		}
 		return 1;
 	}
 
-	_DB.printMsgTime("\tNew ethercat message recieved: msg number=%d", msg_num_new);
+	_DB.printMsgTime("\tNew ethercat message recieved: msg number=%d", p2a_msg_id);
 
 	// Update message id
-	p2aEtherMsgNum = msg_num_new;
+	p2aEtherMsgID = p2a_msg_id;
 
 	// Update dynamic enum instance
-	p2aTypeID = static_cast<Wall_Operation::P2A_Type_ID>(p2a_msg_type_id);
+	p2aEtherMsgType = static_cast<Wall_Operation::P2A_Type_ID>(p2a_msg_type);
 
 	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
@@ -504,12 +505,12 @@ uint8_t Wall_Operation::getEthercatMessage()
 	}
 
 	// HANDLE MESSAGE TYPE
-	switch (p2aTypeID)
+	switch (p2aEtherMsgType)
 	{
 
-	// 	DUMMY
-	case P2A_Type_ID::DUMMY:
-		_DB.printMsgTime("\DUMMY");
+	// 	CLEAR_REG
+	case P2A_Type_ID::CLEAR_REG:
+		_DB.printMsgTime("\tCLEAR_REG");
 		break;
 
 	// 	START_SESSION
@@ -554,7 +555,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 	}
 
 	// Send confirmation message
-	sendEthercatMessage(A2P_Type_ID::RECEIVED_CONFIRMED);
+	sendEthercatMessage(A2P_Type_ID::CONFIRM_RECEIVED);
 
 	// Return new message flag
 	return 0;
@@ -579,28 +580,28 @@ uint8_t Wall_Operation::getEthercatMessage()
 ///		i8[1] [254]
 /// </remarks>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type_id, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
-	a2pEtherMsgNum = p2aEtherMsgNum < 65535 ? p2aEtherMsgNum + 1 : 1;
-	_DB.printMsgTime("\tNew ethercat message sent: msg number=%d", a2pEtherMsgNum);
+	a2pEtherMsgID = p2aEtherMsgID < 65535 ? p2aEtherMsgID + 1 : 1;
+	_DB.printMsgTime("\tNew ethercat message sent: msg number=%d", a2pEtherMsgID);
 
 	// Clear union
 	U.ui64[0] = 0;
 	U.ui64[1] = 0;
 
 	// HANDLE MESSAGE TYPE
-	switch (a2p_msg_type_id)
+	switch (a2p_msg_type)
 	{
 
-	// 	RECEIVED_CONFIRMED
-	case A2P_Type_ID::RECEIVED_CONFIRMED:
-		_DB.printMsgTime("\tRECEIVED_CONFIRMED");
+	// 	CONFIRM_RECEIVED
+	case A2P_Type_ID::CONFIRM_RECEIVED:
+		_DB.printMsgTime("\tCONFIRM_RECEIVED");
 		msg_arg_lng = 2;
-		U.ui16[0] = a2pEtherMsgNum;						  // a2p message number
-		U.ui8[2] = static_cast<uint8_t>(a2p_msg_type_id); // message type
+		U.ui16[0] = a2pEtherMsgID;						  // a2p message number
+		U.ui8[2] = static_cast<uint8_t>(a2p_msg_type); // message type
 		U.ui8[3] = msg_arg_lng;							  // arg length
-		U.ui16[3] = p2aEtherMsgNum;						  // p2a message number
+		U.ui16[3] = p2aEtherMsgID;						  // p2a message number
 
 		break;
 

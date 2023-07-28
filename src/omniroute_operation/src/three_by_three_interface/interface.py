@@ -60,7 +60,7 @@ WALL_MAP = {
 #ENUM: Enum for ethercat python to arduino message type ID
 class P2A_Type_ID(Enum):
     P2A_NONE = 0
-    DUMMY = 127
+    CLEAR_REG = 127
     START_SESSION = 128
     END_SESSION = 129
     MOVE_WALLS = 1
@@ -68,7 +68,7 @@ class P2A_Type_ID(Enum):
 #ENUM: Enum for ethercat arduino to python message type ID
 class A2P_Type_ID(Enum):
     A2P_NONE = 0
-    RECEIVED_CONFIRMED = 1
+    CONFIRM_RECEIVED = 1
     ERROR = 254
 
 #ENUM: Enum for tracking errors
@@ -111,7 +111,7 @@ class Maze_Plot(QGraphicsView):
 
             Maze_Plot.center_text(self.label, label_pos[0], label_pos[1])
 
-        def mouse_press_event(self, event):
+        def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
                 #rospy_log_col('INFO', "\tchamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
                 self.setState(not self.state)
@@ -175,7 +175,7 @@ class Maze_Plot(QGraphicsView):
                             for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
             return vertices_list
 
-        def mouse_press_event(self, event):
+        def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
                 pass
                 #rospy_log_col('INFO', "\tchamber %d clicked in UI" % self.chamber_num)
@@ -319,12 +319,12 @@ class Interface(Plugin):
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
     # Define class variables
-    p2aMsgNum = 0 # initialize python to arduino message number
-    a2pMsgNum = 0 # initialize arduino to python message number
+    p2aEtherMsgID = 0 # initialize python to arduino message number
+    a2pEtherMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    a2pTypeId = A2P_Type_ID.A2P_NONE
-    p2aTypeId = P2A_Type_ID.P2A_NONE
+    a2pEtherMsgType = A2P_Type_ID.A2P_NONE
+    p2aEtherMsgType = P2A_Type_ID.P2A_NONE
     errorType = Error_Type.ERROR_NONE
 
     def __init__(self, context):
@@ -478,7 +478,7 @@ class Interface(Plugin):
     def ros_callback_shutdown(self):
         # Send END_SESSION message to arduino
         self.send_ethercat_message(P2A_Type_ID.END_SESSION)
-        self.timer_send_dummy.start(500) # (ms)
+        # TEMP self.timer_send_dummy.start(500) # (ms)
 
         # Unregister the subscriber
         if self._joint_sub:
@@ -523,8 +523,8 @@ class Interface(Plugin):
         self.timer_send_dummy.start(500) # (ms)
 
     def timer_callback_send_dummy(self):
-        # Send DUMMY message to arduino to clear the START_SESSION message from the registry
-        self.send_ethercat_message(P2A_Type_ID.DUMMY) 
+        # Send CLEAR_REG message to arduino to clear the START_SESSION message from the registry
+        self.send_ethercat_message(P2A_Type_ID.CLEAR_REG) 
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
@@ -608,24 +608,24 @@ class Interface(Plugin):
         else:
             return dir_path
     
-    def send_ethercat_message(self, msg_type_id, msg_lng = 0, cw_list=None):
+    def send_ethercat_message(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
-        # Itterate message number id and roll over to 1 if max 16 bit value is reached
-        self.p2aMsgNum = self.p2aMsgNum + \
-            1 if self.p2aMsgNum < 65535 else 1
+        # Itterate message id and roll over to 1 if max 16 bit value is reached
+        self.p2aEtherMsgID = self.p2aEtherMsgID + \
+            1 if self.p2aEtherMsgID < 65535 else 1
 
         # Create a list with 8 16-bit Union elements
         U = [Interface.Union() for _ in range(8)]
         ui16_i = 0
 
-        # Set message num and type id
-        U[ui16_i].ui16 = self.p2aMsgNum
+        # Set message id and type
+        U[ui16_i].ui16 = self.p2aEtherMsgID
         ui16_i += 1
-        U[ui16_i].ui8[0] = msg_type_id.value
-        U[ui16_i].ui8[1] = msg_lng
+        U[ui16_i].ui8[0] = p2a_msg_type.value
+        U[ui16_i].ui8[1] = msg_arg_lng
 
         # Update walls to move up
-        if (msg_type_id == P2A_Type_ID.MOVE_WALLS) and cw_list is not None:
+        if (p2a_msg_type == P2A_Type_ID.MOVE_WALLS) and cw_list is not None:
             # Update U_arr with corresponding chamber and wall byte
             for cw in cw_list:
                 chamber = cw[0]
@@ -635,7 +635,7 @@ class Interface(Plugin):
                 U[ui16_i].ui8[u_ind_c] = wall_byte
 
         # Add footer
-        ui16_i = 2 + math.ceil(msg_lng/2)
+        ui16_i = 2 + math.ceil(msg_arg_lng/2)
         U[ui16_i].ui8[0] = 254
         U[ui16_i].ui8[1] = 254
 
@@ -643,7 +643,7 @@ class Interface(Plugin):
         reg_arr = [ctypes.c_int16(U.ui16).value for U in U]
 
         # Print reg message
-        rospy_log_col('INFO', "New ethercat message sent: %s %d", msg_type_id.name, self.p2aMsgNum)
+        rospy_log_col('INFO', "New ethercat message sent: %s %d", p2a_msg_type.name, self.p2aEtherMsgID)
         rospy_log_col('INFO', "\tui16[0] %d", U[0].ui16)
         for i in range(1, len(U)):
             rospy_log_col('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
@@ -659,44 +659,45 @@ class Interface(Plugin):
         #         rospy_log_col('INFO', "Chamber %d: Walls %s", chamber, walls)
 
     def get_ethercat_message(self, reg_dat):
-        msg_num_new = 0
-        a2p_msg_type_id = 0
+        a2p_msg_id = 0
+        a2p_msg_type = 0
         msg_arg_lng = 0
         msg_arg_data = [0] * 10
         U = Interface.Union()
 
         # Check first register entry for msg id
         ui16_i = 0
-        msg_num_new = reg_dat[ui16_i]
+        a2p_msg_id = reg_dat[ui16_i]
         ui16_i += 1
         U.ui16 = reg_dat[ui16_i]
         ui16_i += 1
-        a2p_msg_type_id = U.ui8[0]
+        a2p_msg_type = U.ui8[0]
         msg_arg_lng = U.ui8[1]
 
         # Skip ethercat setup junk (65535)
-        if msg_num_new == 65535 or self.a2pMsgNum == 65535:
+        if a2p_msg_id == 65535 or self.a2pEtherMsgID == 65535:
             return 0
 
         # skip redundant messages and reset message type to NONE
-        if msg_num_new == self.a2pMsgNum:
-            self.a2pTypeId = A2P_Type_ID.A2P_NONE
+        if a2p_msg_id == self.a2pEtherMsgID:
+            self.a2pEtherMsgType = A2P_Type_ID.A2P_NONE
             return 0
 
         # Check for skipped or out of sequence messages
-        if msg_num_new - self.a2pMsgNum != 1:
+        if a2p_msg_id - self.a2pEtherMsgID != 1:
             if self.errorType != Error_Type.MESSAGE_ID_DISORDERED: # only run once
-                rospy_log_col('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pMsgNum, msg_num_new)
-                self.a2pMsgNum = msg_num_new # set id last to new value (need better error handling here)
+                # Set id last to new value on first error and set error type
+                self.a2pEtherMsgID = a2p_msg_id 
                 self.errorType = Error_Type.MESSAGE_ID_DISORDERED
+                rospy_log_col('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
             return 1
 
         # Update dynamic enum instance
-        self.a2pTypeId.value = a2p_msg_type_id
-        rospy_log_col('INFO', "\tNew ethercat message received: %s %d", self.a2pTypeId.name, msg_num_new)
+        self.a2pEtherMsgType.value = a2p_msg_type
+        rospy_log_col('INFO', "\tNew ethercat message received: %s %d", self.a2pEtherMsgType.name, a2p_msg_id)
 
         # Update message id
-        self.a2pMsgNum = msg_num_new
+        self.a2pEtherMsgID = a2p_msg_id
 
 
         # Parse 8 bit message arguments
@@ -721,9 +722,13 @@ class Interface(Plugin):
             return 1
 
         # HANDLE MESSAGE TYPE
-        if self.a2pTypeId == A2P_Type_ID.RECEIVED_CONFIRMED:
-            rospy_log_col('INFO', "\tRECEIVED_CONFIRMED")
-        elif self.a2pTypeId == A2P_Type_ID.ERROR:
+
+        # CONFIRM_RECEIVED
+        if self.a2pEtherMsgType == A2P_Type_ID.CONFIRM_RECEIVED:
+            rospy_log_col('INFO', "\tCONFIRM_RECEIVED")
+
+        # A2P_NONE
+        elif self.a2pEtherMsgType == A2P_Type_ID.ERROR:
             rospy_log_col('INFO', "\tA2P_NONE")
 
         # Return new message flag

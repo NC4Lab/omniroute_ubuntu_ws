@@ -94,25 +94,24 @@ public:
 	};
 	Union U;
 	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
-	int p2aEtherMsgNum = 0;				   ///< tracks the received ethercat message number
-	int a2pEtherMsgNum = 0;				   ///< tracks the sent ethercat message number
+	int p2aEtherMsgID = 0;				   ///< tracks the received ethercat message number
+	int a2pEtherMsgID = 0;				   ///< tracks the sent ethercat message number
 	enum P2A_Type_ID
 	{
 		P2A_NONE = 0,
-		DUMMY = 127,
+		CLEAR_REG = 127,
 		START_SESSION = 128,
 		END_SESSION = 129,
 		MOVE_WALLS = 1,
 		ERROR = 254
 	};
-	P2A_Type_ID p2aTypeID = P2A_Type_ID::P2A_NONE;
+	P2A_Type_ID p2aEtherMsgType = P2A_Type_ID::P2A_NONE;
 	enum A2P_Type_ID
 	{
 		A2P_NONE = 0,
-
-		RECEIVED_CONFIRMED = 1
+		CONFIRM_RECEIVED = 1
 	};
-	A2P_Type_ID a2pTypeID = A2P_Type_ID::A2P_NONE;
+	A2P_Type_ID a2pEtherMsgType = A2P_Type_ID::A2P_NONE;
 	enum Error_Type
 	{
 		ERROR_NONE = 0,

@@ -71,15 +71,15 @@ void loop()
 		return;
 
 	// Setup maze
-	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::START_SESSION)
+	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::START_SESSION)
 		W_OPR.resetMaze(false);
 
 	// Reset maze
-	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::END_SESSION)
+	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::END_SESSION)
 		W_OPR.resetMaze(true);
 
 	// Check for new wall move command
-	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::MOVE_WALLS)
+	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::MOVE_WALLS)
 		W_OPR.moveWalls(); // move walls
 
 	// // Test input pins
