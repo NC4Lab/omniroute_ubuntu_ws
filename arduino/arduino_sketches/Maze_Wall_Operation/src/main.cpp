@@ -79,22 +79,22 @@ void loop()
 {
 
 	// Check ethercat coms
-	resp = W_OPR.getProcEthercatComms();
+	resp = W_OPR.getEthercatComms();
 
 	// Wait for initialization message
 	if (!W_OPR.isEthercatInitialized)
 		return;
 
 	// Setup maze
-	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::START_SESSION)
+	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::START_SESSION)
 		W_OPR.resetMaze(false);
 
 	// Reset maze
-	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::END_SESSION)
+	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::END_SESSION)
 		W_OPR.resetMaze(true);
 
 	// Check for new wall move command
-	if (W_OPR.py2ardMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::MOVE_WALLS)
+	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::MOVE_WALLS)
 		W_OPR.moveWalls(); // move walls
 
 }

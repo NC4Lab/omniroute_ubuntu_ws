@@ -280,15 +280,16 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 				C[cham_i].bitOutRegLast[i] = 0;
 		}
 
+		// Reset message counters
+		p2aEtherMsgNumID = 0;
+		a2pEtherMsgNumID = 0;
+
 		// Reset Ethercat initialization flag
 		isEthercatInitialized = false;
 	}
 
 	// Test and reset all walls
 	resp = _setupWalls();
-
-	// Unset flag
-	doMazeReset = false;
 
 	_DB.printMsgTime("MAZE SETUP/RESET DONE");
 }
@@ -412,108 +413,96 @@ uint8_t Wall_Operation::_setupWalls()
 	return resp;
 }
 
-//++++++++++++ Runtime Methods +++++++++++++
+//++++++++++++++ Comms Methods +++++++++++++++
 
 /// <summary>
-/// Option to change the PWM duty cycle for a given wall.
-/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
-/// Could be useful if some walls are running at different speeds.
-/// </summary>
-/// <param name="cham_i">Index of the chamber to set [0-48]</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
-{
-	if (cham_i > 48 || wall_i > 7 || duty > 255)
-		return -1;
-	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
-	return resp;
-}
-
-/// <summary>
-/// Used to get incoming ROS ethercat msg data signalling which walls to raise.
+/// Used to get incoming ROS ethercat msg data.
 /// </summary>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-uint8_t Wall_Operation::getProcEthercatComms()
+uint8_t Wall_Operation::getEthercatComms()
 {
-	int msg_num_id_new;
-	uint8_t msg_arg_lng;
+	int msg_num_new;		  // incoming msg id number
+	uint8_t p2a_msg_type_id;  // incoming msg type id
+	uint8_t msg_arg_lng;	  // incoming msg argument length
 	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
-	int buff_read[8];
-	uint8_t read_i = 0;
-	uint32_t ts_read = millis() + 500;
+	int reg_dat[8];		  // buffer for reading ethercat registers
+	uint8_t reg_i = 0;		  // index for reading ethercat registers
 
 	// Read esmacat buffer
-	ESlave.get_ecat_registers(buff_read);
+	ESlave.get_ecat_registers(reg_dat);
 
 	// Check first register entry for msg id
-	msg_num_id_new = buff_read[read_i++];
-	U.i16[0] = buff_read[read_i++];
-	uint8_t msg_type_id = U.b[0];
-	msg_arg_lng = U.b[1];
+	msg_num_new = reg_dat[reg_i++];
+	U.i16[0] = reg_dat[reg_i++];
+	p2a_msg_type_id = U.i8[0];
+	msg_arg_lng = U.i8[1];
 
 	// Skip ethercat setup junk (255)
-	if (msg_num_id_new == Py2ArdMsgTypeID::JUNK || msg_type_id == Py2ArdMsgTypeID::JUNK)
+	if (msg_num_new == Py2ArdMsgTypeID::JUNK || p2a_msg_type_id == Py2ArdMsgTypeID::JUNK)
 		return 0;
 
 	// skip redundant messages and reset message type to NONE
-	if (msg_num_id_new == etherMsgNumID)
+	if (msg_num_new == p2aEtherMsgNumID)
 	{
-		py2ardMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
+		p2aMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
 		return 0;
 	}
 
 	// Check for skipped or out of sequence messages
-	if (msg_num_id_new - etherMsgNumID != 1)
+	if (msg_num_new - p2aEtherMsgNumID != 1)
 	{
 		if (isEthercatInitialized)
 		{
 			if (runErrorTypeEnum != RunErrorType::MESSAGE_ID_DISORDERED) // only run once
 			{
-				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", etherMsgNumID, msg_num_id_new);
-				etherMsgNumID = msg_num_id_new; // set id last to new value (need better error handeling here)
+				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgNumID, msg_num_new);
+				p2aEtherMsgNumID = msg_num_new; // set id last to new value (need better error handeling here)
 				runErrorTypeEnum = RunErrorType::MESSAGE_ID_DISORDERED;
 			}
 		}
 		return 1;
 	}
 
+	// Update message id
+	p2aEtherMsgNumID = msg_num_new;
+
 	// Update dynamic enum instance
-	py2ardMsgTypeID = static_cast<Wall_Operation::Py2ArdMsgTypeID>(msg_type_id);
-	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_id_new);
+	p2aMsgTypeID = static_cast<Wall_Operation::Py2ArdMsgTypeID>(p2a_msg_type_id);
+	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_new);
 
 	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
 	{
 		// Compute 16 bit to 8 bit conversion stuff
-		bool is_even = msg_arg_lng % 2 == 0;
-		uint8_t msg_arg_lng_round = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1; // round message length up
+		// bool is_even = msg_arg_lng % 2 == 0;
+		// uint8_t msg_arg_lng_round = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1; // devide message length by 2 and round up
+		
 
 		// Loop through buffer
-		uint8_t byte_i = 0;
-		for (size_t buff_i = 0; buff_i < msg_arg_lng_round; buff_i++)
+		uint8_t msg_arg_lng_i16_round = ((int)msg_arg_lng + 1) / 2; // devide message length by 2 and round up
+		uint8_t i8_i = 0;
+		for (size_t i16_i = 0; i16_i < msg_arg_lng_i16_round; i16_i++)
 		{
 			// Get next entry
-			U.i16[0] = buff_read[read_i++];
+			U.i16[0] = reg_dat[reg_i++];
 
-			// Loop through bytes in 16 bit entry and store
+			// Loop through bytes in given 16 bit entry and store
 			for (size_t b_ii = 0; b_ii < 2; b_ii++)
-				msg_arg_data[byte_i++] = U.b[b_ii];
+				msg_arg_data[i8_i++] = U.i8[b_ii];
 		}
 	}
 
 	// Check for footer
-	U.i16[0] = buff_read[read_i++];
-	if (U.b[0] != 254 && U.b[1] != 254)
+	U.i16[0] = reg_dat[reg_i++];
+	if (U.i8[0] != 254 && U.i8[1] != 254)
 	{
 		_DB.printMsgTime("!!Missing message footer!!");
 		runErrorTypeEnum = RunErrorType::MISSING_FOOTER;
 		return 1;
 	}
 
-	// Handle different messages
-	switch (py2ardMsgTypeID)
+	// HANDLE MESSAGE TYPE
+	switch (p2aMsgTypeID)
 	{
 
 	// 	START_SESSION
@@ -543,19 +532,67 @@ uint8_t Wall_Operation::getProcEthercatComms()
 			_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
 			_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
 			_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
-
-			// TEMP
-			_DB.printMsgTime("\t\twall_b=%s", _DB.bitIndStr(wall_b));
-			_DB.printMsgTime("\t\tC[cham_i].bitWallPosition=%s", _DB.bitIndStr(C[cham_i].bitWallPosition));
 		}
 
 		break;
 
 	// 	END_SESSION
 	case Py2ArdMsgTypeID::END_SESSION:
+		break;
 
-		// Unset flag
-		doMazeReset = false;
+	default:
+		break;
+	}
+
+	// Send confirmation message
+	sendEthercatComms(Ard2PyMsgTypeID::RECEIVED_CONFIRMATION);
+
+	// Return new message flag
+	return 0;
+}
+
+/// <summary>
+/// Used to send outgoing ROS ethercat msg data signalling which walls to raise.
+/// </summary>
+
+/// </remarks>
+/*
+	The outgoing register is structured arr[8] of 16 bit integers
+	with all but first 16 bit value seperated into bytes
+	[0]: message number
+		i16 [0-65535]
+	[1]: message info
+		b0 message type [0-255] [see: MsgTypeID]
+		b1 arg length [0-255] [number of message args in bytes]
+	[none or 2:2-6] data
+		message confirmation
+
+	[x-7]: footer
+		b1=254
+		b0=254
+*/
+/// </remarks>
+/// <returns>Success/error codes [0:no error, 1:error]</returns>
+uint8_t Wall_Operation::sendEthercatComms(Ard2PyMsgTypeID a2p_msg_type_id, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+{
+	// Itterate message number id and roll over to 1 if max 16 bit value is reached
+	a2pEtherMsgNumID = p2aEtherMsgNumID < 65535 ? p2aEtherMsgNumID + 1 : 1;
+
+	// Clear union
+	U.i64[0] = 0;
+	U.i64[1] = 0;
+
+	// HANDLE MESSAGE TYPE
+	switch (a2p_msg_type_id)
+	{
+
+	// 	RECEIVED_CONFIRMATION
+	case Ard2PyMsgTypeID::RECEIVED_CONFIRMATION:
+		msg_arg_lng = 2;
+		U.i16[0] = a2pEtherMsgNumID;					 // a2p message number
+		U.i8[2] = static_cast<uint8_t>(a2p_msg_type_id); // message type
+		U.i8[3] = msg_arg_lng;							 // arg length
+		U.i16[3] = p2aEtherMsgNumID;					 // p2a message number
 
 		break;
 
@@ -563,11 +600,35 @@ uint8_t Wall_Operation::getProcEthercatComms()
 		break;
 	}
 
-	// Update message id
-	etherMsgNumID = msg_num_id_new < 65535 ? msg_num_id_new : 0;
+	// Add footer
+    uint8_t i8_i = 2 + msg_arg_lng % 2 == 0 ? msg_arg_lng : msg_arg_lng +1; // round up to nearest even value and add 2
+	U.i8[i8_i+1] = 254;
+	U.i8[i8_i+2] = 254;
 
-	// Return new message flag
-	return 0;
+	// Send message
+	for (size_t i = 0; i < 8; i++)
+	{
+		ESlave.write_reg_value(0, U.i16[0]);
+	}
+}
+
+//+++++++++++++ Runtime Methods ++++++++++++++
+
+/// <summary>
+/// Option to change the PWM duty cycle for a given wall.
+/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
+/// Could be useful if some walls are running at different speeds.
+/// </summary>
+/// <param name="cham_i">Index of the chamber to set [0-48]</param>
+/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
+/// <param name="duty">PWM duty cycle [0-255].</param>
+/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
+{
+	if (cham_i > 48 || wall_i > 7 || duty > 255)
+		return -1;
+	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
+	return resp;
 }
 
 /// <summary>

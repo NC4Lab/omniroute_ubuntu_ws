@@ -24,7 +24,7 @@ from omniroute_operation.msg import *
 
 """
 The outgoing register is structured arr[8] of 16 bit integers
-with each 16 bit value seperated into bytes 
+with all but first 16 bit value seperated into bytes 
 [0]: message number
     i16 [0-65535] 
 [1]: message info
@@ -36,9 +36,7 @@ with each 16 bit value seperated into bytes
         b1 = wall x+1 byte  
 [x-7]: footer  
     b1=254
-    b0=254                            
-
-@return: None
+    b0=254      
 """
 
 # GLOBAL VARS
@@ -57,6 +55,12 @@ WALL_MAP = {
 }
 
 #CLASS: Enum for ethercat python to arduino message type ID
+class Py2ArdMsgTypeID(Enum):
+    START_SESSION = 128
+    END_SESSION = 129
+    MOVE_WALLS = 1
+
+#CLASS: Enum for ethercat arduino to python message type ID
 class Py2ArdMsgTypeID(Enum):
     START_SESSION = 128
     END_SESSION = 129
@@ -114,45 +118,45 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
     if not hasattr(make_reg_msg, "msg_num_id"):
         make_reg_msg.msg_num_id = 0
 
-    # Itterate message count
+    # Itterate message number id and roll over to 1 if max 16 bit value is reached
     make_reg_msg.msg_num_id = make_reg_msg.msg_num_id + \
         1 if make_reg_msg.msg_num_id < 65535 else 1
 
     # Create a list 'reg' with 8 16-bit Union elements
-    U_arr = [Union() for _ in range(8)]
-    u_ind_r = 0
+    U = [Union() for _ in range(8)]
+    u_ind = 0
 
     # Set message num and type id
-    U_arr[u_ind_r].i16 = make_reg_msg.msg_num_id
-    u_ind_r += 1
-    U_arr[u_ind_r].b[0] = msg_type_id.value
-    U_arr[u_ind_r].b[1] = msg_lng
+    U[u_ind].i16 = make_reg_msg.msg_num_id
+    u_ind += 1
+    U[u_ind].i8[0] = msg_type_id.value
+    U[u_ind].i8[1] = msg_lng
 
     # Update walls to move up
     if (msg_type_id == Py2ArdMsgTypeID.MOVE_WALLS) and cw_list is not None:
         # Update U_arr with corresponding chamber and wall byte
         for cw in cw_list:
             chamber = cw[0]
-            u_ind_r = 2 + (chamber // 2)
+            u_ind = 2 + (chamber // 2)
             wall_byte = cw[1]
             u_ind_c = 0 if chamber % 2 == 0 else 1
-            U_arr[u_ind_r].b[u_ind_c] = wall_byte
+            U[u_ind].i8[u_ind_c] = wall_byte
             #rospy_log_info(Fore.YELLOW,"chamber=%d u_ind_r=%d u_ind_c=%d", chamber, u_ind_r, u_ind_c)
 
     # Set footer
-    u_ind_r = 2 + math.ceil(msg_lng/2)
-    U_arr[u_ind_r].b[0] = 254
-    U_arr[u_ind_r].b[1] = 254
+    u_ind = 2 + math.ceil(msg_lng/2)
+    U[u_ind].i8[0] = 254
+    U[u_ind].i8[1] = 254
 
     # TEMP
     #rospy_log_info(Fore.RED,"u_ind_r=%d msg_lng=%d msg_lng/2=%d", u_ind_r, msg_lng, math.ceil(msg_lng/2))
 
     # Store and return 16-bit values cast as signed for use with ease_registers
-    reg_arr = [ctypes.c_int16(U.i16).value for U in U_arr]
+    reg_arr = [ctypes.c_int16(U.i16).value for U in U]
 
     # Print reg message
-    for index, U in enumerate(U_arr):
-        rospy_log_info(Fore.BLUE, "%d %d", U.b[0], U.b[1])
+    for index, U in enumerate(U):
+        rospy_log_info(Fore.BLUE, "%d %d", U.i8[0], U.i8[1])
 
     # # Print the cw_list
     # if cw_list is not None:
@@ -166,17 +170,17 @@ def make_reg_msg(msg_type_id, msg_lng, cw_list=None):
 # CLASS: Union class using c++ union for storing ethercat data shareable accross data types
 class Union:
     def __init__(self):
-        self.b = bytearray([0, 0])  # 2 bytes initialized with zeros
+        self.i8 = bytearray([0, 0])  # 2 bytes initialized with zeros
 
     @property
     def i16(self):
-        return struct.unpack("<H", self.b)[0]
+        return struct.unpack("<H", self.i8)[0]
 
     @i16.setter
     def i16(self, value):
         packed_value = struct.pack("<H", value)
-        self.b[0] = packed_value[0]
-        self.b[1] = packed_value[1]
+        self.i8[0] = packed_value[0]
+        self.i8[1] = packed_value[1]
 
 # CLASS: The shared ConfigHolder class to store the wall configuration 
 class ConfigHolder:
@@ -426,10 +430,10 @@ class Interface(Plugin):
 
         # Add widget to the user interface
         context.add_widget(self._widget)
-        self._widget.mazeView.setViewportUpdateMode(
+        self._widget.plotMazeView.setViewportUpdateMode(
             QGraphicsView.FullViewportUpdate)
         self.scene = QGraphicsScene()
-        self._widget.mazeView.setScene(self.scene)
+        self._widget.plotMazeView.setScene(self.scene)
 
         # Set the fixed size of the main window based on the dimensions from the UI file
         main_window_width = self._widget.geometry().width()
@@ -441,12 +445,12 @@ class Interface(Plugin):
         self._widget.window().setMaximumSize(main_window_width, main_window_height)
 
         # Set the background color of the scene to white
-        self._widget.mazeView.setBackgroundBrush(QColor(255, 255, 255))
-        self._widget.mazeView.setViewport(QtOpenGL.QGLWidget())
+        self._widget.plotMazeView.setBackgroundBrush(QColor(255, 255, 255))
+        self._widget.plotMazeView.setViewport(QtOpenGL.QGLWidget())
 
          # Calculate chamber width and wall line width and offset
-        maze_view_size = self._widget.mazeView.width()
-        chamber_width = self._widget.mazeView.width()*0.9/NUM_ROWS_COLS
+        maze_view_size = self._widget.plotMazeView.width()
+        chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
         wall_width = chamber_width*0.1
 
         # Create Maze and populate walls according to WALL_MAP
@@ -468,9 +472,18 @@ class Interface(Plugin):
             for w in c.walls:
                 self.scene.addItem(w)
 
-        # Initialize file list index to zero and set 
-        self.current_file_index = 0
-        self._widget.fileDirEdit.setText(get_path_config_dir())
+        # Initialize file list text and index
+        self.current_file_index = 0 # set to zero
+        self._widget.fileDirEdit.setText(get_path_config_dir()) # set to default path
+
+        # Initialize ardListWidget with arduino names.
+        # Add 8 arduinos to the list labeled Arduino 0-9
+        for i in range(8):
+            self._widget.ardListWidget.addItem("Arduino " + str(i))
+        # Hide the blue selection bar
+        self._widget.ardListWidget.setStyleSheet("QListWidget::item { border-bottom: 1px solid black; }")
+        # Change the text color for all items in the list to light gray
+        self._widget.ardListWidget.setStyleSheet("QListWidget { color: lightgray; }")
 
         # QT UI object callback setup
         self._widget.sysInitEtherBtn.clicked.connect(self.qt_callback_sysInitEtherBtn_clicked)
@@ -538,17 +551,21 @@ class Interface(Plugin):
         # Update plot walls
         self.maze.update_walls()
 
+    def proc_ard2py_message(self):
+        pass
+
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
-        # emit signal to update plot
+        
+        # Emit signal to update UI as UI should not be updated from a non-main thread
         self.signal_Esmacat_read_maze_ard0_ease.emit() 
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
         pass
-    
+
     def qt_callback_timer(self):
         # Update graphics
         self.scene.update()
-        self._widget.mazeView.update()
+        self._widget.plotMazeView.update()
 
     def qt_callback_sysInitEtherBtn_clicked(self):
         # Send initialization message to arduino

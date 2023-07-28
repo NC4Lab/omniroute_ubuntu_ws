@@ -9,36 +9,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>789</width>
-    <height>930</height>
+    <width>519</width>
+    <height>899</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QGroupBox" name="selectorGroupBox">
+  <widget class="QGroupBox" name="fileGroupBox">
    <property name="geometry">
     <rect>
-     <x>8</x>
+     <x>10</x>
      <y>0</y>
-     <width>770</width>
-     <height>671</height>
+     <width>500</width>
+     <height>890</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
    <property name="title">
-    <string>Route Selector</string>
+    <string/>
    </property>
    <widget class="QLineEdit" name="fileDirEdit">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>671</width>
+      <width>400</width>
       <height>31</height>
      </rect>
     </property>
@@ -48,7 +43,7 @@
      </font>
     </property>
    </widget>
-   <widget class="QLabel" name="selectorLabel_1">
+   <widget class="QLabel" name="headerLabel_1">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -69,16 +64,11 @@
    <widget class="QPushButton" name="fileBrowseBtn">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>410</x>
       <y>60</y>
-      <width>80</width>
+      <width>81</width>
       <height>31</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
     </property>
     <property name="text">
      <string>Browse</string>
@@ -88,45 +78,35 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>630</y>
+      <y>300</y>
       <width>89</width>
       <height>25</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
     <property name="text">
-     <string>Previous</string>
+     <string>previous</string>
     </property>
    </widget>
    <widget class="QPushButton" name="fileNextBtn">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>630</y>
+      <x>140</x>
+      <y>300</y>
       <width>89</width>
       <height>25</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
     <property name="text">
-     <string>Next</string>
+     <string>next</string>
     </property>
    </widget>
    <widget class="QListWidget" name="fileListWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>140</y>
-      <width>250</width>
-      <height>480</height>
+      <y>130</y>
+      <width>220</width>
+      <height>160</height>
      </rect>
     </property>
     <property name="font">
@@ -138,16 +118,11 @@
    <widget class="QPushButton" name="plotClearBtn">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>630</y>
+      <x>10</x>
+      <y>850</y>
       <width>89</width>
       <height>25</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
     </property>
     <property name="text">
      <string>Clear</string>
@@ -156,16 +131,11 @@
    <widget class="QPushButton" name="plotSendBtn">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>630</y>
+      <x>400</x>
+      <y>850</y>
       <width>89</width>
       <height>25</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
     </property>
     <property name="text">
      <string>Send</string>
@@ -174,10 +144,36 @@
    <widget class="QPushButton" name="plotSaveBtn">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>630</y>
+      <x>300</x>
+      <y>850</y>
       <width>89</width>
       <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="sysInitEtherBtn">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>30</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Initialize Ethercat</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="sysArdListWidget">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>130</y>
+      <width>220</width>
+      <height>160</height>
      </rect>
     </property>
     <property name="font">
@@ -185,15 +181,12 @@
       <pointsize>12</pointsize>
      </font>
     </property>
-    <property name="text">
-     <string>Save</string>
-    </property>
    </widget>
-   <widget class="QLabel" name="selectorLabel_2">
+   <widget class="QLabel" name="fileConfigsLabel_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>120</y>
+      <y>110</y>
       <width>181</width>
       <height>21</height>
      </rect>
@@ -207,67 +200,11 @@
      <string>Path Configurations Files</string>
     </property>
    </widget>
-   <widget class="QGraphicsView" name="plotMazeView">
+   <widget class="QLabel" name="headerLabel_3">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>140</y>
-      <width>480</width>
-      <height>480</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="systemGroupBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>680</y>
-     <width>770</width>
-     <height>241</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
-   <property name="title">
-    <string>System Information</string>
-   </property>
-   <widget class="QRadioButton" name="sysInitEtherBtn">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
-      <y>190</y>
-      <width>141</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Initialize Ethercat</string>
-    </property>
-   </widget>
-   <widget class="QListWidget" name="ardListWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>220</width>
-      <height>155</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLabel" name="sysLabel_1">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
+      <x>270</x>
+      <y>110</y>
       <width>141</width>
       <height>21</height>
      </rect>
@@ -281,58 +218,14 @@
      <string>Arduino Status</string>
     </property>
    </widget>
-   <widget class="QLabel" name="ardLabel_1">
+   <widget class="QGraphicsView" name="plotMazeView">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>146</y>
-      <width>101</width>
-      <height>21</height>
+      <x>10</x>
+      <y>360</y>
+      <width>480</width>
+      <height>480</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#babdb6;&quot;&gt;Disconnected&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="ardLabel_2">
-    <property name="geometry">
-     <rect>
-      <x>130</x>
-      <y>166</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#73d216;&quot;&gt;Connected&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="ardLabel_3">
-    <property name="geometry">
-     <rect>
-      <x>130</x>
-      <y>186</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cc0000;&quot;&gt;Error Thrown&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>

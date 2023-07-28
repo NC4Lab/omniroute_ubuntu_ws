@@ -20,11 +20,12 @@
 // TEMP COMMIT TEST
 
 /// <summary>
-/// This class handles the actual opperation of the maze walls.
+/// This class handles the actual opperation of the maze walls and Ethercat coms.
 /// </summary>
 /// <remarks>
 /// This class uses an instance of the Maze_Debug and Cypress_Com classes.
 /// This class also deals with the mapping of walls to associated Cypress pins.
+/// This class also deals with incoming and outgoing Ethercat communication.
 /// </remarks>
 class Wall_Operation
 {
@@ -86,14 +87,15 @@ public:
 	};
 	ChamberTrackStruct C[9]; ///< initialize with max number of chambers for 3x3
 	union Union
-	{					 ///< union for storing ethercat data shareable accross data types
-		byte b[2];		 ///<(byte) 1 byte
-		uint16_t i16[1]; ///<(uint16_t) 2 byte
+	{					 ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
+		byte i8[16];		 ///< (byte) 1 byte
+		uint16_t i16[8]; ///< (uint16_t) 2 byte
+		uint64_t i64[2];	 ///< (uint64_t) 8 byte
 	};
 	Union U;
 	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
-	uint8_t doMazeReset = false;		   ///< flag to track if maze system has been reset
-	int etherMsgNumID = 0;				   ///< tracks the message ethercat message number
+	int p2aEtherMsgNumID = 0;		   ///< tracks the received ethercat message number
+	int a2pEtherMsgNumID = 0;		   ///< tracks the sent ethercat message number
 	enum Py2ArdMsgTypeID
 	{
 		PY2ARD_NONE = 0,
@@ -103,10 +105,11 @@ public:
 		ERROR = 254,
 		JUNK = 255
 	};
-	Py2ArdMsgTypeID py2ardMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
+	Py2ArdMsgTypeID p2aMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
 	enum Ard2PyMsgTypeID
 	{
-		ARD2PY_NONE = 0
+		ARD2PY_NONE = 0,
+		RECEIVED_CONFIRMATION = 1
 	};
 	Ard2PyMsgTypeID ard2PyMsgTypeID = Ard2PyMsgTypeID::ARD2PY_NONE;
 	enum RunErrorType
@@ -161,10 +164,13 @@ private:
 	uint8_t _setupWalls();
 
 public:
-	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
+	uint8_t getEthercatComms();
 
 public:
-	uint8_t getProcEthercatComms();
+	uint8_t sendEthercatComms(Ard2PyMsgTypeID, uint8_t[] = nullptr, uint8_t = 0);
+
+public:
+	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
