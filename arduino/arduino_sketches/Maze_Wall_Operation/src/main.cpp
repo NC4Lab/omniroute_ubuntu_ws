@@ -49,14 +49,38 @@ void setup()
 
 	// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-	DB.printMsg("Uploading to Arduno Uno");
+	DB.printMsg("Finished uploading to Arduno Uno");
 #endif
 #ifdef __AVR_ATmega2560__
-	DB.printMsg("Uploading to Arduno Mega");
+	DB.printMsg("Finished uploading to Arduno Mega");
 #endif
 #ifdef ARDUINO_SAM_DUE
-	DB.printMsg("Uploading to Arduno Due");
+	DB.printMsg("Finished uploading to Arduno Due");
 #endif
+}
+
+//=============== LOOP ==================
+void loop()
+{
+
+	// Check ethercat coms
+	resp = W_OPR.getEthercatMessage();
+
+	// Wait for initialization message
+	if (!W_OPR.isEthercatInitialized)
+		return;
+
+	// Setup maze
+	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::START_SESSION)
+		W_OPR.resetMaze(false);
+
+	// Reset maze
+	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::END_SESSION)
+		W_OPR.resetMaze(true);
+
+	// Check for new wall move command
+	if (W_OPR.p2aTypeID == Wall_Operation::P2A_Type_ID::MOVE_WALLS)
+		W_OPR.moveWalls(); // move walls
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
@@ -72,29 +96,4 @@ void setup()
 	// uint8_t a_wall[2] = { 1, 3 };
 	// W_OPR.testWallOperation(0, a_wall, 2);
 	// while (true);//TEMP
-}
-
-//=============== LOOP ==================
-void loop()
-{
-
-	// Check ethercat coms
-	resp = W_OPR.getEthercatComms();
-
-	// Wait for initialization message
-	if (!W_OPR.isEthercatInitialized)
-		return;
-
-	// Setup maze
-	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::START_SESSION)
-		W_OPR.resetMaze(false);
-
-	// Reset maze
-	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::END_SESSION)
-		W_OPR.resetMaze(true);
-
-	// Check for new wall move command
-	if (W_OPR.p2aMsgTypeID == Wall_Operation::Py2ArdMsgTypeID::MOVE_WALLS)
-		W_OPR.moveWalls(); // move walls
-
 }

@@ -235,19 +235,6 @@
    <property name="title">
     <string>System Information</string>
    </property>
-   <widget class="QRadioButton" name="sysInitEtherBtn">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
-      <y>190</y>
-      <width>141</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Initialize Ethercat</string>
-    </property>
-   </widget>
    <widget class="QListWidget" name="ardListWidget">
     <property name="geometry">
      <rect>

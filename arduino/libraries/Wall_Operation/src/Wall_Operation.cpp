@@ -57,7 +57,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port_1">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_1">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
+void Wall_Operation::_makePMS(Pin_Map_Str &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
@@ -69,7 +69,7 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 /// </summary>
 /// <param name="p_port_2">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_2">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
+void Wall_Operation::_makePMS(Pin_Map_Str &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
@@ -84,7 +84,7 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+void Wall_Operation::_addPortPMS(Pin_Map_Str &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 
 	for (size_t wal_i = 0; wal_i < 8; wal_i++)
@@ -108,7 +108,7 @@ void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t 
 /// <param name="r_pms">Reference to PMS to be updated.</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct.</param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct.</param>
-void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+void Wall_Operation::_addPinPMS(Pin_Map_Str &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
 	{ // loop ports in struct arr
@@ -180,7 +180,7 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 /// Resets most entries in a dynamic PMS struct to there default values.
 /// </summary>
 /// <param name="r_pms">Reference to PMS struct to be reset</param>
-void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
+void Wall_Operation::_resetPMS(Pin_Map_Str &r_pms)
 {
 	r_pms.nPorts = 0;
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
@@ -203,7 +203,7 @@ void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
 /// <param name="r_pms1">PMS struct to use as the basis for entries in "r_pms2"</param>
 /// <param name="r_pms2">Reference to a PMS struct to update</param>
 /// <param name="wall_byte_mask">Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.</param>
-void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2, uint8_t wall_byte_mask)
+void Wall_Operation::_updateDynamicPMS(Pin_Map_Str r_pms1, Pin_Map_Str &r_pms2, uint8_t wall_byte_mask)
 {
 	for (size_t prt_i = 0; prt_i < r_pms1.nPorts; prt_i++)
 	{ // loop ports
@@ -245,7 +245,6 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// </summary>
 void Wall_Operation::resetMaze(uint8_t do_full_reset)
 {
-	_DB.printMsgTime("MAZE SETUP/RESET START");
 	uint8_t resp = 0;
 
 	// Setup cypress chips
@@ -281,8 +280,8 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 		}
 
 		// Reset message counters
-		p2aEtherMsgNumID = 0;
-		a2pEtherMsgNumID = 0;
+		p2aEtherMsgNum = 0;
+		a2pEtherMsgNum = 0;
 
 		// Reset Ethercat initialization flag
 		isEthercatInitialized = false;
@@ -291,7 +290,10 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 	// Test and reset all walls
 	resp = _setupWalls();
 
-	_DB.printMsgTime("MAZE SETUP/RESET DONE");
+	if (do_full_reset)
+		_DB.printMsgTime("Finished maze reset");
+	else
+		_DB.printMsgTime("Finished maze setup");
 }
 
 /// /// <summary>
@@ -419,13 +421,13 @@ uint8_t Wall_Operation::_setupWalls()
 /// Used to get incoming ROS ethercat msg data.
 /// </summary>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-uint8_t Wall_Operation::getEthercatComms()
+uint8_t Wall_Operation::getEthercatMessage()
 {
 	int msg_num_new;		  // incoming msg id number
 	uint8_t p2a_msg_type_id;  // incoming msg type id
 	uint8_t msg_arg_lng;	  // incoming msg argument length
 	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
-	int reg_dat[8];		  // buffer for reading ethercat registers
+	int reg_dat[8];			  // buffer for reading ethercat registers
 	uint8_t reg_i = 0;		  // index for reading ethercat registers
 
 	// Read esmacat buffer
@@ -433,42 +435,43 @@ uint8_t Wall_Operation::getEthercatComms()
 
 	// Check first register entry for msg id
 	msg_num_new = reg_dat[reg_i++];
-	U.i16[0] = reg_dat[reg_i++];
-	p2a_msg_type_id = U.i8[0];
-	msg_arg_lng = U.i8[1];
+	U.ui16[0] = reg_dat[reg_i++];
+	p2a_msg_type_id = U.ui8[0];
+	msg_arg_lng = U.ui8[1];
 
-	// Skip ethercat setup junk (255)
-	if (msg_num_new == Py2ArdMsgTypeID::JUNK || p2a_msg_type_id == Py2ArdMsgTypeID::JUNK)
+	// Skip ethercat setup junk (65535)
+	if (msg_num_new == 65535 || p2a_msg_type_id == 65535)
 		return 0;
 
 	// skip redundant messages and reset message type to NONE
-	if (msg_num_new == p2aEtherMsgNumID)
+	if (msg_num_new == p2aEtherMsgNum)
 	{
-		p2aMsgTypeID = Py2ArdMsgTypeID::PY2ARD_NONE;
+		p2aTypeID = P2A_Type_ID::P2A_NONE;
 		return 0;
 	}
 
 	// Check for skipped or out of sequence messages
-	if (msg_num_new - p2aEtherMsgNumID != 1)
+	if (msg_num_new - p2aEtherMsgNum != 1)
 	{
 		if (isEthercatInitialized)
 		{
-			if (runErrorTypeEnum != RunErrorType::MESSAGE_ID_DISORDERED) // only run once
+			if (errorType != Error_Type::MESSAGE_ID_DISORDERED) // only run once
 			{
-				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgNumID, msg_num_new);
-				p2aEtherMsgNumID = msg_num_new; // set id last to new value (need better error handeling here)
-				runErrorTypeEnum = RunErrorType::MESSAGE_ID_DISORDERED;
+				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgNum, msg_num_new);
+				p2aEtherMsgNum = msg_num_new; // set id last to new value (need better error handeling here)
+				errorType = Error_Type::MESSAGE_ID_DISORDERED;
 			}
 		}
 		return 1;
 	}
 
+	_DB.printMsgTime("\tNew ethercat message recieved: msg number=%d", msg_num_new);
+
 	// Update message id
-	p2aEtherMsgNumID = msg_num_new;
+	p2aEtherMsgNum = msg_num_new;
 
 	// Update dynamic enum instance
-	p2aMsgTypeID = static_cast<Wall_Operation::Py2ArdMsgTypeID>(p2a_msg_type_id);
-	_DB.printMsgTime("New ethercat message recieved: msg_id_new=%d", msg_num_new);
+	p2aTypeID = static_cast<Wall_Operation::P2A_Type_ID>(p2a_msg_type_id);
 
 	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
@@ -476,47 +479,52 @@ uint8_t Wall_Operation::getEthercatComms()
 		// Compute 16 bit to 8 bit conversion stuff
 		// bool is_even = msg_arg_lng % 2 == 0;
 		// uint8_t msg_arg_lng_round = is_even ? msg_arg_lng / 2 : msg_arg_lng / 2 + 1; // devide message length by 2 and round up
-		
 
 		// Loop through buffer
 		uint8_t msg_arg_lng_i16_round = ((int)msg_arg_lng + 1) / 2; // devide message length by 2 and round up
-		uint8_t i8_i = 0;
-		for (size_t i16_i = 0; i16_i < msg_arg_lng_i16_round; i16_i++)
+		uint8_t ui8_i = 0;
+		for (size_t ui16_i = 0; ui16_i < msg_arg_lng_i16_round; ui16_i++)
 		{
 			// Get next entry
-			U.i16[0] = reg_dat[reg_i++];
+			U.ui16[0] = reg_dat[reg_i++];
 
 			// Loop through bytes in given 16 bit entry and store
 			for (size_t b_ii = 0; b_ii < 2; b_ii++)
-				msg_arg_data[i8_i++] = U.i8[b_ii];
+				msg_arg_data[ui8_i++] = U.ui8[b_ii];
 		}
 	}
 
 	// Check for footer
-	U.i16[0] = reg_dat[reg_i++];
-	if (U.i8[0] != 254 && U.i8[1] != 254)
+	U.ui16[0] = reg_dat[reg_i++];
+	if (U.ui8[0] != 254 && U.ui8[1] != 254)
 	{
-		_DB.printMsgTime("!!Missing message footer!!");
-		runErrorTypeEnum = RunErrorType::MISSING_FOOTER;
+		_DB.printMsgTime("\t!!Missing message footer!!");
+		errorType = Error_Type::MISSING_FOOTER;
 		return 1;
 	}
 
 	// HANDLE MESSAGE TYPE
-	switch (p2aMsgTypeID)
+	switch (p2aTypeID)
 	{
 
+	// 	DUMMY
+	case P2A_Type_ID::DUMMY:
+		_DB.printMsgTime("\DUMMY");
+		break;
+
 	// 	START_SESSION
-	case Py2ArdMsgTypeID::START_SESSION:
+	case P2A_Type_ID::START_SESSION:
 		if (!isEthercatInitialized)
 		{
-			_DB.printMsgTime("START_SESSION: ethercat comms initialized");
+			_DB.printMsgTime("\tSTART_SESSION");
+			_DB.printMsgTime("\tEthercat comms initialized");
 			isEthercatInitialized = true;
 		}
 
 		break;
 
 	// 	MOVE_WALLS
-	case Py2ArdMsgTypeID::MOVE_WALLS:
+	case P2A_Type_ID::MOVE_WALLS:
 
 		// Loop through arguments
 		for (size_t cham_i = 0; cham_i < msg_arg_lng; cham_i++)
@@ -529,15 +537,16 @@ uint8_t Wall_Operation::getEthercatComms()
 			// Update move flag
 			C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
 
-			_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
-			_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
-			_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
+			_DB.printMsgTime("\tMOVE_WALLS");
+			_DB.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
+			_DB.printMsgTime("\t\t\tup=%s", _DB.bitIndStr(wall_u_b));
+			_DB.printMsgTime("\t\t\tdown=%s", _DB.bitIndStr(wall_d_b));
 		}
 
 		break;
 
 	// 	END_SESSION
-	case Py2ArdMsgTypeID::END_SESSION:
+	case P2A_Type_ID::END_SESSION:
 		break;
 
 	default:
@@ -545,7 +554,7 @@ uint8_t Wall_Operation::getEthercatComms()
 	}
 
 	// Send confirmation message
-	sendEthercatComms(Ard2PyMsgTypeID::RECEIVED_CONFIRMATION);
+	sendEthercatMessage(A2P_Type_ID::RECEIVED_CONFIRMED);
 
 	// Return new message flag
 	return 0;
@@ -554,45 +563,44 @@ uint8_t Wall_Operation::getEthercatComms()
 /// <summary>
 /// Used to send outgoing ROS ethercat msg data signalling which walls to raise.
 /// </summary>
-
 /// </remarks>
-/*
-	The outgoing register is structured arr[8] of 16 bit integers
-	with all but first 16 bit value seperated into bytes
-	[0]: message number
-		i16 [0-65535]
-	[1]: message info
-		b0 message type [0-255] [see: MsgTypeID]
-		b1 arg length [0-255] [number of message args in bytes]
-	[none or 2:2-6] data
-		message confirmation
-
-	[x-7]: footer
-		b1=254
-		b0=254
-*/
+///	The outgoing register is structured arr[8] of 16 bit integers
+///	with all but first 16 bit value seperated into bytes
+///	i16[0]: a2p message number [0-65535]
+///	i16[1]: message info
+///		i8[0] a2p message type [0-255] [see: MsgTypeID]
+///		i8[1] arg length [0-255] [number of message args in bytes]
+///	i16[none or 2:2-6] message data/arguments
+///		i16[2-3] message confirmation
+///			i16[2] p2a message number [0-65535]
+///			i16[2] p2a message type [0-65535]
+///	i16[x-7]: footer
+///		i8[0] [254]
+///		i8[1] [254]
 /// </remarks>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-uint8_t Wall_Operation::sendEthercatComms(Ard2PyMsgTypeID a2p_msg_type_id, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type_id, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
-	a2pEtherMsgNumID = p2aEtherMsgNumID < 65535 ? p2aEtherMsgNumID + 1 : 1;
+	a2pEtherMsgNum = p2aEtherMsgNum < 65535 ? p2aEtherMsgNum + 1 : 1;
+	_DB.printMsgTime("\tNew ethercat message sent: msg number=%d", a2pEtherMsgNum);
 
 	// Clear union
-	U.i64[0] = 0;
-	U.i64[1] = 0;
+	U.ui64[0] = 0;
+	U.ui64[1] = 0;
 
 	// HANDLE MESSAGE TYPE
 	switch (a2p_msg_type_id)
 	{
 
-	// 	RECEIVED_CONFIRMATION
-	case Ard2PyMsgTypeID::RECEIVED_CONFIRMATION:
+	// 	RECEIVED_CONFIRMED
+	case A2P_Type_ID::RECEIVED_CONFIRMED:
+		_DB.printMsgTime("\tRECEIVED_CONFIRMED");
 		msg_arg_lng = 2;
-		U.i16[0] = a2pEtherMsgNumID;					 // a2p message number
-		U.i8[2] = static_cast<uint8_t>(a2p_msg_type_id); // message type
-		U.i8[3] = msg_arg_lng;							 // arg length
-		U.i16[3] = p2aEtherMsgNumID;					 // p2a message number
+		U.ui16[0] = a2pEtherMsgNum;						  // a2p message number
+		U.ui8[2] = static_cast<uint8_t>(a2p_msg_type_id); // message type
+		U.ui8[3] = msg_arg_lng;							  // arg length
+		U.ui16[3] = p2aEtherMsgNum;						  // p2a message number
 
 		break;
 
@@ -601,35 +609,18 @@ uint8_t Wall_Operation::sendEthercatComms(Ard2PyMsgTypeID a2p_msg_type_id, uint8
 	}
 
 	// Add footer
-    uint8_t i8_i = 2 + msg_arg_lng % 2 == 0 ? msg_arg_lng : msg_arg_lng +1; // round up to nearest even value and add 2
-	U.i8[i8_i+1] = 254;
-	U.i8[i8_i+2] = 254;
+	uint8_t ui8_i = 2 + msg_arg_lng % 2 == 0 ? msg_arg_lng : msg_arg_lng + 1; // round up to nearest even value and add 2
+	U.ui8[ui8_i + 1] = 254;
+	U.ui8[ui8_i + 2] = 254;
 
 	// Send message
 	for (size_t i = 0; i < 8; i++)
 	{
-		ESlave.write_reg_value(0, U.i16[0]);
+		ESlave.write_reg_value(0, U.ui16[0]);
 	}
 }
 
 //+++++++++++++ Runtime Methods ++++++++++++++
-
-/// <summary>
-/// Option to change the PWM duty cycle for a given wall.
-/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
-/// Could be useful if some walls are running at different speeds.
-/// </summary>
-/// <param name="cham_i">Index of the chamber to set [0-48]</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
-{
-	if (cham_i > 48 || wall_i > 7 || duty > 255)
-		return -1;
-	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
-	return resp;
-}
 
 /// <summary>
 /// Option to speicify a given set of walls to move programmatically as an
@@ -682,12 +673,29 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
 	C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b;		// store values in bit flag
 
-	_DB.printMsgTime("New manual message recieved", cham_i, _DB.arrayStr(p_wi, s));
-	_DB.printMsgTime("\tset move walls: chamber=%d", cham_i);
-	_DB.printMsgTime("\t\tup=%s", _DB.bitIndStr(wall_u_b));
-	_DB.printMsgTime("\t\tdown=%s", _DB.bitIndStr(wall_d_b));
+	_DB.printMsgTime("\tRunning manual wall move command", cham_i, _DB.arrayStr(p_wi, s));
+	_DB.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
+	_DB.printMsgTime("\t\t\tup=%s", _DB.bitIndStr(wall_u_b));
+	_DB.printMsgTime("\t\t\tdown=%s", _DB.bitIndStr(wall_d_b));
 
 	return 0;
+}
+
+/// <summary>
+/// Option to change the PWM duty cycle for a given wall.
+/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
+/// Could be useful if some walls are running at different speeds.
+/// </summary>
+/// <param name="cham_i">Index of the chamber to set [0-48]</param>
+/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
+/// <param name="duty">PWM duty cycle [0-255].</param>
+/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
+{
+	if (cham_i > 48 || wall_i > 7 || duty > 255)
+		return -1;
+	uint8_t resp = _C_COM.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
+	return resp;
 }
 
 /// <summary>
@@ -706,7 +714,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	uint8_t do_move_check = 1;					// will track if all chamber movement done
 	uint32_t ts_timeout = millis() + dt_timout; // set timout
 
-	_DB.printMsgTime("Moving walls");
+	_DB.printMsgTime("\tMoving walls");
 
 	// Update dynamic port/pin structs
 	_DB.dtTrack(1); // start timer
@@ -734,9 +742,9 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 		// Print walls being moved
 		if (wall_up_byte_mask > 0)
-			_DB.printMsgTime("\tstart move up: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_up_byte_mask));
+			_DB.printMsgTime("\t\tstart move up: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_up_byte_mask));
 		if (wall_down_byte_mask > 0)
-			_DB.printMsgTime("\tstart move down: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_down_byte_mask));
+			_DB.printMsgTime("\t\tstart move down: chamber=%d walls=%s", cham_i, _DB.bitIndStr(wall_down_byte_mask));
 	}
 
 	// Check IO pins
@@ -754,10 +762,8 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 			uint8_t io_all_reg[14];											  // zero out union values
 			resp = _C_COM.ioReadReg(C[cham_i].addr, REG_GI0, io_all_reg, 14); // read through all input registers (6 active, 2 unused) and the 6 active output registers
 			if (resp != 0)
-			{
-				forceStopWalls();
-				run_error = 1;
-			}																														// force stop and set flag
+				run_error = 1; // set error flag
+
 			uint8_t io_in_reg[6] = {io_all_reg[0], io_all_reg[1], io_all_reg[2], io_all_reg[3], io_all_reg[4], io_all_reg[5]};		// copy out values
 			uint8_t io_out_reg[6] = {io_all_reg[8], io_all_reg[9], io_all_reg[10], io_all_reg[11], io_all_reg[12], io_all_reg[13]}; // copy out values
 			uint8_t io_out_mask[6] = {0};
@@ -796,17 +802,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 					bitWrite(C[cham_i].bitWallMoveFlag, wall_n, 0); // reset wall bit in flag
 					f_do_pwm_update = 1;							// flag to update pwm
 
-					_DB.printMsgTime("\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", cham_i, wall_n, _DB.dtTrack());
-
-					// // TEMP
-					// if (wall_n == 0)
-					// {
-					// 	uint8_t bo_2;
-					// 	uint8_t wall = 0;
-					// 	_C_COM.ioReadPin(C[0].addr, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-					// 	_DB.printMsgTime("#### wall=%d port=%d pin=%d io=%d", wall, wms.ioUp[0][wall], wms.ioUp[1][wall], bo_2);
-					// 	_DB.printRegByte(C[cham_i].pmsDynPWM.bitMaskLong, io_in_reg, 6);
-					// }
+					_DB.printMsgTime("\t\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", cham_i, wall_n, _DB.dtTrack());
 				}
 			}
 
@@ -815,10 +811,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 			{																			 // check for update flag
 				resp = _C_COM.ioWriteReg(C[cham_i].addr, io_out_mask, 6, 0, io_out_reg); // include last reg read and turn off pwms
 				if (resp != 0)
-				{
-					forceStopWalls();
-					run_error = 1;
-				} // force stop and set flag
+					run_error = 1; // set error flag
 			}
 		}
 	}
@@ -846,7 +839,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 				// Flag error for debugging and to stop all wall movement
 				uint8_t wall_n = C[cham_i].pmsDynIO.wall[prt_i][pin_i]; // get wall number
 				run_error = is_timedout && run_error != 1 ? 2 : 3;		// set error flag
-				_DB.printMsgTime("\t!!movement failed: chamber=%d wall=%d cause=%s dt=%s!!", cham_i, wall_n,
+				_DB.printMsgTime("\t\t!!movement failed: chamber=%d wall=%d cause=%s dt=%s!!", cham_i, wall_n,
 								 run_error == 1 ? "i2c" : run_error == 2 ? "timedout"
 																		 : "unknown",
 								 _DB.dtTrack());
@@ -859,7 +852,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	if (run_error != 0)
 		resp = forceStopWalls();
 	else
-		_DB.printMsgTime("Finished all movement");
+		_DB.printMsgTime("\tFinished all movement");
 
 	return run_error; // return error
 }
@@ -871,7 +864,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 uint8_t Wall_Operation::forceStopWalls()
 {
 	uint8_t resp = 0;
-	_DB.printMsgTime("!!Running forse stop!!");
+	// TEMP _DB.printMsgTime("\t!!Running forse stop!!");
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{																		   // loop chambers
 		resp = _C_COM.ioWriteReg(C[cham_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
@@ -1109,7 +1102,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 /// Used for debugging to print out all fields of a PMS struct.
 /// </summary>
 /// <param name="pms">PMS struct to print</param>
-void Wall_Operation::_printPMS(PinMapStruct pms)
+void Wall_Operation::_printPMS(Pin_Map_Str pms)
 {
 	char buff[250];
 	sprintf(buff, "\nIO/PWM nPorts=%d__________________", pms.nPorts);
