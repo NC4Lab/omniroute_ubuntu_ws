@@ -68,8 +68,6 @@ public:
 public:
 	void printRegByte(uint8_t[], uint8_t[], uint8_t);
 
-public:
-	void TEMP_foo(S_VEC<uint8_t>);
 };
 
 #endif

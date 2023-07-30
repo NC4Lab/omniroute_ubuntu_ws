@@ -17,8 +17,6 @@
 #include "Cypress_Com.h"
 #include "Esmacatshield.h"
 
-// TEMP COMMIT TEST
-
 /// <summary>
 /// This class handles the actual opperation of the maze walls and Ethercat coms.
 /// </summary>
@@ -73,7 +71,7 @@ public:
 	Pin_Map_Str pmsDownIO;	///< io down pins
 	Pin_Map_Str pmsUpPWM;	///< pwm up pins
 	Pin_Map_Str pmsDownPWM; ///< pwm down pins
-	struct Chamber_Str		///< struct for tracking each chamber
+	struct Chamber_Struct		///< struct for tracking each chamber
 	{
 		uint8_t num = 0;			   ///< chamber number
 		uint8_t addr = 0;			   ///< chamber I2C address
@@ -85,7 +83,7 @@ public:
 		Pin_Map_Str pmsDynPWM;		   ///< reusable dynamic instance for active PWM
 		Pin_Map_Str pmsDynIO;		   ///< reusable dynamic instance for active IO
 	};
-	Chamber_Str C[9]; ///< initialize with max number of chambers for 3x3
+	Chamber_Struct C[9]; ///< initialize with max number of chambers for 3x3
 	union Union
 	{					  ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
 		byte ui8[16];	  ///< (byte) 1 byte
@@ -93,31 +91,55 @@ public:
 		uint64_t ui64[2]; ///< (uint64_t) 8 byte
 	};
 	Union U;
-	uint8_t isEthercatInitialized = false; ///< flag to track setup/initialization of ethercat coms
-	int p2aEtherMsgID = 0;				   ///< tracks the received ethercat message number
-	int a2pEtherMsgID = 0;				   ///< tracks the sent ethercat message number
-	enum P2A_Type_ID
+	uint8_t isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
+	int p2aMsgID = 0;				 ///< tracks the received ethercat message number
+	int a2pMsgID = 0;				 ///< tracks the sent ethercat message number
+	enum P2A_Msg_Type
 	{
 		P2A_NONE = 0,
-		MOVE_WALLS = 1,
+		P2A_HANDSHAKE = 64,
+		CONFIRM_A2P_MESSAGE = 65,
+		MOVE_WALLS = 2,
 		START_SESSION = 128,
 		END_SESSION = 129,
-		ERROR = 254
 	};
-	P2A_Type_ID p2aEtherMsgType = P2A_Type_ID::P2A_NONE;
-	enum A2P_Type_ID
+	P2A_Msg_Type p2aMsgType = P2A_Msg_Type::P2A_NONE;
+	// const char p2aethermsgtypeStr[5][20] = {
+	// 	"P2A_NONE",
+	// 	"P2A_HANDSHAKE",
+	// 	"MOVE_WALLS",
+	// 	"START_SESSION",
+	// 	"END_SESSION"};
+	enum A2P_Msg_Type
 	{
 		A2P_NONE = 0,
-		CONFIRM_RECEIVED = 128
+		A2P_HANDSHAKE = 64,
+		CONFIRM_P2A_MESSAGE = 65,
+		ERROR = 128
 	};
-	A2P_Type_ID a2pEtherMsgType = A2P_Type_ID::A2P_NONE;
+	A2P_Msg_Type a2pMsgType = A2P_Msg_Type::A2P_NONE;
 	enum Error_Type
 	{
 		ERROR_NONE = 0,
 		MESSAGE_ID_DISORDERED = 1,
-		MISSING_FOOTER = 2
+		NO_MESSAGE_TYPE_MATCH = 2,
+		REGISTER_LEFTOVERS = 3,
+		MISSING_FOOTER = 4
 	};
-	Error_Type errorType = Error_Type::ERROR_NONE;
+	Error_Type p2aErrType = Error_Type::ERROR_NONE;
+	struct Chamber_Struct ///< struct for tracking each chamber
+	{
+		uint8_t num = 0;			   ///< chamber number
+		uint8_t addr = 0;			   ///< chamber I2C address
+		uint8_t bitWallMoveFlag = 0;   ///< bitwise variable, current wall active flag [0:inactive, 1:active]
+		uint8_t bitWallPosition = 0;   ///< bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallErrorFlag = 0;  ///< bitwise variable, flag move errors for a given wall
+		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be updated
+		uint8_t bitOutRegLast[6];	   ///< stores output registry values
+		Pin_Map_Str pmsDynPWM;		   ///< reusable dynamic instance for active PWM
+		Pin_Map_Str pmsDynIO;		   ///< reusable dynamic instance for active IO
+	};
+	Chamber_Struct C[9]; ///< initialize with max number of chambers for 3x3
 
 private:
 	Maze_Debug _DB;		  ///< local instance of Maze_Debug class
@@ -163,10 +185,16 @@ private:
 	uint8_t _setupWalls();
 
 public:
+	void sendEthercatMessage(A2P_Msg_Type, uint8_t[] = nullptr, uint8_t = 0);
+
+public:
 	uint8_t getEthercatMessage();
 
 public:
-	void sendEthercatMessage(A2P_Type_ID, uint8_t[] = nullptr, uint8_t = 0);
+	void executeEthercatCommand();
+
+public:
+	void handleHandshake();
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
@@ -194,7 +222,6 @@ public:
 
 public:
 	void printEtherReg(uint8_t, int[] = nullptr);
-
 };
 
 #endif

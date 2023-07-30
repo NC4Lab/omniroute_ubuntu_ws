@@ -66,12 +66,11 @@ void setup()
 	// while (true);
 
 	// // TEMP
-	// while(true)
+	// while (true)
 	// {
-	// 	W_OPR.printEtherReg(0);
 	// 	delay(1000);
+	// 	W_OPR.printEtherReg(0);
 	// }
-
 }
 
 //=============== LOOP ==================
@@ -81,21 +80,19 @@ void loop()
 	// Check ethercat coms
 	resp = W_OPR.getEthercatMessage();
 
-	// Wait for initialization message
-	if (!W_OPR.isEthercatInitialized)
+	// Execute ethercat command
+	if (resp == 0) // check for new message
+	{
+		// Send confirmation message
+		W_OPR.sendEthercatMessage(W_OPR.A2P_Msg_Type::CONFIRM_P2A_MESSAGE);
+
+		// Execute new command
+		W_OPR.executeEthercatCommand();
+	}
+
+	// Handle for initialization message
+	if (W_OPR.isHandshakeDone)
 		return;
-
-	// Setup maze
-	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::START_SESSION)
-		//W_OPR.resetMaze(false);
-
-	// Reset maze
-	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::END_SESSION)
-		//W_OPR.resetMaze(true);
-
-	// Check for new wall move command
-	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::MOVE_WALLS)
-		//W_OPR.moveWalls(); // move walls
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
@@ -110,5 +107,4 @@ void loop()
 	// // Test wall opperation
 	// uint8_t a_wall[2] = { 1, 3 };
 	// W_OPR.testWallOperation(0, a_wall, 2);
-	// while (true);//TEMP
 }

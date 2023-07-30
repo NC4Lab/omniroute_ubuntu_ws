@@ -12,6 +12,7 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
+from python_qt_binding.QtCore import QObject
 
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem
 from PyQt5.QtCore import Qt, QRectF, QCoreApplication
@@ -63,164 +64,33 @@ WALL_MAP = {
 }
 
 #ENUM: Enum for ethercat python to arduino message type ID
-class P2A_Type_ID(Enum):
+class P2A_Msg_Type(Enum):
     P2A_NONE = 0
-    MOVE_WALLS = 1
+    HANDSHAKE = 64
+    CONFIRM_A2P_MESSAGE = 65
+    MOVE_WALLS = 2
     START_SESSION = 128
     END_SESSION = 129
 
 #ENUM: Enum for ethercat arduino to python message type ID
-class A2P_Type_ID(Enum):
+class A2P_Msg_Type(Enum):
     A2P_NONE = 0
-    CONFIRM_RECEIVED = 128
-    ERROR = 254
+    CONFIRM_P2A_MESSAGE = 65
+    ERROR = 128
 
 #ENUM: Enum for tracking errors
 class Error_Type(Enum):
     ERROR_NONE = 0
     MESSAGE_ID_DISORDERED = 1
-    MISSING_FOOTER = 2
+    NO_MESSAGE_TYPE_MATCH = 2
+    REGISTER_LEFTOVERS = 3
+    MISSING_FOOTER = 4
 
 # CLASS: Maze_Plot to plot the maze
 class Maze_Plot(QGraphicsView):
 
-    # CLASS: Wall
-    class Wall(QGraphicsItemGroup):
-        def __init__(self, p0=(0, 0), p1=(1, 1), wall_width=-1, chamber_num=-1, wall_num=-1, state=False, label_pos=None, parent=None):
-            super().__init__(parent)
-
-            self.chamber_num = chamber_num
-            self.wall_num = wall_num
-            self.state = state
-
-            self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
-            self.upPen = QPen(Qt.red)
-            self.upPen.setWidth(wall_width)
-            self.downPen = QPen(Qt.gray)
-            self.downPen.setWidth(wall_width)
-
-            self.setState(state)
-
-            self.addToGroup(self.line)
-
-            # Plot wall numbers
-            self.label = QGraphicsTextItem(str(wall_num))
-            font_size = wall_width
-            self.label.setFont(QFont("Arial", font_size, QFont.Bold))
-
-            if label_pos == None:
-                label_pos = ((p0[0]+p1[0])/2, (p0[1]+p1[1])/2)
-            self.label.setPos(label_pos[0], label_pos[1])
-            self.addToGroup(self.label)
-
-            Maze_Plot.centerText(self.label, label_pos[0], label_pos[1])
-
-        def mousePressEvent(self, event):
-            if event.button() == Qt.LeftButton:
-                #rospy_log_col('INFO', "\tchamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
-                self.setState(not self.state)
-                #wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
-                if self.state: # add list entry
-                    Maze_Plot.CW_LIST.addWall(self.chamber_num, self.wall_num)
-                else: # remove list entry
-                    Maze_Plot.CW_LIST.removeWall(self.chamber_num, self.wall_num)
-
-        def setState(self, state: bool):
-            if state:
-                self.line.setPen(self.upPen)
-            else:
-                self.line.setPen(self.downPen)
-
-            self.state = state
-
-    # CLASS: Chamber
-    class Chamber(QGraphicsItemGroup):
-        def __init__(self, center_x, center_y, chamber_width, chamber_num, wall_width, parent=None):
-            super().__init__(parent)
-            self.center_x = center_x
-            self.center_y = center_y
-            self.chamber_width = chamber_width
-            self.chamber_num = chamber_num
-
-            # Plot backround chamber octogons
-            octagon_vertices = self.getOctagonVertices(center_x, center_y, chamber_width/2, math.radians(22.5))
-            octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
-            self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
-            self.octagon.setBrush(QBrush(QColor(200, 200, 200)))
-            self.addToGroup(self.octagon)
-
-            # Plot cahamber numbers
-            self.label = QGraphicsTextItem(str(chamber_num))
-            font_size = wall_width*2
-            self.label.setFont(QFont("Arial", font_size, QFont.Bold))
-            self.addToGroup(self.label)
-
-            # Center the text over the chamber's center
-            Maze_Plot.centerText(self.label, center_x, center_y)
-
-            wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
-            wall_vertices_0 = self.getOctagonVertices(
-                center_x, center_y, chamber_width/2, -math.pi/8+wall_angular_offset)
-            wall_vertices_1 = self.getOctagonVertices(
-                center_x, center_y, chamber_width/2, -math.pi/8-wall_angular_offset)
-            wall_label_pos = self.getOctagonVertices(
-                center_x, center_y, chamber_width/3, 0)
-
-            self.walls = [Maze_Plot.Wall(p0=wall_vertices_0[k], 
-                            p1=wall_vertices_1[k+1], 
-                            chamber_num=chamber_num,
-                            wall_num=k, 
-                            wall_width=wall_width, 
-                            label_pos=wall_label_pos[k])
-                        for k in range(8)]
-
-        def getOctagonVertices(self, x, y, w, offset):
-            vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k)))
-                            for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
-            return vertices_list
-
-        def mousePressEvent(self, event):
-            if event.button() == Qt.LeftButton:
-                pass
-                #rospy_log_col('INFO', "\tchamber %d clicked in UI" % self.chamber_num)
-
-    # CLASS: Maze
-    class Maze:
-        def __init__(self, num_rows, num_cols, chamber_width, wall_width):
-
-            self.num_rows = num_rows
-            self.num_cols = num_cols
-            self.chamber_width = chamber_width
-
-            maze_width = self.chamber_width * self.num_cols
-            maze_height = self.chamber_width * self.num_rows
-            half_width = chamber_width/2
-            x_pos = np.linspace(half_width, int(maze_width - half_width),  num_cols)
-            y_pos = np.linspace(half_width, int(maze_height - half_width),  num_rows)
-
-            self.chambers = []
-            k = 0
-            for y in y_pos:
-                for x in x_pos:
-                    self.chambers.append(
-                        Maze_Plot.Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
-                    k = k+1
-
-        def updateWalls(self):
-            cw_list = Maze_Plot.CW_LIST.wall_config_list 
-
-            for chamber in self.chambers:
-                for wall in chamber.walls:
-                    # Check if there is an entry for the current chamber and wall in Maze_Plot.CW_LIST
-                    chamber_num = chamber.chamber_num
-                    wall_num = wall.wall_num
-                    entry_found = any(chamber_num == entry[0] and wall_num in entry[1] for entry in cw_list)
-
-                    # Set the wall state based on whether the entry is found or not
-                    wall.setState(entry_found)
-
-    # CLASS: The shared CW_LIST class to store the wall configuration 
-    class CW_LIST:
+    # CLASS: The shared WConf storage class to store the wall configuration 
+    class WConf:
         wall_config_list = []
 
         @classmethod
@@ -302,6 +172,142 @@ class Maze_Plot(QGraphicsView):
         def __str__(self):
             return str(self.wall_config_list)
 
+    # CLASS: Wall
+    class Wall(QGraphicsItemGroup):
+        def __init__(self, p0=(0, 0), p1=(1, 1), wall_width=-1, chamber_num=-1, wall_num=-1, state=False, label_pos=None, parent=None):
+            super().__init__(parent)
+
+            self.chamber_num = chamber_num
+            self.wall_num = wall_num
+            self.state = state
+
+            self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
+            self.upPen = QPen(Qt.red)
+            self.upPen.setWidth(wall_width)
+            self.downPen = QPen(Qt.gray)
+            self.downPen.setWidth(wall_width)
+
+            self.setState(state)
+
+            self.addToGroup(self.line)
+
+            # Plot wall numbers
+            self.label = QGraphicsTextItem(str(wall_num))
+            font_size = wall_width
+            self.label.setFont(QFont("Arial", font_size, QFont.Bold))
+
+            if label_pos == None:
+                label_pos = ((p0[0]+p1[0])/2, (p0[1]+p1[1])/2)
+            self.label.setPos(label_pos[0], label_pos[1])
+            self.addToGroup(self.label)
+
+            Maze_Plot.centerText(self.label, label_pos[0], label_pos[1])
+
+        def mousePressEvent(self, event):
+            if event.button() == Qt.LeftButton:
+                #rospy_log_col('INFO', "\tchamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
+                self.setState(not self.state)
+                #wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
+                if self.state: # add list entry
+                    Maze_Plot.WConf.addWall(self.chamber_num, self.wall_num)
+                else: # remove list entry
+                    Maze_Plot.WConf.removeWall(self.chamber_num, self.wall_num)
+
+        def setState(self, state: bool):
+            if state:
+                self.line.setPen(self.upPen)
+            else:
+                self.line.setPen(self.downPen)
+
+            self.state = state
+
+    # CLASS: Chamber
+    class Chamber(QGraphicsItemGroup):
+        def __init__(self, center_x, center_y, chamber_width, chamber_num, wall_width, parent=None):
+            super().__init__(parent)
+            self.center_x = center_x
+            self.center_y = center_y
+            self.chamber_width = chamber_width
+            self.chamber_num = chamber_num
+
+            # Plot backround chamber octogons
+            octagon_vertices = self.getOctagonVertices(center_x, center_y, chamber_width/2, math.radians(22.5))
+            octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
+            self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
+            self.octagon.setBrush(QBrush(QColor(200, 200, 200)))
+            self.addToGroup(self.octagon)
+
+            # Plot cahamber numbers
+            self.label = QGraphicsTextItem(str(chamber_num))
+            font_size = wall_width*2
+            self.label.setFont(QFont("Arial", font_size, QFont.Bold))
+            self.addToGroup(self.label)
+
+            # Center the text over the chamber's center
+            Maze_Plot.centerText(self.label, center_x, center_y)
+
+            wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
+            wall_vertices_0 = self.getOctagonVertices(
+                center_x, center_y, chamber_width/2, -math.pi/8+wall_angular_offset)
+            wall_vertices_1 = self.getOctagonVertices(
+                center_x, center_y, chamber_width/2, -math.pi/8-wall_angular_offset)
+            wall_label_pos = self.getOctagonVertices(
+                center_x, center_y, chamber_width/3, 0)
+
+            self.walls = [Maze_Plot.Wall(p0=wall_vertices_0[k], 
+                            p1=wall_vertices_1[k+1], 
+                            chamber_num=chamber_num,
+                            wall_num=k, 
+                            wall_width=wall_width, 
+                            label_pos=wall_label_pos[k])
+                        for k in range(8)]
+
+        def getOctagonVertices(self, x, y, w, offset):
+            vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k)))
+                            for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
+            return vertices_list
+
+        def mousePressEvent(self, event):
+            if event.button() == Qt.LeftButton:
+                pass
+                #rospy_log_col('INFO', "\tchamber %d clicked in UI" % self.chamber_num)
+
+    # CLASS: Maze
+    class Maze:
+
+        def __init__(self, num_rows, num_cols, chamber_width, wall_width):
+
+            self.num_rows = num_rows
+            self.num_cols = num_cols
+            self.chamber_width = chamber_width
+
+            maze_width = self.chamber_width * self.num_cols
+            maze_height = self.chamber_width * self.num_rows
+            half_width = chamber_width/2
+            x_pos = np.linspace(half_width, int(maze_width - half_width),  num_cols)
+            y_pos = np.linspace(half_width, int(maze_height - half_width),  num_rows)
+
+            self.chambers = []
+            k = 0
+            for y in y_pos:
+                for x in x_pos:
+                    self.chambers.append(
+                        Maze_Plot.Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
+                    k = k+1
+
+        def updateWalls(self):
+            cw_list = Maze_Plot.WConf.wall_config_list 
+
+            for chamber in self.chambers:
+                for wall in chamber.walls:
+                    # Check if there is an entry for the current chamber and wall in Maze_Plot.WConf
+                    chamber_num = chamber.chamber_num
+                    wall_num = wall.wall_num
+                    entry_found = any(chamber_num == entry[0] and wall_num in entry[1] for entry in cw_list)
+
+                    # Set the wall state based on whether the entry is found or not
+                    wall.setState(entry_found)
+
     # FUNCTION: Center plotted text 
     def centerText(text_item, center_x, center_y):
         # Set the text item's position relative to its bounding rectangle
@@ -323,13 +329,16 @@ class Interface(Plugin):
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
     # Define class variables
-    p2aEtherMsgID = 0 # initialize python to arduino message number
-    a2pEtherMsgID = 0 # initialize arduino to python message number
+    p2aMsgID = 0 # initialize python to arduino message number
+    a2pMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    a2pEtherMsgType = A2P_Type_ID.A2P_NONE
-    p2aEtherMsgType = P2A_Type_ID.P2A_NONE
+    a2pMsgType = A2P_Msg_Type.A2P_NONE
+    p2aMsgType = P2A_Msg_Type.P2A_NONE
     errorType = Error_Type.ERROR_NONE
+
+    # Handshake flag
+    isHandshakeDone = False
 
     # Dummy variables for testing
     dummy_1 = 0
@@ -456,15 +465,20 @@ class Interface(Plugin):
         self._widget.sysQuiteBtn.clicked.connect(self.qt_callback_sysQuiteBtn_clicked)
         
         # QT timer setup for UI updating
-        self.timer_ui_update = QTimer()
-        self.timer_ui_update.timeout.connect(self.timer_callback_ui_update)
-        self.timer_ui_update.start(20) # set incriment (ms)
+        self.timer_updateUI = QTimer()
+        self.timer_updateUI.timeout.connect(self.timer_callback_updateUI)
+        self.timer_updateUI.start(20) # set incriment (ms)
 
-        # QT timer setup for sending initialization message after a delay
-        self.timer_send_start = QTimer()
-        self.timer_send_start.timeout.connect(self.timer_callback_send_start)
-        self.timer_send_start.setSingleShot(True)  # Run only once
-        self.timer_send_start.start(500) # (ms)
+        # QT timer for sending initial handshake message after a delay
+        self.timer_sendHandshake = QTimer()
+        self.timer_sendHandshake.timeout.connect(self.timer_callback_sendHandshake)
+        self.timer_sendHandshake.setSingleShot(True)  # Run only once
+        self.timer_sendHandshake.start(1000) # (ms)
+
+        # QT timer for checking initial handshake message after a delay
+        self.timer_checkHandshake = QTimer()
+        self.timer_checkHandshake.timeout.connect(self.timer_callback_checkHandshake)
+        self.timer_checkHandshake.setSingleShot(True)  # Run only once
 
         # ROS publisher 
         #wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1) 
@@ -514,14 +528,27 @@ class Interface(Plugin):
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
         pass
 
-    def timer_callback_ui_update(self):
+    def timer_callback_updateUI(self):
         # Update graphics
         self.scene.update()
         self._widget.plotMazeView.update()
 
-    def timer_callback_send_start(self):
-        # Send START_SESSION message to arduino
-        self.sendEthercatMessage(P2A_Type_ID.START_SESSION)
+    def timer_callback_sendHandshake(self):
+        # Send HANDSHAKE message to arduino
+        self.sendEthercatMessage(P2A_Msg_Type.HANDSHAKE)
+        # Start timer to check for HANDSHAKE message confirm recieved
+        self.timer_checkHandshake.start(1000)
+
+    def timer_callback_checkHandshake(self):
+        # Check for HANDSHAKE message confirm recieved isHandshakeDone
+        if self.isHandshakeDone == False:
+            # Send HANDSHAKE message to arduino again
+            self.sendEthercatMessage(P2A_Msg_Type.HANDSHAKE)
+            # Restart check timer
+            self.timer_checkHandshake.start(1000)
+        else:
+            # Send START message to arduino
+            self.sendEthercatMessage(P2A_Msg_Type.START_SESSION)
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
@@ -566,7 +593,7 @@ class Interface(Plugin):
         self.loadFromCSV(-1)
 
     def qt_callback_plotClearBtn_clicked(self):
-        Maze_Plot.CW_LIST.Reset() # reset all values in list
+        Maze_Plot.WConf.Reset() # reset all values in list
         self.maze.updateWalls() # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
@@ -586,13 +613,13 @@ class Interface(Plugin):
             rospyLogCol('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(file_name, Maze_Plot.CW_LIST.getByteList())
+            self.saveToCSV(file_name, Maze_Plot.WConf.getByteList())
 
     def qt_callback_plotSendBtn_clicked(self):
         # Sort entries
-        Maze_Plot.CW_LIST.sortEntries()
-        #rospy_log_col('INFO', Maze_Plot.CW_LIST)
-        self.sendEthercatMessage(P2A_Type_ID.MOVE_WALLS, 9, Maze_Plot.CW_LIST.getByteList())
+        Maze_Plot.WConf.sortEntries()
+        #rospy_log_col('INFO', Maze_Plot.WConf)
+        self.sendEthercatMessage(P2A_Msg_Type.MOVE_WALLS, 9, Maze_Plot.WConf.getByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         # Call function to shut down the ROS session
@@ -603,21 +630,21 @@ class Interface(Plugin):
     def sendEthercatMessage(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
         # Itterate message id and roll over to 1 if max 16 bit value is reached
-        self.p2aEtherMsgID = self.p2aEtherMsgID + \
-            1 if self.p2aEtherMsgID < 65535 else 1
+        self.p2aMsgID = self.p2aMsgID + \
+            1 if self.p2aMsgID < 65535 else 1
 
         # Create a list with 8 16-bit Union elements
         U = [Interface.Union() for _ in range(8)]
         ui16_i = 0
 
         # Set message id and type
-        U[ui16_i].ui16 = self.p2aEtherMsgID
+        U[ui16_i].ui16 = self.p2aMsgID
         ui16_i += 1
         U[ui16_i].ui8[0] = p2a_msg_type.value
         U[ui16_i].ui8[1] = msg_arg_lng
 
         # Update walls to move up
-        if (p2a_msg_type == P2A_Type_ID.MOVE_WALLS) and cw_list is not None:
+        if (p2a_msg_type == P2A_Msg_Type.MOVE_WALLS) and cw_list is not None:
             # Update U_arr with corresponding chamber and wall byte
             for cw in cw_list:
                 chamber = cw[0]
@@ -638,7 +665,7 @@ class Interface(Plugin):
         self.maze_ard0_pub.publish(*reg_arr)  
 
         # Print reg message
-        rospyLogCol('INFO', "SENT Ethercat Message: type=%s id=%d", p2a_msg_type.name, self.p2aEtherMsgID)
+        rospyLogCol('INFO', "SENT Ethercat Message: type=%s id=%d", p2a_msg_type.name, self.p2aMsgID)
         rospyLogCol('INFO', "\tui16[0] %d", U[0].ui16)
         for i in range(1, len(U)):
             rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
@@ -666,49 +693,32 @@ class Interface(Plugin):
         msg_arg_lng = U.ui8[1]
 
 
-        # # TEMP
-        # if (reg_dat[0] != self.dummy_3):
-        #     for i, reg in enumerate(reg_dat):
-        #         rospyLogCol('HIGHLIGHT', "INT%d = %d", i, reg)
-        #     self.dummy_1 += 1
-        #     self.dummy_3 = reg_dat[0]
-        # return
-
-        # TEMP
-        if (self.a2pEtherMsgID != a2p_msg_id):
-            rospyLogCol('HIGHLIGHT', "MESSAGE: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
-            rospyLogCol('HIGHLIGHT', "\tui16[0] %d", a2p_msg_id)
-            rospyLogCol('HIGHLIGHT', "\tui8[1]  %d %d", a2p_msg_type, msg_arg_lng)
-            for i in range(2, len(reg_dat)):
-                U.ui16 = reg_dat[i]
-                rospyLogCol('HIGHLIGHT', "\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
-            self.a2pEtherMsgID = a2p_msg_id
+        # Print registry values
+        self.printEtherReg(0, reg_dat)
 
         # Skip ethercat setup junk (65535)
         if a2p_msg_id == 65535:
             return 0
 
-        # skip redundant messages and reset message type to NONE
-        if a2p_msg_id == self.a2pEtherMsgID:
-            self.a2pEtherMsgType = A2P_Type_ID.A2P_NONE
+        # Skip redundant messages 
+        if a2p_msg_id == self.a2pMsgID:
             return 0
 
         # Check for skipped or out of sequence messages
-        if a2p_msg_id - self.a2pEtherMsgID != 1:
+        if a2p_msg_id - self.a2pMsgID != 1:
             if self.errorType != Error_Type.MESSAGE_ID_DISORDERED: # only run once
                 # Set id last to new value on first error and set error type
-                self.a2pEtherMsgID = a2p_msg_id 
+                self.a2pMsgID = a2p_msg_id 
                 self.errorType = Error_Type.MESSAGE_ID_DISORDERED
-                rospyLogCol('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
+                rospyLogCol('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pMsgID, a2p_msg_id)
             return 1
 
         # Update dynamic enum instance
-        self.a2pEtherMsgType.value = a2p_msg_type
-        rospyLogCol('INFO', "RECIEVED Ethercat Message: type=%s id=%d", self.a2pEtherMsgType.name, a2p_msg_id)
+        self.a2pMsgType.value = a2p_msg_type
+        rospyLogCol('INFO', "RECIEVED Ethercat Message: type=%s id=%d", self.a2pMsgType.name, a2p_msg_id)
 
         # Update message id
-        self.a2pEtherMsgID = a2p_msg_id
-
+        self.a2pMsgID = a2p_msg_id
 
         # Parse 8 bit message arguments
         if msg_arg_lng > 0:
@@ -733,13 +743,18 @@ class Interface(Plugin):
 
         # HANDLE MESSAGE TYPE
 
-        # CONFIRM_RECEIVED
-        if self.a2pEtherMsgType == A2P_Type_ID.CONFIRM_RECEIVED:
+        # HANDSHAKE
+        if self.a2pMsgType == A2P_Msg_Type.HANDSHAKE:
+            # Send START_SESSION once the handshake confirmation is received
+            self.sendEthercatMessage(P2A_Msg_Type.START_SESSION)
+
+        # CONFIRM_P2A_MESSAGE
+        if self.a2pMsgType == A2P_Msg_Type.CONFIRM_P2A_MESSAGE:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
-        # A2P_NONE
-        elif self.a2pEtherMsgType == A2P_Type_ID.ERROR:
-            rospyLogCol('INFO', "\tA2P_NONE")
+        # ERROR
+        elif self.a2pMsgType == A2P_Msg_Type.ERROR:
+            rospyLogCol('ERROR', "\tERROR")
 
         # Return new message flag
         return 0
@@ -788,7 +803,7 @@ class Interface(Plugin):
             with open(file_path, 'r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 wall_byte_config_list = [[int(row[0]), int(row[1])] for row in csv_reader]
-                Maze_Plot.CW_LIST.convertByteList(wall_byte_config_list)
+                Maze_Plot.WConf.convertByteList(wall_byte_config_list)
                 rospyLogCol('INFO', "Data loaded successfully.")
         except Exception as e:
             rospyLogCol('ERROR', "Error loading data from CSV:", str(e))
@@ -818,7 +833,7 @@ class Interface(Plugin):
     def endRosSession(self):
 
         # Send END_SESSION message to arduino
-        self.sendEthercatMessage(P2A_Type_ID.END_SESSION)
+        self.sendEthercatMessage(P2A_Msg_Type.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
@@ -842,7 +857,18 @@ class Interface(Plugin):
         # Send a shutdown request to the ROS master
         rospy.signal_shutdown("User requested shutdown")
 
+    def printEtherReg(self, d_type, reg_dat):
+        U = Interface.Union()
+        for i in range(0, len(reg_dat)):
+            U.ui16 = reg_dat[i]
+            if d_type == 0:
+                rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
+            elif d_type == 1:
+                rospyLogCol('INFO', "\tui16[%d] %d", i, U.ui16)
+             
+    # NOT WORKING!!
     def closeEvent(self, event):
+        rospyLogCol('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.endRosSession()
         event.accept()  # let the window close

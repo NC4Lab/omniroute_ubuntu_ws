@@ -267,18 +267,3 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in_1[], uint8_t p_byte_mask_in
 		Serial.println(buff);
 	}
 }
-
-void Maze_Debug::TEMP_foo(S_VEC<uint8_t> vec)
-{
-	if (DB_VERBOSE == 0)
-		return;
-	char buff[250];
-
-	Serial.println(vec.lng());
-
-	for (size_t i = 0; i < vec.lng(); i++)
-	{
-		sprintf(buff, "vec %d[%d]", i, vec[i]);
-		Serial.println(buff);
-	}
-};
