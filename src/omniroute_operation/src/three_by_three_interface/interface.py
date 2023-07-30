@@ -324,14 +324,14 @@ class Interface(Plugin):
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
     # Define class variables
-    p2aMsgID = 0 # initialize python to arduino message number
-    a2pMsgID = 0 # initialize arduino to python message number
+    sndMsgID = 0 # initialize python to arduino message number
+    rcvMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    a2pMsgType = MsgType.NONE
-    p2aMsgType = MsgType.NONE
-    a2pErrType = ErrorType.ERROR_NONE
-    p2aErrType = ErrorType.ERROR_NONE
+    rcvMsgType = MsgType.NONE
+    sndMsgType = MsgType.NONE
+    rcvErrType = ErrorType.ERROR_NONE
+    sndErrType = ErrorType.ERROR_NONE
 
     # Handshake finished flag
     isHandshakeDone = False
@@ -462,18 +462,18 @@ class Interface(Plugin):
         
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
-        self.timer_updateUI.timeout.connect(self.timer_callback_updateUI)
+        self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
         self.timer_updateUI.start(20) # set incriment (ms)
 
         # QT timer for sending initial handshake message after a delay
         self.timer_sendHandshake = QTimer()
-        self.timer_sendHandshake.timeout.connect(self.timer_callback_sendHandshake)
+        self.timer_sendHandshake.timeout.connect(self.timer_callback_sendHandshake_once)
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
         self.timer_sendHandshake.start(1000) # (ms)
 
         # QT timer for checking initial handshake message after a delay
         self.timer_checkHandshake = QTimer()
-        self.timer_checkHandshake.timeout.connect(self.timer_callback_checkHandshake)
+        self.timer_checkHandshake.timeout.connect(self.timer_callback_checkHandshake_once)
         self.timer_checkHandshake.setSingleShot(True)  # Run only once
 
         # ROS publisher 
@@ -486,7 +486,8 @@ class Interface(Plugin):
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(self.sig_callback_Esmacat_read_maze_ard0_ease)
     
-    """ CALLBACKS: ROS, QT and Signal  ----------------------------------------------------------------------------"""
+    """ CALLBACKS: ROS, QT and Signal """
+
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
         # Store ethercat message in class variable
         si16_arr = [0]*8
@@ -512,36 +513,43 @@ class Interface(Plugin):
         ui16_arr = [0]*8
         for i in range(8):
             ui16_arr[i] = ctypes.c_uint16(si16_arr[i]).value
-            # TEMP rospy_log_col('HIGHLIGHT', "si16_arr[%d]=%d ui16_arr[%d]=%d", i, si16_arr[i], i, ui16_arr[i])
 
         # Parse the message and check if its new
         if self.getEthercatMessage(ui16_arr) != 0:
             return
 
         # Emit signal to update UI as UI should not be updated from a non-main thread
-        #self.signal_Esmacat_read_maze_ard0_ease.emit() 
+        #TEMP self.signal_Esmacat_read_maze_ard0_ease.emit() 
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
         pass
 
-    def timer_callback_updateUI(self):
+    def timer_callback_updateUI_loop(self):
         # Update graphics
         self.scene.update()
         self._widget.plotMazeView.update()
 
-    def timer_callback_sendHandshake(self):
+    def timer_callback_sendHandshake_once(self):
         # Send HANDSHAKE message to arduino
         self.sendEthercatMessage(MsgType.HANDSHAKE)
+        
         # Start timer to check for HANDSHAKE message confirm recieved
-        self.timer_checkHandshake.start(1000)
+        self.timer_checkHandshake.start(500)
 
-    def timer_callback_checkHandshake(self):
+    def timer_callback_checkHandshake_once(self):
         # Check for HANDSHAKE message confirm recieved isHandshakeDone
         if self.isHandshakeDone == False:
+
+            # Give up is more that 3 messages have been sent
+            if self.sndMsgID > 3:
+                rospyLogCol('ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", self.sndMsgID)
+                return  
+
             # Send HANDSHAKE message to arduino again
             self.sendEthercatMessage(MsgType.HANDSHAKE)
+
             # Restart check timer
-            self.timer_checkHandshake.start(1000)
+            self.timer_checkHandshake.start(500)
         else:
             # Send START message to arduino
             self.sendEthercatMessage(MsgType.START_SESSION)
@@ -623,20 +631,20 @@ class Interface(Plugin):
         # End the application
         QApplication.quit()
   
-
+    ''' FUNCTIONS: Ethercat Communication '''
   
     def sendEthercatMessage(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
         # Itterate message id and roll over to 1 if max 16 bit value is reached
-        self.p2aMsgID = self.p2aMsgID + \
-            1 if self.p2aMsgID < 65535 else 1
+        self.sndMsgID = self.sndMsgID + \
+            1 if self.sndMsgID < 65535 else 1
 
         # Create a list with 8 16-bit Union elements
         U = [Interface.ComUnion() for _ in range(8)]
         ui16_i = 0
 
         # Set message id and type
-        U[ui16_i].ui16 = self.p2aMsgID
+        U[ui16_i].ui16 = self.sndMsgID
         ui16_i += 1
         U[ui16_i].ui8[0] = p2a_msg_type.value
         U[ui16_i].ui8[1] = msg_arg_lng
@@ -663,113 +671,144 @@ class Interface(Plugin):
         self.maze_ard0_pub.publish(*reg_arr)  
 
         # Print reg message
-        rospyLogCol('INFO', "SENT Ethercat Message: type=%s id=%d", p2a_msg_type.name, self.p2aMsgID)
+        rospyLogCol('INFO', "SENT Ecat Message: type=%s id=%d", p2a_msg_type.name, self.sndMsgID)
         rospyLogCol('INFO', "\tui16[0] %d", U[0].ui16)
         for i in range(1, len(U)):
             rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
 
-        # TEMP Print the cw_list
+        # # TEMP Print the cw_list
         # if cw_list is not None:
-        #     rospy_log_col('INFO', "Chamber and wall configuration list:")
+        #     rospyLogCol('INFO', "Chamber and wall configuration list:")
         #     for chamber, walls in cw_list:
-        #         rospy_log_col('INFO', "Chamber %d: Walls %s", chamber, walls)
+        #         rospyLogCol('INFO', "Chamber %d: Walls %s", chamber, walls)
 
     def getEthercatMessage(self, reg_dat):
-        a2p_msg_id = 0
-        a2p_msg_type = 0
+        rcv_msg_id = 0
+        rcv_msg_type = 0
         msg_arg_lng = 0
         msg_arg_data = [0] * 10
         U = Interface.ComUnion()
 
         # Check first register entry for msg id
-        ui16_i = 0
-        a2p_msg_id = reg_dat[ui16_i]
-        ui16_i += 1
-        U.ui16 = reg_dat[ui16_i]
-        ui16_i += 1
-        a2p_msg_type = U.ui8[0]
+        reg_i = 0
+        rcv_msg_id = reg_dat[reg_i]
+        reg_i += 1
+        U.ui16 = reg_dat[reg_i]
+        reg_i += 1
+        rcv_msg_type = U.ui8[0]
         msg_arg_lng = U.ui8[1]
 
-        # TEMP Print registry values
-        self.printEtherReg(0, reg_dat)
-
         # Skip ethercat setup junk (65535)
-        if a2p_msg_id == 65535:
+        if rcv_msg_id == 65535:
             return 0
 
         # Skip redundant messages 
-        if a2p_msg_id == self.a2pMsgID:
+        if rcv_msg_id == self.rcvMsgID:
             return 0
+        
+        # Check if rcv_msg_type matches any of the enum values
+        if rcv_msg_type not in [e.value for e in MsgType]:
+            if self.rcvErrType != ErrorType.NO_MESSAGE_TYPE_MATCH:  # only run once
+                # Set id last to new value on first error and set error type
+                self.rcvErrType = ErrorType.NO_MESSAGE_TYPE_MATCH
+                rospyLogCol('ERROR', "!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id)
+                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+            return 2  # return error flag
 
         # Check for skipped or out of sequence messages
-        if a2p_msg_id - self.a2pMsgID != 1:
-            if self.a2pErrType != ErrorType.MESSAGE_ID_DISORDERED: # only run once
+        if rcv_msg_id - self.rcvMsgID != 1:
+            if self.rcvErrType != ErrorType.MESSAGE_ID_DISORDERED:  # only run once
                 # Set id last to new value on first error and set error type
-                self.a2pMsgID = a2p_msg_id 
-                self.a2pErrType = ErrorType.MESSAGE_ID_DISORDERED
-                rospyLogCol('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pMsgID, a2p_msg_id)
-            return 1
+                self.rcvErrType = ErrorType.MESSAGE_ID_DISORDERED
+                rospyLogCol('ERROR', "!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", self.rcvMsgID, rcv_msg_id)
+                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+            return 2  # return error flag
+
+        # Check if message is preceding handshake
+        if not self.isHandshakeDone and rcv_msg_type != MsgType.HANDSHAKE.value:
+            if self.rcvErrType != ErrorType.REGISTER_LEFTOVERS:  # only run once
+                # Set id last to new value on first error and set error type
+                self.rcvErrType = ErrorType.REGISTER_LEFTOVERS
+                rospyLogCol('ERROR', "!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", MsgType(rcv_msg_type).name, rcv_msg_id)
+                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+            return 2  # return error flag
 
         # Update dynamic enum instance
-        self.a2pMsgType.value = a2p_msg_type
-        rospyLogCol('INFO', "RECIEVED Ethercat Message: type=%s id=%d", self.a2pMsgType.name, a2p_msg_id)
+        self.rcvMsgType.value = rcv_msg_type
+        rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgType.name, rcv_msg_id)
+
+        # TEMP Print registry values
+        self.printEReg(0, reg_dat) #TEMP
 
         # Update message id
-        self.a2pMsgID = a2p_msg_id
+        self.rcvMsgID = rcv_msg_id
 
         # Parse 8 bit message arguments
         if msg_arg_lng > 0:
             msg_arg_lng_ui16_round = math.ceil(msg_arg_lng / 2) # divide message length by 2 and round up
             i8_i = 0
-            for ui16_i in range(msg_arg_lng_ui16_round):
+            for reg_i in range(msg_arg_lng_ui16_round):
                 # Get next entry
-                U.ui16 = reg_dat[ui16_i]
-                ui16_i += 1
+                U.ui16 = reg_dat[reg_i]
+                reg_i += 1
                 # Loop through bytes in given 16 bit entry and store
                 for b_ii in range(2):
                     msg_arg_data[i8_i] = U.ui8[b_ii]
                     i8_i += 1
 
         # Check for footer
-        U.ui16 = reg_dat[ui16_i]
-        ui16_i += 1
+        U.ui16 = reg_dat[reg_i]
+        reg_i += 1
         if U.ui8[0] != 254 and U.ui8[1] != 254:
-            rospyLogCol('ERROR', "\t!!Missing message footer!!")
-            self.a2pErrType = ErrorType.MISSING_FOOTER
+            rospyLogCol('ERROR', "\t!!ERROR: Missing message footer!!")
+            self.rcvErrType = ErrorType.MISSING_FOOTER
             return 1
 
         # HANDLE MESSAGE TYPE
 
         # HANDSHAKE
-        if self.a2pMsgType == MsgType.HANDSHAKE:
-            # Send START_SESSION once the handshake confirmation is received
+        if self.rcvMsgType == MsgType.HANDSHAKE:
+            # Stop handshake check timer
+            self.timer_checkHandshake.stop()    
+
+            # Set the handshake flag
+            self.handshakeFlag = True
+
+            # Send START_SESSION message
             self.sendEthercatMessage(MsgType.START_SESSION)
 
         # CONFIRM_RECIEVED
-        if self.a2pMsgType == MsgType.CONFIRM_RECIEVED:
+        if self.rcvMsgType == MsgType.CONFIRM_RECIEVED:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
         # ERROR
-        elif self.a2pMsgType == MsgType.ERROR:
+        elif self.rcvMsgType == MsgType.ERROR:
             rospyLogCol('ERROR', "\tERROR")
 
         # Return new message flag
         return 0
     
-    def printEtherReg(self, d_type, reg_dat, msg_type_enum = MsgType.NONE):
-        # Print message type
-        msg_type_str = msg_type_enum.name if msg_type_enum != MsgType.NONE else "NA" 
-        rospyLogCol('INFO', "\tEthercat Register: type=%s", msg_type_str)
+    def printEReg(self, d_type, reg_dat, msg_type_val = MsgType.NONE.value, col_str = 'INFO'):
+        # Get message type string if exists otherwise set string to "NA"
+        try:
+            msg_type_str = MsgType(msg_type_val).name
+        except ValueError:
+            msg_type_str = "NA"
+
+        # Print heading with type
+        rospyLogCol(col_str, "\tEcat Register: Type %s[%d]", msg_type_str, msg_type_val)
             
         # Print message data
         U = Interface.ComUnion()
         for i in range(0, len(reg_dat)):
             U.ui16 = reg_dat[i]
+            if d_type == 1 or i == 0:
+                rospyLogCol(col_str, "\t\tui16[%d] %d", i, U.ui16)
             if d_type == 0:
-                rospyLogCol('INFO', "\t\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
-            elif d_type == 1:
-                rospyLogCol('INFO', "\t\tui16[%d] %d", i, U.ui16)
+                rospyLogCol(col_str, "\t\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
  
+    ''' FUNCTIONS: CSV File Handleling '''
+
     def getPathConfigDir(self, file_name=None):
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -821,6 +860,8 @@ class Interface(Plugin):
 
         # Update plot walls
         self.maze.updateWalls()
+
+    ''' FUNCTIONS: System Operations '''
 
     def terminate_ros_node(self, s):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)

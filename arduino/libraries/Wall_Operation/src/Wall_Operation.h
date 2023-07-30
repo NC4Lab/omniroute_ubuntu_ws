@@ -119,10 +119,10 @@ public:
 		END_SESSION = 129,
 		ERROR = 254
 	};
-	MsgType p2aMsgType = MsgType::MSG_NONE;
-	MsgType a2pMsgType = MsgType::MSG_NONE;
-	int p2aMsgID = 0; ///< tracks the received ethercat message number
-	int a2pMsgID = 0; ///< tracks the sent ethercat message number
+	MsgType rcvMsgType = MsgType::MSG_NONE; ///< tracks the received ethercat message type
+	MsgType sndMsgType = MsgType::MSG_NONE; ///< tracks the sent ethercat message type
+	int rcvMsgID = 0;						///< tracks the received ethercat message number
+	int sndMsgID = 0;						///< tracks the sent ethercat message number
 
 	enum ErrorType
 	{
@@ -132,38 +132,43 @@ public:
 		REGISTER_LEFTOVERS = 3,
 		MISSING_FOOTER = 4
 	};
-	ErrorType p2aErrType = ErrorType::ERROR_NONE;
+	ErrorType rcvErrType = ErrorType::ERROR_NONE; ///< tracks the received ethercat error type
 
 	struct EtherBuffStruct ///< struct for storing ethercat messages
 	{
-		uint8_t id = 0;						///< Ethercat message ID
-		uint16_t reg16[8] = {0};			///< Ethercat 16 bit register values
-		MsgType msgTyp = MsgType::MSG_NONE; ///< Ethercat message type
-		char msg_typ_str[50];				///< Ethercat message type string
+		uint8_t id = 0;					///< Ethercat message ID
+		MsgType MT = MsgType::MSG_NONE; ///< Ethercat message type
+		char mt_str[50];				///< Ethercat message type string
+		uint16_t I16[8] = {0};			///< Ethercat 16 bit register values
 
 		// Constructor
 		EtherBuffStruct(uint8_t id, MsgType msgTyp, const char *msg)
-			: id(id), msgTyp(msgTyp)
+			: id(id), MT(msgTyp)
 		{
-			strncpy(msg_typ_str, msg, sizeof(msg_typ_str) - 1); // create message type string
-			msg_typ_str[sizeof(msg_typ_str) - 1] = '\0';		// ensure null-termination
+			strncpy(mt_str, msg, sizeof(mt_str) - 1); // create message type string
+			mt_str[sizeof(mt_str) - 1] = '\0';		  // ensure null-termination
 		}
 
 		// Default Constructor
 		EtherBuffStruct()
-			: id(0), msgTyp(MsgType::MSG_NONE)
+			: id(0), MT(MsgType::MSG_NONE)
 		{
-			msg_typ_str[0] = '\0';
+			mt_str[0] = '\0';
 		}
 
 		// Member function
-		void setVars(uint8_t newId)
+		void setVars(uint8_t _id, MsgType _msgTyp, const char *_mt_str, uint16_t *_I16)
 		{
-			id = newId;
+			id = _id;
+			MT = _msgTyp;
+			strncpy(mt_str, _mt_str, sizeof(mt_str) - 1); // create message type string
+			mt_str[sizeof(mt_str) - 1] = '\0';			  // ensure null-termination
+			for (int i = 0; i < 8; i++)					  // copy I16 array for 8 registers
+				I16[i] = _I16[i];
 		}
 	};
 	const static uint8_t etherBufLen = 10;	   ///< size of ethercat message buffer
-	EtherBuffStruct a2pEtherBuff[etherBufLen]; ///<  initialize max 10 messages
+	EtherBuffStruct rcvEtherBuff[etherBufLen]; ///<  initialize max 10 messages
 
 private:
 	Maze_Debug _DB;		  ///< local instance of Maze_Debug class
@@ -243,8 +248,8 @@ public:
 	void printPMS(PinMapStr);
 
 public:
-	void printEtherReg(uint8_t, int[] = nullptr);
-	void printEtherReg(uint8_t, ComUnion);
+	void printEcat(uint8_t, int[] = nullptr);
+	void printEcat(uint8_t, ComUnion);
 };
 
 #endif

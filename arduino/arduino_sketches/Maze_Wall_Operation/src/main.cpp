@@ -82,15 +82,9 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::HANDSHAKE);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::CONFIRM_RECIEVED);
 		delay(dt);
 		W_OPR.sendEthercatMessage(W_OPR.MsgType::HANDSHAKE);
-		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::MOVE_WALLS);
-		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::START_SESSION);
-		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::END_SESSION);
 		delay(dt);
 		W_OPR.sendEthercatMessage(W_OPR.MsgType::ERROR);
 		delay(dt);
