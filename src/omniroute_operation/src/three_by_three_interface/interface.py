@@ -113,7 +113,7 @@ class Maze_Plot(QGraphicsView):
             self.label.setPos(label_pos[0], label_pos[1])
             self.addToGroup(self.label)
 
-            Maze_Plot.center_text(self.label, label_pos[0], label_pos[1])
+            Maze_Plot.centerText(self.label, label_pos[0], label_pos[1])
 
         def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
@@ -121,9 +121,9 @@ class Maze_Plot(QGraphicsView):
                 self.setState(not self.state)
                 #wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
                 if self.state: # add list entry
-                    Maze_Plot.CW_LIST.add_wall(self.chamber_num, self.wall_num)
+                    Maze_Plot.CW_LIST.addWall(self.chamber_num, self.wall_num)
                 else: # remove list entry
-                    Maze_Plot.CW_LIST.remove_wall(self.chamber_num, self.wall_num)
+                    Maze_Plot.CW_LIST.removeWall(self.chamber_num, self.wall_num)
 
         def setState(self, state: bool):
             if state:
@@ -143,7 +143,7 @@ class Maze_Plot(QGraphicsView):
             self.chamber_num = chamber_num
 
             # Plot backround chamber octogons
-            octagon_vertices = self.get_octagon_vertices(center_x, center_y, chamber_width/2, math.radians(22.5))
+            octagon_vertices = self.getOctagonVertices(center_x, center_y, chamber_width/2, math.radians(22.5))
             octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
             self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
             self.octagon.setBrush(QBrush(QColor(200, 200, 200)))
@@ -156,14 +156,14 @@ class Maze_Plot(QGraphicsView):
             self.addToGroup(self.label)
 
             # Center the text over the chamber's center
-            Maze_Plot.center_text(self.label, center_x, center_y)
+            Maze_Plot.centerText(self.label, center_x, center_y)
 
             wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
-            wall_vertices_0 = self.get_octagon_vertices(
+            wall_vertices_0 = self.getOctagonVertices(
                 center_x, center_y, chamber_width/2, -math.pi/8+wall_angular_offset)
-            wall_vertices_1 = self.get_octagon_vertices(
+            wall_vertices_1 = self.getOctagonVertices(
                 center_x, center_y, chamber_width/2, -math.pi/8-wall_angular_offset)
-            wall_label_pos = self.get_octagon_vertices(
+            wall_label_pos = self.getOctagonVertices(
                 center_x, center_y, chamber_width/3, 0)
 
             self.walls = [Maze_Plot.Wall(p0=wall_vertices_0[k], 
@@ -174,7 +174,7 @@ class Maze_Plot(QGraphicsView):
                             label_pos=wall_label_pos[k])
                         for k in range(8)]
 
-        def get_octagon_vertices(self, x, y, w, offset):
+        def getOctagonVertices(self, x, y, w, offset):
             vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k)))
                             for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
             return vertices_list
@@ -206,7 +206,7 @@ class Maze_Plot(QGraphicsView):
                         Maze_Plot.Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
                     k = k+1
 
-        def update_walls(self):
+        def updateWalls(self):
             cw_list = Maze_Plot.CW_LIST.wall_config_list 
 
             for chamber in self.chambers:
@@ -224,7 +224,7 @@ class Maze_Plot(QGraphicsView):
         wall_config_list = []
 
         @classmethod
-        def add_wall(self, chamber_num, wall_num):
+        def addWall(self, chamber_num, wall_num):
             for item in self.wall_config_list:
                 if item[0] == chamber_num:
                     item[1].append(wall_num)
@@ -232,7 +232,7 @@ class Maze_Plot(QGraphicsView):
             self.wall_config_list.append([chamber_num, [wall_num]])
 
         @classmethod
-        def remove_wall(self, chamber_num, wall_num):
+        def removeWall(self, chamber_num, wall_num):
             for item in self.wall_config_list:
                 if item[0] == chamber_num:
                     item[1].remove(wall_num)
@@ -241,17 +241,17 @@ class Maze_Plot(QGraphicsView):
                     return
 
         @classmethod
-        def get_byte_list(self):
+        def getByteList(self):
             wall_byte_config_list = []
             for row in self.wall_config_list:
                 chamber_num = row[0]
                 wall_numbers = row[1]
-                byte_value = self._make_wall_byte(wall_numbers)
+                byte_value = self._makeWallByte(wall_numbers)
                 wall_byte_config_list.append([chamber_num, byte_value])
             return wall_byte_config_list
         
         @classmethod
-        def convert_byte_list(self, wall_byte_config_list):
+        def convertByteList(self, wall_byte_config_list):
             # Clear the existing wall_config_list
             self.wall_config_list = []
 
@@ -266,7 +266,7 @@ class Maze_Plot(QGraphicsView):
                 self.wall_config_list.append([chamber_num, wall_numbers])
 
         @classmethod
-        def sort_entries(self):
+        def sortEntries(self):
             # Sort the rows by the entries in the based on the first chamber number
             self.wall_config_list.sort(key=lambda row: row[0])
 
@@ -275,15 +275,15 @@ class Maze_Plot(QGraphicsView):
                 row[1].sort()
 
         @classmethod
-        def reset(self):
+        def Reset(self):
             self.wall_config_list = []
 
         @classmethod
-        def get_len(self):
+        def getLen(self):
             return len(self.wall_config_list)
         
         @classmethod
-        def _make_wall_byte(self, wall_arr):
+        def _makeWallByte(self, wall_arr):
             byte_value = 0  # Initialize the byte value
 
             # Iterate over the array of values
@@ -303,7 +303,7 @@ class Maze_Plot(QGraphicsView):
             return str(self.wall_config_list)
 
     # FUNCTION: Center plotted text 
-    def center_text(text_item, center_x, center_y):
+    def centerText(text_item, center_x, center_y):
         # Set the text item's position relative to its bounding rectangle
         text_item.setTextWidth(0)  # Allow the text item to resize its width automatically
         text_item.setHtml('<div style="text-align: center; vertical-align: middle;">{}</div>'.format(text_item.toPlainText()))
@@ -331,6 +331,26 @@ class Interface(Plugin):
     p2aEtherMsgType = P2A_Type_ID.P2A_NONE
     errorType = Error_Type.ERROR_NONE
 
+    # Dummy variables for testing
+    dummy_1 = 0
+    dummy_2 = 0
+    dummy_3 = 0
+
+    # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
+    class Union:
+        def __init__(self):
+            self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
+
+        @property
+        def ui16(self):
+            return struct.unpack("<H", self.ui8)[0]
+
+        @ui16.setter
+        def ui16(self, value):
+            packed_value = struct.pack("<H", value)
+            self.ui8[0] = packed_value[0]
+            self.ui8[1] = packed_value[1]
+
     def __init__(self, context):
         super(Interface, self).__init__(context)
 
@@ -338,7 +358,7 @@ class Interface(Plugin):
 
         # Give QObjects reasonable names
         self.setObjectName('Interface')
-        rospy_log_col('INFO', "Running Interface setup")
+        rospyLogCol('INFO', "Running Interface setup")
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -414,7 +434,7 @@ class Interface(Plugin):
 
         # Initialize file list text and index
         self.current_file_index = 0 # set to zero
-        self._widget.fileDirEdit.setText(self.get_path_config_dir()) # set to default path
+        self._widget.fileDirEdit.setText(self.getPathConfigDir()) # set to default path
 
         # Initialize ardListWidget with arduino names.
         # Add 8 arduinos to the list labeled Arduino 0-9
@@ -446,49 +466,15 @@ class Interface(Plugin):
         self.timer_send_start.setSingleShot(True)  # Run only once
         self.timer_send_start.start(500) # (ms)
 
-        # QT timer setup for sending dummy message to clear ethercat registers
-        self.timer_send_dummy = QTimer()
-        self.timer_send_dummy.timeout.connect(self.timer_callback_send_dummy)
-        self.timer_send_dummy.setSingleShot(True)  # Run only once
-
-
-        # ROS publisher stuff
+        # ROS publisher 
         #wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1) 
         self.maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1) # Esmacat write maze ard0 ease
 
-        # ROS subscriber stuff
+        # ROS subscriber
         rospy.Subscriber('Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, tcp_nodelay=True)
 
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(self.sig_callback_Esmacat_read_maze_ard0_ease)
-
-        # Add a shutdown callback to unregister the subscriber when the ROS session is ending
-        rospy.on_shutdown(self.ros_callback_shutdown)
-
-
-    # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
-    class Union:
-        def __init__(self):
-            self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
-
-        @property
-        def ui16(self):
-            return struct.unpack("<H", self.ui8)[0]
-
-        @ui16.setter
-        def ui16(self, value):
-            packed_value = struct.pack("<H", value)
-            self.ui8[0] = packed_value[0]
-            self.ui8[1] = packed_value[1]
-
-    def ros_callback_shutdown(self):
-        # Send END_SESSION message to arduino
-        self.send_ethercat_message(P2A_Type_ID.END_SESSION)
-        # TEMP self.timer_send_dummy.start(500) # (ms)
-
-        # Unregister the subscriber
-        if self._joint_sub:
-            self._joint_sub.unregister()
     
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
         # Store ethercat message in class variable
@@ -502,6 +488,16 @@ class Interface(Plugin):
         si16_arr[6] = msg.INT6
         si16_arr[7] = msg.INT7
 
+        
+        # # TEMP
+        # if (self.dummy_2 != si16_arr[0]):
+        #     rospyLogCol('HIGHLIGHT', "\nCallback %d", self.dummy_1)
+        #     for i in range(8):
+        #         rospyLogCol('HIGHLIGHT', "\t%d) INT%d = %d", self.dummy_1, i, si16_arr[i])
+        #     self.dummy_1 += 1
+        #     self.dummy_2 = si16_arr[0]
+        # return
+
         # Convert 16 bit signed ints to 16 bit unsigned ints array
         ui16_arr = [0]*8
         for i in range(8):
@@ -509,11 +505,11 @@ class Interface(Plugin):
             # TEMP rospy_log_col('HIGHLIGHT', "si16_arr[%d]=%d ui16_arr[%d]=%d", i, si16_arr[i], i, ui16_arr[i])
 
         # Parse the message and check if its new
-        if self.get_ethercat_message(ui16_arr) != 0:
+        if self.getEthercatMessage(ui16_arr) != 0:
             return
 
         # Emit signal to update UI as UI should not be updated from a non-main thread
-        self.signal_Esmacat_read_maze_ard0_ease.emit() 
+        #self.signal_Esmacat_read_maze_ard0_ease.emit() 
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
         pass
@@ -525,18 +521,13 @@ class Interface(Plugin):
 
     def timer_callback_send_start(self):
         # Send START_SESSION message to arduino
-        self.send_ethercat_message(P2A_Type_ID.START_SESSION)
-        self.timer_send_dummy.start(500) # (ms)
-
-    def timer_callback_send_dummy(self):
-        # Send P2A_NONE message to arduino to clear the START_SESSION message from the registry
-        self.send_ethercat_message(P2A_Type_ID.P2A_NONE) 
+        self.sendEthercatMessage(P2A_Type_ID.START_SESSION)
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
-            None, "Select files to add", self.get_path_config_dir(), filter)
+            None, "Select files to add", self.getPathConfigDir(), filter)
 
         if files:
             # Clear the list widget to remove any previous selections
@@ -557,30 +548,30 @@ class Interface(Plugin):
                 self._widget.filePreviousBtn.setEnabled(False)
 
             # Update file index and load csv
-            self.load_csv_data(0)
+            self.loadFromCSV(0)
 
     def qt_callback_fileListWidget_clicked(self, item):
         # Get the index of the clicked item and set it as the current file index
         self.current_file_index = self._widget.fileListWidget.currentRow()
         
         # Update file index and load csv
-        self.load_csv_data(0)
+        self.loadFromCSV(0)
             
     def qt_callback_fileNextBtn_clicked(self):
         # Update file index and load csv
-        self.load_csv_data(1)
+        self.loadFromCSV(1)
     
     def qt_callback_filePreviousBtn_clicked(self):
         # Update file index and load csv
-        self.load_csv_data(-1)
+        self.loadFromCSV(-1)
 
     def qt_callback_plotClearBtn_clicked(self):
-        Maze_Plot.CW_LIST.reset() # reset all values in list
-        self.maze.update_walls() # update walls
+        Maze_Plot.CW_LIST.Reset() # reset all values in list
+        self.maze.updateWalls() # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
-        # Open the folder specified by self.get_path_config_dir() in an explorer window
-        folder_path = self.get_path_config_dir()
+        # Open the folder specified by self.getPathConfigDir() in an explorer window
+        folder_path = self.getPathConfigDir()
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(
@@ -592,24 +583,24 @@ class Interface(Plugin):
                 file_name += ".csv"
 
             # The user has specified a file name, you can perform additional actions here
-            rospy_log_col('INFO', "Selected file:", file_name)
+            rospyLogCol('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.save_data_to_csv(file_name, Maze_Plot.CW_LIST.get_byte_list())
+            self.saveToCSV(file_name, Maze_Plot.CW_LIST.getByteList())
 
     def qt_callback_plotSendBtn_clicked(self):
         # Sort entries
-        Maze_Plot.CW_LIST.sort_entries()
+        Maze_Plot.CW_LIST.sortEntries()
         #rospy_log_col('INFO', Maze_Plot.CW_LIST)
-        self.send_ethercat_message(P2A_Type_ID.MOVE_WALLS, 9, Maze_Plot.CW_LIST.get_byte_list())
+        self.sendEthercatMessage(P2A_Type_ID.MOVE_WALLS, 9, Maze_Plot.CW_LIST.getByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         # Call function to shut down the ROS session
-        self.end_ros_session()
+        self.endRosSession()
         # End the application
         QApplication.quit()
   
-    def send_ethercat_message(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
+    def sendEthercatMessage(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
         # Itterate message id and roll over to 1 if max 16 bit value is reached
         self.p2aEtherMsgID = self.p2aEtherMsgID + \
@@ -642,16 +633,15 @@ class Interface(Plugin):
 
         # Store and return 16-bit values cast as signed for use with ease_registers
         reg_arr = [ctypes.c_int16(U.ui16).value for U in U]
-
-        # Print reg message
-        rospy_log_col('INFO', "New ethercat message sent: %s %d", p2a_msg_type.name, self.p2aEtherMsgID)
-        rospy_log_col('INFO', "\tui16[0] %d", U[0].ui16)
-        for i in range(1, len(U)):
-            rospy_log_col('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
  
-
         # Publish list to topic
         self.maze_ard0_pub.publish(*reg_arr)  
+
+        # Print reg message
+        rospyLogCol('INFO', "SENT Ethercat Message: type=%s id=%d", p2a_msg_type.name, self.p2aEtherMsgID)
+        rospyLogCol('INFO', "\tui16[0] %d", U[0].ui16)
+        for i in range(1, len(U)):
+            rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
 
         # TEMP Print the cw_list
         # if cw_list is not None:
@@ -659,7 +649,7 @@ class Interface(Plugin):
         #     for chamber, walls in cw_list:
         #         rospy_log_col('INFO', "Chamber %d: Walls %s", chamber, walls)
 
-    def get_ethercat_message(self, reg_dat):
+    def getEthercatMessage(self, reg_dat):
         a2p_msg_id = 0
         a2p_msg_type = 0
         msg_arg_lng = 0
@@ -675,8 +665,27 @@ class Interface(Plugin):
         a2p_msg_type = U.ui8[0]
         msg_arg_lng = U.ui8[1]
 
+
+        # # TEMP
+        # if (reg_dat[0] != self.dummy_3):
+        #     for i, reg in enumerate(reg_dat):
+        #         rospyLogCol('HIGHLIGHT', "INT%d = %d", i, reg)
+        #     self.dummy_1 += 1
+        #     self.dummy_3 = reg_dat[0]
+        # return
+
+        # TEMP
+        if (self.a2pEtherMsgID != a2p_msg_id):
+            rospyLogCol('HIGHLIGHT', "MESSAGE: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
+            rospyLogCol('HIGHLIGHT', "\tui16[0] %d", a2p_msg_id)
+            rospyLogCol('HIGHLIGHT', "\tui8[1]  %d %d", a2p_msg_type, msg_arg_lng)
+            for i in range(2, len(reg_dat)):
+                U.ui16 = reg_dat[i]
+                rospyLogCol('HIGHLIGHT', "\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
+            self.a2pEtherMsgID = a2p_msg_id
+
         # Skip ethercat setup junk (65535)
-        if a2p_msg_id == 65535 or self.a2pEtherMsgID == 65535:
+        if a2p_msg_id == 65535:
             return 0
 
         # skip redundant messages and reset message type to NONE
@@ -690,12 +699,12 @@ class Interface(Plugin):
                 # Set id last to new value on first error and set error type
                 self.a2pEtherMsgID = a2p_msg_id 
                 self.errorType = Error_Type.MESSAGE_ID_DISORDERED
-                rospy_log_col('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
+                rospyLogCol('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pEtherMsgID, a2p_msg_id)
             return 1
 
         # Update dynamic enum instance
         self.a2pEtherMsgType.value = a2p_msg_type
-        rospy_log_col('INFO', "\tNew ethercat message received: %s %d", self.a2pEtherMsgType.name, a2p_msg_id)
+        rospyLogCol('INFO', "RECIEVED Ethercat Message: type=%s id=%d", self.a2pEtherMsgType.name, a2p_msg_id)
 
         # Update message id
         self.a2pEtherMsgID = a2p_msg_id
@@ -718,7 +727,7 @@ class Interface(Plugin):
         U.ui16 = reg_dat[ui16_i]
         ui16_i += 1
         if U.ui8[0] != 254 and U.ui8[1] != 254:
-            rospy_log_col('ERROR', "\t!!Missing message footer!!")
+            rospyLogCol('ERROR', "\t!!Missing message footer!!")
             self.errorType = Error_Type.MISSING_FOOTER
             return 1
 
@@ -726,16 +735,16 @@ class Interface(Plugin):
 
         # CONFIRM_RECEIVED
         if self.a2pEtherMsgType == A2P_Type_ID.CONFIRM_RECEIVED:
-            rospy_log_col('INFO', "\tCONFIRM_RECEIVED")
+            rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
         # A2P_NONE
         elif self.a2pEtherMsgType == A2P_Type_ID.ERROR:
-            rospy_log_col('INFO', "\tA2P_NONE")
+            rospyLogCol('INFO', "\tA2P_NONE")
 
         # Return new message flag
         return 0
  
-    def get_path_config_dir(self, file_name=None):
+    def getPathConfigDir(self, file_name=None):
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # Create the path to the "config" directory four levels up
@@ -746,17 +755,17 @@ class Interface(Plugin):
         else:
             return dir_path
   
-    def save_data_to_csv(self, file_name, data):
+    def saveToCSV(self, file_name, data):
         try:
             with open(file_name, 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile)
                 for row in data:
                     csv_writer.writerow(row)
-            rospy_log_col('INFO', "Data saved to:", file_name)
+            rospyLogCol('INFO', "Data saved to:", file_name)
         except Exception as e:
-            rospy_log_col('ERROR', "Error saving data to CSV:", str(e))
+            rospyLogCol('ERROR', "Error saving data to CSV:", str(e))
 
-    def load_csv_data(self, list_increment):
+    def loadFromCSV(self, list_increment):
         # Update the current file index
         self.current_file_index += list_increment
 
@@ -771,7 +780,7 @@ class Interface(Plugin):
 
         # Get the currently selected file path
         file_name = self.files[self.current_file_index]
-        folder_path = self.get_path_config_dir()
+        folder_path = self.getPathConfigDir()
         file_path = os.path.join(folder_path, file_name)
 
         # Load and store CSV data
@@ -779,13 +788,13 @@ class Interface(Plugin):
             with open(file_path, 'r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 wall_byte_config_list = [[int(row[0]), int(row[1])] for row in csv_reader]
-                Maze_Plot.CW_LIST.convert_byte_list(wall_byte_config_list)
-                rospy_log_col('INFO', "Data loaded successfully.")
+                Maze_Plot.CW_LIST.convertByteList(wall_byte_config_list)
+                rospyLogCol('INFO', "Data loaded successfully.")
         except Exception as e:
-            rospy_log_col('ERROR', "Error loading data from CSV:", str(e))
+            rospyLogCol('ERROR', "Error loading data from CSV:", str(e))
 
         # Update plot walls
-        self.maze.update_walls()
+        self.maze.updateWalls()
 
     def terminate_ros_node(self, s):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -806,7 +815,14 @@ class Interface(Plugin):
         p.terminate()
         p.kill()
 
-    def end_ros_session(self):
+    def endRosSession(self):
+
+        # Send END_SESSION message to arduino
+        self.sendEthercatMessage(P2A_Type_ID.END_SESSION)
+
+        # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
+        # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
+
         # Kill specific nodes
         self.terminate_ros_node("/Esmacat_application_node")
         self.terminate_ros_node("/interface_test_node")
@@ -828,11 +844,11 @@ class Interface(Plugin):
 
     def closeEvent(self, event):
         # Call function to shut down the ROS session
-        self.end_ros_session()
+        self.endRosSession()
         event.accept()  # let the window close
 
 # FUNCTION: Log to ROS in color
-def rospy_log_col(level, message, *args):
+def rospyLogCol(level, msg, *args):
     # Exit if DB_VERBOSE is false
     if not DB_VERBOSE: return
     
@@ -844,7 +860,7 @@ def rospy_log_col(level, message, *args):
     else: color = Fore.BLACK
 
     # Format and log message
-    colored_message = f"{color}{message}{Style.RESET_ALL}"
+    colored_message = f"{color}{msg}{Style.RESET_ALL}"
     formatted_message = colored_message % args
     rospy.loginfo(formatted_message)
 

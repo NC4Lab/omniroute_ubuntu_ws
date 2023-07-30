@@ -189,8 +189,12 @@ public:
 public:
 	uint8_t testWallOperation(uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
-private:
-	void _printPMS(Pin_Map_Str);
+public:
+	void printPMS(Pin_Map_Str);
+
+public:
+	void printEtherReg(uint8_t, int[] = nullptr);
+
 };
 
 #endif

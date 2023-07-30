@@ -59,8 +59,19 @@ void setup()
 #endif
 
 	// Run initial maze setup
-	//W_OPR.resetMaze(false); 
-	
+	// W_OPR.resetMaze(false);
+
+	// // TEMP
+	// W_OPR.sendEthercatMessage(W_OPR.A2P_Type_ID::CONFIRM_RECEIVED);
+	// while (true);
+
+	// // TEMP
+	// while(true)
+	// {
+	// 	W_OPR.printEtherReg(0);
+	// 	delay(1000);
+	// }
+
 }
 
 //=============== LOOP ==================
@@ -76,15 +87,15 @@ void loop()
 
 	// Setup maze
 	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::START_SESSION)
-		W_OPR.resetMaze(false);
+		//W_OPR.resetMaze(false);
 
 	// Reset maze
 	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::END_SESSION)
-		W_OPR.resetMaze(true);
+		//W_OPR.resetMaze(true);
 
 	// Check for new wall move command
 	if (W_OPR.p2aEtherMsgType == Wall_Operation::P2A_Type_ID::MOVE_WALLS)
-		W_OPR.moveWalls(); // move walls
+		//W_OPR.moveWalls(); // move walls
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

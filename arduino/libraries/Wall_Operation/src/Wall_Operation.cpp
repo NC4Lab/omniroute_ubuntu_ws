@@ -444,7 +444,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 	msg_arg_lng = U.ui8[1];
 
 	// Skip ethercat setup junk (65535)
-	if (p2a_msg_id == 65535 || p2a_msg_type == 65535)
+	if (p2a_msg_id == 65535)
 		return 0;
 
 	// skip redundant messages and reset message type to P2A_NONE
@@ -557,7 +557,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 		break;
 	}
 
-	_DB.printMsgTime("\tRECIEVED Ethercat Message: type=%s id=%d", _DB.setGetStr(), p2a_msg_id);
+	_DB.printMsgTime("RECIEVED Ethercat Message: type=%s id=%d", _DB.setGetStr(), p2a_msg_id);
 
 	// Send confirmation message
 	sendEthercatMessage(A2P_Type_ID::CONFIRM_RECEIVED);
@@ -572,15 +572,15 @@ uint8_t Wall_Operation::getEthercatMessage()
 /// </remarks>
 ///	The outgoing register is structured arr[8] of 16 bit integers
 ///	with all but first 16 bit value seperated into bytes
-///	i16[0]: a2p message number [0-65535]
-///	i16[1]: message info
-///		i8[0] a2p message type [0-255] [see: MsgTypeID]
-///		i8[1] arg length [0-255] [number of message args in bytes]
-///	i16[none or 2:2-6] message data/arguments
+///	i16[0]: Message ID [0-65535]
+///	i16[1]: Message Info
+///		i8[0] message type [0-255] [see: MsgTypeID]
+///		i8[1] arg length [0-10] [number of message args in bytes]
+///	i16[NA,2:6] Arguments
 ///		i16[2-3] message confirmation
-///			i16[2] p2a message number [0-65535]
+///			i16[2] p2a message id [0-65535]
 ///			i16[2] p2a message type [0-65535]
-///	i16[x-7]: footer
+///	i16[x+1]: Footer
 ///		i8[0] [254]
 ///		i8[1] [254]
 /// </remarks>
@@ -588,7 +588,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
-	a2pEtherMsgID = p2aEtherMsgID < 65535 ? p2aEtherMsgID + 1 : 1;
+	a2pEtherMsgID = a2pEtherMsgID < 65535 ? a2pEtherMsgID + 1 : 1;
 
 	// Clear union
 	U.ui64[0] = 0;
@@ -614,16 +614,19 @@ void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg
 	}
 
 	// Add footer
-	uint8_t ui8_i = 2 + msg_arg_lng % 2 == 0 ? msg_arg_lng : msg_arg_lng + 1; // round up to nearest even value and add 2
+	uint8_t ui8_i = 4 + ((msg_arg_lng % 2 == 0) ? msg_arg_lng : (msg_arg_lng + 1)); // round up to even and add 4
+	U.ui8[ui8_i] = 254;
 	U.ui8[ui8_i + 1] = 254;
-	U.ui8[ui8_i + 2] = 254;
 
 	// Send message
 	for (size_t i = 0; i < 8; i++)
-	{
-		ESlave.write_reg_value(0, U.ui16[0]);
-	}
-	_DB.printMsgTime("\tSENT Ethercat Message: type=%s id=%d", _DB.setGetStr(), a2pEtherMsgID);
+		ESlave.write_reg_value(i, U.ui16[i]);
+	_DB.printMsgTime("SENT Ethercat Message: type=%s id=%d", _DB.setGetStr(), a2pEtherMsgID);
+
+	// Print message
+	_DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
+	for (size_t i = 1; i < 8; i++)
+		_DB.printMsgTime("\tui8[%d]  %d %d", i, U.ui8[2 * i], U.ui8[2 * i + 1]);
 }
 
 //+++++++++++++ Runtime Methods ++++++++++++++
@@ -633,10 +636,10 @@ void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg
 /// alternative to @ref Wall_Operation::getWallCmdSerial.
 /// Note, this function updates the byte mask specifying which walls should be up
 /// </summary>
-/// <param name="cham_i">Index of the chamber to set [0-48]</param>
-/// <param name="bit_val_set">Value to set the bits to [0,1]. DEFAULT[1].</param>
-/// <param name="p_wall_inc">OPTIONAL: pointer array specifying wall numbers for walls to move [0-7] max 8 entries. DEFAULT:[all walls]</param>
-/// <param name="s">OPTIONAL: length of "p_wall_inc". DEFAULT:[8] </param>
+/// <param name="cham_i"> Index of the chamber to set [0-48]</param>
+/// <param name="bit_val_set"> Value to set the bits to [0,1]. DEFAULT[1].</param>
+/// <param name="p_wall_inc">OPTIONAL: Pointer array specifying wall numbers for walls to move [0-7] max 8 entries. DEFAULT:[all walls]</param>
+/// <param name="s">OPTIONAL: Length of "p_wall_inc". DEFAULT:[8] </param>
 /// <returns>Success/error codes [0:success, -1=255:input argument error]</returns>
 /// <example>
 /// Here's an example of how to use setWallCmdManual:
@@ -1107,8 +1110,9 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 /// <summary>
 /// Used for debugging to print out all fields of a PMS struct.
 /// </summary>
-/// <param name="pms">PMS struct to print</param>
-void Wall_Operation::_printPMS(Pin_Map_Str pms)
+/// <param name="p_wall_inc">OPTIONAL: [0-7] max 8 entries. DEFAULT:[all walls] </param>
+/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
+void Wall_Operation::printPMS(Pin_Map_Str pms)
 {
 	char buff[250];
 	sprintf(buff, "\nIO/PWM nPorts=%d__________________", pms.nPorts);
@@ -1123,4 +1127,35 @@ void Wall_Operation::_printPMS(Pin_Map_Str pms)
 			_DB.printMsgTime(buff);
 		}
 	}
+}
+
+/// <summary>
+/// Used for debugging to print out Ethercat register.
+/// </summary>
+/// <param name="d_type"> What data type to print [0, 1] [uint8, uint16] </param>
+/// <param name="p_reg_arr">OPTIONAL: Existing reg values or max 8 entries. DEFAULT:[read values] </param>
+void Wall_Operation::printEtherReg(uint8_t d_type, int p_reg[])
+{
+	int p_r[8]; // initialize array to handle null array argument
+	if (p_reg == nullptr)
+	{ // read all 8 values
+		ESlave.get_ecat_registers(p_r);
+	}
+	else
+	{ // copy over input
+		for (size_t i = 0; i < 8; i++)
+			p_r[i] = p_reg[i];
+	}
+
+	// Print out register
+	_DB.printMsgTime("Ethercat Register__________________");
+	for (size_t i = 0; i < 8; i++)
+	{
+		U.ui16[i] = p_r[i];
+		if (d_type == 0)
+			_DB.printMsgTime("\tui8[%d]  %d %d", i, U.ui8[2 * i], U.ui8[2 * i + 1]);
+		else
+			_DB.printMsgTime("\tui16[%d] %d", i, U.ui16[i]);
+	}
+	_DB.printMsgTime("");
 }
