@@ -42,6 +42,9 @@ private:
 	char *_timeStr(uint32_t);
 
 public:
+	char *setGetStr(const char* = nullptr);
+
+public:
 	char *arrayStr(uint8_t[], size_t);
 
 public:

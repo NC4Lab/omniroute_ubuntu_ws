@@ -58,11 +58,9 @@ void setup()
 	DB.printMsg("Finished uploading to Arduno Due");
 #endif
 
-	C_COM.i2cScan();
-	while(true);
-
 	// Run initial maze setup
-	W_OPR.resetMaze(false); 
+	//W_OPR.resetMaze(false); 
+	
 }
 
 //=============== LOOP ==================

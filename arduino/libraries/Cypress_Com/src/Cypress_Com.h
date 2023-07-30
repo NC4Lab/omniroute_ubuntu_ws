@@ -31,14 +31,10 @@ class Cypress_Com
 	// ---------VARIABLES-----------------
 public:
 	// // 1x3 testing addresses
-	// uint8_t ADDR_LIST[3]{ 0xE, 0x10, 0x12};
-	// uint8_t ADDR_LIST[2]{0x12, 0x10};
+	uint8_t ADDR_LIST[2]{0x12, 0x10};
 
-	// 3x3 testing addresses
-	uint8_t ADDR_LIST[1]
-	{
-		0x2
-	};
+	// // 3x3 testing addresses
+	// uint8_t ADDR_LIST[1]{0x2};
 	
 	// // 3x3 experiment addresses
 	// uint8_t ADDR_LIST[9]

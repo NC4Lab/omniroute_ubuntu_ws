@@ -242,6 +242,7 @@ void Wall_Operation::_updateDynamicPMS(Pin_Map_Str r_pms1, Pin_Map_Str &r_pms2, 
 /// <summary>
 /// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
 /// the wall states and errors
+/// <param name="do_full_reset">reset all variables</param>
 /// </summary>
 void Wall_Operation::resetMaze(uint8_t do_full_reset)
 {
@@ -287,13 +288,16 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 		isEthercatInitialized = false;
 	}
 
+	// Clear Esmacat buffer
+	sendEthercatMessage(A2P_Type_ID::A2P_NONE);
+
 	// Test and reset all walls
 	resp = _setupWalls();
 
 	if (do_full_reset)
-		_DB.printMsgTime("MAZE RESET COMPLETE");
+		_DB.printMsgTime("RESET Maze Complete");
 	else
-		_DB.printMsgTime("MAZE SETUP COMPLETE");
+		_DB.printMsgTime("SETUP Maze Complete");
 }
 
 /// /// <summary>
@@ -423,8 +427,8 @@ uint8_t Wall_Operation::_setupWalls()
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
 uint8_t Wall_Operation::getEthercatMessage()
 {
-	int p2a_msg_id;		  // incoming msg id number
-	uint8_t p2a_msg_type;  // incoming msg type id
+	int p2a_msg_id;			  // incoming msg id number
+	uint8_t p2a_msg_type;	  // incoming msg type id
 	uint8_t msg_arg_lng;	  // incoming msg argument length
 	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
 	int reg_dat[8];			  // buffer for reading ethercat registers
@@ -443,7 +447,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 	if (p2a_msg_id == 65535 || p2a_msg_type == 65535)
 		return 0;
 
-	// skip redundant messages and reset message type to NONE
+	// skip redundant messages and reset message type to P2A_NONE
 	if (p2a_msg_id == p2aEtherMsgID)
 	{
 		p2aEtherMsgType = P2A_Type_ID::P2A_NONE;
@@ -458,15 +462,13 @@ uint8_t Wall_Operation::getEthercatMessage()
 			if (errorType != Error_Type::MESSAGE_ID_DISORDERED) // only run once
 			{
 				// Set id last to new value on first error and set error type (need better error handeling here)
-				p2aEtherMsgID = p2a_msg_id; 
+				p2aEtherMsgID = p2a_msg_id;
 				errorType = Error_Type::MESSAGE_ID_DISORDERED;
 				_DB.printMsgTime("!!Ethercat message id missmatch: last=%d new = %d!!", p2aEtherMsgID, p2a_msg_id);
 			}
 		}
 		return 1;
 	}
-
-	_DB.printMsgTime("\tNew ethercat message recieved: msg number=%d", p2a_msg_id);
 
 	// Update message id
 	p2aEtherMsgID = p2a_msg_id;
@@ -508,16 +510,16 @@ uint8_t Wall_Operation::getEthercatMessage()
 	switch (p2aEtherMsgType)
 	{
 
-	// 	CLEAR_REG
-	case P2A_Type_ID::CLEAR_REG:
-		_DB.printMsgTime("\tCLEAR_REG");
+	// 	P2A_NONE
+	case P2A_Type_ID::P2A_NONE:
+		_DB.setGetStr("P2A_NONE");
 		break;
 
 	// 	START_SESSION
 	case P2A_Type_ID::START_SESSION:
 		if (!isEthercatInitialized)
 		{
-			_DB.printMsgTime("\tSTART_SESSION");
+			_DB.setGetStr("START_SESSION");
 			_DB.printMsgTime("\tEthercat comms initialized");
 			isEthercatInitialized = true;
 		}
@@ -538,7 +540,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 			// Update move flag
 			C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
 
-			_DB.printMsgTime("\tMOVE_WALLS");
+			_DB.setGetStr("MOVE_WALLS");
 			_DB.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
 			_DB.printMsgTime("\t\t\tup=%s", _DB.bitIndStr(wall_u_b));
 			_DB.printMsgTime("\t\t\tdown=%s", _DB.bitIndStr(wall_d_b));
@@ -548,11 +550,14 @@ uint8_t Wall_Operation::getEthercatMessage()
 
 	// 	END_SESSION
 	case P2A_Type_ID::END_SESSION:
+		_DB.setGetStr("END_SESSION");
 		break;
 
 	default:
 		break;
 	}
+
+	_DB.printMsgTime("\tRECIEVED Ethercat Message: type=%s id=%d", _DB.setGetStr(), p2a_msg_id);
 
 	// Send confirmation message
 	sendEthercatMessage(A2P_Type_ID::CONFIRM_RECEIVED);
@@ -584,7 +589,6 @@ void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
 	a2pEtherMsgID = p2aEtherMsgID < 65535 ? p2aEtherMsgID + 1 : 1;
-	_DB.printMsgTime("\tNew ethercat message sent: msg number=%d", a2pEtherMsgID);
 
 	// Clear union
 	U.ui64[0] = 0;
@@ -596,12 +600,12 @@ void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg
 
 	// 	CONFIRM_RECEIVED
 	case A2P_Type_ID::CONFIRM_RECEIVED:
-		_DB.printMsgTime("\tCONFIRM_RECEIVED");
+		_DB.setGetStr("CONFIRM_RECEIVED");
 		msg_arg_lng = 2;
-		U.ui16[0] = a2pEtherMsgID;						  // a2p message number
+		U.ui16[0] = a2pEtherMsgID;					   // a2p message number
 		U.ui8[2] = static_cast<uint8_t>(a2p_msg_type); // message type
-		U.ui8[3] = msg_arg_lng;							  // arg length
-		U.ui16[3] = p2aEtherMsgID;						  // p2a message number
+		U.ui8[3] = msg_arg_lng;						   // arg length
+		U.ui16[3] = p2aEtherMsgID;					   // p2a message number
 
 		break;
 
@@ -619,6 +623,7 @@ void Wall_Operation::sendEthercatMessage(A2P_Type_ID a2p_msg_type, uint8_t p_msg
 	{
 		ESlave.write_reg_value(0, U.ui16[0]);
 	}
+	_DB.printMsgTime("\tSENT Ethercat Message: type=%s id=%d", _DB.setGetStr(), a2pEtherMsgID);
 }
 
 //+++++++++++++ Runtime Methods ++++++++++++++

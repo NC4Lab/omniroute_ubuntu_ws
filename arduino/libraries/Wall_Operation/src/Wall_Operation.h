@@ -32,8 +32,8 @@ class Wall_Operation
 
 	// ---------VARIABLES-----------------
 public:
-	uint8_t nCham;		 ///< number of chambers [1-9]
-	uint8_t pwmDuty;	 ///< pwm duty cycle [0-255]
+	uint8_t nCham;		///< number of chambers [1-9]
+	uint8_t pwmDuty;	///< pwm duty cycle [0-255]
 	struct Wall_Map_Str ///< pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -56,7 +56,7 @@ public:
 		};
 		uint8_t funMap[6][8] = {0}; ///< map of pin function [0:none, 1:io_down, 2:io_up, 3:pwm_down, 4:pwm_up]
 	};
-	Wall_Map_Str wms;	///< only one instance used
+	Wall_Map_Str wms;  ///< only one instance used
 	struct Pin_Map_Str ///< pin mapping orgnanized by port / pin number
 	{
 		uint8_t port[6];		///< stores port numbers
@@ -67,13 +67,13 @@ public:
 		uint8_t nPorts;			///< stores number of ports in list
 		uint8_t nPins[6];		///< stores number of pins in list
 	};
-	Pin_Map_Str pmsAllIO;	  ///< all io pins
-	Pin_Map_Str pmsAllPWM;	  ///< all pwm pins
-	Pin_Map_Str pmsUpIO;	  ///< io up pins
-	Pin_Map_Str pmsDownIO;	  ///< io down pins
-	Pin_Map_Str pmsUpPWM;	  ///< pwm up pins
-	Pin_Map_Str pmsDownPWM;  ///< pwm down pins
-	struct Chamber_Str ///< struct for tracking each chamber
+	Pin_Map_Str pmsAllIO;	///< all io pins
+	Pin_Map_Str pmsAllPWM;	///< all pwm pins
+	Pin_Map_Str pmsUpIO;	///< io up pins
+	Pin_Map_Str pmsDownIO;	///< io down pins
+	Pin_Map_Str pmsUpPWM;	///< pwm up pins
+	Pin_Map_Str pmsDownPWM; ///< pwm down pins
+	struct Chamber_Str		///< struct for tracking each chamber
 	{
 		uint8_t num = 0;			   ///< chamber number
 		uint8_t addr = 0;			   ///< chamber I2C address
@@ -87,8 +87,8 @@ public:
 	};
 	Chamber_Str C[9]; ///< initialize with max number of chambers for 3x3
 	union Union
-	{					 ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
-		byte ui8[16];	 ///< (byte) 1 byte
+	{					  ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
+		byte ui8[16];	  ///< (byte) 1 byte
 		uint16_t ui16[8]; ///< (uint16_t) 2 byte
 		uint64_t ui64[2]; ///< (uint64_t) 8 byte
 	};
@@ -99,17 +99,16 @@ public:
 	enum P2A_Type_ID
 	{
 		P2A_NONE = 0,
-		CLEAR_REG = 127,
+		MOVE_WALLS = 1,
 		START_SESSION = 128,
 		END_SESSION = 129,
-		MOVE_WALLS = 1,
 		ERROR = 254
 	};
 	P2A_Type_ID p2aEtherMsgType = P2A_Type_ID::P2A_NONE;
 	enum A2P_Type_ID
 	{
 		A2P_NONE = 0,
-		CONFIRM_RECEIVED = 1
+		CONFIRM_RECEIVED = 128
 	};
 	A2P_Type_ID a2pEtherMsgType = A2P_Type_ID::A2P_NONE;
 	enum Error_Type
@@ -171,7 +170,7 @@ public:
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
-	
+
 public:
 	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 

@@ -2,6 +2,10 @@
 import os
 import rospy
 from omniroute_esmacat_ros.msg import *
+import signal
+import subprocess
+import psutil
+import time
 
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -10,7 +14,7 @@ from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
 
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF, QCoreApplication
 from PyQt5.QtGui import QPen, QColor, QFont
 
 from PyQt5 import QtWidgets, uic
@@ -44,6 +48,7 @@ with all but first 16 bit value seperated into bytes
 """
 
 # GLOBAL VARS
+DB_VERBOSE = True
 NUM_ROWS_COLS = 3
 WALL_MAP = {
     0: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -60,15 +65,14 @@ WALL_MAP = {
 #ENUM: Enum for ethercat python to arduino message type ID
 class P2A_Type_ID(Enum):
     P2A_NONE = 0
-    CLEAR_REG = 127
+    MOVE_WALLS = 1
     START_SESSION = 128
     END_SESSION = 129
-    MOVE_WALLS = 1
 
 #ENUM: Enum for ethercat arduino to python message type ID
 class A2P_Type_ID(Enum):
     A2P_NONE = 0
-    CONFIRM_RECEIVED = 1
+    CONFIRM_RECEIVED = 128
     ERROR = 254
 
 #ENUM: Enum for tracking errors
@@ -429,6 +433,7 @@ class Interface(Plugin):
         self._widget.plotClearBtn.clicked.connect(self.qt_callback_plotClearBtn_clicked)
         self._widget.plotSaveBtn.clicked.connect(self.qt_callback_plotSaveBtn_clicked)
         self._widget.plotSendBtn.clicked.connect(self.qt_callback_plotSendBtn_clicked)
+        self._widget.sysQuiteBtn.clicked.connect(self.qt_callback_sysQuiteBtn_clicked)
         
         # QT timer setup for UI updating
         self.timer_ui_update = QTimer()
@@ -459,6 +464,7 @@ class Interface(Plugin):
 
         # Add a shutdown callback to unregister the subscriber when the ROS session is ending
         rospy.on_shutdown(self.ros_callback_shutdown)
+
 
     # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
     class Union:
@@ -523,8 +529,8 @@ class Interface(Plugin):
         self.timer_send_dummy.start(500) # (ms)
 
     def timer_callback_send_dummy(self):
-        # Send CLEAR_REG message to arduino to clear the START_SESSION message from the registry
-        self.send_ethercat_message(P2A_Type_ID.CLEAR_REG) 
+        # Send P2A_NONE message to arduino to clear the START_SESSION message from the registry
+        self.send_ethercat_message(P2A_Type_ID.P2A_NONE) 
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
@@ -597,17 +603,12 @@ class Interface(Plugin):
         #rospy_log_col('INFO', Maze_Plot.CW_LIST)
         self.send_ethercat_message(P2A_Type_ID.MOVE_WALLS, 9, Maze_Plot.CW_LIST.get_byte_list())
 
-    def get_path_config_dir(self, file_name=None):
-        # Get the absolute path of the current script file
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Create the path to the "config" directory four levels up
-        dir_path =  os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
-        # Return file or dir path
-        if file_name is not None:
-            return os.path.join(dir_path, file_name)
-        else:
-            return dir_path
-    
+    def qt_callback_sysQuiteBtn_clicked(self):
+        # Call function to shut down the ROS session
+        self.end_ros_session()
+        # End the application
+        QApplication.quit()
+  
     def send_ethercat_message(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
         # Itterate message id and roll over to 1 if max 16 bit value is reached
@@ -733,7 +734,18 @@ class Interface(Plugin):
 
         # Return new message flag
         return 0
-
+ 
+    def get_path_config_dir(self, file_name=None):
+        # Get the absolute path of the current script file
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Create the path to the "config" directory four levels up
+        dir_path =  os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
+        # Return file or dir path
+        if file_name is not None:
+            return os.path.join(dir_path, file_name)
+        else:
+            return dir_path
+  
     def save_data_to_csv(self, file_name, data):
         try:
             with open(file_name, 'w', newline='') as csvfile:
@@ -775,19 +787,69 @@ class Interface(Plugin):
         # Update plot walls
         self.maze.update_walls()
 
+    def terminate_ros_node(self, s):
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        for str in list_output.decode().split("\n"):
+            if (str.startswith(s)):
+                os.system("rosnode kill " + str)
+
+    def terminate_process_and_children(self, p):
+        ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
+        ps_output = ps_command.stdout.read()
+        retcode = ps_command.wait()
+        assert retcode == 0, "ps command returned %d" % retcode
+        for pid_str in ps_output.split("\n")[:-1]:
+                os.kill(int(pid_str), signal.SIGINT)
+        p.terminate()
+        p.kill()
+
+    def end_ros_session(self):
+        # Kill specific nodes
+        self.terminate_ros_node("/Esmacat_application_node")
+        self.terminate_ros_node("/interface_test_node")
+        
+        # Wait for nodes to shutdown
+        time.sleep(1) # (sec)
+        
+        # Kill all nodes (This will also kill this script's node)
+        os.system("rosnode kill -a")
+
+        # Process any pending events in the event loop
+        QCoreApplication.processEvents()
+
+        # Close the UI window
+        self._widget.close()
+
+        # Send a shutdown request to the ROS master
+        rospy.signal_shutdown("User requested shutdown")
+
+    def closeEvent(self, event):
+        # Call function to shut down the ROS session
+        self.end_ros_session()
+        event.accept()  # let the window close
+
 # FUNCTION: Log to ROS in color
 def rospy_log_col(level, message, *args):
-    if level == 'ERROR':
-        color = Fore.RED
-    elif level == 'WARNING':
-        color = Fore.YELLOW
-    elif level == 'INFO':
-        color = Fore.BLUE
-    elif level == 'HIGHLIGHT':
-        color = Fore.GREEN
-    else:
-        color = Fore.BLACK
+    # Exit if DB_VERBOSE is false
+    if not DB_VERBOSE: return
+    
+    # Define colors relative to level string argument
+    if level == 'ERROR': color = Fore.RED
+    elif level == 'WARNING': color = Fore.YELLOW
+    elif level == 'INFO': color = Fore.BLUE
+    elif level == 'HIGHLIGHT': color = Fore.GREEN
+    else: color = Fore.BLACK
+
+    # Format and log message
     colored_message = f"{color}{message}{Style.RESET_ALL}"
     formatted_message = colored_message % args
     rospy.loginfo(formatted_message)
- 
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = MyWindow()
+    win.show()
+    sys.exit(app.exec_())

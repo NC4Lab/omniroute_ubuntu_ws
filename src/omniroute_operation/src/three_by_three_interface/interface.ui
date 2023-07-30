@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>789</width>
-    <height>930</height>
+    <height>928</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -224,7 +224,7 @@
      <x>10</x>
      <y>680</y>
      <width>770</width>
-     <height>241</height>
+     <height>231</height>
     </rect>
    </property>
    <property name="font">
@@ -320,6 +320,24 @@
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cc0000;&quot;&gt;Error Thrown&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sysQuiteBtn">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>190</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>QUIT</string>
     </property>
    </widget>
   </widget>

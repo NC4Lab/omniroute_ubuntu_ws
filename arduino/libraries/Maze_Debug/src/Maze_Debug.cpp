@@ -96,31 +96,49 @@ char *Maze_Debug::_timeStr(uint32_t ts_0)
 }
 
 /// <summary>
+/// Store or retrieve a string for later use. Call without argument to retrieve string.
+/// </summary>
+/// <param name="p_str">OPTIONAL: string to store</param>
+char *Maze_Debug::setGetStr(const char *p_str)
+{
+	static char buff[100];
+
+	// Store string
+	if (p_str != nullptr)
+	{
+		buff[0] = '\0';
+		strncpy(buff, p_str, sizeof(buff) - 1);
+        buff[sizeof(buff) - 1] = '\0';
+	}
+	return buff; 
+}
+
+/// <summary>
 /// Print array of values.
 /// </summary>
 /// <param name="p_arr">Array to print (max 10 elements).</param>
 /// <param name="s">Size of array.</param>
 /// <returns>Formatted array string. E.g., "[0,1,2]"</returns>
-char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
+char* Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 {
-	if (DB_VERBOSE == 0)
-		return '\0';
-	if (s > 10)
-		return;
-	static char buff1[20];
-	buff1[0] = '\0';
-	char buff2[10];
-	strcat(buff1, "[");
-	for (size_t i = 0; i < s; i++)
-	{
-		sprintf(buff2, "%d", p_arr[i]);
-		strcat(buff1, buff2);
-		if (i < s - 1)
-			strcat(buff1, ",");
-		else
-			strcat(buff1, "]");
-	}
-	return buff1;
+    if (DB_VERBOSE == 0)
+        return "";
+    if (s > 10)
+        return "";
+    static char buff1[50];
+    buff1[0] = '\0';
+    char buff2[10];
+    strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
+    for (size_t i = 0; i < s; i++)
+    {
+        snprintf(buff2, sizeof(buff2), "%d", p_arr[i]);
+        strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
+        if (i < s - 1)
+            strncat(buff1, ",", sizeof(buff1) - strlen(buff1) - 1);
+        else
+            strncat(buff1, "]", sizeof(buff1) - strlen(buff1) - 1);
+    }
+    return buff1;
 }
 
 /// <summary>
