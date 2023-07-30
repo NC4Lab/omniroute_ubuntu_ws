@@ -70,8 +70,6 @@ public:
 
 public:
 	uint8_t i2cWrite(uint8_t, uint8_t, uint8_t);
-
-public:
 	uint8_t i2cWrite(uint8_t, uint8_t, uint8_t[], uint8_t);
 
 public:

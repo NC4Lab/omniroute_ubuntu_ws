@@ -57,19 +57,19 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port_1">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_1">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(Pin_Map_Str &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
+void Wall_Operation::_makePMS(PinMapStr &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
 	_addPinPMS(r_pms, p_port_1, p_pin_1);
 }
 /// <summary>
-/// Overload with option for additional @ref Wall_Operation::WallMapStruct entries used
+/// OVERLOAD:  with option for additional @ref Wall_Operation::WallMapStruct entries used
 /// for creating PMS structs that include pins both up and down (e.g., all IO or all PWM pins)
 /// </summary>
 /// <param name="p_port_2">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin_2">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_makePMS(Pin_Map_Str &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
+void Wall_Operation::_makePMS(PinMapStr &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
@@ -84,7 +84,7 @@ void Wall_Operation::_makePMS(Pin_Map_Str &r_pms, uint8_t p_port_1[], uint8_t p_
 /// <param name="r_pms">Reference to PMS to be updated</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
-void Wall_Operation::_addPortPMS(Pin_Map_Str &r_pms, uint8_t p_port[], uint8_t p_pin[])
+void Wall_Operation::_addPortPMS(PinMapStr &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 
 	for (size_t wal_i = 0; wal_i < 8; wal_i++)
@@ -108,7 +108,7 @@ void Wall_Operation::_addPortPMS(Pin_Map_Str &r_pms, uint8_t p_port[], uint8_t p
 /// <param name="r_pms">Reference to PMS to be updated.</param>
 /// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct.</param>
 /// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct.</param>
-void Wall_Operation::_addPinPMS(Pin_Map_Str &r_pms, uint8_t p_port[], uint8_t p_pin[])
+void Wall_Operation::_addPinPMS(PinMapStr &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
 	{ // loop ports in struct arr
@@ -180,7 +180,7 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 /// Resets most entries in a dynamic PMS struct to there default values.
 /// </summary>
 /// <param name="r_pms">Reference to PMS struct to be reset</param>
-void Wall_Operation::_resetPMS(Pin_Map_Str &r_pms)
+void Wall_Operation::_resetPMS(PinMapStr &r_pms)
 {
 	r_pms.nPorts = 0;
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
@@ -203,7 +203,7 @@ void Wall_Operation::_resetPMS(Pin_Map_Str &r_pms)
 /// <param name="r_pms1">PMS struct to use as the basis for entries in "r_pms2"</param>
 /// <param name="r_pms2">Reference to a PMS struct to update</param>
 /// <param name="wall_byte_mask">Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.</param>
-void Wall_Operation::_updateDynamicPMS(Pin_Map_Str r_pms1, Pin_Map_Str &r_pms2, uint8_t wall_byte_mask)
+void Wall_Operation::_updateDynamicPMS(PinMapStr r_pms1, PinMapStr &r_pms2, uint8_t wall_byte_mask)
 {
 	for (size_t prt_i = 0; prt_i < r_pms1.nPorts; prt_i++)
 	{ // loop ports
@@ -440,7 +440,7 @@ uint8_t Wall_Operation::_setupWalls()
 /// <param name="p_msg_arg_data">OPTIONAL: The data for the message arguments. DEFAULT: nullptr.</param>
 /// <param name="msg_arg_lng">OPTIONAL: The length of the message arguments in uint8. DEFAULT: 0.</param>
 /// <returns>Success/error codes [0:no error, 1:error]</returns>
-void Wall_Operation::sendEthercatMessage(A2P_Msg_Type a2p_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+void Wall_Operation::sendEthercatMessage(MsgType a2p_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
 	a2pMsgID = a2pMsgID < 65535 ? a2pMsgID + 1 : 1;
@@ -451,15 +451,15 @@ void Wall_Operation::sendEthercatMessage(A2P_Msg_Type a2p_msg_type, uint8_t p_ms
 
 	// HANDLE MESSAGE TYPE
 
-	// 	CONFIRM_P2A_MESSAGE
-	if (a2p_msg_type == A2P_Msg_Type::CONFIRM_P2A_MESSAGE)
+	// 	CONFIRM_RECIEVED
+	if (a2p_msg_type == MsgType::CONFIRM_RECIEVED)
 	{
-		_DB.setGetStr("CONFIRM_P2A_MESSAGE");
+		_DB.setGetStr("CONFIRM_RECIEVED");
 		msg_arg_lng = 2;
-		U.ui16[0] = a2pMsgID;					   // a2p message number
+		U.ui16[0] = a2pMsgID;						   // a2p message number
 		U.ui8[2] = static_cast<uint8_t>(a2p_msg_type); // message type
 		U.ui8[3] = msg_arg_lng;						   // arg length
-		U.ui16[3] = p2aMsgID;					   // p2a message number
+		U.ui16[3] = p2aMsgID;						   // p2a message number
 	}
 
 	// Add footer
@@ -473,9 +473,8 @@ void Wall_Operation::sendEthercatMessage(A2P_Msg_Type a2p_msg_type, uint8_t p_ms
 	_DB.printMsgTime("SENT Ethercat Message: type=%s id=%d", _DB.setGetStr(), a2pMsgID);
 
 	// Print message
-	_DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
-	for (size_t i = 1; i < 8; i++)
-		_DB.printMsgTime("\tui8[%d]  %d %d", i, U.ui8[2 * i], U.ui8[2 * i + 1]);
+	DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
+	printEtherReg(0, U);
 }
 
 /// <summary>
@@ -509,31 +508,31 @@ uint8_t Wall_Operation::getEthercatMessage()
 		return 1;
 
 	// Make type strings
-	if (p2a_msg_type == P2A_Msg_Type::P2A_HANDSHAKE)
-		_DB.setGetStr("P2A_HANDSHAKE");
-	if (p2a_msg_type == P2A_Msg_Type::MOVE_WALLS)
+	if (p2a_msg_type == MsgType::HANDSHAKE)
+		_DB.setGetStr("HANDSHAKE");
+	if (p2a_msg_type == MsgType::MOVE_WALLS)
 		_DB.setGetStr("MOVE_WALLS");
-	if (p2a_msg_type == P2A_Msg_Type::START_SESSION)
+	if (p2a_msg_type == MsgType::START_SESSION)
 		_DB.setGetStr("START_SESSION");
-	if (p2a_msg_type == P2A_Msg_Type::END_SESSION)
+	if (p2a_msg_type == MsgType::END_SESSION) /*  */
 		_DB.setGetStr("END_SESSION");
 
 	// Check if p2a_msg_type matches any of the enum values
-	if (p2a_msg_type != P2A_Msg_Type::P2A_HANDSHAKE &&
-		p2a_msg_type != P2A_Msg_Type::MOVE_WALLS &&
-		p2a_msg_type != P2A_Msg_Type::START_SESSION &&
-		p2a_msg_type != P2A_Msg_Type::END_SESSION)
+	if (p2a_msg_type != MsgType::HANDSHAKE &&
+		p2a_msg_type != MsgType::MOVE_WALLS &&
+		p2a_msg_type != MsgType::START_SESSION &&
+		p2a_msg_type != MsgType::END_SESSION)
 	{
-		if (p2aErrType != Error_Type::NO_MESSAGE_TYPE_MATCH) // only run once
+		if (p2aErrType != ErrorType::NO_MESSAGE_TYPE_MATCH) // only run once
 		{
 			// Set id last to new value on first error and set error type
-			p2aErrType = Error_Type::NO_MESSAGE_TYPE_MATCH;
+			p2aErrType = ErrorType::NO_MESSAGE_TYPE_MATCH;
 			_DB.printMsgTime("!!ERROR: Ethercat type unknown: last=%d new= %d!!", p2aMsgID, p2a_msg_id);
 		}
 		return 2; // return error flag
 	}
 	else
-		p2aErrType = Error_Type::ERROR_NONE; // reset error type
+		p2aErrType = ErrorType::ERROR_NONE; // reset error type
 
 	// // TEMP
 	// _DB.printMsgTime("Ether Type=%s id= %d", _DB.setGetStr(), p2a_msg_id);
@@ -544,37 +543,37 @@ uint8_t Wall_Operation::getEthercatMessage()
 	{
 		if (isHandshakeDone)
 		{
-			if (p2aErrType != Error_Type::MESSAGE_ID_DISORDERED) // only run once
+			if (p2aErrType != ErrorType::MESSAGE_ID_DISORDERED) // only run once
 			{
 				// Set id last to new value on first error and set error type
-				p2aErrType = Error_Type::MESSAGE_ID_DISORDERED;
+				p2aErrType = ErrorType::MESSAGE_ID_DISORDERED;
 				_DB.printMsgTime("!!ERROR: Ethercat message id missmatch: last=%d new= %d!!", p2aMsgID, p2a_msg_id);
 			}
 		}
 		return 2; // return error flag
 	}
 	else
-		p2aErrType = Error_Type::ERROR_NONE; // reset error type
+		p2aErrType = ErrorType::ERROR_NONE; // reset error type
 
 	// Check if message is preceding handshake
-	if (!isHandshakeDone && p2a_msg_type != P2A_Msg_Type::P2A_HANDSHAKE)
+	if (!isHandshakeDone && p2a_msg_type != MsgType::HANDSHAKE)
 	{
-		if (p2aErrType != Error_Type::REGISTER_LEFTOVERS) // only run once
+		if (p2aErrType != ErrorType::REGISTER_LEFTOVERS) // only run once
 		{
 			// Set id last to new value on first error and set error type
-			p2aErrType = Error_Type::REGISTER_LEFTOVERS;
+			p2aErrType = ErrorType::REGISTER_LEFTOVERS;
 			_DB.printMsgTime("!!ERROR: Ethercat handshake missed or register not reset: type=%s id= %d!!", _DB.setGetStr(), p2a_msg_id);
 		}
 		return 2; // return error flag
 	}
 	else
-		p2aErrType = Error_Type::ERROR_NONE; // reset error type
+		p2aErrType = ErrorType::ERROR_NONE; // reset error type
 
 	// Update message id
 	p2aMsgID = p2a_msg_id;
 
 	// Update dynamic enum instance
-	p2aMsgType = static_cast<Wall_Operation::P2A_Msg_Type>(p2a_msg_type);
+	p2aMsgType = static_cast<Wall_Operation::MsgType>(p2a_msg_type);
 
 	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
@@ -598,12 +597,12 @@ uint8_t Wall_Operation::getEthercatMessage()
 	if (U.ui8[0] != 254 && U.ui8[1] != 254)
 	{
 		_DB.printMsgTime("\t!!Missing message footer!!");
-		p2aErrType = Error_Type::MISSING_FOOTER;
+		p2aErrType = ErrorType::MISSING_FOOTER;
 		return 1;
 	}
 
 	// 	Process wall data
-	if (p2aMsgType == P2A_Msg_Type::MOVE_WALLS)
+	if (p2aMsgType == MsgType::MOVE_WALLS)
 	{
 
 		// Loop through arguments
@@ -636,27 +635,27 @@ void Wall_Operation::executeEthercatCommand()
 {
 
 	// Handle message type
-	if (p2aMsgType == P2A_Msg_Type::P2A_HANDSHAKE)
+	if (p2aMsgType == MsgType::HANDSHAKE)
 	{
 		// Set ethercat flag
 		_DB.printMsgTime("\tEthercat comms initialized");
 		isHandshakeDone = true;
 	}
-	else if (p2aMsgType == P2A_Msg_Type::MOVE_WALLS)
+	else if (p2aMsgType == MsgType::MOVE_WALLS)
 	{
 		moveWalls();
 	}
-	else if (p2aMsgType == P2A_Msg_Type::START_SESSION)
+	else if (p2aMsgType == MsgType::START_SESSION)
 	{
 		resetMaze(false); // dont reset certain variables
 	}
-	else if (p2aMsgType == P2A_Msg_Type::END_SESSION)
+	else if (p2aMsgType == MsgType::END_SESSION)
 	{
 		resetMaze(true); // reset everything
 	}
 
 	// // Reset p2aMsgType
-	// p2aMsgType = P2A_Msg_Type::P2A_NONE;
+	// p2aMsgType = MsgType::MSG_NONE;
 }
 
 /// <summary>
@@ -664,12 +663,11 @@ void Wall_Operation::executeEthercatCommand()
 /// </summary>
 void Wall_Operation::handleHandshake()
 {
-	static uint32_t t_send = millis() + 100; 
+	static uint32_t t_send = millis() + 100;
 
 	// Exit if < dt has not passed
-	if (millis() < t_send) return;
-
-
+	if (millis() < t_send)
+		return;
 }
 
 //+++++++++++++ Runtime Methods ++++++++++++++
@@ -1158,7 +1156,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 /// </summary>
 /// <param name="p_wall_inc">OPTIONAL: [0-7] max 8 entries. DEFAULT:[all walls] </param>
 /// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
-void Wall_Operation::printPMS(Pin_Map_Str pms)
+void Wall_Operation::printPMS(PinMapStr pms)
 {
 	char buff[250];
 	sprintf(buff, "\nIO/PWM nPorts=%d__________________", pms.nPorts);
@@ -1194,14 +1192,25 @@ void Wall_Operation::printEtherReg(uint8_t d_type, int p_reg[])
 	}
 
 	// Print out register
-	_DB.printMsgTime("Ethercat Register__________________");
+	_DB.printMsgTime("\tEthercat Register__________________");
 	for (size_t i = 0; i < 8; i++)
 	{
 		U.ui16[i] = p_r[i];
 		if (d_type == 0)
-			_DB.printMsgTime("\tui8[%d]  %d %d", i, U.ui8[2 * i], U.ui8[2 * i + 1]);
+			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, U.ui8[2 * i], U.ui8[2 * i + 1]);
 		else
-			_DB.printMsgTime("\tui16[%d] %d", i, U.ui16[i]);
+			_DB.printMsgTime("\t\tui16[%d] %d", i, U.ui16[i]);
 	}
 	_DB.printMsgTime("");
+}
+/// <summary>
+/// OVERLOAD: Option to pass a ComUnion struct instead of int arr.
+/// </summary>
+/// <param name="u"> ComUnion struct to print </param>
+void Wall_Operation::printEtherReg(uint8_t d_type, ComUnion u)
+{
+	int reg[8];
+	for (size_t i = 1; i < 8; i++)
+		reg[i] = u.ui16[i];
+	printEtherReg(d_type, reg);
 }

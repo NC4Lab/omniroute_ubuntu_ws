@@ -74,7 +74,7 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
 	return wireEndTransmissionWrapper();
 }
 /// <summary>
-/// Overload option to pass an array of bytes "array "p_byte_val_in_arr" to set multiple
+/// OVERLOAD: Option to pass an array of bytes "array "p_byte_val_in_arr" to set multiple
 /// registers begining at register specified by "reg".
 /// </summary>
 /// <param name="p_byte_val_in_arr">Byte pointer array with the registry values.</param>

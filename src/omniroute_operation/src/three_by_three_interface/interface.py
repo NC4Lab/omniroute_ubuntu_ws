@@ -64,22 +64,17 @@ WALL_MAP = {
 }
 
 #ENUM: Enum for ethercat python to arduino message type ID
-class P2A_Msg_Type(Enum):
-    P2A_NONE = 0
+class MsgType(Enum):
+    NONE = 0
+    CONFIRM_RECIEVED = 32
     HANDSHAKE = 64
-    CONFIRM_A2P_MESSAGE = 65
     MOVE_WALLS = 2
     START_SESSION = 128
     END_SESSION = 129
-
-#ENUM: Enum for ethercat arduino to python message type ID
-class A2P_Msg_Type(Enum):
-    A2P_NONE = 0
-    CONFIRM_P2A_MESSAGE = 65
-    ERROR = 128
+    ERROR = 254
 
 #ENUM: Enum for tracking errors
-class Error_Type(Enum):
+class ErrorType(Enum):
     ERROR_NONE = 0
     MESSAGE_ID_DISORDERED = 1
     NO_MESSAGE_TYPE_MATCH = 2
@@ -333,11 +328,12 @@ class Interface(Plugin):
     a2pMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    a2pMsgType = A2P_Msg_Type.A2P_NONE
-    p2aMsgType = P2A_Msg_Type.P2A_NONE
-    errorType = Error_Type.ERROR_NONE
+    a2pMsgType = MsgType.NONE
+    p2aMsgType = MsgType.NONE
+    a2pErrType = ErrorType.ERROR_NONE
+    p2aErrType = ErrorType.ERROR_NONE
 
-    # Handshake flag
+    # Handshake finished flag
     isHandshakeDone = False
 
     # Dummy variables for testing
@@ -346,7 +342,7 @@ class Interface(Plugin):
     dummy_3 = 0
 
     # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
-    class Union:
+    class ComUnion:
         def __init__(self):
             self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
 
@@ -490,6 +486,7 @@ class Interface(Plugin):
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(self.sig_callback_Esmacat_read_maze_ard0_ease)
     
+    """ CALLBACKS: ROS, QT and Signal  ----------------------------------------------------------------------------"""
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
         # Store ethercat message in class variable
         si16_arr = [0]*8
@@ -501,7 +498,6 @@ class Interface(Plugin):
         si16_arr[5] = msg.INT5
         si16_arr[6] = msg.INT6
         si16_arr[7] = msg.INT7
-
         
         # # TEMP
         # if (self.dummy_2 != si16_arr[0]):
@@ -535,7 +531,7 @@ class Interface(Plugin):
 
     def timer_callback_sendHandshake(self):
         # Send HANDSHAKE message to arduino
-        self.sendEthercatMessage(P2A_Msg_Type.HANDSHAKE)
+        self.sendEthercatMessage(MsgType.HANDSHAKE)
         # Start timer to check for HANDSHAKE message confirm recieved
         self.timer_checkHandshake.start(1000)
 
@@ -543,12 +539,12 @@ class Interface(Plugin):
         # Check for HANDSHAKE message confirm recieved isHandshakeDone
         if self.isHandshakeDone == False:
             # Send HANDSHAKE message to arduino again
-            self.sendEthercatMessage(P2A_Msg_Type.HANDSHAKE)
+            self.sendEthercatMessage(MsgType.HANDSHAKE)
             # Restart check timer
             self.timer_checkHandshake.start(1000)
         else:
             # Send START message to arduino
-            self.sendEthercatMessage(P2A_Msg_Type.START_SESSION)
+            self.sendEthercatMessage(MsgType.START_SESSION)
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
@@ -619,13 +615,15 @@ class Interface(Plugin):
         # Sort entries
         Maze_Plot.WConf.sortEntries()
         #rospy_log_col('INFO', Maze_Plot.WConf)
-        self.sendEthercatMessage(P2A_Msg_Type.MOVE_WALLS, 9, Maze_Plot.WConf.getByteList())
+        self.sendEthercatMessage(MsgType.MOVE_WALLS, 9, Maze_Plot.WConf.getByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         # Call function to shut down the ROS session
         self.endRosSession()
         # End the application
         QApplication.quit()
+  
+
   
     def sendEthercatMessage(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
         
@@ -634,7 +632,7 @@ class Interface(Plugin):
             1 if self.p2aMsgID < 65535 else 1
 
         # Create a list with 8 16-bit Union elements
-        U = [Interface.Union() for _ in range(8)]
+        U = [Interface.ComUnion() for _ in range(8)]
         ui16_i = 0
 
         # Set message id and type
@@ -644,7 +642,7 @@ class Interface(Plugin):
         U[ui16_i].ui8[1] = msg_arg_lng
 
         # Update walls to move up
-        if (p2a_msg_type == P2A_Msg_Type.MOVE_WALLS) and cw_list is not None:
+        if (p2a_msg_type == MsgType.MOVE_WALLS) and cw_list is not None:
             # Update U_arr with corresponding chamber and wall byte
             for cw in cw_list:
                 chamber = cw[0]
@@ -681,7 +679,7 @@ class Interface(Plugin):
         a2p_msg_type = 0
         msg_arg_lng = 0
         msg_arg_data = [0] * 10
-        U = Interface.Union()
+        U = Interface.ComUnion()
 
         # Check first register entry for msg id
         ui16_i = 0
@@ -692,8 +690,7 @@ class Interface(Plugin):
         a2p_msg_type = U.ui8[0]
         msg_arg_lng = U.ui8[1]
 
-
-        # Print registry values
+        # TEMP Print registry values
         self.printEtherReg(0, reg_dat)
 
         # Skip ethercat setup junk (65535)
@@ -706,10 +703,10 @@ class Interface(Plugin):
 
         # Check for skipped or out of sequence messages
         if a2p_msg_id - self.a2pMsgID != 1:
-            if self.errorType != Error_Type.MESSAGE_ID_DISORDERED: # only run once
+            if self.a2pErrType != ErrorType.MESSAGE_ID_DISORDERED: # only run once
                 # Set id last to new value on first error and set error type
                 self.a2pMsgID = a2p_msg_id 
-                self.errorType = Error_Type.MESSAGE_ID_DISORDERED
+                self.a2pErrType = ErrorType.MESSAGE_ID_DISORDERED
                 rospyLogCol('ERROR', "!!Ethercat message id mismatch: last=%d new=%d!!", self.a2pMsgID, a2p_msg_id)
             return 1
 
@@ -738,26 +735,40 @@ class Interface(Plugin):
         ui16_i += 1
         if U.ui8[0] != 254 and U.ui8[1] != 254:
             rospyLogCol('ERROR', "\t!!Missing message footer!!")
-            self.errorType = Error_Type.MISSING_FOOTER
+            self.a2pErrType = ErrorType.MISSING_FOOTER
             return 1
 
         # HANDLE MESSAGE TYPE
 
         # HANDSHAKE
-        if self.a2pMsgType == A2P_Msg_Type.HANDSHAKE:
+        if self.a2pMsgType == MsgType.HANDSHAKE:
             # Send START_SESSION once the handshake confirmation is received
-            self.sendEthercatMessage(P2A_Msg_Type.START_SESSION)
+            self.sendEthercatMessage(MsgType.START_SESSION)
 
-        # CONFIRM_P2A_MESSAGE
-        if self.a2pMsgType == A2P_Msg_Type.CONFIRM_P2A_MESSAGE:
+        # CONFIRM_RECIEVED
+        if self.a2pMsgType == MsgType.CONFIRM_RECIEVED:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
         # ERROR
-        elif self.a2pMsgType == A2P_Msg_Type.ERROR:
+        elif self.a2pMsgType == MsgType.ERROR:
             rospyLogCol('ERROR', "\tERROR")
 
         # Return new message flag
         return 0
+    
+    def printEtherReg(self, d_type, reg_dat, msg_type_enum = MsgType.NONE):
+        # Print message type
+        msg_type_str = msg_type_enum.name if msg_type_enum != MsgType.NONE else "NA" 
+        rospyLogCol('INFO', "\tEthercat Register: type=%s", msg_type_str)
+            
+        # Print message data
+        U = Interface.ComUnion()
+        for i in range(0, len(reg_dat)):
+            U.ui16 = reg_dat[i]
+            if d_type == 0:
+                rospyLogCol('INFO', "\t\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
+            elif d_type == 1:
+                rospyLogCol('INFO', "\t\tui16[%d] %d", i, U.ui16)
  
     def getPathConfigDir(self, file_name=None):
         # Get the absolute path of the current script file
@@ -833,7 +844,7 @@ class Interface(Plugin):
     def endRosSession(self):
 
         # Send END_SESSION message to arduino
-        self.sendEthercatMessage(P2A_Msg_Type.END_SESSION)
+        self.sendEthercatMessage(MsgType.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
@@ -856,15 +867,6 @@ class Interface(Plugin):
 
         # Send a shutdown request to the ROS master
         rospy.signal_shutdown("User requested shutdown")
-
-    def printEtherReg(self, d_type, reg_dat):
-        U = Interface.Union()
-        for i in range(0, len(reg_dat)):
-            U.ui16 = reg_dat[i]
-            if d_type == 0:
-                rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U.ui8[0], U.ui8[1])
-            elif d_type == 1:
-                rospyLogCol('INFO', "\tui16[%d] %d", i, U.ui16)
              
     # NOT WORKING!!
     def closeEvent(self, event):

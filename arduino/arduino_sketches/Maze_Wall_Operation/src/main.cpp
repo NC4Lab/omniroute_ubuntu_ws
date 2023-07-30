@@ -62,10 +62,6 @@ void setup()
 	// W_OPR.resetMaze(false);
 
 	// // TEMP
-	// W_OPR.sendEthercatMessage(W_OPR.A2P_Type_ID::CONFIRM_RECEIVED);
-	// while (true);
-
-	// // TEMP
 	// while (true)
 	// {
 	// 	delay(1000);
@@ -80,11 +76,31 @@ void loop()
 	// Check ethercat coms
 	resp = W_OPR.getEthercatMessage();
 
+	// TEMP
+	if (resp != 0)
+		return;
+	while (true)
+	{
+		int dt = 1000;
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::HANDSHAKE);
+		delay(dt);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::HANDSHAKE);
+		delay(dt);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::MOVE_WALLS);
+		delay(dt);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::START_SESSION);
+		delay(dt);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::END_SESSION);
+		delay(dt);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::ERROR);
+		delay(dt);
+	}
+
 	// Execute ethercat command
 	if (resp == 0) // check for new message
 	{
 		// Send confirmation message
-		W_OPR.sendEthercatMessage(W_OPR.A2P_Msg_Type::CONFIRM_P2A_MESSAGE);
+		W_OPR.sendEthercatMessage(W_OPR.MsgType::CONFIRM_RECIEVED);
 
 		// Execute new command
 		W_OPR.executeEthercatCommand();
