@@ -111,8 +111,9 @@ public:
 		END_SESSION = 129,
 		ERROR = 254
 	};
-	MessageType rcvMsgTp = MessageType::MSG_NONE; ///< tracks the received ethercat message type
-	MessageType sndMsgTp = MessageType::MSG_NONE; ///< tracks the sent ethercat message type
+	MessageType rcvMsgTyp = MessageType::MSG_NONE; ///< tracks the received ethercat message type
+	MessageType sndMsgTyp = MessageType::MSG_NONE; ///< tracks the sent ethercat message type
+	MessageType cnfMsgTyp = MessageType::MSG_NONE; ///< tracks the conf ethercat message type
 	int rcvMsgID = 0;							  ///< tracks the received ethercat message number
 	int sndMsgID = 0;							  ///< tracks the sent ethercat message number
 	enum ErrorType
@@ -123,7 +124,7 @@ public:
 		REGISTER_LEFTOVERS = 3,
 		MISSING_FOOTER = 4
 	};
-	ErrorType rcvErrTp = ErrorType::ERROR_NONE; ///< tracks the received ethercat error type
+	ErrorType rcvErrTyp = ErrorType::ERROR_NONE; ///< tracks the received ethercat error type
 
 	union RegUnion
 	{					  ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
@@ -143,6 +144,8 @@ public:
 			MessageType msgtype = MessageType::MSG_NONE; ///< Ethercat message type
 			ErrorType errtype = ErrorType::ERROR_NONE;	 ///< Ethercat message error
 			uint16_t Reg16[8] = {0};					 ///< Ethercat 16 bit register values
+
+			/// @todo: add way of storing message type of CONFIRM_RECEIVED
 
 			// Indexes for RegUnion
 			uint8_t U8i = 0;  // index for RegUnion.ui8[16]

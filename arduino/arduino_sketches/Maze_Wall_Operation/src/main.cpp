@@ -82,7 +82,6 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_RECIEVED);
 		delay(dt);
 		W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
 		delay(dt);

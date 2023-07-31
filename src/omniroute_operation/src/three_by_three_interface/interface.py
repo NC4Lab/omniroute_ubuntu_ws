@@ -64,7 +64,7 @@ WALL_MAP = {
 }
 
 #ENUM: Enum for ethercat python to arduino message type ID
-class MsgType(Enum):
+class MessageType(Enum):
     NONE = 0
     CONFIRM_RECIEVED = 32
     HANDSHAKE = 64
@@ -74,7 +74,7 @@ class MsgType(Enum):
     ERROR = 254
 
 #ENUM: Enum for tracking errors
-class ErrType(Enum):
+class ErrorType(Enum):
     ERROR_NONE = 0
     MESSAGE_ID_DISORDERED = 1
     NO_MESSAGE_TYPE_MATCH = 2
@@ -328,10 +328,9 @@ class Interface(Plugin):
     rcvMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    rcvMsgTp = MsgType.NONE
-    sndMsgTp = MsgType.NONE
-    rcvErrTp = ErrType.ERROR_NONE
-    sndErrTp = ErrType.ERROR_NONE
+    rcvMsgTyp = MessageType.NONE
+    sndMsgTyp = MessageType.NONE
+    rcvErrTyp = ErrorType.ERROR_NONE
 
     # Handshake finished flag
     isHandshakeDone = False
@@ -531,7 +530,7 @@ class Interface(Plugin):
 
     def timer_callback_sendHandshake_once(self):
         # Send HANDSHAKE message to arduino
-        self.sendEthercatMessage(MsgType.HANDSHAKE)
+        self.sendEthercatMessage(MessageType.HANDSHAKE)
         
         # Start timer to check for HANDSHAKE message confirm recieved
         self.timer_checkHandshake.start(500)
@@ -546,13 +545,13 @@ class Interface(Plugin):
                 return  
 
             # Send HANDSHAKE message to arduino again
-            self.sendEthercatMessage(MsgType.HANDSHAKE)
+            self.sendEthercatMessage(MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_checkHandshake.start(500)
         else:
             # Send START message to arduino
-            self.sendEthercatMessage(MsgType.START_SESSION)
+            self.sendEthercatMessage(MessageType.START_SESSION)
 
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
@@ -623,7 +622,7 @@ class Interface(Plugin):
         # Sort entries
         Maze_Plot.WConf.sortEntries()
         #rospy_log_col('INFO', Maze_Plot.WConf)
-        self.sendEthercatMessage(MsgType.MOVE_WALLS, 9, Maze_Plot.WConf.getByteList())
+        self.sendEthercatMessage(MessageType.MOVE_WALLS, 9, Maze_Plot.WConf.getByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         # Call function to shut down the ROS session
@@ -633,11 +632,12 @@ class Interface(Plugin):
   
     ''' FUNCTIONS: Ethercat Communication '''
   
-    def sendEthercatMessage(self, p2a_msg_type, msg_arg_lng = 0, cw_list=None):
+    def sendEthercatMessage(self, snd_msg_type, msg_arg_lng = 0, cw_list=None):
         
         # Itterate message id and roll over to 1 if max 16 bit value is reached
         self.sndMsgID = self.sndMsgID + \
             1 if self.sndMsgID < 65535 else 1
+        self.sndMsgTyp = snd_msg_type; # update message type
 
         # Create a list with 8 16-bit Union elements
         U = [Interface.ComUnion() for _ in range(8)]
@@ -646,11 +646,11 @@ class Interface(Plugin):
         # Set message id and type
         U[ui16_i].ui16 = self.sndMsgID
         ui16_i += 1
-        U[ui16_i].ui8[0] = p2a_msg_type.value
+        U[ui16_i].ui8[0] = self.sndMsgTyp.value
         U[ui16_i].ui8[1] = msg_arg_lng
 
         # Update walls to move up
-        if (p2a_msg_type == MsgType.MOVE_WALLS) and cw_list is not None:
+        if (self.sndMsgTyp == MessageType.MOVE_WALLS) and cw_list is not None:
             # Update U_arr with corresponding chamber and wall byte
             for cw in cw_list:
                 chamber = cw[0]
@@ -671,7 +671,7 @@ class Interface(Plugin):
         self.maze_ard0_pub.publish(*reg_arr)  
 
         # Print reg message
-        rospyLogCol('INFO', "SENT Ecat Message: type=%s id=%d", p2a_msg_type.name, self.sndMsgID)
+        rospyLogCol('INFO', "SENT Ecat Message: type=%s id=%d", self.sndMsgTyp.name, self.sndMsgID)
         rospyLogCol('INFO', "\tui16[0] %d", U[0].ui16)
         for i in range(1, len(U)):
             rospyLogCol('INFO', "\tui8[%d]  %d %d", i, U[i].ui8[0], U[i].ui8[1])
@@ -687,16 +687,18 @@ class Interface(Plugin):
         rcv_msg_type = 0
         msg_arg_lng = 0
         msg_arg_data = [0] * 10
-        U = Interface.ComUnion()
+        U = [Interface.ComUnion() for _ in range(8)]
+        ui16_i = 0
+
+        # Copy reg_dat to U
+        for i in range(0, len(reg_dat)):
+            U[i].ui16 = reg_dat[i]  
 
         # Check first register entry for msg id
-        reg_i = 0
-        rcv_msg_id = reg_dat[reg_i]
-        reg_i += 1
-        U.ui16 = reg_dat[reg_i]
-        reg_i += 1
-        rcv_msg_type = U.ui8[0]
-        msg_arg_lng = U.ui8[1]
+        rcv_msg_id = U[ui16_i].ui16
+        ui16_i += 1
+        rcv_msg_type = U[ui16_i].ui8[0]
+        msg_arg_lng = U[ui16_i].ui8[1]
 
         # Skip ethercat setup junk (65535)
         if rcv_msg_id == 65535:
@@ -707,35 +709,41 @@ class Interface(Plugin):
             return 0
         
         # Check if rcv_msg_type matches any of the enum values
-        if rcv_msg_type not in [e.value for e in MsgType]:
-            if self.rcvErrTp != ErrType.NO_MESSAGE_TYPE_MATCH:  # only run once
+        if rcv_msg_type not in [e.value for e in MessageType]:
+            if self.rcvErrTyp != ErrorType.NO_MESSAGE_TYPE_MATCH:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrTp = ErrType.NO_MESSAGE_TYPE_MATCH
+                self.rcvErrTyp = ErrorType.NO_MESSAGE_TYPE_MATCH
                 rospyLogCol('ERROR', "!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
+        elif self.rcvErrTyp == ErrorType.NO_MESSAGE_TYPE_MATCH: # only run once
+            self.rcvErrTyp = ErrorType.NO_ERROR  
 
         # Check for skipped or out of sequence messages
         if rcv_msg_id - self.rcvMsgID != 1:
-            if self.rcvErrTp != ErrType.MESSAGE_ID_DISORDERED:  # only run once
+            if self.rcvErrTyp != ErrorType.MESSAGE_ID_DISORDERED:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrTp = ErrType.MESSAGE_ID_DISORDERED
+                self.rcvErrTyp = ErrorType.MESSAGE_ID_DISORDERED
                 rospyLogCol('ERROR', "!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", self.rcvMsgID, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
+        elif self.rcvErrTyp == ErrorType.MESSAGE_ID_DISORDERED: # only run once
+            self.rcvErrTyp = ErrorType.NO_ERROR  
 
         # Check if message is preceding handshake
-        if not self.isHandshakeDone and rcv_msg_type != MsgType.HANDSHAKE.value:
-            if self.rcvErrTp != ErrType.REGISTER_LEFTOVERS:  # only run once
+        if not self.isHandshakeDone and rcv_msg_type != MessageType.HANDSHAKE.value:
+            if self.rcvErrTyp != ErrorType.REGISTER_LEFTOVERS:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrTp = ErrType.REGISTER_LEFTOVERS
-                rospyLogCol('ERROR', "!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", MsgType(rcv_msg_type).name, rcv_msg_id)
+                self.rcvErrTyp = ErrorType.REGISTER_LEFTOVERS
+                rospyLogCol('ERROR', "!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", MessageType(rcv_msg_type).name, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
+        elif self.rcvErrTyp == ErrorType.REGISTER_LEFTOVERS: # only run once
+            self.rcvErrTyp = ErrorType.NO_ERROR    
 
         # Update dynamic enum instance
-        self.rcvMsgTp.value = rcv_msg_type
-        rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgTp.name, rcv_msg_id)
+        self.rcvMsgTyp.value = rcv_msg_type
+        rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgTyp.name, rcv_msg_id)
 
         # TEMP Print registry values
         self.printEcat(0, reg_dat) #TEMP
@@ -743,31 +751,56 @@ class Interface(Plugin):
         # Update message id
         self.rcvMsgID = rcv_msg_id
 
+        # # Parse 8 bit message arguments
+        # if msg_arg_lng > 0:
+        #     msg_arg_lng_ui16_round = math.ceil(msg_arg_lng / 2) # divide message length by 2 and round up
+        #     i8_i = 0
+        #     for ui16_i in range(msg_arg_lng_ui16_round):
+        #         # Get next entry
+        #         U.ui16 = reg_dat[ui16_i]
+        #         ui16_i += 1
+        #         # Loop through bytes in given 16 bit entry and store
+        #         for b_ii in range(2):
+        #             msg_arg_data[i8_i] = U.ui8[b_ii]
+        #             i8_i += 1
+
         # Parse 8 bit message arguments
         if msg_arg_lng > 0:
             msg_arg_lng_ui16_round = math.ceil(msg_arg_lng / 2) # divide message length by 2 and round up
-            i8_i = 0
-            for reg_i in range(msg_arg_lng_ui16_round):
-                # Get next entry
-                U.ui16 = reg_dat[reg_i]
-                reg_i += 1
+            arg_i = 0
+            for _ in range(msg_arg_lng_ui16_round):
+                ui16_i += 1
                 # Loop through bytes in given 16 bit entry and store
-                for b_ii in range(2):
-                    msg_arg_data[i8_i] = U.ui8[b_ii]
-                    i8_i += 1
+                for bb_i in range(2):
+                    msg_arg_data[arg_i] = U[ui16_i].ui8[bb_i]
+                    arg_i += 1
 
         # Check for footer
-        U.ui16 = reg_dat[reg_i]
-        reg_i += 1
-        if U.ui8[0] != 254 and U.ui8[1] != 254:
-            rospyLogCol('ERROR', "\t!!ERROR: Missing message footer!!")
-            self.rcvErrTp = ErrType.MISSING_FOOTER
+        U.ui16 = reg_dat[ui16_i]
+        ui16_i += 1
+        if U[ui16_i].ui8[0] != 254 and U[ui16_i].ui8[1] != 254:
+            if self.rcvErrTyp != ErrorType.REGISTER_LEFTOVERS:  # only run once
+                rospyLogCol('ERROR', "\t!!ERROR: Missing message footer!!")
+                self.rcvErrTyp = ErrorType.MISSING_FOOTER
+                self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 1
+        elif self.rcvErrTyp == ErrorType.MISSING_FOOTER: # only run once
+            self.rcvErrTyp = ErrorType.NO_ERROR  
 
         # HANDLE MESSAGE TYPE
 
+        # CONFIRM_RECIEVED
+        if self.rcvMsgTyp == MessageType.CONFIRM_RECIEVED:
+            rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
+
+            # Parse message arguments
+            msg_arg_data
+            
+
+
+
         # HANDSHAKE
-        if self.rcvMsgTp == MsgType.HANDSHAKE:
+        if self.rcvMsgTyp == MessageType.HANDSHAKE:
             # Stop handshake check timer
             self.timer_checkHandshake.stop()    
 
@@ -775,23 +808,23 @@ class Interface(Plugin):
             self.handshakeFlag = True
 
             # Send START_SESSION message
-            self.sendEthercatMessage(MsgType.START_SESSION)
+            self.sendEthercatMessage(MessageType.START_SESSION)
 
         # CONFIRM_RECIEVED
-        if self.rcvMsgTp == MsgType.CONFIRM_RECIEVED:
+        if self.rcvMsgTyp == MessageType.CONFIRM_RECIEVED:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
         # ERROR
-        elif self.rcvMsgTp == MsgType.ERROR:
+        if self.rcvMsgTyp == MessageType.ERROR:
             rospyLogCol('ERROR', "\tERROR")
 
         # Return new message flag
         return 0
     
-    def printEcat(self, d_type, reg_dat, msg_type_val = MsgType.NONE.value, col_str = 'INFO'):
+    def printEcat(self, d_type, reg_dat, msg_type_val = MessageType.NONE.value, col_str = 'INFO'):
         # Get message type string if exists otherwise set string to "NA"
         try:
-            msg_type_str = MsgType(msg_type_val).name
+            msg_type_str = MessageType(msg_type_val).name
         except ValueError:
             msg_type_str = "NA"
 
@@ -885,7 +918,7 @@ class Interface(Plugin):
     def endRosSession(self):
 
         # Send END_SESSION message to arduino
-        self.sendEthercatMessage(MsgType.END_SESSION)
+        self.sendEthercatMessage(MessageType.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
