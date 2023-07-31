@@ -23,7 +23,8 @@
 		"editor.foldingStrategy": "auto",
 		"files.associations": {
 			"utility": "cpp",
-			"tuple": "cpp"
+			"tuple": "cpp",
+			"thread": "cpp"
 		},
 		"python.autoComplete.extraPaths": [
 			"/home/nc4lab/omniroute_operation_ws/devel/lib/python3/dist-packages",

@@ -82,11 +82,11 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::CONFIRM_RECIEVED);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_RECIEVED);
 		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::HANDSHAKE);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
 		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::ERROR);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::ERROR);
 		delay(dt);
 	}
 
@@ -94,7 +94,7 @@ void loop()
 	if (resp == 0) // check for new message
 	{
 		// Send confirmation message
-		W_OPR.sendEthercatMessage(W_OPR.MsgType::CONFIRM_RECIEVED);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_RECIEVED);
 
 		// Execute new command
 		W_OPR.executeEthercatCommand();

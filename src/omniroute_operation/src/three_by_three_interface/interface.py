@@ -74,13 +74,13 @@ class MsgType(Enum):
     ERROR = 254
 
 #ENUM: Enum for tracking errors
-class ErrorType(Enum):
+class ErrType(Enum):
     ERROR_NONE = 0
     MESSAGE_ID_DISORDERED = 1
     NO_MESSAGE_TYPE_MATCH = 2
     REGISTER_LEFTOVERS = 3
     MISSING_FOOTER = 4
-
+ 
 # CLASS: Maze_Plot to plot the maze
 class Maze_Plot(QGraphicsView):
 
@@ -330,8 +330,8 @@ class Interface(Plugin):
     # Create enum instances
     rcvMsgType = MsgType.NONE
     sndMsgType = MsgType.NONE
-    rcvErrType = ErrorType.ERROR_NONE
-    sndErrType = ErrorType.ERROR_NONE
+    rcvErrType = ErrType.ERROR_NONE
+    sndErrType = ErrType.ERROR_NONE
 
     # Handshake finished flag
     isHandshakeDone = False
@@ -708,29 +708,29 @@ class Interface(Plugin):
         
         # Check if rcv_msg_type matches any of the enum values
         if rcv_msg_type not in [e.value for e in MsgType]:
-            if self.rcvErrType != ErrorType.NO_MESSAGE_TYPE_MATCH:  # only run once
+            if self.rcvErrType != ErrType.NO_MESSAGE_TYPE_MATCH:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrorType.NO_MESSAGE_TYPE_MATCH
+                self.rcvErrType = ErrType.NO_MESSAGE_TYPE_MATCH
                 rospyLogCol('ERROR', "!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id)
-                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+                self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Check for skipped or out of sequence messages
         if rcv_msg_id - self.rcvMsgID != 1:
-            if self.rcvErrType != ErrorType.MESSAGE_ID_DISORDERED:  # only run once
+            if self.rcvErrType != ErrType.MESSAGE_ID_DISORDERED:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrorType.MESSAGE_ID_DISORDERED
+                self.rcvErrType = ErrType.MESSAGE_ID_DISORDERED
                 rospyLogCol('ERROR', "!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", self.rcvMsgID, rcv_msg_id)
-                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+                self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Check if message is preceding handshake
         if not self.isHandshakeDone and rcv_msg_type != MsgType.HANDSHAKE.value:
-            if self.rcvErrType != ErrorType.REGISTER_LEFTOVERS:  # only run once
+            if self.rcvErrType != ErrType.REGISTER_LEFTOVERS:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrorType.REGISTER_LEFTOVERS
+                self.rcvErrType = ErrType.REGISTER_LEFTOVERS
                 rospyLogCol('ERROR', "!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", MsgType(rcv_msg_type).name, rcv_msg_id)
-                self.printEReg(0, reg_dat, col_str='ERROR') #TEMP
+                self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Update dynamic enum instance
@@ -738,7 +738,7 @@ class Interface(Plugin):
         rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgType.name, rcv_msg_id)
 
         # TEMP Print registry values
-        self.printEReg(0, reg_dat) #TEMP
+        self.printEcat(0, reg_dat) #TEMP
 
         # Update message id
         self.rcvMsgID = rcv_msg_id
@@ -761,7 +761,7 @@ class Interface(Plugin):
         reg_i += 1
         if U.ui8[0] != 254 and U.ui8[1] != 254:
             rospyLogCol('ERROR', "\t!!ERROR: Missing message footer!!")
-            self.rcvErrType = ErrorType.MISSING_FOOTER
+            self.rcvErrType = ErrType.MISSING_FOOTER
             return 1
 
         # HANDLE MESSAGE TYPE
@@ -788,7 +788,7 @@ class Interface(Plugin):
         # Return new message flag
         return 0
     
-    def printEReg(self, d_type, reg_dat, msg_type_val = MsgType.NONE.value, col_str = 'INFO'):
+    def printEcat(self, d_type, reg_dat, msg_type_val = MsgType.NONE.value, col_str = 'INFO'):
         # Get message type string if exists otherwise set string to "NA"
         try:
             msg_type_str = MsgType(msg_type_val).name
