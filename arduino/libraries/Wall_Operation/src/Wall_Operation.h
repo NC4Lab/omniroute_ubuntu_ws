@@ -111,11 +111,10 @@ public:
 		END_SESSION = 129,
 		ERROR = 254
 	};
-	MessageType rcvMessageType = MessageType::MSG_NONE; ///< tracks the received ethercat message type
-	MessageType sndMessageType = MessageType::MSG_NONE; ///< tracks the sent ethercat message type
-	int rcvMsgID = 0;									///< tracks the received ethercat message number
-	int sndMsgID = 0;									///< tracks the sent ethercat message number
-
+	MessageType rcvMsgTp = MessageType::MSG_NONE; ///< tracks the received ethercat message type
+	MessageType sndMsgTp = MessageType::MSG_NONE; ///< tracks the sent ethercat message type
+	int rcvMsgID = 0;							  ///< tracks the received ethercat message number
+	int sndMsgID = 0;							  ///< tracks the sent ethercat message number
 	enum ErrorType
 	{
 		ERROR_NONE = 0,
@@ -124,7 +123,7 @@ public:
 		REGISTER_LEFTOVERS = 3,
 		MISSING_FOOTER = 4
 	};
-	ErrorType rcvErrType = ErrorType::ERROR_NONE; ///< tracks the received ethercat error type
+	ErrorType rcvErrTp = ErrorType::ERROR_NONE; ///< tracks the received ethercat error type
 
 	union RegUnion
 	{					  ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
@@ -132,165 +131,167 @@ public:
 		uint16_t ui16[8]; ///< (uint16_t) 2 byte
 		uint64_t ui64[2]; ///< (uint64_t) 8 byte
 	};
-	RegUnion UU; ///< union for storing ethercat 8 16-bit reg entries
+	RegUnion U; ///< union for storing ethercat 8 16-bit reg entries
 
-	const static uint8_t msg_queue_len = 10; ///< size of ethercat message buffer
-	struct MessageHandler					 ///< struct for storing ethercat messages
-	{
-	public:
-		uint8_t msgid = 0;							 ///< Ethercat message ID
-		char msgtypstr[50];							 ///< Ethercat message type string
-		MessageType msgtype = MessageType::MSG_NONE; ///< Ethercat message type
-		ErrorType errtype = ErrorType::ERROR_NONE;	 ///< Ethercat message error
-		uint16_t Reg16[8] = {0};					 ///< Ethercat 16 bit register values
-
-		// Indexes for RegUnion
-		uint8_t U8i = 0;  // index for RegUnion.ui8[16]
-		uint8_t U16i = 0; // index for RegUnion.ui16[8]
-
-		// Shared by all instances of EcatRegStruct (static)
-		static RegUnion U;		  ///< union for storing ethercat 8 16-bit reg entries
-		static uint8_t LenQ;	  ///< set to msg_queue_len @todo: define this by @ref msg_queue_len in constructor
-		static uint8_t IndQ;	  ///< index for ethercat receive message buffer
-		static const int MsgDt;	  ///< delay between message send/write (ms)
-		static uint32_t MsgTS;	  ///< last sent/recieve ts (ms)
-		static MessageType MsgTp; ///< Ethercat message error @todo: set to MessageType::MSG_NONE in constructor
-		static ErrorType ErrTp;	  ///< Ethercat message error @todo: set to ErrorType::ERROR_NONE in constructor
-
-		// Constructor
-		MessageHandler(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr)
-			: msgid(_msgid), msgtype(_msgtype)
+	/*
+		const static uint8_t msg_queue_len = 10; ///< size of ethercat message buffer
+		struct MessageHandler					 ///< struct for storing ethercat messages
 		{
-			strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
-			msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
-		}
+		public:
+			uint8_t msgid = 0;							 ///< Ethercat message ID
+			char msgtypstr[50];							 ///< Ethercat message type string
+			MessageType msgtype = MessageType::MSG_NONE; ///< Ethercat message type
+			ErrorType errtype = ErrorType::ERROR_NONE;	 ///< Ethercat message error
+			uint16_t Reg16[8] = {0};					 ///< Ethercat 16 bit register values
 
-		// Default Constructor
-		MessageHandler()
-			: msgid(0), msgtype(MessageType::MSG_NONE)
-		{
-			msgtypstr[0] = '\0';
-		}
+			// Indexes for RegUnion
+			uint8_t U8i = 0;  // index for RegUnion.ui8[16]
+			uint8_t U16i = 0; // index for RegUnion.ui16[8]
 
-		// Struct Methods: Setters
+			// Shared by all instances of EcatRegStruct (static)
+			static uint8_t LenQ;	  ///< set to msg_queue_len @todo: define this by @ref msg_queue_len in constructor
+			static uint8_t IndQ;	  ///< index for ethercat receive message buffer
+			static const int MsgDt;	  ///< delay between message send/write (ms)
+			static uint32_t MsgTS;	  ///< last sent/recieve ts (ms)
+			static MessageType MsgTp; ///< Ethercat message error @todo: set to MessageType::MSG_NONE in constructor
+			static ErrorType ErrTp;	  ///< Ethercat message error @todo: set to ErrorType::ERROR_NONE in constructor
+		private:
+			static RegUnion _U; ///< union for storing ethercat 8 16-bit reg entries
 
-		void set_all(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr, uint16_t *_Reg16)
-		{
-			msgid = _msgid;
-			msgtype = _msgtype;
-			strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
-			msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
-			for (int i = 0; i < 8; i++)							   // copy Reg16 array for 8 registers
-				Reg16[i] = _Reg16[i];
-		}
-		void set_msgid(uint8_t _msgid)
-		{
-			msgid = _msgid;
-		}
-		void set_msg_type(MessageType _msgtype)
-		{
-			msgtype = _msgtype;
-		}
-		void set_typ_str(const char *_msgtypstr)
-		{
-			strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
-			msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
-		}
-		void set_int16(uint16_t *_Reg16)
-		{
-			for (int i = 0; i < 8; i++) // copy Reg16 array for 8 registers
-				Reg16[i] = _Reg16[i];
-		}
+			// Constructor
+			MessageHandler(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr)
+				: msgid(_msgid), msgtype(_msgtype)
+			{
+				strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+				msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
+			}
 
-		// Struct Methods: Getters
-		uint8_t get_id()
-		{
-			return msgid;
-		}
-		MessageType get_msg_mt()
-		{
-			return msgtype;
-		}
-		const char *get_msg_type_str()
-		{
-			return msgtypstr;
-		}
+			// Default Constructor
+			MessageHandler()
+				: msgid(0), msgtype(MessageType::MSG_NONE)
+			{
+				msgtypstr[0] = '\0';
+			}
 
-		uint16_t *get_int16()
-		{
-			return Reg16;
-		}
+			// Struct Methods: Setters
 
-		// Struct Methods: Setters RegUnion
+			void set_all(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr, uint16_t *_Reg16)
+			{
+				msgid = _msgid;
+				msgtype = _msgtype;
+				strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+				msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
+				for (int i = 0; i < 8; i++)							   // copy Reg16 array for 8 registers
+					Reg16[i] = _Reg16[i];
+			}
+			void set_msgid(uint8_t _msgid)
+			{
+				msgid = _msgid;
+			}
+			void set_msg_type(MessageType _msgtype)
+			{
+				msgtype = _msgtype;
+			}
+			void set_typ_str(const char *_msgtypstr)
+			{
+				strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+				msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
+			}
+			void set_int16(uint16_t *_Reg16)
+			{
+				for (int i = 0; i < 8; i++) // copy Reg16 array for 8 registers
+					Reg16[i] = _Reg16[i];
+			}
 
-		// Create a method that will work with the U union to set the 8 16-bit registers, tracking both 16 and 8 bit index
-		void set_ui16(int p_reg[])
-		{
-			// set full register
-			for (int U16i = 0; U16i < 8; U16i++)
-				U.ui16[U16i] = p_reg[U16i];
-		}
-		// Store reg data in ui16[8] and and incriment ui16 and ui8 index
-		void set_ui16(int reg_i16)
-		{
-			return;
-		}
-		// Store reg data in ui8[16] and and incriment ui16 and ui8 index
-		void set_ui8(int reg_i18)
-		{
-			return;
-		}
-		// Store reg data in ui16[16] at index set_u16_i and update ui16 and ui8 index
-		void set_ui16(int reg_i16, uint8_t set_u16_i)
-		{
-			return;
-		}
-		// Store reg data in ui8[16] at index set_u8_i and incriment ui16 and ui8 index
-		void set_ui8(int reg_i8, uint8_t set_u8_i)
-		{
-			return;
-		}
+			// Struct Methods: Getters
+			uint8_t get_id()
+			{
+				return msgid;
+			}
+			MessageType get_msg_mt()
+			{
+				return msgtype;
+			}
+			const char *get_msg_type_str()
+			{
+				return msgtypstr;
+			}
 
-		/// @@todo: create a method that will work with the U union to set the 8 16-bit registers, tracking both 16 and 8 bit index
+			uint16_t *get_int16()
+			{
+				return Reg16;
+			}
 
-		/// @todo: @methods: Getter RegUnion
+			// Struct Methods: Setters RegUnion
 
-		/// @todo: @methods: DATA STORAGE
+			// Create a method that will work with the U union to set the 8 16-bit registers, tracking both 16 and 8 bit index
+			void set_ui16(int p_reg[])
+			{
+				// set full register
+				for (int U16i = 0; U16i < 8; U16i++)
+					_U.ui16[U16i] = p_reg[U16i];
+			}
+			// Store reg data in ui16[8] and and incriment ui16 and ui8 index
+			void set_ui16(int reg_i16)
+			{
+				return;
+			}
+			// Store reg data in ui8[16] and and incriment ui16 and ui8 index
+			void set_ui8(int reg_i18)
+			{
+				return;
+			}
+			// Store reg data in ui16[16] at index set_u16_i and update ui16 and ui8 index
+			void set_ui16(int reg_i16, uint8_t set_u16_i)
+			{
+				return;
+			}
+			// Store reg data in ui8[16] at index set_u8_i and incriment ui16 and ui8 index
+			void set_ui8(int reg_i8, uint8_t set_u8_i)
+			{
+				return;
+			}
 
-		/// 	@todo: methods for higher level storing of message data within instances of the EcatRegStruct arrau for sending and receiving from the ethercat master
-		///			@methods: Store indevidual message parameters and data and track the index of the of
-		///			@methods: Get data to be sent cycling through the
-		void write_message_to_ecat()
-		{
+			/// @@todo: create a method that will work with the U union to set the 8 16-bit registers, tracking both 16 and 8 bit index
 
-			// Exit if no message to send
+			/// @todo: @methods: Getter RegUnion
 
-			// Exit if < dt has not passed
+			/// @todo: @methods: DATA STORAGE
 
-			// Exit if < dt has not passed
+			/// 	@todo: methods for higher level storing of message data within instances of the EcatRegStruct arrau for sending and receiving from the ethercat master
+			///			@methods: Store indevidual message parameters and data and track the index of the of
+			///			@methods: Get data to be sent cycling through the
+			void write_message_to_ecat()
+			{
 
-		}
+				// Exit if no message to send
 
-		/// 	@todo: Store reg data in message data
+				// Exit if < dt has not passed
 
-		/// 	QUESTION: would it make sense to just move the Esmacatshield instance into here and send data directly to the master from here?
+				// Exit if < dt has not passed
+			}
 
-		///		@todo: methods for storing data within the instances of EcatRegStruct for sending and receiving from the ethercat master
+			/// 	@todo: Store reg data in message data
 
-		/// @todo: @methods: Deubuggig
+			/// 	QUESTION: would it make sense to just move the Esmacatshield instance into here and send data directly to the master from here?
 
-		/// 	@todo: Move to Maze_Debug::plotReg() method into here
-	};
-	RegUnion Wall_Operation::MessageHandler::U;
-	uint8_t MessageHandler::LenQ = msg_queue_len;
-	uint8_t MessageHandler::IndQ = 0;
-	const int MessageHandler::MsgDt = 0; // You need to provide a value here, 0 is just an example
-	uint32_t MessageHandler::MsgTS = 0;	 // Initialize as per your requirement
-	MessageType MessageHandler::MsgTp = MessageType::MSG_NONE;
-	ErrorType MessageHandler::ErrTp = ErrorType::ERROR_NONE;
+			///		@todo: methods for storing data within the instances of EcatRegStruct for sending and receiving from the ethercat master
 
-	// MessageHandler SndMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for sending messages
-	// MessageHandler RcvMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for receiving messages
+			/// @todo: @methods: Deubuggig
+
+			/// 	@todo: Move to Maze_Debug::plotReg() method into here
+		};
+		RegUnion Wall_Operation::MessageHandler::U;
+		uint8_t MessageHandler::LenQ = msg_queue_len;
+		uint8_t MessageHandler::IndQ = 0;
+		const int MessageHandler::MsgDt = 0; // You need to provide a value here, 0 is just an example
+		uint32_t MessageHandler::MsgTS = 0;	 // Initialize as per your requirement
+		MessageType MessageHandler::MsgTp = MessageType::MSG_NONE;
+		ErrorType MessageHandler::ErrTp = ErrorType::ERROR_NONE;
+
+		MessageHandler SndMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for sending messages
+		MessageHandler RcvMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for receiving messages
+		*/
 
 private:
 	Maze_Debug _DB;		///< local instance of Maze_Debug class

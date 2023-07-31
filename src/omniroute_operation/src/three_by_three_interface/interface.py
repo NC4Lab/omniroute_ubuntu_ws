@@ -328,10 +328,10 @@ class Interface(Plugin):
     rcvMsgID = 0 # initialize arduino to python message number
 
     # Create enum instances
-    rcvMsgType = MsgType.NONE
-    sndMsgType = MsgType.NONE
-    rcvErrType = ErrType.ERROR_NONE
-    sndErrType = ErrType.ERROR_NONE
+    rcvMsgTp = MsgType.NONE
+    sndMsgTp = MsgType.NONE
+    rcvErrTp = ErrType.ERROR_NONE
+    sndErrTp = ErrType.ERROR_NONE
 
     # Handshake finished flag
     isHandshakeDone = False
@@ -708,34 +708,34 @@ class Interface(Plugin):
         
         # Check if rcv_msg_type matches any of the enum values
         if rcv_msg_type not in [e.value for e in MsgType]:
-            if self.rcvErrType != ErrType.NO_MESSAGE_TYPE_MATCH:  # only run once
+            if self.rcvErrTp != ErrType.NO_MESSAGE_TYPE_MATCH:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrType.NO_MESSAGE_TYPE_MATCH
+                self.rcvErrTp = ErrType.NO_MESSAGE_TYPE_MATCH
                 rospyLogCol('ERROR', "!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Check for skipped or out of sequence messages
         if rcv_msg_id - self.rcvMsgID != 1:
-            if self.rcvErrType != ErrType.MESSAGE_ID_DISORDERED:  # only run once
+            if self.rcvErrTp != ErrType.MESSAGE_ID_DISORDERED:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrType.MESSAGE_ID_DISORDERED
+                self.rcvErrTp = ErrType.MESSAGE_ID_DISORDERED
                 rospyLogCol('ERROR', "!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", self.rcvMsgID, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Check if message is preceding handshake
         if not self.isHandshakeDone and rcv_msg_type != MsgType.HANDSHAKE.value:
-            if self.rcvErrType != ErrType.REGISTER_LEFTOVERS:  # only run once
+            if self.rcvErrTp != ErrType.REGISTER_LEFTOVERS:  # only run once
                 # Set id last to new value on first error and set error type
-                self.rcvErrType = ErrType.REGISTER_LEFTOVERS
+                self.rcvErrTp = ErrType.REGISTER_LEFTOVERS
                 rospyLogCol('ERROR', "!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", MsgType(rcv_msg_type).name, rcv_msg_id)
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
 
         # Update dynamic enum instance
-        self.rcvMsgType.value = rcv_msg_type
-        rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgType.name, rcv_msg_id)
+        self.rcvMsgTp.value = rcv_msg_type
+        rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgTp.name, rcv_msg_id)
 
         # TEMP Print registry values
         self.printEcat(0, reg_dat) #TEMP
@@ -761,13 +761,13 @@ class Interface(Plugin):
         reg_i += 1
         if U.ui8[0] != 254 and U.ui8[1] != 254:
             rospyLogCol('ERROR', "\t!!ERROR: Missing message footer!!")
-            self.rcvErrType = ErrType.MISSING_FOOTER
+            self.rcvErrTp = ErrType.MISSING_FOOTER
             return 1
 
         # HANDLE MESSAGE TYPE
 
         # HANDSHAKE
-        if self.rcvMsgType == MsgType.HANDSHAKE:
+        if self.rcvMsgTp == MsgType.HANDSHAKE:
             # Stop handshake check timer
             self.timer_checkHandshake.stop()    
 
@@ -778,11 +778,11 @@ class Interface(Plugin):
             self.sendEthercatMessage(MsgType.START_SESSION)
 
         # CONFIRM_RECIEVED
-        if self.rcvMsgType == MsgType.CONFIRM_RECIEVED:
+        if self.rcvMsgTp == MsgType.CONFIRM_RECIEVED:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
         # ERROR
-        elif self.rcvMsgType == MsgType.ERROR:
+        elif self.rcvMsgTp == MsgType.ERROR:
             rospyLogCol('ERROR', "\tERROR")
 
         # Return new message flag

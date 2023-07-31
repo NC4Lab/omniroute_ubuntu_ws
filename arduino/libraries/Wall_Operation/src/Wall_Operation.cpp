@@ -446,12 +446,12 @@ void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg
 	sndMsgID = sndMsgID < 65535 ? sndMsgID + 1 : 1;
 
 	// Clear union
-	UU.ui64[0] = 0;
-	UU.ui64[1] = 0;
+	U.ui64[0] = 0;
+	U.ui64[1] = 0;
 
 	// Add shared message data
-	UU.ui16[0] = sndMsgID;						   // send message id
-	UU.ui8[2] = static_cast<uint8_t>(snd_msg_type); // send message type
+	U.ui16[0] = sndMsgID;						   // send message id
+	U.ui8[2] = static_cast<uint8_t>(snd_msg_type); // send message type
 
 	// HANDLE MESSAGE TYPE
 
@@ -460,7 +460,7 @@ void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg
 	{
 		_DB.setGetStr("CONFIRM_RECIEVED");
 		msg_arg_lng = 2;
-		UU.ui16[3] = rcvMsgID; // recieved message number
+		U.ui16[3] = rcvMsgID; // recieved message number
 	}
 	// 	HANDSHAKE
 	else if (snd_msg_type == MessageType::HANDSHAKE)
@@ -473,27 +473,27 @@ void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg
 	{
 		_DB.setGetStr("ERROR");
 		msg_arg_lng = 2;
-		UU.ui16[3] = ErrorType::ERROR_NONE; // error type
+		U.ui16[3] = ErrorType::ERROR_NONE; // error type
 	}
 
 	// Add message argument length
-	UU.ui8[3] = msg_arg_lng;
+	U.ui8[3] = msg_arg_lng;
 
 	// Round msg_arg_lng up to even number and add 4 for id and msg info
 	uint8_t ui8_i = 4 + ((msg_arg_lng % 2 == 0) ? msg_arg_lng : (msg_arg_lng + 1));
 
 	// Add footer
-	UU.ui8[ui8_i] = 254;
-	UU.ui8[ui8_i + 1] = 254;
+	U.ui8[ui8_i] = 254;
+	U.ui8[ui8_i + 1] = 254;
 
 	// Send message
 	for (size_t i = 0; i < 8; i++)
-		ESMA.write_reg_value(i, UU.ui16[i]);
+		ESMA.write_reg_value(i, U.ui16[i]);
 	_DB.printMsgTime("SENT Ecat Message: type=%s id=%d", _DB.setGetStr(), sndMsgID);
 
 	// Print message
-	_DB.printMsgTime("\tui16[0] %d", UU.ui16[0]);
-	printEcat(0, UU);
+	_DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
+	printEcat(0, U);
 }
 
 /// <summary>
@@ -514,9 +514,9 @@ uint8_t Wall_Operation::getEthercatMessage()
 
 	// Check first register entry for msg id
 	rcv_msg_id = reg_dat[reg_i++];
-	UU.ui16[0] = reg_dat[reg_i++];
-	rcv_msg_type = UU.ui8[0];
-	msg_arg_lng = UU.ui8[1];
+	U.ui16[0] = reg_dat[reg_i++];
+	rcv_msg_type = U.ui8[0];
+	msg_arg_lng = U.ui8[1];
 
 	// Skip ethercat setup junk (65535)
 	if (rcv_msg_id == 65535)
@@ -545,16 +545,16 @@ uint8_t Wall_Operation::getEthercatMessage()
 		rcv_msg_type != MessageType::START_SESSION &&
 		rcv_msg_type != MessageType::END_SESSION)
 	{
-		if (rcvErrType != ErrorType::NO_MESSAGE_TYPE_MATCH) // only run once
+		if (rcvErrTp != ErrorType::NO_MESSAGE_TYPE_MATCH) // only run once
 		{
 			// Set id last to new value on first error and set error type
-			rcvErrType = ErrorType::NO_MESSAGE_TYPE_MATCH;
+			rcvErrTp = ErrorType::NO_MESSAGE_TYPE_MATCH;
 			_DB.printMsgTime("!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id);
 		}
 		return 2; // return error flag
 	}
 	else
-		rcvErrType = ErrorType::ERROR_NONE; // reset error type
+		rcvErrTp = ErrorType::ERROR_NONE; // reset error type
 
 	// // TEMP
 	// _DB.printMsgTime("Ether Type=%s id= %d", _DB.setGetStr(), rcv_msg_id);
@@ -565,37 +565,37 @@ uint8_t Wall_Operation::getEthercatMessage()
 	{
 		if (isHandshakeDone)
 		{
-			if (rcvErrType != ErrorType::MESSAGE_ID_DISORDERED) // only run once
+			if (rcvErrTp != ErrorType::MESSAGE_ID_DISORDERED) // only run once
 			{
 				// Set id last to new value on first error and set error type
-				rcvErrType = ErrorType::MESSAGE_ID_DISORDERED;
+				rcvErrTp = ErrorType::MESSAGE_ID_DISORDERED;
 				_DB.printMsgTime("!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", rcvMsgID, rcv_msg_id);
 			}
 		}
 		return 2; // return error flag
 	}
 	else
-		rcvErrType = ErrorType::ERROR_NONE; // reset error type
+		rcvErrTp = ErrorType::ERROR_NONE; // reset error type
 
 	// Check if message is preceding handshake
 	if (!isHandshakeDone && rcv_msg_type != MessageType::HANDSHAKE)
 	{
-		if (rcvErrType != ErrorType::REGISTER_LEFTOVERS) // only run once
+		if (rcvErrTp != ErrorType::REGISTER_LEFTOVERS) // only run once
 		{
 			// Set id last to new value on first error and set error type
-			rcvErrType = ErrorType::REGISTER_LEFTOVERS;
+			rcvErrTp = ErrorType::REGISTER_LEFTOVERS;
 			_DB.printMsgTime("!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", _DB.setGetStr(), rcv_msg_id);
 		}
 		return 2; // return error flag
 	}
 	else
-		rcvErrType = ErrorType::ERROR_NONE; // reset error type
+		rcvErrTp = ErrorType::ERROR_NONE; // reset error type
 
 	// Update message id
 	rcvMsgID = rcv_msg_id;
 
 	// Update dynamic enum instance
-	rcvMessageType = static_cast<Wall_Operation::MessageType>(rcv_msg_type);
+	rcvMsgTp = static_cast<Wall_Operation::MessageType>(rcv_msg_type);
 
 	// Parse 8 bit message arguments
 	if (msg_arg_lng > 0)
@@ -606,25 +606,25 @@ uint8_t Wall_Operation::getEthercatMessage()
 		for (size_t ui16_i = 0; ui16_i < msg_arg_lng_i16_round; ui16_i++)
 		{
 			// Get next entry
-			UU.ui16[0] = reg_dat[reg_i++];
+			U.ui16[0] = reg_dat[reg_i++];
 
 			// Loop through bytes in given 16 bit entry and store
 			for (size_t b_ii = 0; b_ii < 2; b_ii++)
-				msg_arg_data[ui8_i++] = UU.ui8[b_ii];
+				msg_arg_data[ui8_i++] = U.ui8[b_ii];
 		}
 	}
 
 	// Check for footer
-	UU.ui16[0] = reg_dat[reg_i++];
-	if (UU.ui8[0] != 254 && UU.ui8[1] != 254)
+	U.ui16[0] = reg_dat[reg_i++];
+	if (U.ui8[0] != 254 && U.ui8[1] != 254)
 	{
 		_DB.printMsgTime("\t!!Missing message footer!!");
-		rcvErrType = ErrorType::MISSING_FOOTER;
+		rcvErrTp = ErrorType::MISSING_FOOTER;
 		return 1;
 	}
 
 	// 	Process wall data
-	if (rcvMessageType == MessageType::MOVE_WALLS)
+	if (rcvMsgTp == MessageType::MOVE_WALLS)
 	{
 
 		// Loop through arguments
@@ -657,27 +657,27 @@ void Wall_Operation::executeEthercatCommand()
 {
 
 	// Handle message type
-	if (rcvMessageType == MessageType::HANDSHAKE)
+	if (rcvMsgTp == MessageType::HANDSHAKE)
 	{
 		// Set ethercat flag
 		_DB.printMsgTime("\tEcat Comms Established");
 		isHandshakeDone = true;
 	}
-	else if (rcvMessageType == MessageType::MOVE_WALLS)
+	else if (rcvMsgTp == MessageType::MOVE_WALLS)
 	{
 		moveWalls();
 	}
-	else if (rcvMessageType == MessageType::START_SESSION)
+	else if (rcvMsgTp == MessageType::START_SESSION)
 	{
 		resetMaze(false); // dont reset certain variables
 	}
-	else if (rcvMessageType == MessageType::END_SESSION)
+	else if (rcvMsgTp == MessageType::END_SESSION)
 	{
 		resetMaze(true); // reset everything
 	}
 
-	// // Reset rcvMessageType
-	// rcvMessageType = MessageType::MSG_NONE;
+	// // Reset rcvMsgTp
+	// rcvMsgTp = MessageType::MSG_NONE;
 }
 
 
