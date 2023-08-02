@@ -418,11 +418,9 @@ uint8_t Wall_Operation::_setupWalls()
 
 //++++++++++++++ Comms Methods +++++++++++++++
 
-/// <summary>
-/// Used to send outgoing ROS ethercat msg data signalling which walls to raise.
-/// </summary>
-/// </remarks>
-///	The outgoing register is structured arr[8] of 16 bit integers
+/// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
+///
+///	@note: The outgoing register is structured uint16[8]
 ///	with all but first 16 bit value seperated into bytes
 ///	i16[0]: Message ID [0-65535]
 ///	i16[1]: Message Info
@@ -435,11 +433,20 @@ uint8_t Wall_Operation::_setupWalls()
 ///	i16[x+1]: Footer
 ///		i8[0] [254]
 ///		i8[1] [254]
-/// </remarks>
-/// <param name="snd_msg_type">The type of the message to be sent.</param>
-/// <param name="p_msg_arg_data">OPTIONAL: The data for the message arguments. DEFAULT: nullptr.</param>
-/// <param name="msg_arg_lng">OPTIONAL: The length of the message arguments in uint8. DEFAULT: 0.</param>
-/// <returns>Success/error codes [0:no error, 1:error]</returns>
+/// @note: The message length corresponds to number of bits. 
+/// The indexing of the RegUnion is is as follows:
+///		ui16[0], ui8[0][1]
+///		ui16[1], ui8[2][3]
+///		ui16[2], ui8[4][5]
+///		ui16[3], ui8[6][7]
+///		ui16[4], ui8[8][9]
+///		ui16[5], ui8[10][11]
+///		ui16[6], ui8[12][13]
+///		ui16[7], ui8[14][15]
+/// @param: snd_msg_type: The type of the message to be sent.
+/// @param: p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
+/// @param: msg_arg_lng: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
+/// @return: Success/error codes [0:no error, 1:error]
 void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 	// Itterate message number id and roll over to 1 if max 16 bit value is reached
@@ -462,8 +469,8 @@ void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg
 	{
 		_DB.setGetStr("CONFIRM_RECIEVED");
 		msg_arg_lng = 3;
-		U.ui16[3] = rcvMsgID; // recieved message id
-		U.ui8[2] = static_cast<uint8_t>(rcvMsgTyp); // recieved message type
+		U.ui16[2] = rcvMsgID; // recieved message id
+		U.ui8[6] = static_cast<uint8_t>(rcvMsgTyp); // recieved message type
 		
 	}
 	// 	HANDSHAKE
@@ -485,89 +492,6 @@ void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg
 
 	// Round msg_arg_lng up to even number and add 4 for id and msg info
 	ui8_i = 4 + ((msg_arg_lng % 2 == 0) ? msg_arg_lng : (msg_arg_lng + 1));
-
-	// Add footer
-	U.ui8[ui8_i++] = 254;
-	U.ui8[ui8_i] = 254;
-
-	// Send message
-	for (size_t i = 0; i < 8; i++)
-		ESMA.write_reg_value(i, U.ui16[i]);
-	_DB.printMsgTime("SENT Ecat Message: type=%s id=%d", _DB.setGetStr(), sndMsgID);
-
-	// Print message
-	_DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
-	printEcat(0, U);
-}
-
-/// <summary>
-/// Used to send outgoing ROS ethercat msg data signalling which walls to raise.
-/// </summary>
-/// </remarks>
-///	The outgoing register is structured arr[8] of 16 bit integers
-///	with all but first 16 bit value seperated into bytes
-///	i16[0]: Message ID [0-65535]
-///	i16[1]: Message Info
-///		i8[0] message type [0-255] [see: MessageTypeID]
-///		i8[1] arg length [0-10] [number of message args in bytes]
-///	i16[NA,2:6] Arguments
-///		i16[2-3] message confirmation
-///			i16[2] rcv message id [0-65535]
-///			i16[2] rcv message type [0-65535]
-///	i16[x+1]: Footer
-///		i8[0] [254]
-///		i8[1] [254]
-/// </remarks>
-/// <param name="snd_msg_type">The type of the message to be sent.</param>
-/// <param name="p_msg_arg_data">OPTIONAL: The data for the message arguments. DEFAULT: nullptr.</param>
-/// <param name="msg_arg_lng">OPTIONAL: The length of the message arguments in uint8. DEFAULT: 0.</param>
-/// <returns>Success/error codes [0:no error, 1:error]</returns>
-void Wall_Operation::sendEthercatMessage(MessageType snd_msg_type, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
-{
-	// Itterate message number id and roll over to 1 if max 16 bit value is reached
-	sndMsgID = sndMsgID < 65535 ? sndMsgID + 1 : 1;
-	sndMsgTyp = snd_msg_type;	// update message type
-
-	// Clear union
-	U.ui64[0] = 0;
-	U.ui64[1] = 0;
-	uint8_t ui8_i = 0;
-
-	// Add shared message data
-	U.ui16[0] = sndMsgID;
-	ui8_i += 2;					   // send message id
-	U.ui8[ui8_i++] = static_cast<uint8_t>(sndMsgTyp); // send message type
-
-	// HANDLE MESSAGE TYPE
-
-	// 	CONFIRM_RECIEVED
-	if (sndMsgTyp == MessageType::CONFIRM_RECIEVED)
-	{
-		_DB.setGetStr("CONFIRM_RECIEVED");
-		msg_arg_lng = 3;
-		U.ui16[3] = rcvMsgID; // recieved message id
-		U.ui8[2] = static_cast<uint8_t>(rcvMsgTyp); // recieved message type
-		
-	}
-	// 	HANDSHAKE
-	else if (sndMsgTyp == MessageType::HANDSHAKE)
-	{
-		_DB.setGetStr("HANDSHAKE");
-		msg_arg_lng = 0;
-	}
-	// 	ERROR
-	else if (sndMsgTyp == MessageType::ERROR)
-	{
-		_DB.setGetStr("ERROR");
-		msg_arg_lng = 2;
-		U.ui16[3] = ErrorType::ERROR_NONE; // error type
-	}
-
-	// Add message argument length
-	U.ui8[ui8_i++] = msg_arg_lng;
-
-	// Round msg_arg_lng up to even number and add 4 for id and msg info
-	ui8_i = ui8_i + ((msg_arg_lng % 2 == 0) ? msg_arg_lng : (msg_arg_lng + 1));
 
 	// Add footer
 	U.ui8[ui8_i++] = 254;
@@ -864,7 +788,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	_DB.printMsgTime("\tMoving walls");
 
 	// TEMP
-	return 0;
+	//return 0;
 
 	// Update dynamic port/pin structs
 	_DB.dtTrack(1); // start timer
@@ -1282,7 +1206,7 @@ void Wall_Operation::printEcat(uint8_t d_type, RegUnion u)
 	{
 		if (d_type == 1 || i == 0)
 			_DB.printMsgTime("\t\tui16[%d] %d", i, u.ui16[i]);
-		else if (d_type == 0)
+		if (d_type == 0)
 			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, u.ui8[2 * i], u.ui8[2 * i + 1]);
 	}
 	_DB.printMsgTime(" ");
@@ -1306,7 +1230,7 @@ void Wall_Operation::printEcat(uint8_t d_type, int p_reg[])
 
 	// Convert to RegUnion
 	for (size_t i = 1; i < 8; i++)
-		u.ui16[0] = p_reg[i];
+		u.ui16[i] = p_reg[i];
 
 	// Pass to other printEcat
 	printEcat(d_type, u);

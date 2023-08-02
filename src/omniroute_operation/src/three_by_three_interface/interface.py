@@ -65,7 +65,7 @@ WALL_MAP = {
 
 #ENUM: Enum for ethercat python to arduino message type ID
 class MessageType(Enum):
-    NONE = 0
+    MSG_NONE = 0
     CONFIRM_RECIEVED = 32
     HANDSHAKE = 64
     MOVE_WALLS = 2
@@ -326,10 +326,12 @@ class Interface(Plugin):
     # Define class variables
     sndMsgID = 0 # initialize python to arduino message number
     rcvMsgID = 0 # initialize arduino to python message number
+    cnfMsgID = 0
 
     # Create enum instances
-    rcvMsgTyp = MessageType.NONE
-    sndMsgTyp = MessageType.NONE
+    rcvMsgTyp = MessageType.MSG_NONE
+    sndMsgTyp = MessageType.MSG_NONE
+    cnfMsgTyp = MessageType.MSG_NONE
     rcvErrTyp = ErrorType.ERROR_NONE
 
     # Handshake finished flag
@@ -717,7 +719,7 @@ class Interface(Plugin):
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
         elif self.rcvErrTyp == ErrorType.NO_MESSAGE_TYPE_MATCH: # only run once
-            self.rcvErrTyp = ErrorType.NO_ERROR  
+            self.rcvErrTyp = ErrorType.ERROR_NONE  
 
         # Check for skipped or out of sequence messages
         if rcv_msg_id - self.rcvMsgID != 1:
@@ -728,10 +730,10 @@ class Interface(Plugin):
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
         elif self.rcvErrTyp == ErrorType.MESSAGE_ID_DISORDERED: # only run once
-            self.rcvErrTyp = ErrorType.NO_ERROR  
+            self.rcvErrTyp = ErrorType.ERROR_NONE  
 
         # Check if message is preceding handshake
-        if not self.isHandshakeDone and rcv_msg_type != MessageType.HANDSHAKE.value:
+        if not self.isHandshakeDone and rcv_msg_type != MessageType.HANDSHAKE.value and rcv_msg_type != MessageType.CONFIRM_RECIEVED.value:
             if self.rcvErrTyp != ErrorType.REGISTER_LEFTOVERS:  # only run once
                 # Set id last to new value on first error and set error type
                 self.rcvErrTyp = ErrorType.REGISTER_LEFTOVERS
@@ -739,10 +741,12 @@ class Interface(Plugin):
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 2  # return error flag
         elif self.rcvErrTyp == ErrorType.REGISTER_LEFTOVERS: # only run once
-            self.rcvErrTyp = ErrorType.NO_ERROR    
+            self.rcvErrTyp = ErrorType.ERROR_NONE    
 
         # Update dynamic enum instance
-        self.rcvMsgTyp.value = rcv_msg_type
+        self.rcvMsgTyp = MessageType(rcv_msg_type)
+
+
         rospyLogCol('INFO', "RECIEVED Ecat Message: type=%s id=%d", self.rcvMsgTyp.name, rcv_msg_id)
 
         # TEMP Print registry values
@@ -776,7 +780,7 @@ class Interface(Plugin):
                     arg_i += 1
 
         # Check for footer
-        U.ui16 = reg_dat[ui16_i]
+        U[ui16_i].ui16 = reg_dat[ui16_i]
         ui16_i += 1
         if U[ui16_i].ui8[0] != 254 and U[ui16_i].ui8[1] != 254:
             if self.rcvErrTyp != ErrorType.REGISTER_LEFTOVERS:  # only run once
@@ -785,7 +789,7 @@ class Interface(Plugin):
                 self.printEcat(0, reg_dat, col_str='ERROR') #TEMP
             return 1
         elif self.rcvErrTyp == ErrorType.MISSING_FOOTER: # only run once
-            self.rcvErrTyp = ErrorType.NO_ERROR  
+            self.rcvErrTyp = ErrorType.ERROR_NONE  
 
         # HANDLE MESSAGE TYPE
 
@@ -793,26 +797,33 @@ class Interface(Plugin):
         if self.rcvMsgTyp == MessageType.CONFIRM_RECIEVED:
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
-            # Parse message arguments
-            msg_arg_data
-            
+            # Get confirmation message number
+            u = Interface.ComUnion()
+            u.ui8[0] = msg_arg_data[0]
+            u.ui8[1] = msg_arg_data[1]
+            self.cnfMsgID = u.ui16
 
+            # Get message number
+            self.cnfMsgTyp = MessageType(msg_arg_data[2])
+            
+            # Print confirmation message
+            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d", self.cnfMsgTyp.name, self.cnfMsgID)    
+
+            # Check if confirmation message is handshake
+            if self.cnfMsgTyp == MessageType.HANDSHAKE:
+                # Stop handshake check timer
+                self.timer_checkHandshake.stop()    
+
+                # Set the handshake flag
+                self.handshakeFlag = True
+
+                # Send START_SESSION message
+                self.sendEthercatMessage(MessageType.START_SESSION)
 
 
         # HANDSHAKE
         if self.rcvMsgTyp == MessageType.HANDSHAKE:
-            # Stop handshake check timer
-            self.timer_checkHandshake.stop()    
-
-            # Set the handshake flag
-            self.handshakeFlag = True
-
-            # Send START_SESSION message
-            self.sendEthercatMessage(MessageType.START_SESSION)
-
-        # CONFIRM_RECIEVED
-        if self.rcvMsgTyp == MessageType.CONFIRM_RECIEVED:
-            rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
+            rospyLogCol('ERROR', "\tHANDSHAKE")
 
         # ERROR
         if self.rcvMsgTyp == MessageType.ERROR:
@@ -821,7 +832,7 @@ class Interface(Plugin):
         # Return new message flag
         return 0
     
-    def printEcat(self, d_type, reg_dat, msg_type_val = MessageType.NONE.value, col_str = 'INFO'):
+    def printEcat(self, d_type, reg_dat, msg_type_val = MessageType.MSG_NONE.value, col_str = 'INFO'):
         # Get message type string if exists otherwise set string to "NA"
         try:
             msg_type_str = MessageType(msg_type_val).name

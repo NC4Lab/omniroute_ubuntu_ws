@@ -93,6 +93,7 @@ public:
 	// ---------ETHERCAT COMMS-----------------
 	uint8_t isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
 
+	/// @todo: need to have a way to track the argument length associated with each message type
 	const char msg_type_str[7][20] = {
 		"MSG_NONE",
 		"CONFIRM_RECIEVED",
@@ -338,7 +339,7 @@ private:
 	uint8_t _setupWalls();
 
 public:
-	void sendEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
+	void sendEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 255);
 
 public:
 	uint8_t getEthercatMessage();

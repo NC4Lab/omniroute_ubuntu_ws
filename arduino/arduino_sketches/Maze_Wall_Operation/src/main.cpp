@@ -58,8 +58,9 @@ void setup()
 	DB.printMsg("Finished uploading to Arduno Due");
 #endif
 
-	// Run initial maze setup
+	// // Run initial maze setup
 	// W_OPR.resetMaze(false);
+	// while(true);
 
 	// // TEMP
 	// while (true)
@@ -76,18 +77,19 @@ void loop()
 	// Check ethercat coms
 	resp = W_OPR.getEthercatMessage();
 
-	// TEMP
-	if (resp != 0)
-		return;
-	while (true)
-	{
-		int dt = 1000;
-		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
-		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::ERROR);
-		delay(dt);
-	}
+	// // TEMP
+	// if (resp != 0)
+	// 	return;
+	// while (true)
+	// {
+	// 	int dt = 1000;
+	// 	W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_RECIEVED);
+	// 	delay(dt);
+	// 	W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
+	// 	delay(dt);
+	// 	W_OPR.sendEthercatMessage(W_OPR.MessageType::ERROR);
+	// 	delay(dt);
+	// }
 
 	// Execute ethercat command
 	if (resp == 0) // check for new message
