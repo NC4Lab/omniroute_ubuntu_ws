@@ -560,7 +560,8 @@ uint8_t Wall_Operation::getEthercatMessage()
 		{
 			// Set id last to new value on first error and set error type
 			rcvErrTyp = ErrorType::NO_MESSAGE_TYPE_MATCH;
-			_DB.printMsgTime("!!ERROR: Ecat No Type Match: val=%d id=%d!!", rcv_msg_type, rcv_msg_id);
+			_DB.printMsgTime("!!ERROR: Ecat No Type Match: type_val=%d id=%d!!", rcv_msg_type, rcv_msg_id);
+			//printEcat(0, reg_dat); // TEMP
 		}
 		return 2; // return error flag
 	}
@@ -581,6 +582,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 				// Set id last to new value on first error and set error type
 				rcvErrTyp = ErrorType::MESSAGE_ID_DISORDERED;
 				_DB.printMsgTime("!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", rcvMsgID, rcv_msg_id);
+				printEcat(0, reg_dat); // TEMP
 			}
 		}
 		return 2; // return error flag
@@ -596,6 +598,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 			// Set id last to new value on first error and set error type
 			rcvErrTyp = ErrorType::REGISTER_LEFTOVERS;
 			_DB.printMsgTime("!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", _DB.setGetStr(), rcv_msg_id);
+			printEcat(0, reg_dat); // TEMP
 		}
 		return 2; // return error flag
 	}
@@ -631,6 +634,7 @@ uint8_t Wall_Operation::getEthercatMessage()
 	{
 		_DB.printMsgTime("!!ERROR: Ecat Missing message footer: type=%s id=%d!!", _DB.setGetStr(), rcv_msg_id);
 		rcvErrTyp = ErrorType::MISSING_FOOTER;
+		printEcat(0, reg_dat); // TEMP
 		return 1;
 	}
 	else if (rcvErrTyp == ErrorType::MISSING_FOOTER)
