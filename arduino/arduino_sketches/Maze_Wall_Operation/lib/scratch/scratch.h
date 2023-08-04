@@ -1,127 +1,219 @@
-/// here is an example class with a constructor, destructor, methods, various types of variables, and a static variable.
-/// @class Example_Class
-/// @brief This is an example class for generating doxygen documentation.
-/// @details This class is used to demonstrate how to generate doxygen documentation.
-/// @note This class is not intended to be used for any other purpose.
-/// @warning This class is not intended to be used for any other purpose.
-/// @todo This class is not intended to be used for any other purpose.
-/// @bug This class is not intended to be used for any other purpose.
-/// @deprecated This class is not intended to be used for any other purpose.
-/// @param p_wall_inc [0-7] max 8 entries.
-/// @param s length of "p_wall_inc" array.
-/// @param d_type Specifies the data type to print.
-/// @param p_reg An array of existing register values.
-/// @param x [0-7] max 8 entries.
-/// @param nCham number of chambers being used [1-49]
-/// @param pwmDuty PWM duty for all walls [0-255]
-/// @param DB_VERBOSE set to control debugging behavior [0:silent, 1:verbose]
-/// @param resp capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-/// @param W_OPR Wall_Operation class instance
-/// @param C_COM Cypress_Com class instance
-/// @param DB Maze_Debug class instance
-/// @param LED_BUILTIN built in LED pin
-/// @param Serial1 Serial1 port
-/// @param Serial Serial port
+const static uint8_t msg_queue_len = 10; ///< size of ethercat message buffer
 
-/// QUESTION: is this the best way to return the array if I am going to be passing it to:
-/// @class Esmacatshield: :write_reg(uint8_t id, uint16_t *reg16)
-// Make a list of doxygen commands to use in the comments
-
-/// QUESTION: TODO: OPTIONAL: DEFAULT: PARAM: RETURN: SUMMARY: BRIEF: DETAILS: NOTE: WARNING: TODO: BUG: DEPRECATED: PARAM: RETURN: 
-/// @brief: @details: @note: @warning: @todo: @bug: @deprecated: @param: @return: @ref: @see: 
-/// @bug: @deprecated: @param: @return: @ref: @see: @todo: @warning: @note: @details: @brief:
-
-/// more examples below
-
-
-/// <summary>
-/// Used for debugging to print out all fields of a PMS struct.
-/// </summary>
-/// <param name="p_wall_inc">OPTIONAL: [0-7] max 8 entries. DEFAULT:[all walls] </param>
-/// PARAM: p_wall_inc [0-7] max 8 entries. OPTIONAL: DEFAULT:[all walls]
-/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
-
-/// OVERLOAD: function for printing Ethercat register values.
-/// This version of the function accepts an array of integer register values.
-/// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
-/// @param p_reg: An array of existing register values. @def [x]:[0-7] max 8 entries.
-/// RETURN: 0 if successful, 1 if error.
-
-/// Break up these sections of code with a clear delimiting text feature
-/// create a new section of code with a break line and a new section title:
-/// @section title
-
-/**
- * \class MyClass
- * \brief A brief description of the class.
- *
- * A more detailed description of the class.
- */
-class MyClass
-{
 public:
-    /**
-     * \brief Brief description of the constructor.
-     *
-     * More detailed description of the constructor.
-     */
-    MyClass();
+	struct MessageHandler
+	{
+		static uint8_t LenQ;
+		static uint8_t IndQ;
+		static const int MsgDt;
+		static uint32_t MsgTS;
+		static MessageType MsgTp;
+		static ErrorType ErrTp;
 
-    /**
-     * \brief Brief description of the method.
-     * \param param1 Description of the first parameter.
-     * \param param2 Description of the second parameter.
-     * \return Description of the return value.
-     *
-     * More detailed description of the method.
-     */
-    int myMethod(int param1, float param2);
-};
+		uint8_t msgid;
+		char msgtypstr[50];
+		MessageType msgtype;
+		ErrorType errtype;
+		uint16_t Reg16[8];
 
-/**
- * \fn int myFunction(int param1, float param2)
- * \brief Brief description of the function.
- * \param param1 Description of the first parameter.
- * \param param2 Description of the second parameter.
- * \return Description of the return value.
- *
- * More detailed description of the function.
- */
-int myFunction(int param1, float param2);
+		uint8_t U8i;
+		uint8_t U16i;
 
-/**
- * \file myfile.cpp
- * \brief Brief description of the file.
- *
- * More detailed description of the file.
- */
+		static RegUnion _U;
 
+		MessageHandler();
 
-/**
- * \def MY_MACRO(arg)
- * \brief Brief description of the macro.
- * \param arg Description of the argument.
- *
- * More detailed description of the macro.
- */
-#define MY_MACRO(arg) ...
+		void set_all(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr, uint16_t *_Reg16);
+		void set_msgid(uint8_t _msgid);
+		void set_msg_type(MessageType _msgtype);
+		void set_typ_str(const char *_msgtypstr);
+		void set_int16(uint16_t *_Reg16);
+
+		uint8_t get_id();
+		MessageType get_msg_mt();
+		const char *get_msg_type_str();
+		uint16_t *get_int16();
+
+		void set_ui16(int p_reg[]);
+		void set_ui16(int reg_i16);
+		void set_ui8(int reg_i18);
+		void set_ui16(int reg_i16, uint8_t set_u16_i);
+		void set_ui8(int reg_i8, uint8_t set_u8_i);
+	};
+	MessageHandler SndMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for sending messages
+	MessageHandler RcvMH[msg_queue_len]; ///<  initialize array of MessageHandler structs for receiving messages
 
 
-// This is great! Now reuse everything you have here making sure to include at least two examples of most type of element (class, enum, etc) so this would mean having, for example a function1() and a function2() which different prameters. 
+    // Initialization of static members
+uint8_t Wall_Operation::MessageHandler::LenQ = 0;
+uint8_t Wall_Operation::MessageHandler::IndQ = 0;
+const int Wall_Operation::MessageHandler::MsgDt = 0; // Adjust this as per your requirement
+uint32_t Wall_Operation::MessageHandler::MsgTS = 0;
+Wall_Operation::MessageType Wall_Operation::MessageHandler::MsgTp = Wall_Operation::MessageType::MSG_NONE;
+Wall_Operation::ErrorType Wall_Operation::MessageHandler::ErrTp = Wall_Operation::ErrorType::ERROR_NONE;
+Wall_Operation::RegUnion Wall_Operation::MessageHandler::_U;
 
-// Then I want you to then generate 2 identical versions in terms of the code.
+Wall_Operation::MessageHandler::MessageHandler()
+    : msgid(0), msgtype(MessageType::MSG_NONE)
+{
+    msgtypstr[0] = '\0';
+    LenQ = msg_queue_len;
+    MsgTp = MessageType::MSG_NONE;
+    ErrTp = ErrorType::ERROR_NONE;
+}
 
-// The first usin the capitol style comments:
-// /// QUESTION: TODO: OPTIONAL: DEFAULT: PARAM: RETURN: SUMMARY: BRIEF: DETAILS: NOTE: WARNING: TODO: BUG: DEPRECATED: PARAM: RETURN: 
+void Wall_Operation::MessageHandler::set_all(uint8_t _msgid, MessageType _msgtype, const char *_msgtypstr, uint16_t *_Reg16)
+{
+    msgid = _msgid;
+    msgtype = _msgtype;
+    strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+    msgtypstr[sizeof(msgtypstr) - 1] = '\0'; // ensure null-termination
+    for (int i = 0; i < 8; i++) // copy Reg16 array for 8 registers
+        Reg16[i] = _Reg16[i];
+}
 
-// The second version useing  @ comments:
-// /// @brief: @details: @note: @warning: @todo: @bug: @deprecated: @param: @return: @ref:  
-// /// @bug: @deprecated: @param: @return: @ref: @see: @todo: @warning: @note: @details: @brief: @section: @indef
+void Wall_Operation::MessageHandler::set_msgid(uint8_t _msgid)
+{
+    msgid = _msgid;
+}
 
-// try to use as many different types of documentation cammans and more if possible, with good examples of how to use them to explain things like types expected arguments usages ranges of values for arguments etc
+void Wall_Operation::MessageHandler::set_msg_type(MessageType _msgtype)
+{
+    msgtype = _msgtype;
+}
 
-// While each version will ideally using only one of these two styles, if there are other interestin types of formating I would like that as well. For example, any interesting ways there are of breaking up code blocks visually like:
-//  """---TEXT---"""
-// ///#pragma region ----------TEXT----------
+void Wall_Operation::MessageHandler::set_typ_str(const char *_msgtypstr)
+{
+    strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+    msgtypstr[sizeof(msgtypstr) - 1] = '\0'; // ensure null-termination
+}
 
-// ///#pragma endregion 
+void Wall_Operation::MessageHandler::set_int16(uint16_t *_Reg16)
+{
+    for (int i = 0; i < 8; i++) // copy Reg16 array for 8 registers
+        Reg16[i] = _Reg16[i];
+}
+
+uint8_t Wall_Operation::MessageHandler::get_id()
+{
+    return msgid;
+}
+
+Wall_Operation::MessageType Wall_Operation::MessageHandler::get_msg_mt()
+{
+    return msgtype;
+}
+
+const char* Wall_Operation::MessageHandler::get_msg_type_str()
+{
+    return msgtypstr;
+}
+
+uint16_t* Wall_Operation::MessageHandler::get_int16()
+{
+    return Reg16;
+}
+
+void Wall_Operation::MessageHandler::set_ui16(int p_reg[])
+{
+    // set full register
+    for (int U16i = 0; U16i < 8; U16i++)
+        _U.ui16[U16i] = p_reg[U16i];
+}
+
+void Wall_Operation::MessageHandler::set_ui16(int reg_i16)
+{
+    // Method implementation...
+    return;
+}
+
+void Wall_Operation::MessageHandler::set_ui8(int reg_i18)
+{
+    // Method implementation...
+    return;
+}
+
+void Wall_Operation::MessageHandler::set_ui16(int reg_i16, uint8_t set_u16_i)
+{
+    // Method implementation...
+    return;
+}
+
+void Wall_Operation::MessageHandler::set_ui8(int reg_i8, uint8_t set_u8_i)
+{
+    // Method implementation...
+    return;
+}
+
+
+// Default Constructor
+		MessageQueueStruct();
+
+		// Struct Methods: Setters
+		void set_msgid(uint8_t _msgid)
+		{
+			msgid = _msgid;
+		}
+		void set_msg_type(MessageType _msgtype)
+		{
+			msgtype = _msgtype;
+		}
+		void set_typ_str(const char *_msgtypstr)
+		{
+			strncpy(msgtypstr, _msgtypstr, sizeof(msgtypstr) - 1); // create message type string
+			msgtypstr[sizeof(msgtypstr) - 1] = '\0';			   // ensure null-termination
+		}
+		void set_int16(uint16_t *_Reg16)
+		{
+			for (int i = 0; i < 8; i++) // copy Reg16 array for 8 registers
+				Reg16[i] = _Reg16[i];
+		}
+
+		// Struct Methods: Getters
+		uint8_t get_id()
+		{
+			return msgid;
+		}
+		MessageType get_msg_mt()
+		{
+			return msgtype;
+		}
+		const char *get_msg_type_str()
+		{
+			return msgtypstr;
+		}
+
+		uint16_t *get_int16()
+		{
+			return Reg16;
+		}
+
+		// Struct Methods: Setters RegUnion
+
+		// Create a method that will work with the U union to set the 8 16-bit registers, tracking both 16 and 8 bit index
+		void set_ui16(int p_reg[])
+		{
+			// set full register
+			for (int U16i = 0; U16i < 8; U16i++)
+				_U.ui16[U16i] = p_reg[U16i];
+		}
+		// Store reg data in ui16[8] and and incriment ui16 and ui8 index
+		void set_ui16(int reg_i16)
+		{
+			return;
+		}
+		// Store reg data in ui8[16] and and incriment ui16 and ui8 index
+		void set_ui8(int reg_i18)
+		{
+			return;
+		}
+		// Store reg data in ui16[16] at index set_u16_i and update ui16 and ui8 index
+		void set_ui16(int reg_i16, uint8_t set_u16_i)
+		{
+			return;
+		}
+		// Store reg data in ui8[16] at index set_u8_i and incriment ui16 and ui8 index
+		void set_ui8(int reg_i8, uint8_t set_u8_i)
+		{
+			return;
+		}
