@@ -343,7 +343,7 @@ class Interface(Plugin):
     dummy_3 = 0
 
     # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
-    class ComUnion:
+    class RegUnion:
         def __init__(self):
             self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
 
@@ -356,6 +356,22 @@ class Interface(Plugin):
             packed_value = struct.pack("<H", value)
             self.ui8[0] = packed_value[0]
             self.ui8[1] = packed_value[1]
+
+    class EcatMessageStruct:
+        def __init__(self):
+            self.msgDt = 10
+            self.msgID = 0
+            self.msgTp = MessageType.MSG_NONE
+            self.errTp = ErrorType.ERROR_NONE
+            self.msg_tp_str = ""
+            self.err_tp_str = ""
+            self.msg_tp_val = 0
+            self.msg_arg_lng = 0
+            self.ArgDat = [0] * 10
+            self.RegU = [Interface.RegUnion() for _ in range(8)]
+            self.u8i = 0
+            self.u16i = 0
+            self.isDone = False
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
@@ -642,7 +658,7 @@ class Interface(Plugin):
         self.sndMsgTyp = snd_msg_type; # update message type
 
         # Create a list with 8 16-bit Union elements
-        U = [Interface.ComUnion() for _ in range(8)]
+        U = [Interface.RegUnion() for _ in range(8)]
         ui16_i = 0
 
         # Set message id and type
@@ -689,7 +705,7 @@ class Interface(Plugin):
         rcv_msg_type = 0
         msg_arg_lng = 0
         msg_arg_data = [0] * 10
-        U = [Interface.ComUnion() for _ in range(8)]
+        U = [Interface.RegUnion() for _ in range(8)]
         ui16_i = 0
 
         # Copy reg_dat to U
@@ -798,7 +814,7 @@ class Interface(Plugin):
             rospyLogCol('INFO', "\tCONFIRM_RECEIVED")
 
             # Get confirmation message number
-            u = Interface.ComUnion()
+            u = Interface.RegUnion()
             u.ui8[0] = msg_arg_data[0]
             u.ui8[1] = msg_arg_data[1]
             self.cnfMsgID = u.ui16
@@ -843,7 +859,7 @@ class Interface(Plugin):
         rospyLogCol(col_str, "\tEcat Register: Type %s[%d]", msg_type_str, msg_type_val)
             
         # Print message data
-        U = Interface.ComUnion()
+        U = Interface.RegUnion()
         for i in range(0, len(reg_dat)):
             U.ui16 = reg_dat[i]
             if d_type == 1 or i == 0:

@@ -65,7 +65,7 @@ void Wall_Operation::_seti8(EcatMessageStruct &r_EM, uint8_t dat_8)
 	// Store data
 	r_EM.RegU.ui8[r_EM.u8i] = dat_8;
 
-	_DB.printMsgTime("\t_storei8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
+	//_DB.printMsgTime("\t_storei8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
 
 	// Update union indeces
 	r_EM.u8i++;
@@ -77,7 +77,7 @@ void Wall_Operation::_seti16(EcatMessageStruct &r_EM, uint16_t dat_16)
 	// Store data
 	r_EM.RegU.ui16[r_EM.u16i] = dat_16;
 
-	_DB.printMsgTime("\t_storei8: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
+	//_DB.printMsgTime("\t_storei8: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
 
 	// Update union indeces
 	r_EM.u16i += 1;
@@ -89,7 +89,7 @@ uint8_t Wall_Operation::_geti8(EcatMessageStruct &r_EM)
 	// Store data
 	uint8_t dat_8 = r_EM.RegU.ui8[r_EM.u8i];
 
-	_DB.printMsgTime("\t_geti8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
+	//_DB.printMsgTime("\t_geti8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
 
 	// Update union indeces
 	r_EM.u8i++;
@@ -103,7 +103,7 @@ uint16_t Wall_Operation::_geti16(EcatMessageStruct &r_EM)
 	// Store data
 	uint8_t dat_16 = r_EM.RegU.ui16[r_EM.u16i];
 
-	_DB.printMsgTime("\t_geti16: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
+	//_DB.printMsgTime("\t_geti16: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
 
 	// Update union indeces
 	r_EM.u16i += 1;
@@ -128,14 +128,16 @@ bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, u
 	bool is_found = false;
 	for (int i = 0; i < N_MessageType; ++i)
 	{
-		if (msg_type_val == static_cast<MessageType>(i))
+		if (msg_type_val == i)
 		{
 			is_found = true;
 			break;
 		}
 	};
+	bool is_err = !is_found;
+
 	// Set type to none if not found
-	if (!is_found)
+	if (is_err)
 		msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
 
 	// Store message id
@@ -148,13 +150,13 @@ bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, u
 	r_EM.msgTp = static_cast<Wall_Operation::MessageType>(msg_type_val);
 
 	// Copy string to struct
-	if (is_found)
+	if (!is_err)
 		strncpy(r_EM.msg_tp_str, message_type_str[r_EM.msg_tp_val], sizeof(r_EM.msg_tp_str) - 1);
 	else
 		strncpy(r_EM.msg_tp_str, "NULL", sizeof(r_EM.msg_tp_str) - 1);
 	r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0'; // ensure null termination
 
-	return is_found;
+	return is_err;
 }
 
 void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
@@ -171,7 +173,7 @@ void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool i
 		{
 			// Set error type
 			r_EM.errTp = err_tp;
-			_DB.printMsgTime("!!ERROR: Ecat: %s type_val=%d id=%d!!", r_EM.err_tp_str, r_EM.msg_tp_val, r_EM.msgID);
+			_DB.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
 			printEcatU(0, r_EM.RegU); // TEMP
 		}
 	}
@@ -270,21 +272,24 @@ uint8_t Wall_Operation::readEthercatMessage()
 	static EcatMessageStruct tempEM; // temp ethercat message struct
 	bool is_err = false;			 // error flag
 
+	// Reset union variables
+	_resetU(tempEM);
+
 	// Read esmacat buffer and copy into union
 	int reg_dat[8];
 	ESMA.get_ecat_registers(reg_dat);
 	for (size_t i = 0; i < 8; i++)
 		tempEM.RegU.ui16[i] = reg_dat[i];
 
+	// Skip ethercat setup junk (255)
+	if (tempEM.RegU.ui8[0] == 255 || tempEM.RegU.ui8[1] == 255)
+		return 0;
+
 	// Store message id
 	tempEM.msgID = _geti16(tempEM);
 
 	// Store message type value
 	tempEM.msg_tp_val = _geti8(tempEM);
-
-	// Skip ethercat setup junk (65535)
-	if (tempEM.msgID == 65535)
-		return 0;
 
 	// Skip redundant messages
 	if (tempEM.msgID == rcvEM.msgID)
@@ -298,15 +303,15 @@ uint8_t Wall_Operation::readEthercatMessage()
 	if (is_err)
 		return 2; // return error flag
 
-	// Check for skipped or out of sequence messages
-	is_err = tempEM.msgID - rcvEM.msgID != 1;
-	_checkErr(tempEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
-	if (is_err)
-		return 2; // return error flag
-
 	// Check if message is preceding handshake
 	is_err = !isHandshakeDone && tempEM.msgTp != MessageType::HANDSHAKE;
 	_checkErr(tempEM, ErrorType::REGISTER_LEFTOVERS, is_err);
+	if (is_err)
+		return 2; // return error flag
+
+	// Check for skipped or out of sequence messages
+	is_err = tempEM.msgID - rcvEM.msgID != 1;
+	_checkErr(tempEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
 	if (is_err)
 		return 2; // return error flag
 

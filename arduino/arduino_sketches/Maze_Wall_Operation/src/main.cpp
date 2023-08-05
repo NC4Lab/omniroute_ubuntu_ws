@@ -78,7 +78,7 @@ void loop()
 	resp = W_OPR.readEthercatMessage();
 
 	// TEMP
-	if (resp != 0)
+	if (resp != 1)
 		return;
 	while (true)
 	{
