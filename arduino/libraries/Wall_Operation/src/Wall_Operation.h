@@ -93,9 +93,10 @@ public:
 	// ---------ETHERCAT COMMS-----------------
 	uint8_t isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
 
-	const char msg_type_str[7][20] = {
+	const char msg_type_str[8][20] = {
 		"MSG_NONE",
 		"CONFIRM_RECIEVED",
+		"CONFIRM_DONE",
 		"HANDSHAKE",
 		"MOVE_WALLS",
 		"START_SESSION",
@@ -104,12 +105,13 @@ public:
 	enum MessageType
 	{
 		MSG_NONE = 0,
-		CONFIRM_RECIEVED = 32,
-		HANDSHAKE = 64,
-		MOVE_WALLS = 2,
-		START_SESSION = 128,
-		END_SESSION = 129,
-		ERROR = 254
+		CONFIRM_RECIEVED = 1,
+		CONFIRM_DONE = 2,
+		HANDSHAKE = 3,
+		MOVE_WALLS = 4,
+		START_SESSION = 5,
+		END_SESSION = 6,
+		ERROR = 7
 	};
 	enum ErrorType
 	{
@@ -135,36 +137,22 @@ public:
 	};
 	RegUnion U; ///< union for storing ethercat 8 16-bit reg entries
 
-	struct MessageQueueStruct ///< struct for storing ethercat messages
+	struct EcatMessageStruct ///< class for handeling ethercat messages
 	{
-		int msgid = 0;																 ///< Ethercat message ID
-		char msgtypstr[50] = {0};													 ///< Ethercat message type string
-		Wall_Operation::MessageType msgtype = Wall_Operation::MessageType::MSG_NONE; ///< Ethercat message type
-		Wall_Operation::ErrorType errtype = Wall_Operation::ErrorType::ERROR_NONE;	 ///< Ethercat message error
-		uint16_t Reg16[8] = {0};													 ///< Ethercat 16 bit register values
-		static RegUnion UU;															   ///< union for storing ethercat 8 16-bit reg entries
-		uint8_t u8i = 0;														   // index for RegUnion.ui8[16]
-		uint8_t u16i = 0;														   // index for RegUnion.ui16[8]
-		bool isDone
-	};
-
-	struct MessageHandlerStruct ///< class for handeling ethercat messages
-	{
-		const static uint8_t LenQ = 10;											   ///< set to msg_queue_len @todo: define this by @ref msg_queue_len in constructor3
 		const int msgDt = 10;													   ///< delay between message send/write (ms)
-		uint8_t readIndQ = 0;													   ///< read index for message queue
-		uint8_t writeIndQ = 0;													   ///< write index for message queue
 		int msgID = 0;															   ///< Ethercat message ID
 		Wall_Operation::MessageType msgTp = Wall_Operation::MessageType::MSG_NONE; ///< Ethercat message error
 		Wall_Operation::ErrorType errTp = ErrorType::ERROR_NONE;				   ///< Ethercat message error
-		Wall_Operation::MessageQueueStruct MQ[LenQ];							   ///< ethercat message queue
-		static RegUnion UU;															   ///< union for storing ethercat 8 16-bit reg entries
-		uint8_t u8i = 0;														   // index for RegUnion.ui8[16]
-		uint8_t u16i = 0;														   // index for RegUnion.ui16[8]
+		char msg_tp_str[50] = {0};												   ///< Ethercat message type string
+		uint8_t msg_tp_val = 0;													   ///< Ethercat message type value
+		static RegUnion RegU;													   ///< union for storing ethercat 8 16-bit reg entries
+		uint8_t u8i = 0;														   ///< index for RegUnion.ui8[16]
+		uint8_t u16i = 0;														   ///< index for RegUnion.ui16[8]
+		bool isDone = false;													   ///< flag for message exicution completion
 	};
 
-	MessageHandlerStruct sndMH; ///<  initialize message handler instance for sending messages
-	MessageHandlerStruct rcvMH; ///<  initialize message handler instance for receiving messages
+	EcatMessageStruct sndEM; ///<  initialize message handler instance for sending messages
+	EcatMessageStruct rcvEM; ///<  initialize message handler instance for receiving messages
 
 private:
 	Maze_Debug _DB;		///< local instance of Maze_Debug class
@@ -177,18 +165,17 @@ public:
 	Wall_Operation(uint8_t, uint8_t, uint8_t = 1);
 
 private:
-	void _updateQind(uint8_t &);
+	void _resetU(EcatMessageStruct &);
 
-	void _updateIDind(int &);
+	void _storei8(EcatMessageStruct &, uint8_t);
 
-	void _resetU(MessageHandlerStruct &);
-
-	void _storei8(MessageHandlerStruct &, uint8_t);
-
-	void _storei16(MessageHandlerStruct &, uint16_t);
+	void _storei16(EcatMessageStruct &, uint16_t);
 
 public:
-	void storeEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 255);
+	void writeEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 255);
+
+public:
+	uint8_t readEthercatMessage();
 
 public:
 	void sendEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 255);
@@ -256,7 +243,7 @@ public:
 
 public:
 	void printEcat(uint8_t, int[] = nullptr);
-	void printEcat(uint8_t, RegUnion);
+	void printEcatU(uint8_t, RegUnion);
 };
 
 #endif

@@ -92,7 +92,7 @@ void loop()
 	// }
 
 	// Execute ethercat command
-	if (resp == 0) // check for new message
+	if (resp == 1) // check for new message
 	{
 		// Send confirmation message
 		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_RECIEVED);

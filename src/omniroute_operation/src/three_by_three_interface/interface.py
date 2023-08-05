@@ -66,12 +66,13 @@ WALL_MAP = {
 #ENUM: Enum for ethercat python to arduino message type ID
 class MessageType(Enum):
     MSG_NONE = 0
-    CONFIRM_RECIEVED = 32
-    HANDSHAKE = 64
-    MOVE_WALLS = 2
-    START_SESSION = 128
-    END_SESSION = 129
-    ERROR = 254
+    CONFIRM_RECIEVED = 1
+    CONFIRM_DONE = 2
+    HANDSHAKE = 3
+    MOVE_WALLS = 4
+    START_SESSION = 5
+    END_SESSION = 6
+    ERROR = 7
 
 #ENUM: Enum for tracking errors
 class ErrorType(Enum):
