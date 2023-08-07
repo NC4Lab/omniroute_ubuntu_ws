@@ -30,11 +30,11 @@ class Wall_Operation
 
 	// ---------VARIABLES-----------------
 public:
-	// -----------MAZE VARS-----------------
+	// -----------GENERAL-----------------
 	uint8_t nCham;	 ///< number of chambers [1-9]
 	uint8_t pwmDuty; ///< pwm duty cycle [0-255]
 
-	// -----------CYPRESS VARS-----------------
+	// -----------CYPRESS-----------------
 	struct WallMapStruct ///< pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -85,8 +85,8 @@ public:
 		uint8_t bitWallErrorFlag = 0;			///< bitwise variable, flag move errors for a given wall
 		uint8_t bitWallUpdateFlag = 0;			///< bitwise variable, flag that wall position should be updated
 		uint8_t bitOutRegLast[6];				///< stores output registry values
-		Wall_Operation::PinMapStruct pmsDynPWM; ///< reusable dynamic instance for active PWM
-		Wall_Operation::PinMapStruct pmsDynIO;	///< reusable dynamic instance for active IO
+		PinMapStruct pmsDynPWM; ///< reusable dynamic instance for active PWM
+		PinMapStruct pmsDynIO;	///< reusable dynamic instance for active IO
 	};
 	ChamberStruct C[9]; ///< initialize with max number of chambers for 3x3
 
@@ -147,8 +147,8 @@ public:
 	{
 		int msgDt = 10;															   ///< delay between message send/write (ms)
 		int msgID = 0;															   ///< Ethercat message ID
-		Wall_Operation::MessageType msgTp = Wall_Operation::MessageType::MSG_NONE; ///< Ethercat message error
-		Wall_Operation::ErrorType errTp = ErrorType::ERROR_NONE;				   ///< Ethercat message error
+		MessageType msgTp = MessageType::MSG_NONE; ///< Ethercat message error
+		ErrorType errTp = ErrorType::ERROR_NONE;				   ///< Ethercat message error
 		char msg_tp_str[50] = {0};												   ///< Ethercat message type string
 		char err_tp_str[50] = {0};												   ///< Ethercat error type string
 		uint8_t msg_tp_val = 0;													   ///< Ethercat message type value
