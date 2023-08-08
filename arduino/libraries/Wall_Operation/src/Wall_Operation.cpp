@@ -259,7 +259,7 @@ void Wall_Operation::writeEthercatMessage(MessageType msg_type_enum, uint8_t p_m
 		ESMA.write_reg_value(i, sndEM.RegU.ui16[i]);
 
 	// Print message
-	_DB.printMsgTime("STORE Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
+	_DB.printMsgTime("SENT Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
 	printEcatU(0, sndEM.RegU); // TEMP
 }
 

@@ -62,24 +62,6 @@ WALL_MAP = {
     7: [1, 3, 5, 7, 6],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
-
-#ENUM: Enum for ethercat python to arduino message type ID
-class MessageType(Enum):
-    MSG_NONE = 0,
-    CONFIRM_DONE = 1
-    HANDSHAKE = 2
-    MOVE_WALLS = 3
-    START_SESSION = 4
-    END_SESSION = 5
-    ERROR = 6
-
-#ENUM: Enum for tracking errors
-class ErrorType(Enum):
-    ERROR_NONE = 0
-    MESSAGE_ID_DISORDERED = 1
-    NO_MESSAGE_TYPE_MATCH = 2
-    REGISTER_LEFTOVERS = 3
-    MISSING_FOOTER = 4
  
 # CLASS: Maze_Plot to plot the maze
 class Maze_Plot(QGraphicsView):
@@ -316,6 +298,293 @@ class Maze_Plot(QGraphicsView):
         x_pos = center_x - text_rect.width() / 2
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
+
+#ENUM: Enum for ethercat python to arduino message type ID
+class MessageType(Enum):
+    MSG_NONE = 0,
+    CONFIRM_DONE = 1
+    HANDSHAKE = 2
+    MOVE_WALLS = 3
+    START_SESSION = 4
+    END_SESSION = 5
+    ERROR = 6
+
+#ENUM: Enum for tracking errors
+class ErrorType(Enum):
+    ERROR_NONE = 0
+    MESSAGE_ID_DISORDERED = 1
+    NO_MESSAGE_TYPE_MATCH = 2
+    REGISTER_LEFTOVERS = 3
+    MISSING_FOOTER = 4
+
+#CLASS: Ethercat message handler
+class Ecat_Handler:
+
+    # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
+    class RegUnion:
+        def __init__(self):
+            self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
+
+        @property
+        def ui16(self):
+            return struct.unpack("<H", self.ui8)[0]
+
+        @ui16.setter
+        def ui16(self, value):
+            packed_value = struct.pack("<H", value)
+            self.ui8[0] = packed_value[0]
+            self.ui8[1] = packed_value[1]
+
+    class EcatMessageStruct:
+        def __init__(self):
+            self.msgDt = 10
+            self.msgID = 0
+            self.msgTp = MessageType.MSG_NONE
+            self.errTp = ErrorType.ERROR_NONE
+            self.msg_tp_str = ""
+            self.err_tp_str = ""
+            self.msg_tp_val = 0
+            self.msg_arg_lng = 0
+            self.ArgDat = [0] * 10
+            self.RegU = [Interface.RegUnion() for _ in range(8)]
+            self.u8i = 0
+            self.u16i = 0
+            self.isDone = False
+
+    def __init__(self):
+        self.sndEM = Ecat_Handler.EcatMessageStruct()
+        self.rcvEM = Ecat_Handler.EcatMessageStruct()
+
+    @classmethod
+    def _resetU(self, r_EM):
+        r_EM.RegU.ui64[0] = 0
+        r_EM.RegU.ui64[1] = 0
+        r_EM.u8i = 0
+        r_EM.u16i = 0
+
+    @classmethod
+    def __init__(self):
+        self.sndEM = Ecat_Handler.EcatMessageStruct()
+        self.rcvEM = Ecat_Handler.EcatMessageStruct()
+
+    def _resetU(self, r_EM):
+        for reg in r_EM.RegU:
+            reg.ui16 = 0
+        r_EM.u8i = 0
+        r_EM.u16i = 0
+
+    @classmethod
+    def _seti8(self, r_EM, dat_8):
+        r_EM.RegU[r_EM.u8i // 2].ui8[r_EM.u8i % 2] = dat_8
+        r_EM.u8i += 1
+        r_EM.u16i = r_EM.u8i // 2
+
+    @classmethod
+    def _seti16(self, r_EM, dat_16):
+        r_EM.RegU[r_EM.u16i].ui16 = dat_16
+        r_EM.u16i += 1
+        r_EM.u8i = r_EM.u16i * 2
+
+    @classmethod
+    def _geti8(self, r_EM):
+        dat_8 = r_EM.RegU[r_EM.u8i // 2].ui8[r_EM.u8i % 2]
+        r_EM.u8i += 1
+        r_EM.u16i = r_EM.u8i // 2
+        return dat_8
+
+    @classmethod
+    def _geti16(self, r_EM):
+        dat_16 = r_EM.RegU[r_EM.u16i].ui16
+        r_EM.u16i += 1
+        r_EM.u8i = r_EM.u16i * 2
+        return dat_16
+
+    @classmethod
+    def _setupMsgStruct(self, r_EM, msg_id, msg_type_val):
+        # Check for valid message type
+        is_found = msg_type_val in MessageType.__members__.values()
+        is_err = not is_found
+
+        # Set type to none if not found
+        if is_err:
+            msg_type_val = MessageType.MSG_NONE.value
+
+        # Store message id
+        r_EM.msgID = msg_id
+
+        # Store message type value
+        r_EM.msg_tp_val = msg_type_val
+
+        # Get message type enum
+        r_EM.msgTp = MessageType(msg_type_val)
+
+        # Copy string to struct
+        if not is_err:
+            r_EM.msg_tp_str = MessageType(msg_type_val).name
+        else:
+            r_EM.msg_tp_str = "NULL"
+
+        return is_err
+
+    @classmethod
+    def _checkErr(self, r_EM, err_tp, is_err):
+        # Get error string
+        err_tp_val = err_tp.value
+        r_EM.err_tp_str = ErrorType(err_tp_val).name
+
+        # Handle error
+        if is_err:
+            if r_EM.errTp != err_tp: # only run once
+                # Set error type
+                r_EM.errTp = err_tp
+                rospyLogCol('ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val)
+                
+        else:
+            if r_EM.errTp == err_tp:
+                r_EM.errTp = ErrorType.ERROR_NONE  # unset error type
+
+    @classmethod
+    def writeEthercatMessage(self, msg_type_enum, p_msg_arg_data=None, msg_arg_lng=255):
+        # Reset union variables
+        self._resetU(self.sndEM)
+
+        # Update message id: iterate id and roll over to 1 if max 16 bit value is reached
+        msg_id = self.sndEM.msgID + 1 if self.sndEM.msgID < 65535 else 1
+
+        # Store message type info
+        self._setupMsgStruct(self.sndEM, msg_id, msg_type_enum.value)
+
+        # Store message id
+        self._seti16(self.sndEM, self.sndEM.msgID)  # message id
+
+        # Store message type value
+        self._seti8(self.sndEM, self.sndEM.msg_tp_val)
+
+        # Specify message argument length if not provided
+        if msg_arg_lng != 255:
+            self._seti8(self.sndEM, msg_arg_lng)  # message argument length
+        else:
+            if self.sndEM.msgTp == MessageType.CONFIRM_DONE:
+                self._seti8(self.sndEM, 4)  # message argument length
+                self._seti16(self.sndEM, self.rcvEM.msgID)  # received message id
+                self._seti8(self.sndEM, self.rcvEM.msg_tp_val)  # received message type value
+            elif self.sndEM.msgTp == MessageType.HANDSHAKE:
+                self._seti8(self.sndEM, 0)  # message argument length
+
+        # Store footer
+        self._seti8(self.sndEM, 254)
+        self._seti8(self.sndEM, 254)
+
+        # Set flag
+        self.sndEM.isDone = False
+
+        # Write message
+        for i in range(8):
+            self.ESMA.write_reg_value(i, self.sndEM.RegU[i].ui16)
+
+        # Print message
+        rospyLogCol('INFO', "SENT Ecat Message: id=%d type=%s", self.sndEM.msgID, self.sndEM.msg_tp_str)
+        # printEcatU(0, sndEM.RegU)  # TEMP
+
+    @classmethod
+    def readEthercatMessage(self):
+        tempEM = self.EcatMessageStruct()  # temp ethercat message struct
+        is_err = False  # error flag
+
+        # Reset union variables
+        self._resetU(tempEM)
+
+        # Read esmacat buffer and copy into union
+        reg_dat = self.ESMA.get_ecat_registers()
+        for i in range(8):
+            tempEM.RegU[i].ui16 = reg_dat[i]
+
+        # Skip ethercat setup junk (255)
+        if tempEM.RegU[0].ui8[0] == 255 or tempEM.RegU[0].ui8[1] == 255:
+            return 0
+
+        # Store message id
+        tempEM.msgID = self._geti16(tempEM)
+
+        # Store message type value
+        tempEM.msg_tp_val = self._geti8(tempEM)
+
+        # Skip redundant messages
+        if tempEM.msgID == self.rcvEM.msgID:
+            return 0
+
+        # Setup message struct and check for valid message type
+        is_err = self._setupMsgStruct(tempEM, tempEM.msgID, tempEM.msg_tp_val)
+
+        # Run check error for valid message type
+        self._checkErr(tempEM, ErrorType.NO_MESSAGE_TYPE_MATCH, is_err)
+        if is_err:
+            return 2  # return error flag
+
+        # Check if message is preceding handshake
+        is_err = not isHandshakeDone and tempEM.msgTp != MessageType.HANDSHAKE
+        self._checkErr(tempEM, ErrorType.REGISTER_LEFTOVERS, is_err)
+        if is_err:
+            return 2  # return error flag
+
+        # Check for skipped or out of sequence messages
+        is_err = tempEM.msgID - self.rcvEM.msgID != 1
+        self._checkErr(tempEM, ErrorType.MESSAGE_ID_DISORDERED, is_err)
+        if is_err:
+            return 2  # return error flag
+
+        # Get argument length
+        tempEM.msg_arg_lng = self._geti8(tempEM)
+
+        # Parse 8 bit message arguments
+        if tempEM.msg_arg_lng > 0:
+            for i in range(tempEM.msg_arg_lng):
+                tempEM.ArgDat[i] = self._geti8(tempEM)
+
+        # Check for footer
+        is_err = self._geti8(tempEM) != 254 or self._geti8(tempEM) != 254
+        self._checkErr(tempEM, ErrorType.MISSING_FOOTER, is_err)
+        if is_err:
+            return 2  # return error flag
+
+        # Set flag
+        tempEM.isDone = False
+
+        # Copy over data
+        self.rcvEM = tempEM
+
+        # Process wall data
+        if self.rcvEM.msgTp == MessageType.MOVE_WALLS:
+            # Loop through arguments
+            for cham_i in range(self.rcvEM.msg_arg_lng):
+                wall_b = self.rcvEM.ArgDat[cham_i]
+
+                wall_u_b = ~C[cham_i].bitWallPosition & wall_b  # get walls to move up
+                wall_d_b = C[cham_i].bitWallPosition & ~wall_b  # get walls to move down
+
+                # Move walls up
+                for wall_i in range(NUM_WALLS):
+                    if (wall_u_b >> wall_i) & 0b1:
+                        C[cham_i].wall[wall_i].up()
+
+                # Move walls down
+                for wall_i in range(NUM_WALLS):
+                    if (wall_d_b >> wall_i) & 0b1:
+                        C[cham_i].wall[wall_i].down()
+
+                # Update wall position
+                C[cham_i].bitWallPosition = wall_b
+        elif self.rcvEM.msgTp == MessageType.HANDSHAKE:
+            isHandshakeDone = True
+
+        # Print message
+        rospyLogCol('INFO', "RECEIVE Ecat Message: id=%d type=%s", self.rcvEM.msgID, self.rcvEM.msg_tp_str)
+        # printEcatU(0, rcvEM.RegU)  # TEMP
+
+        # Send confirm done message
+        self.writeEthercatMessage(MessageType.CONFIRM_DONE)
+
+        return 1  # return data received flag
 
 # CLASS: Interface plugin
 class Interface(Plugin):
@@ -648,7 +917,9 @@ class Interface(Plugin):
         # End the application
         QApplication.quit()
   
-    ''' FUNCTIONS: Ethercat Communication '''
+    ''' V2 FUNCTIONS: Ethercat Communication '''
+
+    ''' V1 FUNCTIONS: Ethercat Communication '''
   
     def sendEthercatMessage(self, snd_msg_type, msg_arg_lng = 0, cw_list=None):
         
