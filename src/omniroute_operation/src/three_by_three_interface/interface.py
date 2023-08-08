@@ -346,19 +346,10 @@ class Ecat_Handler:
     class EcatMessageStruct:
 
         # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
-        class RegUnion:
-            def __init__(self):
-                self.ui8 = bytearray([0, 0])  # 2 bytes initialized with zeros
-
-            @property
-            def ui16(self):
-                return struct.unpack("<H", self.ui8)[0]
-
-            @ui16.setter
-            def ui16(self, value):
-                packed_value = struct.pack("<H", value)
-                self.ui8[0] = packed_value[0]
-                self.ui8[1] = packed_value[1]
+        class RegUnion(ctypes.Union):
+            _fields_ = [("ui8", ctypes.c_uint8 * 16),
+                        ("ui16", ctypes.c_uint16 * 8),
+                        ("ui64", ctypes.c_uint64 * 2)]
 
         def __init__(self):
             self.msgDt = 10
@@ -367,10 +358,11 @@ class Ecat_Handler:
             self.errTp = ErrorType.ERROR_NONE
             self.msg_arg_lng = 0
             self.Arg8 = [0] * 10
+            self.ArgU = self.RegUnion()
             self.u8i = 0
             self.u16i = 0
             self.isDone = False
-            self.RegU = [self.RegUnion() for _ in range(8)]
+            self.RegU = self.RegUnion()
 
     # Handshake finished flag
     isHandshakeDone = False
@@ -383,35 +375,45 @@ class Ecat_Handler:
 
     @classmethod
     def _resetU(cls, r_EM):
-        for reg in r_EM.RegU:
-            reg.ui16 = 0
+        r_EM.RegU.ui64[0] = 0
+        r_EM.RegU.ui64[1] = 0
         r_EM.u8i = 0
         r_EM.u16i = 0
 
     @classmethod
     def _seti8(cls, r_EM, dat_8):
-        r_EM.RegU[r_EM.u8i // 2].ui8[r_EM.u8i % 2] = dat_8
-        r_EM.u8i = (r_EM.u8i + 1) % 2  # keep u8i in range 0-1
-        r_EM.u16i = r_EM.u8i // 2
+        # Store data
+        r_EM.RegU.ui8[r_EM.u8i] = dat_8
+        rospyLogCol('HIGHLIGHT', "\t_storei8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8)
+        # Update union indices
+        r_EM.u8i += 1
+        r_EM.u16i = r_EM.u8i // 2 if r_EM.u8i % 2 == 0 else r_EM.u8i // 2 + 1
 
     @classmethod
     def _seti16(cls, r_EM, dat_16):
-        r_EM.RegU[r_EM.u16i].ui16 = dat_16
+        # Store data
+        r_EM.RegU.ui16[r_EM.u16i] = dat_16
+        rospyLogCol('HIGHLIGHT', "\t_storei16: u8i[%d] u16i[%d] dat_16=%d", r_EM.u8i, r_EM.u16i, dat_16)
+        # Update union indices
         r_EM.u16i += 1
-        r_EM.u8i = 0
+        r_EM.u8i = r_EM.u16i * 2
 
     @classmethod
     def _geti8(cls, r_EM):
-        dat_8 = r_EM.RegU[r_EM.u8i // 2].ui8[r_EM.u8i % 2]
-        r_EM.u8i = (r_EM.u8i + 1) % 2  # keep u8i in range 0-1
-        r_EM.u16i = r_EM.u8i // 2
+        # Get data
+        dat_8 = r_EM.RegU.ui8[r_EM.u8i]
+        # Update union indices and return data
+        r_EM.u8i += 1
+        r_EM.u16i = r_EM.u8i // 2 if r_EM.u8i % 2 == 0 else r_EM.u8i // 2 + 1
         return dat_8
 
     @classmethod
     def _geti16(cls, r_EM):
-        dat_16 = r_EM.RegU[r_EM.u16i].ui16
+        # Store data
+        dat_16 = r_EM.RegU.ui16[r_EM.u16i]
+        # Update union indices and return data
         r_EM.u16i += 1
-        r_EM.u8i = 0
+        r_EM.u8i = r_EM.u16i * 2
         return dat_16
 
     @classmethod
@@ -427,11 +429,11 @@ class Ecat_Handler:
         rospyLogCol(level, "\tEcat Register")
 
         # Print message data
-        for i, u in enumerate(reg_u):
+        for i in range(8):
             if d_type == 1 or i == 0:
-                rospyLogCol(level, "\t\tui16[%d] %d", i, u.ui16)
+                rospyLogCol(level, "\t\tui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                rospyLogCol(level, "\t\tui8[%d]  %d %d", i, u.ui8[0], u.ui8[1])
+                rospyLogCol(level, "\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
 
     @classmethod
@@ -536,7 +538,9 @@ class Ecat_Handler:
         cls._printEcatReg('INFO', 0, cls.sndEM.RegU)  # TEMP
 
         # Store and return ethercat message
-        reg_arr = [ctypes.c_int16(U.ui16).value for U in cls.sndEM.RegU]
+        reg_arr = [0] * 8
+        for i in range(8):
+            reg_arr[i] = cls.sndEM.RegU.ui16[i]
         return reg_arr
 
     @classmethod
@@ -546,10 +550,10 @@ class Ecat_Handler:
         # Copy data into union
         cls._resetU(cls.tmpEM)  # reset union variables
         for i in range(8):
-            cls.tmpEM.RegU[i].ui16 = reg_dat[i]
+            cls.tmpEM.RegU.ui16[i] = reg_dat[i]
 
         # Skip ethercat setup junk (255)
-        if cls.tmpEM.RegU[0].ui8[0] == 255 or cls.tmpEM.RegU[0].ui8[1] == 255:
+        if cls.tmpEM.RegU.ui8[0] == 255 or cls.tmpEM.RegU.ui8[1] == 255:
             return 0
         
         # Get message id and message type value
@@ -586,7 +590,7 @@ class Ecat_Handler:
         # Parse 8 bit message arguments
         if cls.tmpEM.msg_arg_lng > 0:
             for i in range(cls.tmpEM.msg_arg_lng):
-                cls.tmpEM.Arg8[i] = cls._geti8(cls.tmpEM)
+                cls.tmpEM.ArgU.ui8[i] = cls._geti8(cls.tmpEM)
 
         # Check for footer
         is_err = cls._geti8(cls.tmpEM) != 254 or cls._geti8(cls.tmpEM) != 254
@@ -607,13 +611,10 @@ class Ecat_Handler:
             rospyLogCol('INFO', "\tCONFIRM_DONE")
 
             # Get confirmation message number
-            u = Interface.RegUnion()
-            u.ui8[0] = cls.tmpEM.Arg8[0]
-            u.ui8[1] = cls.tmpEM.Arg8[1]
-            cls.cnfEM.msgID = u.ui16
+            cls.cnfEM.msgID = cls.rcvEM.ArgU.ui16[0]
 
             # Get message number
-            cls.cnfEM.msgTp = MessageType(cls.tmpEM.Arg8[2])
+            cls.cnfEM.msgTp = MessageType(cls.rcvEM.ArgU.ui8[2])
 
             # Print confirmation message
             rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",

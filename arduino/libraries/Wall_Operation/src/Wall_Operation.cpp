@@ -86,29 +86,27 @@ void Wall_Operation::_seti16(EcatMessageStruct &r_EM, uint16_t dat_16)
 
 uint8_t Wall_Operation::_geti8(EcatMessageStruct &r_EM)
 {
-	// Store data
+	// Get data
 	uint8_t dat_8 = r_EM.RegU.ui8[r_EM.u8i];
 
 	//_DB.printMsgTime("\t_geti8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
 
-	// Update union indeces
+	// Update union indeces and return data
 	r_EM.u8i++;
 	r_EM.u16i = r_EM.u8i % 2 == 0 ? r_EM.u8i / 2 : r_EM.u8i / 2 + 1;
-
 	return dat_8;
 }
 
 uint16_t Wall_Operation::_geti16(EcatMessageStruct &r_EM)
 {
-	// Store data
+	// Get data
 	uint8_t dat_16 = r_EM.RegU.ui16[r_EM.u16i];
 
 	//_DB.printMsgTime("\t_geti16: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
 
-	// Update union indeces
+	// Update union indeces and return data
 	r_EM.u16i += 1;
 	r_EM.u8i = r_EM.u16i * 2;
-
 	return dat_16;
 }
 
