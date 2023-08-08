@@ -77,6 +77,9 @@ void loop()
 	// Check ethercat coms
 	resp = W_OPR.getEthercatMessage();
 
+	W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
+	while(true);
+
 	// TEMP
 	if (resp != 1)
 		return;
