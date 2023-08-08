@@ -11,7 +11,7 @@
 //============= INCLUDE ================
 #include "Wall_Operation.h"
 
-//======== CLASS: Wall_Operation ==========
+//======== CLASS: WALL_OPERATION ==========
 
 /// <summary>
 /// CONSTUCTOR: Create Wall_Operation class instance
@@ -47,7 +47,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 	}
 }
 
-//++++++++++++++ Ethercat Comms Methods +++++++++++++++
+//++++++++++++++ ETHERCAT COMMS METHODS +++++++++++++++
 
 void Wall_Operation::_resetU(EcatMessageStruct &r_EM)
 {
@@ -112,9 +112,50 @@ uint16_t Wall_Operation::_geti16(EcatMessageStruct &r_EM)
 	return dat_16;
 }
 
+/// Overloaded function for printing Ethercat register values.
+/// This version of the function accepts a RegUnion object.
+/// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
+/// @param u: A RegUnion object containing the register values to print.
+void Wall_Operation::_printEcatReg(uint8_t d_type, RegUnion reg_u)
+{
+	// Print out register
+	_DB.printMsgTime("\tEcat Register");
+	for (size_t i = 0; i < 8; i++)
+	{
+		if (d_type == 1 || i == 0)
+			_DB.printMsgTime("\t\tui16[%d] %d", i, reg_u.ui16[i]);
+		if (d_type == 0)
+			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1]);
+	}
+	_DB.printMsgTime(" ");
+}
+
+/// OVERLOAD: function for printing Ethercat register values.
+/// This version of the function accepts an array of integer register values.
+/// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
+/// @param p_reg: An array of existing register values. DEFAULT: the function reads the register values directly from Ethercat.
+void Wall_Operation::_printEcatReg(uint8_t d_type, int p_reg[])
+{
+	RegUnion u;
+	int p_r[8]; // initialize array to handle null array argument
+
+	// Get register values directly from Ethercat
+	if (p_reg == nullptr)
+		ESMA.get_ecat_registers(p_r);
+	else // copy array
+		for (size_t i = 0; i < 8; i++)
+			p_r[i] = p_reg[i];
+
+	// Convert to RegUnion
+	for (size_t i = 1; i < 8; i++)
+		u.ui16[i] = p_reg[i];
+
+	// Pass to other _printEcatU
+	_printEcatReg(d_type, u);
+}
+
 bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, MessageType msg_type_enum)
 {
-
 	// Get message type value
 	/// @note need to be certain this enum is a valid value
 	uint8_t msg_type_val = static_cast<uint8_t>(msg_type_enum);
@@ -161,20 +202,23 @@ bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, u
 
 void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
 {
-	// Get error string
-	uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
-	strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
-	r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
-
 	// Handle error
 	if (is_err)
 	{
-		if (r_EM.errTp != err_tp) // only run once
+		// Only run once
+		if (r_EM.errTp != err_tp)
 		{
 			// Set error type
 			r_EM.errTp = err_tp;
+
+			// Get error string
+			uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
+			strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
+			r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
+
+			// Print error
 			_DB.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
-			printEcatU(0, r_EM.RegU); // TEMP
+			_printEcatReg(0, r_EM.RegU); // TEMP
 		}
 	}
 	else if (r_EM.errTp == err_tp)
@@ -209,7 +253,7 @@ void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool i
 /// @param msg_type_enum: The type of the message to be sent.
 /// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
 /// @param msg_arg_lng: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-void Wall_Operation::writeEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+void Wall_Operation::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
 {
 
 	// Reset union variables
@@ -227,25 +271,35 @@ void Wall_Operation::writeEthercatMessage(MessageType msg_type_enum, uint8_t p_m
 	// Store message type value
 	_seti8(sndEM, sndEM.msg_tp_val);
 
-	// Specify message argument length if not provided
-	_DB.printMsg("msg_arg_lng=%d", msg_arg_lng);
-	if (msg_arg_lng != 255)
-		_seti8(sndEM, msg_arg_lng); // message argument length
+	// 	------------- STORE ARGUMENTS -------------
+
+	// CONFIRM_DONE
+	if (sndEM.msgTp == MessageType::CONFIRM_DONE)
+	{
+		_seti8(sndEM, 4);				 // message argument length
+		_seti16(sndEM, rcvEM.msgID);	 // recieved message id
+		_seti8(sndEM, rcvEM.msg_tp_val); // recieved message type value
+	}
+
+	// HANDSHAKE
+	else if (sndEM.msgTp == MessageType::HANDSHAKE)
+	{
+		_seti8(sndEM, 0); // message argument length
+	}
+
+	// OTHER
 	else
 	{
-		// CONFIRM_DONE
-		if (sndEM.msgTp == MessageType::CONFIRM_DONE)
-		{
-			_seti8(sndEM, 4);				 // message argument length
-			_seti16(sndEM, rcvEM.msgID);	 // recieved message id
-			_seti8(sndEM, rcvEM.msg_tp_val); // recieved message type value
-		}
-		// 	HANDSHAKE
-		else if (sndEM.msgTp == MessageType::HANDSHAKE)
-		{
-			_seti8(sndEM, 0); // message argument length
-		}
+		// Store message argument length if provided
+		_seti8(sndEM, msg_arg_lng); // message argument length
+
+		// Store message arguments if provided
+		if (p_msg_arg_data != nullptr)
+			for (size_t i = 0; i < msg_arg_lng; i++)
+				_seti8(sndEM, p_msg_arg_data[i]);
 	}
+
+	// 	------------- FINISH SETUP AND WRITE -------------
 
 	// Store footer
 	_seti8(sndEM, 254);
@@ -260,90 +314,91 @@ void Wall_Operation::writeEthercatMessage(MessageType msg_type_enum, uint8_t p_m
 
 	// Print message
 	_DB.printMsgTime("SENT Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
-	printEcatU(0, sndEM.RegU); // TEMP
+	_printEcatReg(0, sndEM.RegU); // TEMP
 }
 
 /// <summary>
 /// Used to get incoming ROS ethercat msg data.
 /// </summary>
 /// <returns>Success/error codes [0:no message, 1:new message, 2:error]</returns>
-uint8_t Wall_Operation::readEthercatMessage()
+uint8_t Wall_Operation::getEthercatMessage()
 {
-	static EcatMessageStruct tempEM; // temp ethercat message struct
-	bool is_err = false;			 // error flag
+	bool is_err = false; // error flag
 
-	// Reset union variables
-	_resetU(tempEM);
-
-	// Read esmacat buffer and copy into union
+	// Read esmacat buffer and
 	int reg_dat[8];
 	ESMA.get_ecat_registers(reg_dat);
+
+	// Copy data into union
+	_resetU(tmpEM); // reset union variables
 	for (size_t i = 0; i < 8; i++)
-		tempEM.RegU.ui16[i] = reg_dat[i];
+		tmpEM.RegU.ui16[i] = reg_dat[i];
 
 	// Skip ethercat setup junk (255)
-	if (tempEM.RegU.ui8[0] == 255 || tempEM.RegU.ui8[1] == 255)
+	if (tmpEM.RegU.ui8[0] == 255 || tmpEM.RegU.ui8[1] == 255)
 		return 0;
 
-	// Store message id
-	tempEM.msgID = _geti16(tempEM);
-
-	// Store message type value
-	tempEM.msg_tp_val = _geti8(tempEM);
+	// Get message id and message type value
+	uint16_t msg_id = _geti16(tmpEM);
+	uint8_t msg_type_val = _geti8(tmpEM);
 
 	// Skip redundant messages
-	if (tempEM.msgID == rcvEM.msgID)
+	if (msg_id == rcvEM.msgID)
 		return 0;
 
-	// Setup message struct and check for valid message type
-	is_err = _setupMsgStruct(tempEM, tempEM.msgID, tempEM.msg_tp_val);
+	// Setup message struct which will add message id and type info
+	is_err = _setupMsgStruct(tmpEM, msg_id, msg_type_val);
 
 	// Run check error for valid message type
-	_checkErr(tempEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
+	_checkErr(tmpEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
 	if (is_err)
 		return 2; // return error flag
 
 	// Check if message is preceding handshake
-	is_err = !isHandshakeDone && tempEM.msgTp != MessageType::HANDSHAKE;
-	_checkErr(tempEM, ErrorType::REGISTER_LEFTOVERS, is_err);
+	is_err = !isHandshakeDone && tmpEM.msgTp != MessageType::HANDSHAKE;
+	_checkErr(tmpEM, ErrorType::REGISTER_LEFTOVERS, is_err);
 	if (is_err)
 		return 2; // return error flag
 
 	// Check for skipped or out of sequence messages
-	is_err = tempEM.msgID - rcvEM.msgID != 1;
-	_checkErr(tempEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
+	is_err = tmpEM.msgID - rcvEM.msgID != 1;
+	_checkErr(tmpEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
 	if (is_err)
 		return 2; // return error flag
 
 	// Get argument length
-	tempEM.msg_arg_lng = _geti8(tempEM);
+	tmpEM.msg_arg_lng = _geti8(tmpEM);
 
 	// Parse 8 bit message arguments
-	if (tempEM.msg_arg_lng > 0)
-		for (size_t i = 0; i < tempEM.msg_arg_lng; i++)
-			tempEM.ArgDat[i] = _geti8(tempEM);
+	if (tmpEM.msg_arg_lng > 0)
+		for (size_t i = 0; i < tmpEM.msg_arg_lng; i++)
+			tmpEM.Arg8[i] = _geti8(tmpEM);
 
 	// Check for footer
-	is_err = _geti8(tempEM) != 254 || _geti8(tempEM) != 254;
-	_checkErr(tempEM, ErrorType::MISSING_FOOTER, is_err);
+	is_err = _geti8(tmpEM) != 254 || _geti8(tmpEM) != 254;
+	_checkErr(tmpEM, ErrorType::MISSING_FOOTER, is_err);
 	if (is_err)
 		return 2; // return error flag
 
 	// Set flag
-	tempEM.isDone = false;
+	tmpEM.isDone = false;
 
 	// Copy over data
-	rcvEM = tempEM;
+	rcvEM = tmpEM;
 
-	// 	Process wall data
+	// 	------------- PROCESS ARGUMENTS -------------
+
+	// MOVE_WALLS
 	if (rcvEM.msgTp == MessageType::MOVE_WALLS)
 	{
 
 		// Loop through arguments
 		for (size_t cham_i = 0; cham_i < rcvEM.msg_arg_lng; cham_i++)
 		{
-			uint8_t wall_b = rcvEM.ArgDat[cham_i];
+			// Get wall byte data
+			uint8_t wall_b = rcvEM.Arg8[cham_i];
 
+			// Get walls to move up and down
 			uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
 			uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
 
@@ -357,7 +412,7 @@ uint8_t Wall_Operation::readEthercatMessage()
 		}
 	}
 	_DB.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
-	printEcatU(0, rcvEM.RegU); // TEMP
+	_printEcatReg(0, rcvEM.RegU); // TEMP
 
 	// Return new message flag
 	return 1;
@@ -393,282 +448,7 @@ void Wall_Operation::executeEthercatMessage()
 	rcvEM.isDone = true;
 }
 
-/// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
-///
-///	@note: The outgoing register is structured uint16[8]
-///	with all but first 16 bit value seperated into bytes
-///	i16[0]: Message ID [0-65535]
-///	i16[1]: Message Info
-///		i8[0] message type [0-255] [see: MessageTypeID]
-///		i8[1] arg length [0-10] [number of message args in bytes]
-///	i16[NA,2:6] Arguments
-///		i16[2-3] message confirmation
-///			i16[2] rcv message id [0-65535]
-///			i16[2] rcv message type [0-65535]
-///	i16[x+1]: Footer
-///		i8[0] [254]
-///		i8[1] [254]
-/// @note: The message length corresponds to number of bits.
-/// The indexing of the RegUnion is is as follows:
-///		ui16[0], ui8[0][1]		// id
-///		ui16[1], ui8[2][3]		// type		arg length
-///		ui16[2], ui8[4][5]		// arg 1	arg 2
-///		ui16[3], ui8[6][7]		// arg 3	arg 4
-///		ui16[4], ui8[8][9]     	// arg 5	arg 6
-///		ui16[5], ui8[10][11]   	// arg 7	arg 8
-///		ui16[6], ui8[12][13]  	// arg 9	arg 10
-///		ui16[7], ui8[14][15]  	// footer
-/// @param msg_type_enum: The type of the message to be sent.
-/// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
-/// @param msg_arg_lng: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-/// @return: Success/error codes [0:no error, 1:error]
-void Wall_Operation::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
-{
-	// Itterate message number id and roll over to 1 if max 16 bit value is reached
-	sndMsgID = sndMsgID < 65535 ? sndMsgID + 1 : 1;
-	sndMsgTyp = msg_type_enum; // update message type
-
-	// Clear union
-	U.ui64[0] = 0;
-	U.ui64[1] = 0;
-	uint8_t ui8_i = 2;
-
-	// Add shared message data
-	U.ui16[0] = sndMsgID;						// send message id
-	U.ui8[2] = static_cast<uint8_t>(sndMsgTyp); // send message type
-
-	// HANDLE MESSAGE TYPE
-
-	// 	CONFIRM_DONE
-	if (sndMsgTyp == MessageType::CONFIRM_DONE)
-	{
-		_DB.setGetStr("CONFIRM_DONE");
-		msg_arg_lng = 3;
-		U.ui16[2] = rcvMsgID;						// recieved message id
-		U.ui8[6] = static_cast<uint8_t>(rcvMsgTyp); // recieved message type
-	}
-	// 	HANDSHAKE
-	else if (sndMsgTyp == MessageType::HANDSHAKE)
-	{
-		_DB.setGetStr("HANDSHAKE");
-		msg_arg_lng = 0;
-	}
-	// 	ERROR
-	else if (sndMsgTyp == MessageType::ERROR)
-	{
-		_DB.setGetStr("ERROR");
-		msg_arg_lng = 2;
-		U.ui16[3] = ErrorType::ERROR_NONE; // error type
-	}
-
-	// Add message argument length
-	U.ui8[3] = msg_arg_lng;
-
-	// Round msg_arg_lng up to even number and add 4 for id and msg info
-	ui8_i = 4 + ((msg_arg_lng % 2 == 0) ? msg_arg_lng : (msg_arg_lng + 1));
-
-	// Add footer
-	U.ui8[ui8_i++] = 254;
-	U.ui8[ui8_i] = 254;
-
-	// Send message
-	for (size_t i = 0; i < 8; i++)
-		ESMA.write_reg_value(i, U.ui16[i]);
-	_DB.printMsgTime("SENT Ecat Message: type=%s id=%d", _DB.setGetStr(), sndMsgID);
-
-	// Print message
-	_DB.printMsgTime("\tui16[0] %d", U.ui16[0]);
-	printEcatU(0, U);
-}
-
-/// <summary>
-/// Used to get incoming ROS ethercat msg data.
-/// </summary>
-/// <returns>Success/error codes [0:no message, 1:new message, 2:error]</returns>
-uint8_t Wall_Operation::getEthercatMessage()
-{
-	int rcv_msg_id;			  // incoming msg id number
-	uint8_t msg_type_val;	  // incoming msg type id
-	uint8_t msg_arg_lng;	  // incoming msg argument length
-	uint8_t msg_arg_data[10]; // uint16_t[5] devided into uinit8-t[10]
-	int reg_dat[8];			  // buffer for reading ethercat registers
-	uint8_t reg_i = 0;		  // index for reading ethercat registers
-
-	// Read esmacat buffer
-	ESMA.get_ecat_registers(reg_dat);
-
-	// Check first register entry for msg id
-	rcv_msg_id = reg_dat[reg_i++];
-	U.ui16[0] = reg_dat[reg_i++];
-	msg_type_val = U.ui8[0];
-	msg_arg_lng = U.ui8[1];
-
-	// Skip ethercat setup junk (65535)
-	if (rcv_msg_id == 65535)
-		return 0;
-
-	// Skip redundant messages
-	if (rcv_msg_id == rcvMsgID)
-		return 0;
-
-	// Make type strings for all MessageType enum values
-	if (msg_type_val == MessageType::CONFIRM_DONE)
-		_DB.setGetStr("CONFIRM_DONE");
-	if (msg_type_val == MessageType::HANDSHAKE)
-		_DB.setGetStr("HANDSHAKE");
-	if (msg_type_val == MessageType::MOVE_WALLS)
-		_DB.setGetStr("MOVE_WALLS");
-	if (msg_type_val == MessageType::START_SESSION)
-		_DB.setGetStr("START_SESSION");
-	if (msg_type_val == MessageType::END_SESSION) /*  */
-		_DB.setGetStr("END_SESSION");
-
-	// Check if rcv_msg_type matches any of the enum values
-	if (msg_type_val != MessageType::CONFIRM_DONE &&
-		msg_type_val != MessageType::HANDSHAKE &&
-		msg_type_val != MessageType::MOVE_WALLS &&
-		msg_type_val != MessageType::START_SESSION &&
-		msg_type_val != MessageType::END_SESSION)
-	{
-		if (rcvErrTyp != ErrorType::NO_MESSAGE_TYPE_MATCH) // only run once
-		{
-			// Set id last to new value on first error and set error type
-			rcvErrTyp = ErrorType::NO_MESSAGE_TYPE_MATCH;
-			_DB.printMsgTime("!!ERROR: Ecat No Type Match: type_val=%d id=%d!!", msg_type_val, rcv_msg_id);
-			// printEcatU(0, reg_dat); // TEMP
-		}
-		return 2; // return error flag
-	}
-	else if (rcvErrTyp == ErrorType::NO_MESSAGE_TYPE_MATCH)
-		rcvErrTyp = ErrorType::ERROR_NONE; // unset error type
-
-	// // TEMP
-	// _DB.printMsgTime("Ether Type=%s id= %d", _DB.setGetStr(), rcv_msg_id);
-	// printEcatU(0, reg_dat);
-
-	// Check for skipped or out of sequence messages
-	if (rcv_msg_id - rcvMsgID != 1)
-	{
-		if (isHandshakeDone)
-		{
-			if (rcvErrTyp != ErrorType::MESSAGE_ID_DISORDERED) // only run once
-			{
-				// Set id last to new value on first error and set error type
-				rcvErrTyp = ErrorType::MESSAGE_ID_DISORDERED;
-				_DB.printMsgTime("!!ERROR: Ecat ID Missmatch: old=%d new=%d!!", rcvMsgID, rcv_msg_id);
-				printEcatU(0, reg_dat); // TEMP
-			}
-		}
-		return 2; // return error flag
-	}
-	else if (rcvErrTyp == ErrorType::MESSAGE_ID_DISORDERED)
-		rcvErrTyp = ErrorType::ERROR_NONE; // unset error type
-
-	// Check if message is preceding handshake
-	if (!isHandshakeDone && msg_type_val != MessageType::HANDSHAKE)
-	{
-		if (rcvErrTyp != ErrorType::REGISTER_LEFTOVERS) // only run once
-		{
-			// Set id last to new value on first error and set error type
-			rcvErrTyp = ErrorType::REGISTER_LEFTOVERS;
-			_DB.printMsgTime("!!ERROR: Ecat Missed Handshake: type=%s id=%d!!", _DB.setGetStr(), rcv_msg_id);
-			printEcatU(0, reg_dat); // TEMP
-		}
-		return 2; // return error flag
-	}
-	else if (rcvErrTyp == ErrorType::REGISTER_LEFTOVERS)
-		rcvErrTyp = ErrorType::ERROR_NONE; // unset error type
-
-	// Update message id
-	rcvMsgID = rcv_msg_id;
-
-	// Update dynamic enum instance
-	rcvMsgTyp = static_cast<Wall_Operation::MessageType>(msg_type_val);
-
-	// Parse 8 bit message arguments
-	if (msg_arg_lng > 0)
-	{
-		// Loop through buffer
-		uint8_t msg_arg_lng_i16_round = ((int)msg_arg_lng + 1) / 2; // devide message length by 2 and round up
-		uint8_t ui8_i = 0;
-		for (size_t ui16_i = 0; ui16_i < msg_arg_lng_i16_round; ui16_i++)
-		{
-			// Get next entry
-			U.ui16[0] = reg_dat[reg_i++];
-
-			// Loop through bytes in given 16 bit entry and store
-			for (size_t b_ii = 0; b_ii < 2; b_ii++)
-				msg_arg_data[ui8_i++] = U.ui8[b_ii];
-		}
-	}
-
-	// Check for footer
-	U.ui16[0] = reg_dat[reg_i++];
-	if (U.ui8[0] != 254 && U.ui8[1] != 254)
-	{
-		_DB.printMsgTime("!!ERROR: Ecat Missing message footer: type=%s id=%d!!", _DB.setGetStr(), rcv_msg_id);
-		rcvErrTyp = ErrorType::MISSING_FOOTER;
-		printEcatU(0, reg_dat); // TEMP
-		return 2;
-	}
-	else if (rcvErrTyp == ErrorType::MISSING_FOOTER)
-		rcvErrTyp = ErrorType::ERROR_NONE; // unset error type
-
-	// 	Process wall data
-	if (rcvMsgTyp == MessageType::MOVE_WALLS)
-	{
-
-		// Loop through arguments
-		for (size_t cham_i = 0; cham_i < msg_arg_lng; cham_i++)
-		{
-			uint8_t wall_b = msg_arg_data[cham_i];
-
-			uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
-			uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // move down any unasigned walls
-
-			// Update move flag
-			C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
-
-			// Print walls set to be moved
-			_DB.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
-			_DB.printMsgTime("\t\t\tup=%s", _DB.bitIndStr(wall_u_b));
-			_DB.printMsgTime("\t\t\tdown=%s", _DB.bitIndStr(wall_d_b));
-		}
-	}
-	_DB.printMsgTime("RECIEVED Ecat Message: type=%s id=%d", _DB.setGetStr(), rcvMsgID);
-
-	// Return new message flag
-	return 1;
-}
-
-/// <summary>
-/// Used to process incoming ROS Ethercat msg data.
-/// </summary>
-void Wall_Operation::executeEthercatCommand()
-{
-
-	// Handle message type
-	if (rcvMsgTyp == MessageType::HANDSHAKE)
-	{
-		// Set ethercat flag
-		_DB.printMsgTime("\tEcat Comms Established");
-		isHandshakeDone = true;
-	}
-	else if (rcvMsgTyp == MessageType::MOVE_WALLS)
-	{
-		moveWalls();
-	}
-	else if (rcvMsgTyp == MessageType::START_SESSION)
-	{
-		resetMaze(false); // dont reset certain variables
-	}
-	else if (rcvMsgTyp == MessageType::END_SESSION)
-	{
-		resetMaze(true); // reset everything
-	}
-}
-
-//++++++++++++ Data Handeling +++++++++++++
+//++++++++++++ DATA HANDELING +++++++++++++
 
 /// <summary>
 /// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information
@@ -858,7 +638,7 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 	}
 }
 
-//++++++++++++ Setup Methods +++++++++++++
+//++++++++++++ SETUP METHODS +++++++++++++
 
 /// <summary>
 /// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
@@ -902,8 +682,9 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 		}
 
 		// Reset message counters
-		rcvMsgID = 0;
-		sndMsgID = 0;
+		sndEM.msgID = 0;
+		tmpEM.msgID = 0;
+		rcvEM.msgID = 0;
 
 		// Reset Ethercat handshake flag
 		isHandshakeDone = false;
@@ -1037,7 +818,7 @@ uint8_t Wall_Operation::_setupWalls()
 	return resp;
 }
 
-//+++++++++++++ Runtime Methods ++++++++++++++
+//+++++++++++++ RUNTIME METHODS ++++++++++++++
 
 /// <summary>
 /// Option to speicify a given set of walls to move programmatically as an
@@ -1294,7 +1075,7 @@ uint8_t Wall_Operation::forceStopWalls()
 	return resp;
 }
 
-//+++++++ Testing and Debugging Methods ++++++++
+//+++++++ TESTING AND DEBUGGING METHODS ++++++++
 
 /// <summary>
 /// Used for testing the limit switch IO pins on a given Cypress chip.
@@ -1538,46 +1319,4 @@ void Wall_Operation::printPMS(PinMapStruct pms)
 			_DB.printMsgTime(buff);
 		}
 	}
-}
-
-/// Overloaded function for printing Ethercat register values.
-/// This version of the function accepts a RegUnion object.
-/// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
-/// @param u: A RegUnion object containing the register values to print.
-void Wall_Operation::printEcatU(uint8_t d_type, RegUnion u)
-{
-	// Print out register
-	_DB.printMsgTime("\tEcat Register");
-	for (size_t i = 0; i < 8; i++)
-	{
-		if (d_type == 1 || i == 0)
-			_DB.printMsgTime("\t\tui16[%d] %d", i, u.ui16[i]);
-		if (d_type == 0)
-			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, u.ui8[2 * i], u.ui8[2 * i + 1]);
-	}
-	_DB.printMsgTime(" ");
-}
-
-/// OVERLOAD: function for printing Ethercat register values.
-/// This version of the function accepts an array of integer register values.
-/// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
-/// @param p_reg: An array of existing register values. DEFAULT: the function reads the register values directly from Ethercat.
-void Wall_Operation::printEcatU(uint8_t d_type, int p_reg[])
-{
-	RegUnion u;
-	int p_r[8]; // initialize array to handle null array argument
-
-	// Get register values directly from Ethercat
-	if (p_reg == nullptr)
-		ESMA.get_ecat_registers(p_r);
-	else // copy array
-		for (size_t i = 0; i < 8; i++)
-			p_r[i] = p_reg[i];
-
-	// Convert to RegUnion
-	for (size_t i = 1; i < 8; i++)
-		u.ui16[i] = p_reg[i];
-
-	// Pass to other printEcatU
-	printEcatU(d_type, u);
 }

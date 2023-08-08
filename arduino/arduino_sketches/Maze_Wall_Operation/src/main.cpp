@@ -75,7 +75,7 @@ void loop()
 {
 
 	// Check ethercat coms
-	resp = W_OPR.readEthercatMessage();
+	resp = W_OPR.getEthercatMessage();
 
 	// TEMP
 	if (resp != 1)
@@ -83,9 +83,9 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.writeEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
 		delay(dt);
-		W_OPR.writeEthercatMessage(W_OPR.MessageType::HANDSHAKE);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
 		delay(dt);
 	}
 
@@ -93,7 +93,7 @@ void loop()
 	if (resp == 1) // check for new message
 	{
 		// Send confirmation message
-		W_OPR.writeEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
+		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
 
 		// Execute new command
 		W_OPR.executeEthercatMessage();
