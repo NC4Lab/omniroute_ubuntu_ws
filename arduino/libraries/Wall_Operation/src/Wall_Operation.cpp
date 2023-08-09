@@ -1,5 +1,7 @@
 // ######################################
+
 //======== Wall_Operation.cpp ==========
+
 // ######################################
 
 //============= INCLUDE ================
@@ -543,7 +545,7 @@ uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_
 /// @return Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]
 uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
-	// Local vars// TEMP COMMIT TEST
+	// Local vars
 	uint8_t resp = 0;
 	uint8_t run_error = 0;						// store run errors
 	uint8_t is_timedout = 0;					// flag timeout

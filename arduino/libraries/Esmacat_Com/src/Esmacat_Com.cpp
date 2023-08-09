@@ -1,9 +1,15 @@
 // ######################################
+
 //========== Esmacat_Com.cpp ===========
+
 // ######################################
 
 //============= INCLUDE ================
 #include "Esmacat_Com.h"
+
+//========DEFINES: Esmacat_Com==========
+
+Maze_Debug Esmacat_Com::_Dbg; ///< static local instance of Maze_Debug class
 
 //========CLASS: Esmacat_Com==========
 
@@ -19,6 +25,7 @@ Esmacat_Com::Esmacat_Com()
 /// @return Last updated 8 bit index
 uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
 {
+    //_Dbg.printMsgTime("\t\t\tupd8: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
     i8 = b_i + 1;
     i16 = i8 / 2;
@@ -29,6 +36,7 @@ uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
 /// @return Last updated 16 bit index
 uint8_t Esmacat_Com::UIndStruct::upd16(uint8_t b_i)
 {
+    //_Dbg.printMsgTime("\t\t\tupd16: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
     i16 = b_i + 1;
     i8 = i16 * 2;
@@ -174,9 +182,10 @@ void Esmacat_Com::_uSetFooter(EcatMessageStruct &r_EM)
 /// @brief Get message footer from union
 bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
 {
-    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()];
-    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()];
-    return r_EM.msgFoot[0] == 254 && r_EM.msgFoot[1] == 254;
+    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy first footer byte
+    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy second footer byte
+    bool is_err = r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254; // check for valid footers
+    return is_err
 }
 
 /// @brief Reset union data and indeces
@@ -362,7 +371,7 @@ uint8_t Esmacat_Com::getEcatMessage()
     if (is_err)
         return 2; // return error flag
 
-    // Get argument length and arguments
+    // Get argument length and argument data
     _uGetArgLength(tmpEM);
     _uGetArgData8(tmpEM);
 

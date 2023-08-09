@@ -547,9 +547,10 @@ class Esmacat_Com:
     def _uGetFooter(self, r_EM):
         """Get message footer from union"""
 
-        r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
-        r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
-        return r_EM.msgFoot[0] == 254 and r_EM.msgFoot[1] == 254
+        r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy first footer byte
+        r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy second footer byte
+        is_err = r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254 # check if footer is valid
+        return is_err
 
     def _uReset(self, r_EM):
         """Reset union data and indices"""

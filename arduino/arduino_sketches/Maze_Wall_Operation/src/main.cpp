@@ -21,8 +21,8 @@
 //============ VARIABLES ===============
 
 // Global
-extern bool DB_VERBOSE = 1;	 //< set to control debugging behavior [0:silent, 1:verbose]
-extern bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
+bool DB_VERBOSE = 1;	 //< set to control debugging behavior [0:silent, 1:verbose]
+bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
@@ -78,7 +78,7 @@ void loop()
 	// int dt = 1000;
 	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
 	// delay(dt);
-
+	
 	// Check ethercat coms
 	resp = WallOper.EsmaCom.getEcatMessage();
 

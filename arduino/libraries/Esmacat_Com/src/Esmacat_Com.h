@@ -1,5 +1,7 @@
 // ######################################
+
 //=========== Esmacat_Com.h ============
+
 // ######################################
 #ifndef ESMACAT_COM_H
 #define ESMACAT_COM_H
@@ -99,7 +101,7 @@ public:
     EcatMessageStruct tmpEM; ///<  initialize message handler instance for temporary receiving messages
 
 private:
-    Maze_Debug _Dbg;     ///< local instance of Maze_Debug class
+    static Maze_Debug _Dbg;     ///< local instance of Maze_Debug class 
     Esmacatshield _ESMA; //< instance of Esmacatshield class
 
     // -----------METHODS-----------------
