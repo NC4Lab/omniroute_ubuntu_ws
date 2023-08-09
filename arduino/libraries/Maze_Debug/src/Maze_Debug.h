@@ -39,25 +39,25 @@ private:
 	void _printMsg(const char *, va_list);
 
 private:
-	char *_timeStr(uint32_t);
+	const char *_timeStr(uint32_t);
 
 public:
-	char *setGetStr(const char* = nullptr);
+	const char *setGetStr(const char* = nullptr);
 
 public:
-	char *arrayStr(uint8_t[], size_t);
+	const char *arrayStr(uint8_t[], size_t);
 
 public:
-	char *binStr(uint8_t);
+	const char *binStr(uint8_t);
 
 public:
-	char *hexStr(uint8_t);
+	const char *hexStr(uint8_t);
 
 public:
-	char *dtTrack(uint8_t = 0);
+	const char *dtTrack(uint8_t = 0);
 
 public:
-	char *bitIndStr(uint8_t);
+	const char *bitIndStr(uint8_t);
 
 public:
 	void printRegByte(uint8_t);

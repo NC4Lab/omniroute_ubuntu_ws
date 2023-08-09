@@ -15,6 +15,33 @@ Esmacat_Com::Esmacat_Com()
         _ESMA.start_spi();
 }
 
+/// @brief Update union 8 bit and 16 bit index
+/// @return Last updated 8 bit index
+uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
+{
+    b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
+    i8 = b_i + 1;
+    i16 = i8 / 2;
+    return b_i;
+}
+
+/// @brief Update union 16 bit and 8 bit index
+/// @return Last updated 16 bit index
+uint8_t Esmacat_Com::UIndStruct::upd16(uint8_t b_i)
+{
+    b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
+    i16 = b_i + 1;
+    i8 = i16 * 2;
+    return b_i;
+}
+
+/// @brief Reset union 8 bit and 16 bit index
+void Esmacat_Com::UIndStruct::reset()
+{
+    i8 = 0;
+    i16 = 0;
+}
+
 /// @brief Set message ID entry in union and updated associated variable
 void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 {

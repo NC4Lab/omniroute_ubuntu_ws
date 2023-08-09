@@ -4,6 +4,7 @@
             "name": "Maze_Debug_Configuration",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/../**",
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/avr/include",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/7.3.0/include",

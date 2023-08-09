@@ -76,7 +76,7 @@ void Maze_Debug::_printMsg(const char *p_fmt, va_list args)
 /// <param name="ts_ms">Current time (ms).</param>
 /// <param name="t0_ms">Zero time if computing dt (ms).</param>
 /// <returns>String in the form [MM:SS:MS]</returns>
-char *Maze_Debug::_timeStr(uint32_t ts_0)
+const char *Maze_Debug::_timeStr(uint32_t ts_0)
 {
 	static char buff[3][25]; // track up to 3 instances
 	static uint8_t i;
@@ -84,12 +84,12 @@ char *Maze_Debug::_timeStr(uint32_t ts_0)
 
 	// get minutes, seconds and milliseconds
 	uint32_t dt = millis() - ts_0;
-	int dt_m = (dt - (dt % (60 * 1000))) / (60 * 1000);			 // minutes
-	int dt_s = (dt - (dt_m * (60 * 1000)) - (dt % 1000)) / 1000; // seconds
-	int dt_ms = dt - (dt_m * (60 * 1000)) - (dt_s * 1000);		 // milliseconds
+	uint32_t dt_m = (dt - (dt % (60UL * 1000UL))) / (60UL * 1000UL);		  // minutes
+	uint32_t dt_s = (dt - (dt_m * (60UL * 1000UL)) - (dt % 1000UL)) / 1000UL; // seconds
+	uint32_t dt_ms = dt - (dt_m * (60UL * 1000UL)) - (dt_s * 1000UL);		  // milliseconds
 
 	// Format string and print
-	sprintf(buff[i], "%02u:%02u:%03u", dt_m, dt_s, dt_ms);
+	sprintf(buff[i], "%02lu:%02lu:%03lu", dt_m, dt_s, dt_ms);
 	uint8_t ii = i;
 	i = i == 2 ? 0 : i + 1;
 	return buff[ii];
@@ -99,7 +99,7 @@ char *Maze_Debug::_timeStr(uint32_t ts_0)
 /// Store or retrieve a string for later use. Call without argument to retrieve string.
 /// </summary>
 /// <param name="p_str">OPTIONAL: string to store</param>
-char *Maze_Debug::setGetStr(const char *p_str)
+const char *Maze_Debug::setGetStr(const char *p_str)
 {
 	static char buff[100];
 
@@ -108,9 +108,9 @@ char *Maze_Debug::setGetStr(const char *p_str)
 	{
 		buff[0] = '\0';
 		strncpy(buff, p_str, sizeof(buff) - 1);
-        buff[sizeof(buff) - 1] = '\0';
+		buff[sizeof(buff) - 1] = '\0';
 	}
-	return buff; 
+	return buff;
 }
 
 /// <summary>
@@ -119,26 +119,26 @@ char *Maze_Debug::setGetStr(const char *p_str)
 /// <param name="p_arr">Array to print (max 10 elements).</param>
 /// <param name="s">Size of array.</param>
 /// <returns>Formatted array string. E.g., "[0,1,2]"</returns>
-char* Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
+const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 {
-    if (DB_VERBOSE == 0)
-        return "";
-    if (s > 10)
-        return "";
-    static char buff1[50];
-    buff1[0] = '\0';
-    char buff2[10];
-    strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
-    for (size_t i = 0; i < s; i++)
-    {
-        snprintf(buff2, sizeof(buff2), "%d", p_arr[i]);
-        strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
-        if (i < s - 1)
-            strncat(buff1, ",", sizeof(buff1) - strlen(buff1) - 1);
-        else
-            strncat(buff1, "]", sizeof(buff1) - strlen(buff1) - 1);
-    }
-    return buff1;
+	if (DB_VERBOSE == 0)
+		return "";
+	if (s > 10)
+		return "";
+	static char buff1[50];
+	buff1[0] = '\0';
+	char buff2[10];
+	strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
+	for (size_t i = 0; i < s; i++)
+	{
+		snprintf(buff2, sizeof(buff2), "%d", p_arr[i]);
+		strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
+		if (i < s - 1)
+			strncat(buff1, ",", sizeof(buff1) - strlen(buff1) - 1);
+		else
+			strncat(buff1, "]", sizeof(buff1) - strlen(buff1) - 1);
+	}
+	return buff1;
 }
 
 /// <summary>
@@ -146,7 +146,7 @@ char* Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 /// </summary>
 /// <param name="b">Byte to print.</param>
 /// <returns>Formatted byte string [B00000000].</returns>
-char *Maze_Debug::binStr(uint8_t b)
+const char *Maze_Debug::binStr(uint8_t b)
 {
 	if (DB_VERBOSE == 0)
 		return "B00000000";
@@ -164,11 +164,11 @@ char *Maze_Debug::binStr(uint8_t b)
 /// </summary>
 /// <param name="h">Hex value to print</param>
 /// <returns>formatted hex string [e.g., 0xFF]</returns>
-char *Maze_Debug::hexStr(uint8_t h)
+const char *Maze_Debug::hexStr(uint8_t h)
 {
 	static char buff[20];
 	buff[0] = '\0';
-	sprintf(buff, "%p", h);
+	sprintf(buff, "0x%02X", h);
 	return buff;
 }
 
@@ -179,13 +179,13 @@ char *Maze_Debug::hexStr(uint8_t h)
 /// </summary>
 /// <param name="do_reset">Reset clock [1].</param>
 /// <returns>Formatted string [s:ms:us].</returns>
-char *Maze_Debug::dtTrack(uint8_t do_reset)
+const char *Maze_Debug::dtTrack(uint8_t do_reset)
 {
 	static unsigned long ts_0 = 0;
 	if (do_reset == 1)
 	{
 		ts_0 = millis(); // store current time on first call
-		return '\0';
+		return "";
 	}
 	else
 	{ // get dt on subsiquent call
@@ -198,30 +198,39 @@ char *Maze_Debug::dtTrack(uint8_t do_reset)
 /// </summary>
 /// <param name="byte_mask_in">Byte value used as a mask with Cypress methods.</param>
 /// <returns>Formatted array string. E.g., "[0,1,2]"</returns>
-char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
+const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 {
 	if (DB_VERBOSE == 0)
-		return '\0';
+		return "";
 	static char buff1[20];
 	buff1[0] = '\0';
 	char buff2[10];
 	if (byte_mask_in == 0)
+	{
 		sprintf(buff1, "[]"); // no ones in byte
+	}
 	else
 	{
 		strcat(buff1, "[");
-		uint8_t c_cnt = 0;
 		for (size_t i = 0; i < 8; i++)
 		{
 			if (bitRead(byte_mask_in, i) == 1)
 			{
-				sprintf(buff2, "%d", i);
+				sprintf(buff2, "%d,", i); // add comma right here
 				strcat(buff1, buff2);
-				strcat(buff1, ",");
-				c_cnt += 2;
 			}
 		}
-		buff1[c_cnt] = ']';
+		// Remove the last comma and append closing bracket
+		size_t len = strlen(buff1);
+		if (len > 1 && buff1[len - 1] == ',')
+		{
+			buff1[len - 1] = ']';
+			buff1[len] = '\0';
+		}
+		else
+		{
+			strcat(buff1, "]");
+		}
 	}
 	return buff1;
 }

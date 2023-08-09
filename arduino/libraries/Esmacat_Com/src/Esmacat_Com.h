@@ -68,32 +68,9 @@ public:
         uint8_t i8 = 0;  ///< 8 bit index
         uint8_t i16 = 0; ///< 16 bit index
 
-        /// @brief Update union 8 bit and 16 bit index
-        /// @return Last updated 8 bit index
-        uint8_t upd8(uint8_t b_i = 255)
-        {
-            b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
-            i8 = b_i + 1;
-            i16 = i8 / 2;
-            return b_i;
-        }
-
-        /// @brief Update union 16 bit and 8 bit index
-        /// @return Last updated 16 bit index
-        uint8_t upd16(uint8_t b_i = 255)
-        {
-            b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
-            i16 = b_i + 1;
-            i8 = i16 * 2;
-            return b_i;
-        }
-
-        /// @brief Reset union 8 bit and 16 bit index
-        void reset()
-        {
-            i8 = 0;
-            i16 = 0;
-        }
+        uint8_t upd8(uint8_t b_i = 255);
+        uint8_t upd16(uint8_t b_i = 255);
+        void reset();
     };
 
     struct EcatMessageStruct ///< class for handeling ethercat messages
