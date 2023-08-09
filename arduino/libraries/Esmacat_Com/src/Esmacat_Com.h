@@ -122,7 +122,7 @@ public:
     EcatMessageStruct tmpEM; ///<  initialize message handler instance for temporary receiving messages
 
 private:
-    Maze_Debug _DB;     ///< local instance of Maze_Debug class
+    Maze_Debug _Dbg;     ///< local instance of Maze_Debug class
     Esmacatshield _ESMA; //< instance of Esmacatshield class
 
     // -----------METHODS-----------------
@@ -143,9 +143,9 @@ private:
     void _uGetArgLength(EcatMessageStruct &);
 
 private:
-    void _uSetArgData(EcatMessageStruct &, uint8_t);
-    void _uSetArgData(EcatMessageStruct &, uint16_t);
-    void _uGetArgData(EcatMessageStruct &);
+    void _uSetArgData8(EcatMessageStruct &, uint8_t);
+    void _uSetArgData16(EcatMessageStruct &, uint16_t);
+    void _uGetArgData8(EcatMessageStruct &);
 
 private:
     void _uSetFooter(EcatMessageStruct &);
@@ -161,10 +161,10 @@ public:
     void msgReset();
 
 public:
-    void sendEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
+    void sendEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
 
 public:
-    uint8_t getEthercatMessage();
+    uint8_t getEcatMessage();
 
 private:
     void _printEcatReg(uint8_t, int[] = nullptr);

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+#======================== PACKAGES ========================
 import os
 import rospy
 from omniroute_esmacat_ros.msg import *
@@ -7,6 +9,7 @@ import subprocess
 import psutil
 import time
 import ctypes
+from typing import List
 
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -49,7 +52,8 @@ with all but first 16 bit value seperated into bytes
     b0=254      
 """
 
-# GLOBAL VARS
+#======================== GLOBAL VARS ========================
+
 DB_VERBOSE = True  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
@@ -64,8 +68,38 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
-# CLASS: Maze_Plot to plot the maze
+#======================== GLOBAL FUNCTIONS ========================
+
+def rospyLogCol(level, msg, *args):
+    """ Log to ROS in color """
+
+    # Exit if DB_VERBOSE is false
+    if not DB_VERBOSE:
+        return
+
+    # Define colors relative to level string argument
+    if level == 'ERROR':
+        color = Fore.RED
+    elif level == 'WARNING':
+        color = Fore.YELLOW
+    elif level == 'INFO':
+        color = Fore.BLUE
+    elif level == 'HIGHLIGHT':
+        color = Fore.GREEN
+    else:
+        color = Fore.BLACK
+
+    # Format and log message
+    colored_message = f"{color}{msg}{Style.RESET_ALL}"
+    formatted_message = colored_message % args
+    rospy.loginfo(formatted_message)
+
+#======================== GLOBAL CLASSES ========================
+
 class Maze_Plot(QGraphicsView):
+    """ Maze_Plot class to plot the maze """
+
+    #------------------------ NESTED CLASSES ------------------------
 
     # CLASS: Wall
     class Wall(QGraphicsItemGroup):
@@ -76,7 +110,7 @@ class Maze_Plot(QGraphicsView):
             self.wall_num = wall_num
             self.state = state
 
-            self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
+            self.line = QGraphicsLineItem(Plugin.QLineF(p0[0], p0[1], p1[0], p1[1]))
             self.upPen = QPen(Qt.red)
             self.upPen.setWidth(wall_width)
             self.downPen = QPen(Qt.gray)
@@ -128,9 +162,9 @@ class Maze_Plot(QGraphicsView):
             # Plot backround chamber octogons
             octagon_vertices = self.getOctagonVertices(
                 center_x, center_y, chamber_width/2, math.radians(22.5))
-            octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
-            self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
-            self.octagon.setBrush(QBrush(QColor(200, 200, 200)))
+            octagon_points = [Plugin.QPointF(i[0], i[1]) for i in octagon_vertices]
+            self.octagon = Plugin.QGraphicsPolygonItem(Plugin.QPolygonF(octagon_points))
+            self.octagon.setBrush(Plugin.QBrush(QColor(200, 200, 200)))
             self.addToGroup(self.octagon)
 
             # Plot cahamber numbers
@@ -207,8 +241,11 @@ class Maze_Plot(QGraphicsView):
                     # Set the wall state based on whether the entry is found or not
                     wall.setState(entry_found)
 
-    # FUNCTION: Center plotted text
+    #------------------------ FUNCTIONS ------------------------
+
     def centerText(text_item, center_x, center_y):
+        """Centers the text item over the given coordinates"""
+
         # Set the text item's position relative to its bounding rectangle
         # Allow the text item to resize its width automatically
         text_item.setTextWidth(0)
@@ -223,32 +260,35 @@ class Maze_Plot(QGraphicsView):
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
 
-# CLASS: The shared Wall_Config storage class to store the wall configuration
 class Wall_Config:
+    """ Stores the wall configuration for the maze """
+
+    #------------------------ CLASS VARIABLES ------------------------
+    # Stores the wall configuration list
     wallConfigList = []
 
-    # Reset the wall configuration list
     @classmethod
     def Reset(cls):
+        """Resets the wall configuration list"""
         cls.wallConfigList = []
 
-    # Get the number of entries in the wall configuration list
     @classmethod
     def getLen(cls):
+        """Returns the number of entries in the wall configuration list"""
         return len(cls.wallConfigList)
 
-    # Add or remove a wall from the wall configuration list
     @classmethod
     def addWall(cls, chamber_num, wall_num):
+        """Adds a wall to the wall configuration list"""
         for item in cls.wallConfigList:
             if item[0] == chamber_num:
                 item[1].append(wall_num)
                 return
         cls.wallConfigList.append([chamber_num, [wall_num]])
 
-    # Remove a wall from the wall configuration list
     @classmethod
     def removeWall(cls, chamber_num, wall_num):
+        """Removes a wall from the wall configuration list"""
         for item in cls.wallConfigList:
             if item[0] == chamber_num:
                 item[1].remove(wall_num)
@@ -256,9 +296,10 @@ class Wall_Config:
                     cls.wallConfigList.remove(item)
                 return
 
-    # Convert a list of byte values to a wall configuration list entries
     @classmethod
     def makeByte2WallList(cls, wall_byte_config_list):
+        """Converts a list of byte values to a wall configuration list entries"""
+
         # Clear the existing wall_config_list
         cls.wallConfigList = []
 
@@ -272,9 +313,10 @@ class Wall_Config:
 
             cls.wallConfigList.append([chamber_num, wall_numbers])
 
-    # Get a list with byte values for each chamber corespoinding to the wall configuration
     @classmethod
     def makeWall2ByteList(cls):
+        """Returns a list with byte values for each chamber corespoinding to the wall configuration"""  
+
         wall_byte_config_list = []
         for row in cls.wallConfigList:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
@@ -289,9 +331,10 @@ class Wall_Config:
             wall_byte_config_list.append([chamber_num, byte_value])
         return wall_byte_config_list
 
-    # Use makeWall2ByteList to convert the wall_config_list to a list of byte values where each byte value corresponds entry corresponds to a chamber
     @classmethod
     def getWall2ByteList(cls):
+        """Returns a list with byte values for each chamber corespoinding to the wall configuration"""
+
         wall_byte_config_list = cls.makeWall2ByteList()
 
         # Update U_arr with corresponding chamber and wall byte
@@ -301,9 +344,10 @@ class Wall_Config:
 
         return wall_arr
 
-    # Sort list by chamber number and wall numbers
     @classmethod
     def sortEntries(cls):
+        """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
+
         # Sort the rows by the entries in the based on the first chamber number
         cls.wallConfigList.sort(key=lambda row: row[0])
 
@@ -311,18 +355,18 @@ class Wall_Config:
         for row in cls.wallConfigList:
             row[1].sort()
 
-    # Used to access the wall_config_list entries
     @classmethod
     def __iter__(cls):
+        """Returns an iterator for the wall configuration list"""
         return iter(cls.wallConfigList)
 
-    # Used to print the wall_config_list
     @classmethod
     def __str__(cls):
+        """Returns the wall configuration list as a string"""
         return str(cls.wallConfigList)
 
-# ENUM: Enum for ethercat python to arduino message type ID
 class MessageType(Enum):
+    """ Enum for ethercat python to arduino message type ID """
     MSG_NONE = 0
     CONFIRM_DONE = 1
     HANDSHAKE = 2
@@ -331,99 +375,168 @@ class MessageType(Enum):
     END_SESSION = 5
     ERROR = 6
 
-# ENUM: Enum for tracking errors
 class ErrorType(Enum):
+    """ Enum for tracking errors """
     ERROR_NONE = 0
     MESSAGE_ID_DISORDERED = 1
     NO_MESSAGE_TYPE_MATCH = 2
     REGISTER_LEFTOVERS = 3
     MISSING_FOOTER = 4
+    N_ErrorType = 5
 
-# CLASS: Ethercat message handler
-class Ecat_Handler:
-
-    # CLASS: Ethercat message struct
-    class EcatMessageStruct:
-
-        # CLASS: emulates c++ union type for storing ethercat data shareable accross 8 and 16 bit data types
-        class RegUnion(ctypes.Union):
-            _fields_ = [("ui8", ctypes.c_uint8 * 16),
-                        ("ui16", ctypes.c_uint16 * 8),
-                        ("ui64", ctypes.c_uint64 * 2)]
-
-        def __init__(self):
-            self.msgDt = 10
-            self.msgID = 0
-            self.msgTp = MessageType.MSG_NONE
-            self.errTp = ErrorType.ERROR_NONE
-            self.msg_arg_lng = 0
-            self.Arg8 = [0] * 10
-            self.ArgU = self.RegUnion()
-            self.u8i = 0
-            self.u16i = 0
-            self.isDone = False
-            self.RegU = self.RegUnion()
+class Esmacat_Com:
+    """ 
+    This class is used to communicate with the arduino via ethercat.
+    It is used to send and receive messages from the arduino.
+    """ 
+    #------------------------ CLASS VARIABLES ------------------------
 
     # Handshake finished flag
     isHandshakeDone = False
 
-    # Create message structs
-    sndEM = EcatMessageStruct()  # message to be sent
-    rcvEM = EcatMessageStruct()  # message received
-    tmpEM = EcatMessageStruct()  # temporary message
-    cnfEM = EcatMessageStruct()  # message being confirmed
+    #------------------------ NESTED CLASSES ------------------------
 
-    @classmethod
-    def _resetU(cls, r_EM):
+    class RegUnion(ctypes.Union):
+        """ C++ style Union for storing ethercat data shareable accross 8 and 16 bit data types """
+        _fields_ = [("ui8", ctypes.c_uint8 * 16),
+                    ("ui16", ctypes.c_uint16 * 8),
+                    ("ui64", ctypes.c_uint64 * 2)]
+    
+    class UIndStruct:
+        """ Struct for storing ethercat data shareable accross 8 and 16 bit data types """
+        def __init__(self):
+            self.i8 = 0  # 8 bit index
+            self.i16 = 0 # 16 bit index
+        
+        def upd8(self, b_i=255):
+            """Update union 8 bit and 16 bit index and return last updated 8 bit index"""
+            b_i = b_i if b_i != 255 else self.i8
+            self.i8 = b_i + 1
+            self.i16 = self.i8 // 2
+            return b_i
+
+        def upd16(self, b_i=255):
+            """Update union 16 bit and 8 bit index and return last updated 16 bit index"""
+            b_i = b_i if b_i != 255 else self.i16
+            self.i16 = b_i + 1
+            self.i8 = self.i16 * 2
+            return b_i
+
+        def reset(self):
+            """Reset union 8 bit and 16 bit index"""
+            self.i8 = 0
+            self.i16 = 0
+    
+    class EcatMessageStruct:
+        """ Struct for storing ethercat messages """
+        def __init__(self):
+            self.RegU = Esmacat_Com.RegUnion()    # Union for storing ethercat 8 16-bit reg entries
+            self.getUI = Esmacat_Com.UIndStruct() # Union index handler for getting union data
+            self.setUI = Esmacat_Com.UIndStruct() # Union index handler for getting union data
+            self.msgID = 0
+            self.msgTp = MessageType.MSG_NONE
+            self.msgFoot = [0, 0]
+            self.argLen = 0
+            self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
+            self.argUI = Esmacat_Com.UIndStruct() # Union index handler for argument union data
+            self.errTp = ErrorType.ERROR_NONE
+            self.isDone = False
+    
+    def __init__(self):
+
+        # Initialize ethercat message handler instances
+        self.sndEM = self.EcatMessageStruct()  # Initialize message handler instance for sending messages
+        self.rcvEM = self.EcatMessageStruct()  # Initialize message handler instance for receiving messages
+        self.tmpEM = self.EcatMessageStruct()  # Initialize message handler instance for temporary receiving messages
+
+        # ROS Publisher: Initialize ethercat message handler instances
+        self.maze_ard0_pub = rospy.Publisher(
+            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
+
+    #------------------------ PRIVATE METHODS ------------------------
+
+    def _uSetMsgID(self, r_EM, msg_id=255):
+        """Set message ID entry in union and update associated variable"""
+        if msg_id == 255:
+            msg_id = r_EM.msgID + 1 if r_EM.msgID < 65535 else 1
+
+        r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id
+        self._uGetMsgID(r_EM)  # copy from union to associated struct variable
+
+    def _uGetMsgID(self, r_EM):
+        """Get message ID from union"""
+        r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
+
+    def _uSetMsgType(self, r_EM, msg_type_enum):
+        """Set message type entry in union and update associated variable"""
+        msg_type_val = msg_type_enum  # In Python, enum conversion to int is direct
+        r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_val
+        self._uGetMsgType(r_EM)  # copy from union to associated struct variable
+
+    def _uGetMsgType(self, r_EM):
+        """Get message type from union and check if valid"""
+        msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
+        is_found = msg_type_val in MessageType
+
+        if not is_found:
+            msg_type_val = MessageType.MSG_NONE
+        else:
+            r_EM.msgTp = MessageType(msg_type_val)
+
+    def _uSetArgLength(self, r_EM, msg_arg_len):
+        """Set message argument length entry in union and update associated variable"""
+        r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len
+        self._uGetArgLength(r_EM)
+
+    def _uGetArgLength(self, r_EM):
+        """Get message argument length"""
+        r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
+
+    def _uSetArgData8(self, r_EM, msg_arg_data8):
+        """Set message 8-bit argument data entry in union"""
+        if isinstance(msg_arg_data8, int) and msg_arg_data8 <= 255:  # 8-bit data
+            r_EM.argUI.i8 += 1
+            self._uSetArgLength(r_EM, r_EM.argUI.i8)
+            regu8_i = r_EM.argUI.i8 + 3
+            r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
+        self._uGetArgData(r_EM)
+
+    def _uSetArgData16(self, r_EM, msg_arg_data16):
+        """Set message 16-bit argument data entry in union"""
+        if isinstance(msg_arg_data16, int) and msg_arg_data16 > 255:  # 16-bit data
+            r_EM.argUI.i16 += 1
+            self._uSetArgLength(r_EM, r_EM.argUI.i8)
+            regu16_i = (r_EM.argUI.i8 + 3) // 2
+            r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
+        self._uGetArgData(r_EM)
+
+    def _uGetArgData(self, r_EM):
+        """Get reg union message argument data and copy to arg union"""
+        for i in range(r_EM.argLen):
+            r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
+
+    def _uSetFooter(self, r_EM):
+        """Set message footer entry in union and update associated variable"""
+        r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
+        r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
+        self._uGetFooter(r_EM)
+
+    def _uGetFooter(self, r_EM):
+        """Get message footer from union"""
+        r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
+        r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
+        return r_EM.msgFoot[0] == 254 and r_EM.msgFoot[1] == 254
+
+    def _uReset(self, r_EM):
+        """Reset union data and indices"""
         r_EM.RegU.ui64[0] = 0
         r_EM.RegU.ui64[1] = 0
-        r_EM.u8i = 0
-        r_EM.u16i = 0
+        r_EM.setUI.reset()
+        r_EM.getUI.reset()
+        r_EM.argUI.reset()
 
-    @classmethod
-    def _seti8(cls, r_EM, dat_8):
-        # Store data
-        r_EM.RegU.ui8[r_EM.u8i] = dat_8
-        rospyLogCol('HIGHLIGHT', "\t_storei8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8)
-        # Update union indices
-        r_EM.u8i += 1
-        r_EM.u16i = r_EM.u8i // 2 if r_EM.u8i % 2 == 0 else r_EM.u8i // 2 + 1
-
-    @classmethod
-    def _seti16(cls, r_EM, dat_16):
-        # Store data
-        r_EM.RegU.ui16[r_EM.u16i] = dat_16
-        rospyLogCol('HIGHLIGHT', "\t_storei16: u8i[%d] u16i[%d] dat_16=%d", r_EM.u8i, r_EM.u16i, dat_16)
-        # Update union indices
-        r_EM.u16i += 1
-        r_EM.u8i = r_EM.u16i * 2
-
-    @classmethod
-    def _geti8(cls, r_EM):
-        # Get data
-        dat_8 = r_EM.RegU.ui8[r_EM.u8i]
-        # Update union indices and return data
-        r_EM.u8i += 1
-        r_EM.u16i = r_EM.u8i // 2 if r_EM.u8i % 2 == 0 else r_EM.u8i // 2 + 1
-        return dat_8
-
-    @classmethod
-    def _geti16(cls, r_EM):
-        # Store data
-        dat_16 = r_EM.RegU.ui16[r_EM.u16i]
-        # Update union indices and return data
-        r_EM.u16i += 1
-        r_EM.u8i = r_EM.u16i * 2
-        return dat_16
-
-    @classmethod
-    def _printEcatReg(cls, level, d_type, reg_u, msg_type_val=MessageType.MSG_NONE.value):
-       
-        # Get message type string if exists otherwise set string to "NA"
-        try:
-            msg_type_str = MessageType(msg_type_val).name
-        except ValueError:
-            msg_type_str = "NA"
+    def _printEcatReg(self, level, d_type, reg_u):
+        """Print EtherCAT register data"""
 
         # Print heading with type
         rospyLogCol(level, "\tEcat Register")
@@ -435,215 +548,162 @@ class Ecat_Handler:
             if d_type == 0:
                 rospyLogCol(level, "\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
+    #------------------------ PUBLIC METHODS ------------------------
 
-    @classmethod
-    def _setupMsgStruct(cls, r_EM, msg_id, msg_type_val=0, msg_type_enum=MessageType.MSG_NONE):
-       
-        # Handle different msg type input
-        if msg_type_enum != MessageType.MSG_NONE:
-            msg_type_val = msg_type_enum.value
+    def msgReset(self):
+        """Reset all message structs."""
+        # Reset message counters
+        self.sndEM.msgID = 0
+        self.tmpEM.msgID = 0
+        self.rcvEM.msgID = 0
 
-        # Check for valid message type
-        is_found = msg_type_val in MessageType.__members__.values()
-        is_err = not is_found
+        # Reset Ethercat handshake flag
+        self.isHandshakeDone = False
 
-        # Set type to none if not found
-        if is_err:
-            msg_type_val = MessageType.MSG_NONE.value
+    def sendEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=255):
+        """
+        Used to parse new incoming ROS ethercat msg data.
 
-        # Store message id
-        r_EM.msgID = msg_id
+        Args:
+            reg_arr: array length 8 from the ethercat register.
 
-        # Store message type enum
-        r_EM.msgTp = MessageType(msg_type_val)
+        Returns:
+            int: Success/error codes [0:no message, 1:new message, 2:error]
+        """
 
-        return is_err
-
-    @classmethod
-    def _checkErr(cls, r_EM, err_tp, is_err):
-
-        # Handle error
-        if is_err:
-            # Store error type
-            r_EM.errTp = err_tp
-            if r_EM.errTp != err_tp:  # only run once
-                # Set error type
-                r_EM.errTp = err_tp
-                rospyLogCol(
-                    'ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgTp.name, r_EM.msgTp.value)
-                cls._printEcatReg(0, r_EM.RegU, level='ERROR')  # TEMP
-
-        else:
-            if r_EM.errTp == err_tp:
-                r_EM.errTp = ErrorType.ERROR_NONE  # unset error type
-
-    @classmethod
-    def formatEthercatMessage(cls, msg_type_enum, msg_arg_data=None, msg_arg_lng=255):
         # Reset union variables
-        cls._resetU(cls.sndEM)
+        self._uReset(self.sndEM)
 
-        # Update message id: iterate id and roll over to 1 if max 16 bit value is reached
-        msg_id = cls.sndEM.msgID + 1 if cls.sndEM.msgID < 65535 else 1
+        # Store new message id
+        self._uSetMsgID(self.sndEM)
 
-        # Store message type info
-        cls._setupMsgStruct(cls.sndEM, msg_id, msg_type_enum=msg_type_enum)
+        # Store new message type
+        self._uSetMsgType(self.sndEM, msg_type_enum)
 
-        # Store message id
-        cls._seti16(cls.sndEM, cls.sndEM.msgID)  # message id
+        # Store arguments based on the message type
+        if self.sndEM.msgTp == MessageType.CONFIRM_DONE:
+            self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16 bit received message id
+            self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
 
-        # Store message type value
-        cls._seti8(cls.sndEM, cls.sndEM.msgTp.value)
+        elif self.sndEM.msgTp == MessageType.HANDSHAKE:
+            self._uSetArgLength(self.sndEM, 0)  # message argument length to 0
 
-        # 	------------- STORE ARGUMENTS -------------
-
-        # CONFIRM_DONE
-        if cls.sndEM.msgTp == MessageType.CONFIRM_DONE:
-            cls._seti8(cls.sndEM, 4)  # message argument length
-            cls._seti16(cls.sndEM, cls.rcvEM.msgID)  # received message id
-            # received message type value
-            cls._seti8(cls.sndEM, cls.rcvEM.msgTp.value)
-
-        # HANDSHAKE
-        elif cls.sndEM.msgTp == MessageType.HANDSHAKE:
-            cls._seti8(cls.sndEM, 0)  # message argument length
-
-        # MOVE_WALLS
-        elif cls.sndEM.msgTp == MessageType.MOVE_WALLS:
-            cls._seti8(cls.sndEM, msg_arg_lng)  # store message argument length
-            for i in range(msg_arg_lng):
-                cls._seti8(cls.sndEM, msg_arg_data[i])
-
-        # OTHER
         else:
-            # Store message argument length if provided
-            cls._seti8(cls.sndEM, msg_arg_lng)
+            self._uSetArgLength(self.sndEM, msg_arg_len)  # store message argument length if provided
+            if msg_arg_data_arr is not None:  # store message arguments if provided
+                for i in range(msg_arg_len):
+                    self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
 
-            # Store message arguments if provided
-            if msg_arg_data is not None:
-                for i in range(msg_arg_lng):
-                    cls._seti8(cls.sndEM, msg_arg_data[i])
-
-        # 	------------- FINISH SETUP AND WRITE -------------
+        # Update associated argument variables in struct
+        self._uGetArgLength(self.sndEM)
 
         # Store footer
-        cls._seti8(cls.sndEM, 254)
-        cls._seti8(cls.sndEM, 254)
+        self._uSetFooter(self.sndEM)
 
         # Set flag
-        cls.sndEM.isDone = False
+        self.sndEM.isDone = False
 
-        # Print message
+         # Store Union 16-bit values cast as signed and publish to ease_registers topic
+        reg_arr = [ctypes.c_int16(U.ui16).value for U in self.sndEM.RegU]
+        self.maze_ard0_pub.publish(*reg_arr)  
+
+              # Print message
         rospyLogCol('INFO', "SENT Ecat Message: id=%d type=%s",
-                    cls.sndEM.msgID, cls.sndEM.msgTp.name)
-        cls._printEcatReg('INFO', 0, cls.sndEM.RegU)  # TEMP
+                    self.sndEM.msgID, self.sndEM.msgTp.name)
+        self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
 
-        # Store and return ethercat message
-        reg_arr = [0] * 8
-        for i in range(8):
-            reg_arr[i] = cls.sndEM.RegU.ui16[i]
-        return reg_arr
+    def parseEcatMessage(self, reg_arr):
+        """
+        Used to parse new incoming ROS ethercat msg data.
 
-    @classmethod
-    def parseEthercatMessage(cls, reg_dat):
+        Args:
+            reg_arr (list): Array of length 8 from the ethercat register.
+        
+        Returns:
+            int: Success/error codes [0:no message, 1:new message, 2:error]
+        """
         is_err = False  # error flag
 
-        # Copy data into union
-        cls._resetU(cls.tmpEM)  # reset union variables
+         # Copy register data into union
+        self._uReset(self.sndEM) # reset union variables
         for i in range(8):
-            cls.tmpEM.RegU.ui16[i] = reg_dat[i]
+            self.tmpEM.RegU[i].ui16 = reg_arr[i]
+
+        # Read esmacat buffer to get register data
+        # Note: You need to implement or integrate the corresponding method in Python
+        self._ESMA.get_ecat_registers(self.tmpEM.RegU.ui16)
 
         # Skip ethercat setup junk (255)
-        if cls.tmpEM.RegU.ui8[0] == 255 or cls.tmpEM.RegU.ui8[1] == 255:
+        if self.tmpEM.RegU.ui8[0] == 255 or self.tmpEM.RegU.ui8[1] == 255:
             return 0
-        
-        # Get message id and message type value
-        msg_id = cls._geti16(cls.tmpEM)
-        msg_type_val = cls._geti8(cls.tmpEM)
+
+        # Get message id
+        self._uGetMsgID(self.tmpEM)
 
         # Skip redundant messages
-        if cls.tmpEM.msgID == cls.rcvEM.msgID:
+        if self.tmpEM.msgID == self.rcvEM.msgID:
             return 0
-        
-        # Setup message struct and check for valid message type
-        is_err = cls._setupMsgStruct(cls.tmpEM, msg_id, msg_type_val=msg_type_val)
+
+        # Get message type and check if valid
+        is_err = self._uGetMsgType(self.tmpEM)
 
         # Run check error for valid message type
-        cls._checkErr(cls.tmpEM, ErrorType.NO_MESSAGE_TYPE_MATCH, is_err)
+        self._checkErr(self.tmpEM, ErrorType.NO_MESSAGE_TYPE_MATCH, is_err)
         if is_err:
             return 2  # return error flag
 
         # Check if message is preceding handshake
-        is_err = not cls.isHandshakeDone and cls.tmpEM.msgTp != MessageType.HANDSHAKE
-        cls._checkErr(cls.tmpEM, ErrorType.REGISTER_LEFTOVERS, is_err)
+        is_err = not self.isHandshakeDone and self.tmpEM.msgTp != MessageType.HANDSHAKE
+        self._checkErr(self.tmpEM, ErrorType.REGISTER_LEFTOVERS, is_err)
         if is_err:
             return 2  # return error flag
 
         # Check for skipped or out of sequence messages
-        is_err = cls.tmpEM.msgID - cls.rcvEM.msgID != 1
-        cls._checkErr(cls.tmpEM, ErrorType.MESSAGE_ID_DISORDERED, is_err)
+        is_err = self.tmpEM.msgID - self.rcvEM.msgID != 1
+        self._checkErr(self.tmpEM, ErrorType.MESSAGE_ID_DISORDERED, is_err)
         if is_err:
             return 2  # return error flag
 
-        # Get argument length
-        cls.tmpEM.msg_arg_lng = cls._geti8(cls.tmpEM)
+        # Get argument length and arguments
+        self._uGetArgLength(self.tmpEM)
+        self._uGetArgData(self.tmpEM)  # Note: You previously had _uGetArgData8, but it's renamed for generality
 
-        # Parse 8 bit message arguments
-        if cls.tmpEM.msg_arg_lng > 0:
-            for i in range(cls.tmpEM.msg_arg_lng):
-                cls.tmpEM.ArgU.ui8[i] = cls._geti8(cls.tmpEM)
+        # Get and check for footer
+        is_err = self._uGetFooter(self.tmpEM)
 
-        # Check for footer
-        is_err = cls._geti8(cls.tmpEM) != 254 or cls._geti8(cls.tmpEM) != 254
-        cls._checkErr(cls.tmpEM, ErrorType.MISSING_FOOTER, is_err)
+        # Run check error for valid footer
+        self._checkErr(self.tmpEM, ErrorType.MISSING_FOOTER, is_err)
         if is_err:
             return 2  # return error flag
 
         # Set flag
-        cls.tmpEM.isDone = False
+        self.tmpEM.isDone = False
 
         # Copy over data
-        cls.rcvEM = cls.tmpEM
-
-        # 	------------- PROCESS ARGUMENTS -------------
-
-        # CONFIRM_DONE
-        if cls.rcvEM.msgTp == MessageType.CONFIRM_DONE:
-            rospyLogCol('INFO', "\tCONFIRM_DONE")
-
-            # Get confirmation message number
-            cls.cnfEM.msgID = cls.rcvEM.ArgU.ui16[0]
-
-            # Get message number
-            cls.cnfEM.msgTp = MessageType(cls.rcvEM.ArgU.ui8[2])
-
-            # Print confirmation message
-            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",
-                        cls.cnfEM.msgTp, cls.cnfEM.msgID)
-
-        # ERROR
-        if cls.rcvEM.msgTp == MessageType.ERROR:
-            pass
+        self.rcvEM = self.tmpEM
 
         # Print message
         rospyLogCol('INFO', "RECEIVED Ecat Message: id=%d type=%s",
-                    cls.rcvEM.msgID, cls.rcvEM.msgTp.name)
-        cls._printEcatReg('INFO', 0, cls.rcvEM.RegU)  # TEMP
+                    self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
 
-        # Send confirm done message
-        cls.formatEthercatMessage(MessageType.CONFIRM_DONE)
+        # Return new message flag
+        return 1
 
-        return 1  # return data received flag
-
+#======================== MAIN UI CLASS ========================
 # CLASS: Interface plugin
 class Interface(Plugin):
+    """ Interface plugin """
 
     # Define signals
-    signal_Esmacat_read_maze_ard0_ease = Signal()
+    signal_Esmacat_read_maze_ard0_ease = Plugin.Signal()
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
 
         self._joint_sub = None
+
+        #................ QT UI Setup ................ 
 
         # Give QObjects reasonable names
         self.setObjectName('Interface')
@@ -662,7 +722,7 @@ class Interface(Plugin):
             print('unknowns: ', unknowns)
 
         # Create QWidget
-        self._widget = QWidget()
+        self._widget = Plugin.QWidget()
         # Extend the widget with all attributes and children from UI file
         loadUi(os.path.join(os.path.dirname(
             os.path.realpath(__file__)), 'interface.ui'), self._widget)
@@ -697,30 +757,6 @@ class Interface(Plugin):
         self._widget.plotMazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.plotMazeView.setViewport(QtOpenGL.QGLWidget())
 
-        # Calculate chamber width and wall line width and offset
-        maze_view_size = self._widget.plotMazeView.width()
-        chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
-        wall_width = chamber_width*0.1
-
-        # Create Maze_Plot.Maze and populate walls according to WALL_MAP
-        self.maze = Maze_Plot.Maze(num_rows=NUM_ROWS_COLS,
-                                  num_cols=NUM_ROWS_COLS,
-                                  chamber_width=chamber_width,
-                                  wall_width=wall_width)
-
-        # Add chambers and disable walls not connected
-        for k, c in enumerate(self.maze.chambers):
-            self.scene.addItem(c)
-            for j, w in enumerate(c.walls):
-                if j not in WALL_MAP[k]:
-                    w.setEnabled(False)
-                    w.setVisible(False)
-
-        # Add walls - this is a new loop so that they are drawn above the chambers
-        for c in self.maze.chambers:
-            for w in c.walls:
-                self.scene.addItem(w)
-
         # Initialize file list text and index
         self.current_file_index = 0  # set to zero
         self._widget.fileDirEdit.setText(
@@ -736,6 +772,34 @@ class Interface(Plugin):
         # Change the text color for all items in the list to light gray
         self._widget.ardListWidget.setStyleSheet(
             "QListWidget { color: lightgray; }")
+
+        #................ Maze Setup ................
+
+        # Calculate chamber width and wall line width and offset
+        maze_view_size = self._widget.plotMazeView.width()
+        chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
+        wall_width = chamber_width*0.1
+
+        # Create Maze_Plot.Maze and populate walls according to WALL_MAP
+        self.MazePlot = Maze_Plot.Maze(num_rows=NUM_ROWS_COLS,
+                                  num_cols=NUM_ROWS_COLS,
+                                  chamber_width=chamber_width,
+                                  wall_width=wall_width)
+
+        # Add chambers and disable walls not connected
+        for k, c in enumerate(self.MazePlot.chambers):
+            self.scene.addItem(c)
+            for j, w in enumerate(c.walls):
+                if j not in WALL_MAP[k]:
+                    w.setEnabled(False)
+                    w.setVisible(False)
+
+        # Add walls - this is a new loop so that they are drawn above the chambers
+        for c in self.MazePlot.chambers:
+            for w in c.walls:
+                self.scene.addItem(w)
+
+        #................ QT Callback Setup ................
 
         # QT UI object callback setup
         self._widget.fileListWidget.itemClicked.connect(
@@ -756,40 +820,42 @@ class Interface(Plugin):
             self.qt_callback_sysQuiteBtn_clicked)
 
         # QT timer setup for UI updating
-        self.timer_updateUI = QTimer()
+        self.timer_updateUI = Plugin.QTimer()
         self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
         self.timer_updateUI.start(20)  # set incriment (ms)
 
         # QT timer for sending initial handshake message after a delay
-        self.timer_sendHandshake = QTimer()
+        self.timer_sendHandshake = Plugin.QTimer()
         self.timer_sendHandshake.timeout.connect(
             self.timer_callback_sendHandshake_once)
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
         self.timer_sendHandshake.start(1000)  # (ms)
 
         # QT timer for checking initial handshake message after a delay
-        self.timer_checkHandshake = QTimer()
+        self.timer_checkHandshake = Plugin.QTimer()
         self.timer_checkHandshake.timeout.connect(
             self.timer_callback_checkHandshake_once)
         self.timer_checkHandshake.setSingleShot(True)  # Run only once
 
-        # ROS publisher
+        #................ ROS Setup ................
+
+        # @obsolete ROS Sublisher: @obsolete 
         # wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
 
-        # Esmacat write maze ard0 ease publisher
-        self.maze_ard0_pub = rospy.Publisher(
-            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  
-
-        # ROS subscriber
-        # Esmacat arduino maze ard0 ease
+        # ROS Subscriber: Esmacat arduino maze ard0 ease
         rospy.Subscriber(
             'Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, tcp_nodelay=True)
 
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(
             self.sig_callback_Esmacat_read_maze_ard0_ease)
+        
+        #................ Ecat Setup ................
 
-    """ CALLBACKS: ROS, QT and Signal """
+        # Create Esmacat_Com object
+        self.EsmaCom_A0 = Esmacat_Com()
+
+    #------------------------ CALLBACKS: ROS, QT and Signal ------------------------
 
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
         # Store ethercat message in class variable
@@ -809,24 +875,22 @@ class Interface(Plugin):
             ui16_arr[i] = ctypes.c_uint16(si16_arr[i]).value
 
         # Parse the message and check if its new
-        if Ecat_Handler.parseEthercatMessage(ui16_arr) != 1:
+        if self.EsmaCom_A0.parseEcatMessage(ui16_arr) != 1:
             return
 
         # Handle confirmation message
-        if Ecat_Handler.rcvEM.msgTp == MessageType.CONFIRMATION:
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRMATION:
             # Check if confirmation message is handshake
-            if Ecat_Handler.cnfEM.msgTp == MessageType.HANDSHAKE:
+            if self.EsmaCom_A0.cnfEM.msgTp == MessageType.HANDSHAKE:
 
                 # Stop handshake check timer
                 self.timer_checkHandshake.stop()
 
                 # Set the handshake flag
-                Ecat_Handler.isHandshakeDone = True
+                self.EsmaCom_A0.isHandshakeDone = True
 
                 # Send START_SESSION message
-                self.maze_ard0_pub.publish(
-                    *Ecat_Handler.formatEthercatMessage(MessageType.START_SESSION)
-                )
+                self.EsmaCom_A0.sendEthercatMessage(MessageType.START_SESSION)
                 
 
         # Emit signal to update UI as UI should not be updated from a non-main thread
@@ -837,35 +901,29 @@ class Interface(Plugin):
 
     def timer_callback_sendHandshake_once(self):
         # Send HANDSHAKE message to arduino
-        self.maze_ard0_pub.publish(
-                *Ecat_Handler.formatEthercatMessage(MessageType.HANDSHAKE)
-        )
+        self.EsmaCom_A0.sendEthercatMessage(MessageType.HANDSHAKE)
 
         # Start timer to check for HANDSHAKE message confirm recieved
         self.timer_checkHandshake.start(500)
 
     def timer_callback_checkHandshake_once(self):
         # Check for HANDSHAKE message confirm recieved flag
-        if Ecat_Handler.isHandshakeDone == False:
+        if self.EsmaCom_A0.isHandshakeDone == False:
 
             # Give up is more that 3 messages have been sent
-            if Ecat_Handler.sndEM.msgID > 3:
+            if self.EsmaCom_A0.sndEM.msgID > 3:
                 rospyLogCol(
-                    'ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", Ecat_Handler.sndEM.msgID)
+                    'ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
                 return
 
             # Send HANDSHAKE message to arduino again
-            self.maze_ard0_pub.publish(
-                *Ecat_Handler.formatEthercatMessage(MessageType.HANDSHAKE)
-            )
+            self.EsmaCom_A0.sendEthercatMessage(MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_checkHandshake.start(500)
         else:
             # Send START message to arduino
-            self.maze_ard0_pub.publish(
-                *Ecat_Handler.formatEthercatMessage(MessageType.START_SESSION)
-            )
+            self.EsmaCom_A0.sendEthercatMessage(MessageType.START_SESSION)
 
     def timer_callback_updateUI_loop(self):
         # Update graphics
@@ -875,7 +933,7 @@ class Interface(Plugin):
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
-        files, _ = QFileDialog.getOpenFileNames(
+        files, _ = Plugin.QFileDialog.getOpenFileNames(
             None, "Select files to add", self.getPathConfigDir(), filter)
 
         if files:
@@ -916,14 +974,14 @@ class Interface(Plugin):
 
     def qt_callback_plotClearBtn_clicked(self):
         Wall_Config.Reset()  # reset all values in list
-        self.maze.updateWalls()  # update walls
+        self.MazePlot.updateWalls()  # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
         # Open the folder specified by self.getPathConfigDir() in an explorer window
         folder_path = self.getPathConfigDir()
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        file_name, _ = QFileDialog.getSaveFileName(
+        options = Plugin.QFileDialog.Options()
+        options |= Plugin.QFileDialog.DontUseNativeDialog
+        file_name, _ = Plugin.QFileDialog.getSaveFileName(
             None, "Save CSV File", folder_path, "CSV Files (*.csv);;All Files (*)", options=options)
 
         if file_name:
@@ -942,10 +1000,8 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.maze_ard0_pub.publish(
-            *Ecat_Handler.formatEthercatMessage(
+        self.EsmaCom_A0.sendEthercatMessage(
             MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
-        )
 
     def qt_callback_sysQuiteBtn_clicked(self):
         # Call function to shut down the ROS session
@@ -953,7 +1009,43 @@ class Interface(Plugin):
         # End the application
         QApplication.quit()
 
-    ''' FUNCTIONS: CSV File Handling '''
+    #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
+
+    def procEcatArguments(self):
+        """
+        Used to parse new incoming ROS ethercat msg data.
+        
+        Returns:
+            int: Success/error codes [0:no message, 1:new message, 2:error]
+        """
+
+        #................ Process Arguments ................ 
+
+        # CONFIRM_DONE
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
+            rospyLogCol('INFO', "\tCONFIRM_DONE")
+
+            # Get confirmation message number
+            self.cnfEM.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
+
+            # Get message number
+            self.cnfEM.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
+
+            # Print confirmation message
+            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",
+                        self.cnfEM.msgTp, self.cnfEM.msgID)
+
+        # ERROR
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
+            pass
+
+
+        #................ Execute Arguments ................ 
+
+
+
+    
+    #------------------------ FUNCTIONS: CSV File Handling ------------------------
 
     def getPathConfigDir(self, file_name=None):
         # Get the absolute path of the current script file
@@ -1007,9 +1099,9 @@ class Interface(Plugin):
             rospyLogCol('ERROR', "Error loading data from CSV:", str(e))
 
         # Update plot walls
-        self.maze.updateWalls()
+        self.MazePlot.updateWalls()
 
-    ''' FUNCTIONS: System Operations '''
+    #------------------------ FUNCTIONS: System Operations ------------------------
 
     def terminate_ros_node(self, s):
         list_cmd = subprocess.Popen(
@@ -1035,9 +1127,7 @@ class Interface(Plugin):
     def endRosSession(self):
 
         # Send END_SESSION message to arduino
-        self.maze_ard0_pub.publish(
-            *Ecat_Handler.formatEthercatMessage(MessageType.END_SESSION)
-        )
+        self.EsmaCom_A0.sendEthercatMessage(MessageType.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
@@ -1061,39 +1151,10 @@ class Interface(Plugin):
         # Send a shutdown request to the ROS master
         rospy.signal_shutdown("User requested shutdown")
 
-    # NOT WORKING!!
+    """ @todo: Implement this function to handle the window close event """
     def closeEvent(self, event):
         rospyLogCol('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.endRosSession()
         event.accept()  # let the window close
 
-# FUNCTION: Log to ROS in color
-def rospyLogCol(level, msg, *args):
-    # Exit if DB_VERBOSE is false
-    if not DB_VERBOSE:
-        return
-
-    # Define colors relative to level string argument
-    if level == 'ERROR':
-        color = Fore.RED
-    elif level == 'WARNING':
-        color = Fore.YELLOW
-    elif level == 'INFO':
-        color = Fore.BLUE
-    elif level == 'HIGHLIGHT':
-        color = Fore.GREEN
-    else:
-        color = Fore.BLACK
-
-    # Format and log message
-    colored_message = f"{color}{msg}{Style.RESET_ALL}"
-    formatted_message = colored_message % args
-    rospy.loginfo(formatted_message)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = MyWindow()
-    win.show()
-    sys.exit(app.exec_())

@@ -97,7 +97,7 @@ void Esmacat_Com::_uGetArgLength(EcatMessageStruct &r_EM)
 }
 
 /// @brief Set 8 bit message argument data entry in union
-void Esmacat_Com::_uSetArgData(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
+void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
     // Increment argument union index
     r_EM.argUI.upd8();
@@ -110,10 +110,10 @@ void Esmacat_Com::_uSetArgData(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 
     // Set message argument data in reg union
     r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8;
-    _uGetArgData(r_EM); // copy from union to associated struct variable
+    _uGetArgData8(r_EM); // copy from union to associated struct variable
 }
 /// @brief Set 16 bit message argument data entry in union
-void Esmacat_Com::_uSetArgData(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
+void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
 {
     // Increment argument union index
     r_EM.argUI.upd16();
@@ -126,11 +126,11 @@ void Esmacat_Com::_uSetArgData(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
 
     // Set message argument data in reg union
     r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16; // set message argument data in reg union
-    _uGetArgData(r_EM);                                          // copy from union to associated struct variable
+    _uGetArgData8(r_EM);                                          // copy from union to associated struct variable
 }
 
 /// @brief Get reg union message argument data and copy to arg union
-void Esmacat_Com::_uGetArgData(EcatMessageStruct &r_EM)
+void Esmacat_Com::_uGetArgData8(EcatMessageStruct &r_EM)
 {
     for (size_t i = 0; i < r_EM.argLen; i++)
         r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy to 8 bit argument Union
@@ -183,7 +183,7 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_e
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
-            _DB.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
+            _Dbg.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
             _printEcatReg(0, r_EM.RegU); // TEMP
         }
     }
@@ -237,7 +237,7 @@ void Esmacat_Com::msgReset()
 /// @param msg_type_enum: The type of the message to be sent.
 /// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
 /// @param msg_arg_len: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-void Esmacat_Com::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
+void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
 
     // Reset union variables
@@ -254,8 +254,8 @@ void Esmacat_Com::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_a
     // CONFIRM_DONE
     if (sndEM.msgTp == MessageType::CONFIRM_DONE)
     {
-        _uSetArgData(sndEM, rcvEM.msgID);      // store 16 bit recieved message id
-        _uSetArgData(sndEM, rcvEM.msg_tp_val); // recieved message type value
+        _uSetArgData16(sndEM, rcvEM.msgID);      // store 16 bit recieved message id
+        _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
     }
 
     // HANDSHAKE
@@ -270,7 +270,7 @@ void Esmacat_Com::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_a
         _uSetArgLength(sndEM, msg_arg_len); // store message argument length if provided
         if (p_msg_arg_data != nullptr)      // store message arguments if provided
             for (size_t i = 0; i < msg_arg_len; i++)
-                _uSetArgData(sndEM, p_msg_arg_data[i]); // store message arguments if provided
+                _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
     }
 
     // Update associated argument variables in struct
@@ -289,14 +289,14 @@ void Esmacat_Com::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_a
         _ESMA.write_reg_value(i, sndEM.RegU.i16[i]);
 
     // Print message
-    _DB.printMsgTime("SENT Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
+    _Dbg.printMsgTime("SENT Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
     _printEcatReg(0, sndEM.RegU); // TEMP
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
 ///
 /// @return Success/error codes [0:no message, 1:new message, 2:error]
-uint8_t Esmacat_Com::getEthercatMessage()
+uint8_t Esmacat_Com::getEcatMessage()
 {
     bool is_err = false; // error flag
 
@@ -336,7 +336,7 @@ uint8_t Esmacat_Com::getEthercatMessage()
 
     // Get argument length and arguments
     _uGetArgLength(tmpEM);
-    _uGetArgData(tmpEM);
+    _uGetArgData8(tmpEM);
 
     // Get and check for footer
     is_err = _uGetFooter(tmpEM);
@@ -352,7 +352,7 @@ uint8_t Esmacat_Com::getEthercatMessage()
     // Copy over data
     rcvEM = tmpEM;
 
-    _DB.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
+    _Dbg.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(0, rcvEM.RegU); // TEMP
 
     // Return new message flag
@@ -366,15 +366,15 @@ uint8_t Esmacat_Com::getEthercatMessage()
 void Esmacat_Com::_printEcatReg(uint8_t d_type, RegUnion u_reg)
 {
     // Print out register
-    _DB.printMsgTime("\tEcat Register");
+    _Dbg.printMsgTime("\tEcat Register");
     for (size_t i = 0; i < 8; i++)
     {
         if (d_type == 1 || i == 0)
-            _DB.printMsgTime("\t\tui16[%d] %d", i, u_reg.ui16[i]);
+            _Dbg.printMsgTime("\t\tui16[%d] %d", i, u_reg.ui16[i]);
         if (d_type == 0)
-            _DB.printMsgTime("\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
+            _Dbg.printMsgTime("\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
     }
-    _DB.printMsgTime(" ");
+    _Dbg.printMsgTime(" ");
 }
 
 /// OVERLOAD: function for printing Ethercat register values.

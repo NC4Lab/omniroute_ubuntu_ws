@@ -57,7 +57,7 @@ public:
 	const uint8_t pwmClockVal = 0;	 ///< PWM clock config [0: 32 kHz(default), 1: 24 MHz, 2: 1.5 MHz, 3: 93.75 kHz, 4: 367.6 Hz(programmable), 5: previous PWM]
 	const uint8_t pwmPeriodVal = 32; ///< PWM period of the PWM counter(1 - 255).Devisor for hardward clock
 private:
-	Maze_Debug _DB; ///< unique instance of Maze_Debug class
+	Maze_Debug _Dbg; ///< unique instance of Maze_Debug class
 
 	// -----------METHODS-----------------
 public:

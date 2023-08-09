@@ -30,9 +30,9 @@ uint8_t nCham = 2;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
-Maze_Debug DB;
-Cypress_Com C_COM;
-Wall_Operation W_OPR(nCham, pwmDuty);
+Maze_Debug Dbg;
+Cypress_Com CypCom;
+Wall_Operation WallOper(nCham, pwmDuty);
 
 //=============== SETUP =================
 void setup()
@@ -48,17 +48,17 @@ void setup()
 
 	// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-	DB.printMsg("Finished uploading to Arduno Uno");
+	Dbg.printMsg("Finished uploading to Arduno Uno");
 #endif
 #ifdef __AVR_ATmega2560__
-	DB.printMsg("Finished uploading to Arduno Mega");
+	Dbg.printMsg("Finished uploading to Arduno Mega");
 #endif
 #ifdef ARDUINO_SAM_DUE
-	DB.printMsg("Finished uploading to Arduno Due");
+	Dbg.printMsg("Finished uploading to Arduno Due");
 #endif
 
 	// // Run initial maze setup
-	// W_OPR.resetMaze(false);
+	// WallOper.resetMaze(false);
 	// while(true);
 }
 
@@ -67,13 +67,13 @@ void loop()
 {
 
 	// Check ethercat coms
-	resp = W_OPR.E_COM.getEthercatMessage();
+	resp = WallOper.EsmaCom.getEcatMessage();
 
 	// TEMP
 	int dt = 1000;
-		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
+		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
 		delay(dt);
-		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::HANDSHAKE);
+		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
 		delay(dt);
 
 	// TEMP
@@ -82,9 +82,9 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
+		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
 		delay(dt);
-		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::HANDSHAKE);
+		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
 		delay(dt);
 	}
 
@@ -92,26 +92,23 @@ void loop()
 	if (resp == 1) // check for new message
 	{
 		// Send confirmation message
-		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
+		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
 
-		// Process ethercat arguments
-		W_OPR.procEthercatArguments();
-
-		// Execute new command
-		W_OPR.executeEthercatMessage();
+		// Process and exicute ethercat arguments
+		WallOper.procEcatArguments();
 	}
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
-	// resp = W_OPR.testWallIO(0, a_wall, 1);
-	// resp = W_OPR.testWallIO(0);
+	// resp = WallOper.testWallIO(0, a_wall, 1);
+	// resp = WallOper.testWallIO(0);
 
 	// // Test PWM output
 	// uint8_t a_wall[1] = { 1 };
-	// W_OPR.testWallPWM(0, a_wall, 1);
+	// WallOper.testWallPWM(0, a_wall, 1);
 	// while (true);
 
 	// // Test wall opperation
 	// uint8_t a_wall[2] = { 1, 3 };
-	// W_OPR.testWallOperation(0, a_wall, 2);
+	// WallOper.testWallOperation(0, a_wall, 2);
 }

@@ -310,22 +310,22 @@ uint8_t Cypress_Com::i2cScan()
 	// Print results
 	if (cnt_addr > 0)
 	{
-		_DB.printMsg("I2C devices found");
+		_Dbg.printMsg("I2C devices found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print devices
-			_DB.printMsg("%d)\t%s", i + 1, _DB.hexStr(list_addr[i]));
+			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_addr[i]));
 		}
 	}
 	else
 	{
-		_DB.printMsg("No I2C devices found");
+		_Dbg.printMsg("No I2C devices found");
 	}
 	if (cnt_err > 0)
 	{
-		_DB.printMsg("!!ERROR: I2C errors found!!");
+		_Dbg.printMsg("!!ERROR: I2C errors found!!");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
-			_DB.printMsg("%d)\t%s", i + 1, _DB.hexStr(list_err[i]));
+			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_err[i]));
 		}
 	}
 
@@ -347,19 +347,19 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 #ifdef ARDUINO_SAM_DUE
 	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
 	{
-		_DB.printMsg("!!ERROR: i2c lines LOW!!");
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
 	}
 #endif
 #ifdef __AVR_ATmega2560__
 	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
 	{
-		_DB.printMsg("!!ERROR: i2c lines LOW!!");
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
 	}
 #endif
 #ifdef ARDUINO_AVR_UNO
 	if ((digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW))
 	{
-		_DB.printMsg("!!ERROR: i2c lines LOW!!");
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
 	}
 #endif
 
@@ -369,7 +369,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = wireEndTransmissionWrapper();
 	if (resp != 0)
 	{
-		_DB.printMsg("!!ERROR: i2c failed!!");
+		_Dbg.printMsg("!!ERROR: i2c failed!!");
 		return resp;
 	}
 
@@ -377,7 +377,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
 	if (resp != 0)
 	{
-		_DB.printMsg("!!ERROR: chip restore failed!!");
+		_Dbg.printMsg("!!ERROR: chip restore failed!!");
 		return resp;
 	}
 
@@ -385,7 +385,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
 	if (resp != 0)
 	{
-		_DB.printMsg("!!ERROR: chip reconfigure failed!!");
+		_Dbg.printMsg("!!ERROR: chip reconfigure failed!!");
 		return resp;
 	}
 
@@ -488,7 +488,7 @@ uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool print_err)
 	uint8_t resp = Wire.endTransmission(send_stop);
 	if (resp != 0 && print_err)
 	{
-		_DB.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
+		_Dbg.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
 	}
 	return resp;
 }

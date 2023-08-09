@@ -82,11 +82,11 @@ public:
 	};
 	ChamberStruct C[9]; ///< initialize with max number of chambers for 3x3
 
-	Esmacat_Com E_COM; //< instance of Esmacatshield class
+	Esmacat_Com EsmaCom; //< instance of Esmacatshield class
 
 private:
-	Maze_Debug _DB;		///< local instance of Maze_Debug class
-	Cypress_Com _C_COM; ///< local instance of Cypress_Com class
+	Maze_Debug _Dbg;		///< local instance of Maze_Debug class
+	Cypress_Com _CypCom; ///< local instance of Cypress_Com class
 
 	// -----------METHODS-----------------
 
@@ -94,10 +94,7 @@ public:
 	Wall_Operation(uint8_t, uint8_t);
 
 public:
-	uint8_t procEthercatArguments();
-
-public:
-	void executeEthercatMessage();
+	uint8_t procEcatArguments();
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);
