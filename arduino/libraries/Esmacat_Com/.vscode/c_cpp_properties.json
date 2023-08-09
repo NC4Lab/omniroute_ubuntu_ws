@@ -1,9 +1,12 @@
 {
     "configurations": [
         {
-            "name": "Safe_Vector_Configuration",
+            "name": "Esmacat_Com_Configuration",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/../**",
+                "${workspaceFolder}/../Maze_Debug/src",
+                "${workspaceFolder}/../Esmacatshield/src",
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/avr/include",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/7.3.0/include",
@@ -11,11 +14,10 @@
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/libraries/SPI/src"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c17",
-            "cppStandard": "gnu++14",
-            "intelliSenseMode": "linux-gcc-x64"
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "compilerPath": "${env:HOME}/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": ["-mmcu=atmega2560"]
         }
     ],
     "version": 4

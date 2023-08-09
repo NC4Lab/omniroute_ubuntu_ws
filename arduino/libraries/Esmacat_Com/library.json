@@ -1,10 +1,10 @@
 {
-  "name": "Safe_Vector",
+  "name": "Esmacat_Com",
   "version": "1.0.0",
   "repository":
   {
     "type": "git",
-    "url": "https://github/Safe_Vector"
+    "url": "https://github/Esmacat_Com"
   },
   "authors":
   [
@@ -12,6 +12,9 @@
       "name": "Adam Lester"
     }
   ],
+  "dependencies": {
+    "Esmacatshield": ">=0.3.0 ../Esmacatshield"
+  },
   "frameworks": "*",
   "platforms": "*"
 }

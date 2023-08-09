@@ -13,10 +13,8 @@
     }
   ],
   "dependencies": {
-    "Safe_Vector": ">=1.0.0 ../Safe_Vector",
-    "Maze_Debug": ">=1.0.0 ../Maze_Debug",
     "Cypress_Com": ">=1.0.0 ../Cypress_Com",
-    "Esmacatshield": ">=0.3.0 ../Esmacatshield"
+    "Esmacat_Com": ">=1.0.0 ../Esmacat_Com"
   },
   "frameworks": "*",
   "platforms": "*"

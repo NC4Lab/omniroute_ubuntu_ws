@@ -5,9 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/../**",
-                "${workspaceFolder}/../Safe_Vector/src",
                 "${workspaceFolder}/../Maze_Debug/src",
                 "${workspaceFolder}/../Cypress_Com/src",
+                "${workspaceFolder}/../Esmacat_Com/src",
                 "${workspaceFolder}/../Esmacatshield",
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/avr/include",

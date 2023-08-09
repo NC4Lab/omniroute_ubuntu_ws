@@ -12,9 +12,6 @@
       "name": "Adam Lester"
     }
   ],
-  "dependencies": {
-    "Safe_Vector": ">=1.0.0 ../Safe_Vector"
-  },
   "platform": "ar",
   "framework": "*"
 }

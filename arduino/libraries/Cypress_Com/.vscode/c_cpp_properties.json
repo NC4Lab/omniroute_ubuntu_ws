@@ -4,7 +4,6 @@
             "name": "Cypress_Com_Configuration",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../Safe_Vector/src",
                 "${workspaceFolder}/../Maze_Debug/src",
                 "${env:HOME}/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "${env:HOME}/.platformio/packages/toolchain-atmelavr/avr/include",

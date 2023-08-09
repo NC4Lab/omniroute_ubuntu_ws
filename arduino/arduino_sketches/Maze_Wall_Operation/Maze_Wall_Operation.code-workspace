@@ -10,10 +10,10 @@
 			"path": "../../libraries/Maze_Debug"
 		},
 		{
-			"path": "../../libraries/Safe_Vector"
+			"path": "../../libraries/Wall_Operation"
 		},
 		{
-			"path": "../../libraries/Wall_Operation"
+			"path": "../../libraries/Esmacat_Com"
 		},
 		{
 			"path": "../../libraries/Esmacatshield"

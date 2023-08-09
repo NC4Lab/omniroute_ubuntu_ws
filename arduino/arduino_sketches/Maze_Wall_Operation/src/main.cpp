@@ -13,7 +13,7 @@
 #include <Wire.h>
 
 // CUSTOM
-#include <Safe_Vector.h>
+#include <Esmacat_Com.h>
 #include <Maze_Debug.h>
 #include <Cypress_Com.h>
 #include <Wall_Operation.h>
@@ -21,7 +21,8 @@
 //============ VARIABLES ===============
 
 // Global
-extern bool DB_VERBOSE = 1; //<set to control debugging behavior [0:silent, 1:verbose]
+extern bool DB_VERBOSE = 1; //< set to control debugging behavior [0:silent, 1:verbose]
+extern bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
 uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
@@ -59,13 +60,6 @@ void setup()
 	// // Run initial maze setup
 	// W_OPR.resetMaze(false);
 	// while(true);
-
-	// // TEMP
-	// while (true)
-	// {
-	// 	delay(1000);
-	// 	W_OPR.printEtherReg(0);
-	// }
 }
 
 //=============== LOOP ==================
@@ -73,7 +67,14 @@ void loop()
 {
 
 	// Check ethercat coms
-	resp = W_OPR.getEthercatMessage();
+	resp = W_OPR.E_COM.getEthercatMessage();
+
+	// TEMP
+	int dt = 1000;
+		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
+		delay(dt);
+		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::HANDSHAKE);
+		delay(dt);
 
 	// TEMP
 	if (resp != 1)
@@ -81,9 +82,9 @@ void loop()
 	while (true)
 	{
 		int dt = 1000;
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
+		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
 		delay(dt);
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::HANDSHAKE);
+		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::HANDSHAKE);
 		delay(dt);
 	}
 
@@ -91,7 +92,7 @@ void loop()
 	if (resp == 1) // check for new message
 	{
 		// Send confirmation message
-		W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
+		W_OPR.E_COM.sendEthercatMessage(W_OPR.E_COM.MessageType::CONFIRM_DONE);
 
 		// Process ethercat arguments
 		W_OPR.procEthercatArguments();
@@ -99,10 +100,6 @@ void loop()
 		// Execute new command
 		W_OPR.executeEthercatMessage();
 	}
-
-	// Handle for initialization message
-	if (W_OPR.isHandshakeDone)
-		return;
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
