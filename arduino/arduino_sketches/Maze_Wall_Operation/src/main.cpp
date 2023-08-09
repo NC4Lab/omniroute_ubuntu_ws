@@ -72,25 +72,8 @@ void setup()
 void loop()
 {
 
-	// //TEMP
-	// for (uint16_t i = 0; i < 8; i++)
-	// {
-	// 	//uint8_t u16i = i % 2 == 0 ? i / 2 : i / 2 + 1;
-	// 	uint8_t u8i = i * 2;
-	// 	DB.printMsgTime("i=%d u8i=%d", i, u8i);
-	// }
-
 	// Check ethercat coms
 	resp = W_OPR.getEthercatMessage();
-
-	int dt = 1000;
-	W_OPR.sendEthercatMessage(W_OPR.MessageType::CONFIRM_DONE);
-	delay(dt);
-	uint8_t arg_arr[5] = { 5,6,7,8,9 };
-	W_OPR.sendEthercatMessage(W_OPR.MessageType::MOVE_WALLS, arg_arr, 5);
-	delay(dt);
-	while (true)
-		;
 
 	// TEMP
 	if (resp != 1)
