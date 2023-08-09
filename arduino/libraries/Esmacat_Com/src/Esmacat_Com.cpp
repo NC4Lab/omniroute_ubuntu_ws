@@ -18,7 +18,7 @@ Esmacat_Com::Esmacat_Com()
 /// @brief Set message ID entry in union and updated associated variable
 void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 {
-    // Get new message ID: itterate id and roll over to 1 if max 16 bit value is reached
+    // Get new message ID: itterate id and roll over to 1 if max 16-bit value is reached
     if (msg_id == 255)
         msg_id = r_EM.msgID < 65535 ? r_EM.msgID + 1 : 1;
 
@@ -85,6 +85,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
 /// @brief Set message argument length entry in union and updated associated variable
 void Esmacat_Com::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
 {
+    // Set argument length union entry
     r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len;
     _uGetArgLength(sndEM); // copy from union to associated struct variable
 }
@@ -92,17 +93,16 @@ void Esmacat_Com::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
 /// @brief Get message argument length
 void Esmacat_Com::_uGetArgLength(EcatMessageStruct &r_EM)
 {
-    // Get message argument length
     r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)];
 }
 
-/// @brief Set 8 bit message argument data entry in union
+/// @brief Set 8-bit message argument data entry in union
 void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
     // Increment argument union index
     r_EM.argUI.upd8();
 
-    // Update message argument length from argument union 8 bit index
+    // Update message argument length from argument union 8-bit index
     _uSetArgLength(r_EM, r_EM.argUI.i8);
 
     // Get reg union index
@@ -112,13 +112,13 @@ void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
     r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8;
     _uGetArgData8(r_EM); // copy from union to associated struct variable
 }
-/// @brief Set 16 bit message argument data entry in union
+/// @brief Set 16-bit message argument data entry in union
 void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
 {
     // Increment argument union index
     r_EM.argUI.upd16();
 
-    // Update message argument length from argument union 16 bit index
+    // Update message argument length from argument union 16-bit index
     _uSetArgLength(r_EM, r_EM.argUI.i8);
 
     // Get reg union index
@@ -126,14 +126,14 @@ void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data1
 
     // Set message argument data in reg union
     r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16; // set message argument data in reg union
-    _uGetArgData8(r_EM);                                          // copy from union to associated struct variable
+    _uGetArgData8(r_EM);                                         // copy from union to associated struct variable
 }
 
-/// @brief Get reg union message argument data and copy to arg union
+/// @brief Get 8-bit reg union message argument data and copy to arg union
 void Esmacat_Com::_uGetArgData8(EcatMessageStruct &r_EM)
 {
     for (size_t i = 0; i < r_EM.argLen; i++)
-        r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy to 8 bit argument Union
+        r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy to 8-bit argument Union
 }
 
 /// @brief Set message footer entry in union and updated associated variable
@@ -206,7 +206,7 @@ void Esmacat_Com::msgReset()
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
 ///
 ///	@note: The outgoing register is structured uint16[8]
-///	with all but first 16 bit value seperated into bytes
+///	with all but first 16-bit value seperated into bytes
 ///
 /// @note: The message length corresponds to number of bits.
 ///
@@ -254,7 +254,7 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
     // CONFIRM_DONE
     if (sndEM.msgTp == MessageType::CONFIRM_DONE)
     {
-        _uSetArgData16(sndEM, rcvEM.msgID);      // store 16 bit recieved message id
+        _uSetArgData16(sndEM, rcvEM.msgID);     // store 16-bit recieved message id
         _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
     }
 
@@ -323,7 +323,8 @@ uint8_t Esmacat_Com::getEcatMessage()
         return 2; // return error flag
 
     // Check if message is preceding handshake
-    is_err = !isHandshakeDone && tmpEM.msgTp != MessageType::HANDSHAKE;
+    is_err = !isHandshakeDone &&
+             (tmpEM.msgTp != MessageType::HANDSHAKE || tmpEM.msgID > 1);
     _checkErr(tmpEM, ErrorType::REGISTER_LEFTOVERS, is_err);
     if (is_err)
         return 2; // return error flag
@@ -372,7 +373,7 @@ void Esmacat_Com::_printEcatReg(uint8_t d_type, RegUnion u_reg)
         if (d_type == 1 || i == 0)
             _Dbg.printMsgTime("\t\tui16[%d] %d", i, u_reg.ui16[i]);
         if (d_type == 0)
-            _Dbg.printMsgTime("\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
+            _Dbg.printMsgTime("\t\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
     }
     _Dbg.printMsgTime(" ");
 }

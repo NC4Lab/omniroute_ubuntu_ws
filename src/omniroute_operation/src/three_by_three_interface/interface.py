@@ -1,56 +1,41 @@
 #!/usr/bin/env python
 
 #======================== PACKAGES ========================
+# Standard Library Imports
 import os
-import rospy
-from omniroute_esmacat_ros.msg import *
 import signal
 import subprocess
-import psutil
 import time
+import math
+import csv
 import ctypes
 from typing import List
+from enum import Enum
 
-from python_qt_binding.QtCore import *
-from python_qt_binding.QtWidgets import *
-from python_qt_binding.QtGui import *
-from python_qt_binding import loadUi
-from python_qt_binding import QtOpenGL
-from python_qt_binding.QtCore import QObject
+# Third-party Imports
+import numpy as np
+from scipy.io import loadmat
+from colorama import Fore, Style
 
+# ROS Imports
+import rospy
+from std_msgs.msg import *
+from omniroute_esmacat_ros.msg import *
+from omniroute_operation.msg import *
+
+# PyQt and PySide Imports
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem
 from PyQt5.QtCore import Qt, QRectF, QCoreApplication
 from PyQt5.QtGui import QPen, QColor, QFont
-
-from PyQt5 import QtWidgets, uic
+from python_qt_binding import loadUi, QtOpenGL
+from python_qt_binding.QtCore import *
+from python_qt_binding.QtWidgets import *
+from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
-import numpy as np
-from scipy.io import loadmat
-import math
-from colorama import Fore, Style
-import ctypes
-from enum import Enum
-import csv
 
-from std_msgs.msg import *
-from omniroute_operation.msg import *
+# It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove 
+# the ones that are not necessary to avoid confusion and make the code cleaner.
 
-"""
-The outgoing register is structured arr[8] of 16 bit integers
-with all but first 16 bit value seperated into bytes 
-[0]: message number
-    ui16 [0-65535] 
-[1]: message INFO
-    b0 message type [0-255] [see: MsgTypeID]
-    b1 arg length [0-255] [number of message args in bytes]           
-[none or 2:2-6] data
-    wall state bytes
-        b0 = wall x byte
-        b1 = wall x+1 byte  
-[x-7]: footer  
-    b1=254
-    b0=254      
-"""
 
 #======================== GLOBAL VARS ========================
 
@@ -110,7 +95,7 @@ class Maze_Plot(QGraphicsView):
             self.wall_num = wall_num
             self.state = state
 
-            self.line = QGraphicsLineItem(Plugin.QLineF(p0[0], p0[1], p1[0], p1[1]))
+            self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
             self.upPen = QPen(Qt.red)
             self.upPen.setWidth(wall_width)
             self.downPen = QPen(Qt.gray)
@@ -162,9 +147,9 @@ class Maze_Plot(QGraphicsView):
             # Plot backround chamber octogons
             octagon_vertices = self.getOctagonVertices(
                 center_x, center_y, chamber_width/2, math.radians(22.5))
-            octagon_points = [Plugin.QPointF(i[0], i[1]) for i in octagon_vertices]
-            self.octagon = Plugin.QGraphicsPolygonItem(Plugin.QPolygonF(octagon_points))
-            self.octagon.setBrush(Plugin.QBrush(QColor(200, 200, 200)))
+            octagon_points = [QPointF(i[0], i[1]) for i in octagon_vertices]
+            self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
+            self.octagon.setBrush(QBrush(QColor(200, 200, 200)))
             self.addToGroup(self.octagon)
 
             # Plot cahamber numbers
@@ -397,33 +382,34 @@ class Esmacat_Com:
     #------------------------ NESTED CLASSES ------------------------
 
     class RegUnion(ctypes.Union):
-        """ C++ style Union for storing ethercat data shareable accross 8 and 16 bit data types """
+        """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
         _fields_ = [("ui8", ctypes.c_uint8 * 16),
                     ("ui16", ctypes.c_uint16 * 8),
+                    ("i16", ctypes.c_int16 * 8),
                     ("ui64", ctypes.c_uint64 * 2)]
     
     class UIndStruct:
-        """ Struct for storing ethercat data shareable accross 8 and 16 bit data types """
+        """ Struct for storing ethercat data shareable accross 8 and 16-bit data types """
         def __init__(self):
-            self.i8 = 0  # 8 bit index
-            self.i16 = 0 # 16 bit index
+            self.i8 = 0  # 8-bit index
+            self.i16 = 0 # 16-bit index
         
         def upd8(self, b_i=255):
-            """Update union 8 bit and 16 bit index and return last updated 8 bit index"""
+            """Update union 8-bit and 16-bit index and return last updated 8-bit index"""
             b_i = b_i if b_i != 255 else self.i8
             self.i8 = b_i + 1
             self.i16 = self.i8 // 2
             return b_i
 
         def upd16(self, b_i=255):
-            """Update union 16 bit and 8 bit index and return last updated 16 bit index"""
+            """Update union 16-bit and 8-bit index and return last updated 16-bit index"""
             b_i = b_i if b_i != 255 else self.i16
             self.i16 = b_i + 1
             self.i8 = self.i16 * 2
             return b_i
 
         def reset(self):
-            """Reset union 8 bit and 16 bit index"""
+            """Reset union 8-bit and 16-bit index"""
             self.i8 = 0
             self.i16 = 0
     
@@ -457,27 +443,40 @@ class Esmacat_Com:
 
     def _uSetMsgID(self, r_EM, msg_id=255):
         """Set message ID entry in union and update associated variable"""
+        
+        # Get new message ID: itterate id and roll over to 1 if max 16-bit value is reached
         if msg_id == 255:
             msg_id = r_EM.msgID + 1 if r_EM.msgID < 65535 else 1
 
+        # Set message ID entry in union
         r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id
         self._uGetMsgID(r_EM)  # copy from union to associated struct variable
 
     def _uGetMsgID(self, r_EM):
         """Get message ID from union"""
+
         r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
         """Set message type entry in union and update associated variable"""
-        msg_type_val = msg_type_enum  # In Python, enum conversion to int is direct
+
+        # Get new message type: convert enum to int
+        msg_type_val = msg_type_enum.value
+
+        # Set message type entry in union
         r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_val
         self._uGetMsgType(r_EM)  # copy from union to associated struct variable
 
     def _uGetMsgType(self, r_EM):
         """Get message type from union and check if valid"""
-        msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
-        is_found = msg_type_val in MessageType
 
+        # Get message type value
+        msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
+
+        # Check if 'msg_type_val' corresponds to any value in the 'MessageType' Enum.
+        is_found = msg_type_val in [e.value for e in MessageType]
+
+        # If not found, set message type to 'MSG_NONE'
         if not is_found:
             msg_type_val = MessageType.MSG_NONE
         else:
@@ -485,55 +484,102 @@ class Esmacat_Com:
 
     def _uSetArgLength(self, r_EM, msg_arg_len):
         """Set message argument length entry in union and update associated variable"""
+        
+        # Set argument length union entry
         r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len
-        self._uGetArgLength(r_EM)
+        self._uGetArgLength(r_EM) # copy from union to associated struct variable
 
     def _uGetArgLength(self, r_EM):
         """Get message argument length"""
+
+        # Get argument length union entry
         r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
 
     def _uSetArgData8(self, r_EM, msg_arg_data8):
         """Set message 8-bit argument data entry in union"""
-        if isinstance(msg_arg_data8, int) and msg_arg_data8 <= 255:  # 8-bit data
-            r_EM.argUI.i8 += 1
+        
+        if isinstance(msg_arg_data8, int) and msg_arg_data8 <= 255:  # check for 8-bit int data
+
+            # Increment argument union index
+            r_EM.argUI.upd8()
+
+            # Update argument length union entry
             self._uSetArgLength(r_EM, r_EM.argUI.i8)
+
+            # Get 8-bit union index and set 8-bit argument data entry in union
             regu8_i = r_EM.argUI.i8 + 3
+
+            # Set message argument data in reg union
             r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
-        self._uGetArgData(r_EM)
+            self._uGetArgData8(r_EM) # copy from union to associated struct variable
 
     def _uSetArgData16(self, r_EM, msg_arg_data16):
         """Set message 16-bit argument data entry in union"""
-        if isinstance(msg_arg_data16, int) and msg_arg_data16 > 255:  # 16-bit data
-            r_EM.argUI.i16 += 1
-            self._uSetArgLength(r_EM, r_EM.argUI.i8)
-            regu16_i = (r_EM.argUI.i8 + 3) // 2
-            r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
-        self._uGetArgData(r_EM)
 
-    def _uGetArgData(self, r_EM):
-        """Get reg union message argument data and copy to arg union"""
+        if isinstance(msg_arg_data16, int) and msg_arg_data16 > 255:  # check for 16-bit int data
+
+            # Increment argument union index
+            r_EM.argUI.upd16()
+            
+            # Update argument length union entry
+            self._uSetArgLength(r_EM, r_EM.argUI.i8)
+            
+            # Get 16-bit union index and set 16-bit argument data entry in union
+            regu16_i = (r_EM.argUI.i8 + 3) // 2
+            
+            # Set message argument data in reg union
+            r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
+            self._uGetArgData8(r_EM) # copy from union to associated struct variable
+
+    def _uGetArgData8(self, r_EM):
+        """Get reg union 8-bit message argument data and copy to arg union"""
+
         for i in range(r_EM.argLen):
-            r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
+            r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy to 8-bit argument Union
 
     def _uSetFooter(self, r_EM):
         """Set message footer entry in union and update associated variable"""
+
         r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
         r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
-        self._uGetFooter(r_EM)
+        self._uGetFooter(r_EM) # copy from union to associated struct variable
 
     def _uGetFooter(self, r_EM):
         """Get message footer from union"""
+
         r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
         r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
         return r_EM.msgFoot[0] == 254 and r_EM.msgFoot[1] == 254
 
     def _uReset(self, r_EM):
         """Reset union data and indices"""
+
+        # Reset union data
         r_EM.RegU.ui64[0] = 0
         r_EM.RegU.ui64[1] = 0
+
+        # Reset union indices
         r_EM.setUI.reset()
         r_EM.getUI.reset()
         r_EM.argUI.reset()
+
+    def _checkErr(self, r_EM, err_tp, is_err):
+        """Check if error type is valid and set error type"""
+
+        # Handle error
+        if is_err:
+            # Store error type
+            r_EM.errTp = err_tp
+            if r_EM.errTp != err_tp:  # only run once
+                # Set error type
+                r_EM.errTp = err_tp
+                rospyLogCol(
+                    'ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgTp.name, r_EM.msgTp.value)
+                self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
+
+        else:
+            if r_EM.errTp == err_tp:
+                r_EM.errTp = ErrorType.ERROR_NONE  # unset error type
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
@@ -546,12 +592,13 @@ class Esmacat_Com:
             if d_type == 1 or i == 0:
                 rospyLogCol(level, "\t\tui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                rospyLogCol(level, "\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                rospyLogCol(level, "\t\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
     def msgReset(self):
         """Reset all message structs."""
+
         # Reset message counters
         self.sndEM.msgID = 0
         self.tmpEM.msgID = 0
@@ -582,7 +629,7 @@ class Esmacat_Com:
 
         # Store arguments based on the message type
         if self.sndEM.msgTp == MessageType.CONFIRM_DONE:
-            self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16 bit received message id
+            self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16-bit received message id
             self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
 
         elif self.sndEM.msgTp == MessageType.HANDSHAKE:
@@ -604,10 +651,12 @@ class Esmacat_Com:
         self.sndEM.isDone = False
 
          # Store Union 16-bit values cast as signed and publish to ease_registers topic
-        reg_arr = [ctypes.c_int16(U.ui16).value for U in self.sndEM.RegU]
+        reg_arr = [0] * 8
+        for i in range(8):
+            reg_arr[i] = self.sndEM.RegU.i16[i] # cast as ctype signed int (e.g., uint16))
         self.maze_ard0_pub.publish(*reg_arr)  
 
-              # Print message
+        # Print message
         rospyLogCol('INFO', "SENT Ecat Message: id=%d type=%s",
                     self.sndEM.msgID, self.sndEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
@@ -627,11 +676,7 @@ class Esmacat_Com:
          # Copy register data into union
         self._uReset(self.sndEM) # reset union variables
         for i in range(8):
-            self.tmpEM.RegU[i].ui16 = reg_arr[i]
-
-        # Read esmacat buffer to get register data
-        # Note: You need to implement or integrate the corresponding method in Python
-        self._ESMA.get_ecat_registers(self.tmpEM.RegU.ui16)
+            self.tmpEM.RegU.ui16[i] = reg_arr[i]
 
         # Skip ethercat setup junk (255)
         if self.tmpEM.RegU.ui8[0] == 255 or self.tmpEM.RegU.ui8[1] == 255:
@@ -653,7 +698,10 @@ class Esmacat_Com:
             return 2  # return error flag
 
         # Check if message is preceding handshake
-        is_err = not self.isHandshakeDone and self.tmpEM.msgTp != MessageType.HANDSHAKE
+        is_err = not self.isHandshakeDone and (
+            self.tmpEM.msgTp != MessageType.HANDSHAKE or self.tmpEM.msgID > 1
+        )
+
         self._checkErr(self.tmpEM, ErrorType.REGISTER_LEFTOVERS, is_err)
         if is_err:
             return 2  # return error flag
@@ -666,7 +714,7 @@ class Esmacat_Com:
 
         # Get argument length and arguments
         self._uGetArgLength(self.tmpEM)
-        self._uGetArgData(self.tmpEM)  # Note: You previously had _uGetArgData8, but it's renamed for generality
+        self._uGetArgData8(self.tmpEM) 
 
         # Get and check for footer
         is_err = self._uGetFooter(self.tmpEM)
@@ -696,7 +744,7 @@ class Interface(Plugin):
     """ Interface plugin """
 
     # Define signals
-    signal_Esmacat_read_maze_ard0_ease = Plugin.Signal()
+    signal_Esmacat_read_maze_ard0_ease = Signal()
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
@@ -722,7 +770,7 @@ class Interface(Plugin):
             print('unknowns: ', unknowns)
 
         # Create QWidget
-        self._widget = Plugin.QWidget()
+        self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
         loadUi(os.path.join(os.path.dirname(
             os.path.realpath(__file__)), 'interface.ui'), self._widget)
@@ -820,19 +868,19 @@ class Interface(Plugin):
             self.qt_callback_sysQuiteBtn_clicked)
 
         # QT timer setup for UI updating
-        self.timer_updateUI = Plugin.QTimer()
+        self.timer_updateUI = QTimer()
         self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
         self.timer_updateUI.start(20)  # set incriment (ms)
 
         # QT timer for sending initial handshake message after a delay
-        self.timer_sendHandshake = Plugin.QTimer()
+        self.timer_sendHandshake = QTimer()
         self.timer_sendHandshake.timeout.connect(
             self.timer_callback_sendHandshake_once)
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
         self.timer_sendHandshake.start(1000)  # (ms)
 
         # QT timer for checking initial handshake message after a delay
-        self.timer_checkHandshake = Plugin.QTimer()
+        self.timer_checkHandshake = QTimer()
         self.timer_checkHandshake.timeout.connect(
             self.timer_callback_checkHandshake_once)
         self.timer_checkHandshake.setSingleShot(True)  # Run only once
@@ -855,6 +903,39 @@ class Interface(Plugin):
         # Create Esmacat_Com object
         self.EsmaCom_A0 = Esmacat_Com()
 
+    #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
+
+    def procEcatArguments(self):
+        """
+        Used to parse new incoming ROS ethercat msg data.
+        
+        Returns:
+            int: Success/error codes [0:no message, 1:new message, 2:error]
+        """
+
+        #................ Process Arguments ................ 
+
+        # CONFIRM_DONE
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
+            rospyLogCol('INFO', "\tCONFIRM_DONE")
+
+            # Get confirmation message number
+            self.cnfEM.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
+
+            # Get message number
+            self.cnfEM.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
+
+            # Print confirmation message
+            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",
+                        self.cnfEM.msgTp, self.cnfEM.msgID)
+
+        # ERROR
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
+            pass
+
+
+        #................ Execute Arguments ................ 
+    
     #------------------------ CALLBACKS: ROS, QT and Signal ------------------------
 
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
@@ -869,7 +950,7 @@ class Interface(Plugin):
         si16_arr[6] = msg.INT6
         si16_arr[7] = msg.INT7
 
-        # Convert 16 bit signed ints to 16 bit unsigned ints array
+        # Convert 16-bit signed ints to 16-bit unsigned ints array
         ui16_arr = [0]*8
         for i in range(8):
             ui16_arr[i] = ctypes.c_uint16(si16_arr[i]).value
@@ -890,7 +971,7 @@ class Interface(Plugin):
                 self.EsmaCom_A0.isHandshakeDone = True
 
                 # Send START_SESSION message
-                self.EsmaCom_A0.sendEthercatMessage(MessageType.START_SESSION)
+                self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
                 
 
         # Emit signal to update UI as UI should not be updated from a non-main thread
@@ -901,7 +982,7 @@ class Interface(Plugin):
 
     def timer_callback_sendHandshake_once(self):
         # Send HANDSHAKE message to arduino
-        self.EsmaCom_A0.sendEthercatMessage(MessageType.HANDSHAKE)
+        self.EsmaCom_A0.sendEcatMessage(MessageType.HANDSHAKE)
 
         # Start timer to check for HANDSHAKE message confirm recieved
         self.timer_checkHandshake.start(500)
@@ -917,13 +998,13 @@ class Interface(Plugin):
                 return
 
             # Send HANDSHAKE message to arduino again
-            self.EsmaCom_A0.sendEthercatMessage(MessageType.HANDSHAKE)
+            self.EsmaCom_A0.sendEcatMessage(MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_checkHandshake.start(500)
         else:
             # Send START message to arduino
-            self.EsmaCom_A0.sendEthercatMessage(MessageType.START_SESSION)
+            self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
 
     def timer_callback_updateUI_loop(self):
         # Update graphics
@@ -933,7 +1014,7 @@ class Interface(Plugin):
     def qt_callback_fileBrowseBtn_clicked(self):
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
-        files, _ = Plugin.QFileDialog.getOpenFileNames(
+        files, _ = QFileDialog.getOpenFileNames(
             None, "Select files to add", self.getPathConfigDir(), filter)
 
         if files:
@@ -979,9 +1060,9 @@ class Interface(Plugin):
     def qt_callback_plotSaveBtn_clicked(self):
         # Open the folder specified by self.getPathConfigDir() in an explorer window
         folder_path = self.getPathConfigDir()
-        options = Plugin.QFileDialog.Options()
-        options |= Plugin.QFileDialog.DontUseNativeDialog
-        file_name, _ = Plugin.QFileDialog.getSaveFileName(
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getSaveFileName(
             None, "Save CSV File", folder_path, "CSV Files (*.csv);;All Files (*)", options=options)
 
         if file_name:
@@ -1000,7 +1081,7 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.sendEthercatMessage(
+        self.EsmaCom_A0.sendEcatMessage(
             MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
@@ -1009,42 +1090,6 @@ class Interface(Plugin):
         # End the application
         QApplication.quit()
 
-    #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
-
-    def procEcatArguments(self):
-        """
-        Used to parse new incoming ROS ethercat msg data.
-        
-        Returns:
-            int: Success/error codes [0:no message, 1:new message, 2:error]
-        """
-
-        #................ Process Arguments ................ 
-
-        # CONFIRM_DONE
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
-            rospyLogCol('INFO', "\tCONFIRM_DONE")
-
-            # Get confirmation message number
-            self.cnfEM.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
-
-            # Get message number
-            self.cnfEM.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
-
-            # Print confirmation message
-            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",
-                        self.cnfEM.msgTp, self.cnfEM.msgID)
-
-        # ERROR
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
-            pass
-
-
-        #................ Execute Arguments ................ 
-
-
-
-    
     #------------------------ FUNCTIONS: CSV File Handling ------------------------
 
     def getPathConfigDir(self, file_name=None):
@@ -1127,7 +1172,7 @@ class Interface(Plugin):
     def endRosSession(self):
 
         # Send END_SESSION message to arduino
-        self.EsmaCom_A0.sendEthercatMessage(MessageType.END_SESSION)
+        self.EsmaCom_A0.sendEcatMessage(MessageType.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()

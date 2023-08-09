@@ -58,8 +58,8 @@ public:
     union RegUnion
     {                     ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
         byte ui8[16];     ///< (byte) 1 byte
-        int i16[8];       ///< (int) 2 byte
         uint16_t ui16[8]; ///< (uint16_t) 2 byte
+        int i16[8];       ///< (int) 2 byte
         uint64_t ui64[2]; ///< (uint64_t) 8 byte
     };
 
@@ -169,7 +169,6 @@ public:
 private:
     void _printEcatReg(uint8_t, int[] = nullptr);
     void _printEcatReg(uint8_t, RegUnion);
-    
 };
 
 #endif
