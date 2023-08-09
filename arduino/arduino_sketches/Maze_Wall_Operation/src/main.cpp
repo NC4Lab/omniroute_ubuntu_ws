@@ -66,43 +66,12 @@ void setup()
 void loop()
 {
 
-	// // TEMP
-	// while (true)
-	// {
-	// 	int dt = 1000;
-	// 	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
-	// 	delay(dt);
-	// }
-
-	// // TEMP
-	// int dt = 1000;
-	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
-	// delay(dt);
-	
 	// Check ethercat coms
 	resp = WallOper.EsmaCom.getEcatMessage();
 
-	// TEMP
-	if (resp != 1)
-		return;
-	while (true)
-	{
-		int dt = 1000;
-		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
-		delay(dt);
-		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
-		delay(dt);
-	}
-
-	// Execute ethercat command
+	// Process and exicute ethercat arguments
 	if (resp == 1) // check for new message
-	{
-		// Send confirmation message
-		WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
-
-		// Process and exicute ethercat arguments
 		WallOper.procEcatArguments();
-	}
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

@@ -71,33 +71,42 @@ uint8_t Wall_Operation::procEcatArguments()
 			C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b; // store values in bit flag
 
 			// Print walls set to be moved
-			_Dbg.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
-			_Dbg.printMsgTime("\t\t\tup=%s", _Dbg.bitIndStr(wall_u_b));
-			_Dbg.printMsgTime("\t\t\tdown=%s", _Dbg.bitIndStr(wall_d_b));
+			_Dbg.printMsgTime("\t\t set move walls: chamber=%d", cham_i);
+			_Dbg.printMsgTime("\t\t\t up=%s", _Dbg.bitIndStr(wall_u_b));
+			_Dbg.printMsgTime("\t\t\t down=%s", _Dbg.bitIndStr(wall_d_b));
 		}
 	}
 
 	//........................ Execute Arguments ........................
 
-	// Handle message type
+	// HANDSHAKE
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
 	{
 		// Set ethercat flag
-		_Dbg.printMsgTime("\tEcat Comms Established");
+		_Dbg.printMsgTime("ECAT COMMS ESTABLISHED");
 		EsmaCom.isHandshakeDone = true;
 	}
+	
+	// MOVE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
 	{
 		moveWalls();
 	}
+	
+	// START_SESSION
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_SESSION)
 	{
 		resetMaze(false); // dont reset certain variables
 	}
+	
+	// END_SESSION
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::END_SESSION)
 	{
 		resetMaze(true); // reset everything
 	}
+
+	// Send done confirmaton
+	EsmaCom.sendEcatMessage(EsmaCom.MessageType::CONFIRM_DONE);
 
 	// Set flag
 	EsmaCom.rcvEM.isDone = true;
@@ -387,7 +396,7 @@ uint8_t Wall_Operation::_setupCypressIO()
 			}
 		}
 		if (resp != 0)
-			_Dbg.printMsgTime("\t!!failed IO pin setup: chamber=%d", cham_i);
+			_Dbg.printMsgTime("\t !!failed IO pin setup: chamber=%d", cham_i);
 	}
 	_Dbg.printMsgTime("Finished IO pin setup");
 	return resp;
@@ -412,7 +421,7 @@ uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
 		{
 			resp = _CypCom.setupSourcePWM(C[cham_i].addr, wms.pwmSrc[src_i], pwm_duty);
 			if (resp != 0)
-				_Dbg.printMsgTime("\t!!failed PWM source setup: source=%d", src_i);
+				_Dbg.printMsgTime("\t !!failed PWM source setup: source=%d", src_i);
 		}
 
 		// Setup wall pwm pins
@@ -427,7 +436,7 @@ uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
 			}
 		}
 		if (resp != 0)
-			_Dbg.printMsgTime("\t!!failed PWM pin setup: chamber=%d", cham_i);
+			_Dbg.printMsgTime("\t !!failed PWM pin setup: chamber=%d", cham_i);
 	}
 	_Dbg.printMsgTime("Finished PWM setup");
 	return resp;
@@ -455,7 +464,7 @@ uint8_t Wall_Operation::_setupWalls()
 		resp = moveWalls(); // move walls down
 
 		if (resp != 0)
-			_Dbg.printMsgTime("\t!!failed wall initialization: chamber=%d", cham_i);
+			_Dbg.printMsgTime("\t !!failed wall initialization: chamber=%d", cham_i);
 	}
 
 	// Set resp to any non-zero flag and return
@@ -513,10 +522,10 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
 	C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b;		// store values in bit flag
 
-	_Dbg.printMsgTime("\tRunning manual wall move command", cham_i, _Dbg.arrayStr(p_wi, s));
-	_Dbg.printMsgTime("\t\tset move walls: chamber=%d", cham_i);
-	_Dbg.printMsgTime("\t\t\tup=%s", _Dbg.bitIndStr(wall_u_b));
-	_Dbg.printMsgTime("\t\t\tdown=%s", _Dbg.bitIndStr(wall_d_b));
+	_Dbg.printMsgTime("\t Running manual wall move command", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsgTime("\t\t set move walls: chamber=%d", cham_i);
+	_Dbg.printMsgTime("\t\t\t up=%s", _Dbg.bitIndStr(wall_u_b));
+	_Dbg.printMsgTime("\t\t\t down=%s", _Dbg.bitIndStr(wall_d_b));
 
 	return 0;
 }
@@ -552,7 +561,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	uint8_t do_move_check = 1;					// will track if all chamber movement done
 	uint32_t ts_timeout = millis() + dt_timout; // set timout
 
-	_Dbg.printMsgTime("\tMoving walls");
+	_Dbg.printMsgTime("\t Moving walls");
 
 	// TEMP
 	// return 0;
@@ -583,9 +592,9 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 		// Print walls being moved
 		if (wall_up_byte_mask > 0)
-			_Dbg.printMsgTime("\t\tstart move up: chamber=%d walls=%s", cham_i, _Dbg.bitIndStr(wall_up_byte_mask));
+			_Dbg.printMsgTime("\t\t start move up: chamber=%d walls=%s", cham_i, _Dbg.bitIndStr(wall_up_byte_mask));
 		if (wall_down_byte_mask > 0)
-			_Dbg.printMsgTime("\t\tstart move down: chamber=%d walls=%s", cham_i, _Dbg.bitIndStr(wall_down_byte_mask));
+			_Dbg.printMsgTime("\t\t start move down: chamber=%d walls=%s", cham_i, _Dbg.bitIndStr(wall_down_byte_mask));
 	}
 
 	// Check IO pins
@@ -643,7 +652,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 					bitWrite(C[cham_i].bitWallMoveFlag, wall_n, 0); // reset wall bit in flag
 					f_do_pwm_update = 1;							// flag to update pwm
 
-					_Dbg.printMsgTime("\t\tend move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", cham_i, wall_n, _Dbg.dtTrack());
+					_Dbg.printMsgTime("\t\t end move %s: chamber=%d wall=%d dt=%s", swtch_fun == 1 ? "down" : "up", cham_i, wall_n, _Dbg.dtTrack());
 				}
 			}
 
@@ -680,7 +689,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 				// Flag error for debugging and to stop all wall movement
 				uint8_t wall_n = C[cham_i].pmsDynIO.wall[prt_i][pin_i]; // get wall number
 				run_error = is_timedout && run_error != 1 ? 2 : 3;		// set error flag
-				_Dbg.printMsgTime("\t\t!!movement failed: chamber=%d wall=%d cause=%s dt=%s!!", cham_i, wall_n,
+				_Dbg.printMsgTime("\t\t !!movement failed: chamber=%d wall=%d cause=%s dt=%s!!", cham_i, wall_n,
 								  run_error == 1 ? "i2c" : run_error == 2 ? "timedout"
 																		  : "unknown",
 								  _Dbg.dtTrack());
@@ -694,7 +703,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	if (run_error != 0)
 		resp = forceStopWalls();
 	else
-		_Dbg.printMsgTime("\tFinished all movement");
+		_Dbg.printMsgTime("\t Finished all movement");
 
 	return run_error; // return error
 }
@@ -705,7 +714,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 uint8_t Wall_Operation::forceStopWalls()
 {
 	uint8_t resp = 0;
-	// TEMP _Dbg.printMsgTime("\t!!Running forse stop!!");
+	// TEMP _Dbg.printMsgTime("\t !!Running forse stop!!");
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{																			// loop chambers
 		resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
@@ -762,14 +771,14 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 			if (resp != 0) // break out of loop if error returned
 				break;
 			if (r_bit_out == 1)
-				_Dbg.printMsgTime("\tWall %d: down", wall_n);
+				_Dbg.printMsgTime("\t Wall %d: down", wall_n);
 
 			// Check up pins
 			resp = _CypCom.ioReadPin(C[cham_i].addr, wms.ioUp[0][wall_n], wms.ioUp[1][wall_n], r_bit_out);
 			if (resp != 0) // break out of loop if error returned
 				break;
 			if (r_bit_out == 1)
-				_Dbg.printMsgTime("\tWall %d: up", wall_n);
+				_Dbg.printMsgTime("\t Wall %d: up", wall_n);
 
 			// Add small delay
 			delay(10);
@@ -812,12 +821,12 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 	for (size_t i = 0; i < s; i++)
 	{ // loop walls
 		uint8_t wall_n = p_wi[i];
-		_Dbg.printMsgTime("\tWall %d: Up", wall_n);
+		_Dbg.printMsgTime("\t Wall %d: Up", wall_n);
 		resp = _CypCom.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 1); // run wall up
 		if (resp != 0)
 			return resp;
 		delay(dt_run);
-		_Dbg.printMsgTime("\tWall %d: Down", wall_n);
+		_Dbg.printMsgTime("\t Wall %d: Down", wall_n);
 		resp = _CypCom.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 1); // run wall down (run before so motoro hard stops)
 		if (resp != 0)
 			return resp;
@@ -870,7 +879,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 		_Dbg.printMsgTime("Running wall %d", wall_n);
 
 		// Run up
-		_Dbg.printMsgTime("\tup start");
+		_Dbg.printMsgTime("\t up start");
 		resp = _CypCom.ioWritePin(C[cham_i].addr, wms.pwmUp[0][wall_n], wms.pwmUp[1][wall_n], 1);
 		if (resp != 0)
 			return resp;
@@ -883,19 +892,19 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 				return resp;
 			if (r_bit_out == 1)
 			{
-				_Dbg.printMsgTime("\tup end [%s]", _Dbg.dtTrack());
+				_Dbg.printMsgTime("\t up end [%s]", _Dbg.dtTrack());
 				break;
 			}
 			else if (millis() >= ts)
 			{
-				_Dbg.printMsgTime("\t!!up timedout [%s]!!", _Dbg.dtTrack());
+				_Dbg.printMsgTime("\t !!up timedout [%s]!!", _Dbg.dtTrack());
 				break;
 			}
 			delay(10);
 		}
 
 		// Run down
-		_Dbg.printMsgTime("\tDown start");
+		_Dbg.printMsgTime("\t Down start");
 		resp = _CypCom.ioWritePin(C[cham_i].addr, wms.pwmDown[0][wall_n], wms.pwmDown[1][wall_n], 1);
 		if (resp != 0)
 			return resp;
@@ -911,12 +920,12 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 				return resp;
 			if (r_bit_out == 1)
 			{
-				_Dbg.printMsgTime("\tdown end [%s]", _Dbg.dtTrack());
+				_Dbg.printMsgTime("\t down end [%s]", _Dbg.dtTrack());
 				break;
 			}
 			else if (millis() >= ts)
 			{
-				_Dbg.printMsgTime("\t!!down timedout [%s]!!", _Dbg.dtTrack());
+				_Dbg.printMsgTime("\t !!down timedout [%s]!!", _Dbg.dtTrack());
 				break;
 			}
 			delay(10);

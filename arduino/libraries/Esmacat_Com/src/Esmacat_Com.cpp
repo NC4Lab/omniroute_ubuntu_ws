@@ -25,7 +25,7 @@ Esmacat_Com::Esmacat_Com()
 /// @return Last updated 8 bit index
 uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
 {
-    //_Dbg.printMsgTime("\t\t\tupd8: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
+    //_Dbg.printMsgTime("\t\t\t upd8: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
     i8 = b_i + 1;
     i16 = i8 / 2;
@@ -36,7 +36,7 @@ uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
 /// @return Last updated 16 bit index
 uint8_t Esmacat_Com::UIndStruct::upd16(uint8_t b_i)
 {
-    //_Dbg.printMsgTime("\t\t\tupd16: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
+    //_Dbg.printMsgTime("\t\t\t upd16: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
     i16 = b_i + 1;
     i8 = i16 * 2;
@@ -185,7 +185,7 @@ bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
     r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy first footer byte
     r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy second footer byte
     bool is_err = r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254; // check for valid footers
-    return is_err
+    return is_err;
 }
 
 /// @brief Reset union data and indeces
@@ -204,7 +204,7 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 /// @brief Check for and log any message processing errors
 void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
 {
-    // Handle error
+    // Check for error
     if (is_err)
     {
         // Only run once
@@ -223,8 +223,10 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_e
             _printEcatReg(0, r_EM.RegU); // TEMP
         }
     }
+
+    // Unset error type
     else if (r_EM.errTp == err_tp)
-        r_EM.errTp = ErrorType::ERROR_NONE; // unset error type
+        r_EM.errTp = ErrorType::ERROR_NONE; 
 }
 
 /// @brief: Reset all message structs.
@@ -403,13 +405,13 @@ uint8_t Esmacat_Com::getEcatMessage()
 void Esmacat_Com::_printEcatReg(uint8_t d_type, RegUnion u_reg)
 {
     // Print out register
-    _Dbg.printMsgTime("\tEcat Register");
+    _Dbg.printMsgTime("\t Ecat Register");
     for (size_t i = 0; i < 8; i++)
     {
         if (d_type == 1 || i == 0)
-            _Dbg.printMsgTime("\t\tui16[%d] %d", i, u_reg.ui16[i]);
+            _Dbg.printMsgTime("\t\t ui16[%d] %d", i, u_reg.ui16[i]);
         if (d_type == 0)
-            _Dbg.printMsgTime("\t\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
+            _Dbg.printMsgTime("\t\t\t ui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
     }
     _Dbg.printMsgTime(" ");
 }

@@ -119,7 +119,7 @@ class Maze_Plot(QGraphicsView):
 
         def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
-                # rospy_log_col('INFO', "\tchamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
+                # rospy_log_col('INFO', "\t chamber %d wall %d clicked in UI" % (self.chamber_num, self.wall_num))
                 self.setState(not self.state)
                 # wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
                 if self.state:  # add list entry
@@ -185,7 +185,7 @@ class Maze_Plot(QGraphicsView):
         def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
                 pass
-                # rospy_log_col('INFO', "\tchamber %d clicked in UI" % self.chamber_num)
+                # rospy_log_col('INFO', "\t chamber %d clicked in UI" % self.chamber_num)
 
     # CLASS: Maze
     class Maze:
@@ -475,12 +475,15 @@ class Esmacat_Com:
 
         # Check if 'msg_type_val' corresponds to any value in the 'MessageType' Enum.
         is_found = msg_type_val in [e.value for e in MessageType]
+        is_err = not is_found
 
         # If not found, set message type to 'MSG_NONE'
-        if not is_found:
+        if is_err:
             msg_type_val = MessageType.MSG_NONE
         else:
             r_EM.msgTp = MessageType(msg_type_val)
+
+        return is_err
 
     def _uSetArgLength(self, r_EM, msg_arg_len):
         """Set message argument length entry in union and update associated variable"""
@@ -567,33 +570,37 @@ class Esmacat_Com:
     def _checkErr(self, r_EM, err_tp, is_err):
         """Check if error type is valid and set error type"""
 
-        # Handle error
+        # Check for error
         if is_err:
-            # Store error type
-            r_EM.errTp = err_tp
-            if r_EM.errTp != err_tp:  # only run once
+
+            # Run only once
+            if r_EM.errTp != err_tp:  
+                
                 # Set error type
                 r_EM.errTp = err_tp
+
+                # Print error message
                 rospyLogCol(
                     'ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgTp.name, r_EM.msgTp.value)
                 self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
-
+        
+        # Unset error type
         else:
             if r_EM.errTp == err_tp:
-                r_EM.errTp = ErrorType.ERROR_NONE  # unset error type
+                r_EM.errTp = ErrorType.ERROR_NONE  
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
 
         # Print heading with type
-        rospyLogCol(level, "\tEcat Register")
+        rospyLogCol(level, "\t Ecat Register")
 
         # Print message data
         for i in range(8):
             if d_type == 1 or i == 0:
-                rospyLogCol(level, "\t\tui16[%d] %d", i, reg_u.ui16[i])
+                rospyLogCol(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                rospyLogCol(level, "\t\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                rospyLogCol(level, "\t\t\t ui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
@@ -698,9 +705,9 @@ class Esmacat_Com:
         if is_err:
             return 2  # return error flag
 
-        # Check if message is preceding handshake
+        # Check if message is preceding handshake and confirm done messages
         is_err = not self.isHandshakeDone and (
-            self.tmpEM.msgTp != MessageType.HANDSHAKE or self.tmpEM.msgID > 1
+            self.tmpEM.msgTp != MessageType.CONFIRM_DONE or self.tmpEM.msgID > 1
         )
 
         self._checkErr(self.tmpEM, ErrorType.REGISTER_LEFTOVERS, is_err)
@@ -848,6 +855,20 @@ class Interface(Plugin):
             for w in c.walls:
                 self.scene.addItem(w)
 
+        #................ Ecat Setup ................
+
+        # Create Esmacat_Com object
+        self.EsmaCom_A0 = Esmacat_Com()
+
+        # Store the time the interface was initialized
+        self.ts_interface_init = rospy.get_time() # (sec)
+
+        # Specify delay to start reading/writing Esmacat data 
+        self.dt_ecat_start = 1 # (sec)
+
+        # Specify delay between Esmacat checks reads
+        self.dt_ecat_check = 0.5 # (sec)
+
         #................ QT Callback Setup ................
 
         # QT UI object callback setup
@@ -873,18 +894,12 @@ class Interface(Plugin):
         self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
         self.timer_updateUI.start(20)  # set incriment (ms)
 
-        # QT timer for sending initial handshake message after a delay
+        # QT timer to send and check handshake confirmation after a delay
         self.timer_sendHandshake = QTimer()
         self.timer_sendHandshake.timeout.connect(
             self.timer_callback_sendHandshake_once)
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
-        self.timer_sendHandshake.start(1000)  # (ms)
-
-        # QT timer for checking initial handshake message after a delay
-        self.timer_checkHandshake = QTimer()
-        self.timer_checkHandshake.timeout.connect(
-            self.timer_callback_checkHandshake_once)
-        self.timer_checkHandshake.setSingleShot(True)  # Run only once
+        self.timer_sendHandshake.start(self.dt_ecat_start*1000) # (ms)
 
         #................ ROS Setup ................
 
@@ -898,11 +913,7 @@ class Interface(Plugin):
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(
             self.sig_callback_Esmacat_read_maze_ard0_ease)
-        
-        #................ Ecat Setup ................
 
-        # Create Esmacat_Com object
-        self.EsmaCom_A0 = Esmacat_Com()
 
     #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
@@ -916,30 +927,51 @@ class Interface(Plugin):
 
         #................ Process Arguments ................ 
 
+        # Create temp EcatMessageStruct object for confirmation message
+        cnf_em = self.EsmaCom_A0.EcatMessageStruct()
+
         # CONFIRM_DONE
         if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
-            rospyLogCol('INFO', "\tCONFIRM_DONE")
 
             # Get confirmation message number
-            self.cnfEM.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
+            cnf_em.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
 
             # Get message number
-            self.cnfEM.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
+            cnf_em.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
 
             # Print confirmation message
-            rospyLogCol('INFO', "\t\tConfirmed: type=%s id=%d",
-                        self.cnfEM.msgTp, self.cnfEM.msgID)
+            rospyLogCol('INFO', "CONFIRMED DONE Ecat Message: type=%s id=%d",
+                        cnf_em.msgTp, cnf_em.msgID)
 
         # ERROR
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
+        elif self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
             pass
 
-
         #................ Execute Arguments ................ 
+
+        # CONFIRM_DONE
+        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
+
+            # Check if message is a handshake confirmation
+            if cnf_em.msgTp == MessageType.HANDSHAKE:
+
+                # Set the handshake flag
+                self.EsmaCom_A0.isHandshakeDone = True
+                rospyLogCol('INFO', "ECAT COMMS ESTABLISHED");
+
+                # Send START_SESSION message
+                self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
     
-    #------------------------ CALLBACKS: ROS, QT and Signal ------------------------
+    #------------------------ CALLBACKS: ROS ------------------------
 
     def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
+        """ ROS callback for Esmacat_read_maze_ard0_ease topic """
+
+        # Wait for interface to initialize
+        current_time = rospy.get_time()
+        if (current_time - self.ts_interface_init) < self.dt_ecat_start:  # Less than 100ms
+            return
+
         # Store ethercat message in class variable
         si16_arr = [0]*8
         si16_arr[0] = msg.INT0
@@ -959,36 +991,24 @@ class Interface(Plugin):
         # Parse the message and check if its new
         if self.EsmaCom_A0.parseEcatMessage(ui16_arr) != 1:
             return
-
-        # Handle confirmation message
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRMATION:
-            # Check if confirmation message is handshake
-            if self.EsmaCom_A0.cnfEM.msgTp == MessageType.HANDSHAKE:
-
-                # Stop handshake check timer
-                self.timer_checkHandshake.stop()
-
-                # Set the handshake flag
-                self.EsmaCom_A0.isHandshakeDone = True
-
-                # Send START_SESSION message
-                self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
+        
+        # Process the message arguments
+        self.procEcatArguments()
                 
-
         # Emit signal to update UI as UI should not be updated from a non-main thread
         # TEMP self.signal_Esmacat_read_maze_ard0_ease.emit()
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
-        pass
+        """ Signal callback for Esmacat_read_maze_ard0_ease topic """
+
+    #------------------------ CALLBACKS: Timers ------------------------
 
     def timer_callback_sendHandshake_once(self):
-        # Send HANDSHAKE message to arduino
-        self.EsmaCom_A0.sendEcatMessage(MessageType.HANDSHAKE)
+        """ Timer callback to send handshake message once resend till confirmation. """
 
-        # Start timer to check for HANDSHAKE message confirm recieved
-        self.timer_checkHandshake.start(500)
-
-    def timer_callback_checkHandshake_once(self):
+        # Kill handshake check timer
+        # self.timer_sendHandshake.stop()
+        
         # Check for HANDSHAKE message confirm recieved flag
         if self.EsmaCom_A0.isHandshakeDone == False:
 
@@ -997,22 +1017,26 @@ class Interface(Plugin):
                 rospyLogCol(
                     'ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
                 return
+            elif self.EsmaCom_A0.sndEM.msgID > 1:
+                rospyLogCol(
+                    'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
 
-            # Send HANDSHAKE message to arduino again
+            # Send HANDSHAKE message to arduino 
             self.EsmaCom_A0.sendEcatMessage(MessageType.HANDSHAKE)
 
             # Restart check timer
-            self.timer_checkHandshake.start(500)
-        else:
-            # Send START message to arduino
-            self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
+            self.timer_sendHandshake.start(self.dt_ecat_check*1000)
 
     def timer_callback_updateUI_loop(self):
+        """ Timer callback to update UI. """
+
         # Update graphics
         self.scene.update()
         self._widget.plotMazeView.update()
 
     def qt_callback_fileBrowseBtn_clicked(self):
+        """ Callback for the "Browse" button. """
+
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
         files, _ = QFileDialog.getOpenFileNames(
@@ -1040,6 +1064,8 @@ class Interface(Plugin):
             self.loadFromCSV(0)
 
     def qt_callback_fileListWidget_clicked(self, item):
+        """ Callback function for the file list widget."""
+
         # Get the index of the clicked item and set it as the current file index
         self.current_file_index = self._widget.fileListWidget.currentRow()
 
@@ -1047,18 +1073,26 @@ class Interface(Plugin):
         self.loadFromCSV(0)
 
     def qt_callback_fileNextBtn_clicked(self):
+        """ Callback function for the "Next" button."""
+
         # Update file index and load csv
         self.loadFromCSV(1)
 
     def qt_callback_filePreviousBtn_clicked(self):
+        """ Callback function for the "Previous" button."""
+
         # Update file index and load csv
         self.loadFromCSV(-1)
 
     def qt_callback_plotClearBtn_clicked(self):
+        """ Callback function for the "Clear" button."""
+
         Wall_Config.Reset()  # reset all values in list
         self.MazePlot.updateWalls()  # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
+        """ Callback function for the "Save" button."""
+
         # Open the folder specified by self.getPathConfigDir() in an explorer window
         folder_path = self.getPathConfigDir()
         options = QFileDialog.Options()
@@ -1078,6 +1112,8 @@ class Interface(Plugin):
             self.saveToCSV(file_name, Wall_Config.makeWall2ByteList())
 
     def qt_callback_plotSendBtn_clicked(self):
+        """ Callback function for the "Send" button."""
+
         # Sort entries
         Wall_Config.sortEntries()
 
@@ -1086,6 +1122,8 @@ class Interface(Plugin):
             MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
+        """ Callback function for the "Quit" button."""
+
         # Call function to shut down the ROS session
         self.endRosSession()
         # End the application
@@ -1094,6 +1132,8 @@ class Interface(Plugin):
     #------------------------ FUNCTIONS: CSV File Handling ------------------------
 
     def getPathConfigDir(self, file_name=None):
+        """ Function to get the path to the "config" directory four levels up from the current script file. """
+
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # Create the path to the "config" directory four levels up
@@ -1106,6 +1146,8 @@ class Interface(Plugin):
             return dir_path
 
     def saveToCSV(self, file_name, wall_config_list):
+        """ Function to save the wall config data to a CSV file """
+
         try:
             with open(file_name, 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile)
@@ -1116,6 +1158,8 @@ class Interface(Plugin):
             rospyLogCol('ERROR', "Error saving data to CSV:", str(e))
 
     def loadFromCSV(self, list_increment):
+        """ Function to load the wall config data from a CSV file """
+
         # Update the current file index
         self.current_file_index += list_increment
 
@@ -1150,6 +1194,8 @@ class Interface(Plugin):
     #------------------------ FUNCTIONS: System Operations ------------------------
 
     def terminate_ros_node(self, s):
+        """ Function to terminate a ROS node when exiting the application """
+
         list_cmd = subprocess.Popen(
             "rosnode list", shell=True, stdout=subprocess.PIPE)
         list_output = list_cmd.stdout.read()
@@ -1160,6 +1206,8 @@ class Interface(Plugin):
                 os.system("rosnode kill " + str)
 
     def terminate_process_and_children(self, p):
+        """ Function to terminate a process and all its children when exiting the application """
+
         ps_command = subprocess.Popen(
             "ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
         ps_output = ps_command.stdout.read()
@@ -1171,6 +1219,7 @@ class Interface(Plugin):
         p.kill()
 
     def endRosSession(self):
+        """ Function to end the ROS session """
 
         # Send END_SESSION message to arduino
         self.EsmaCom_A0.sendEcatMessage(MessageType.END_SESSION)
@@ -1199,6 +1248,8 @@ class Interface(Plugin):
 
     """ @todo: Implement this function to handle the window close event """
     def closeEvent(self, event):
+        """ Function to handle the window close event """
+        
         rospyLogCol('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.endRosSession()
