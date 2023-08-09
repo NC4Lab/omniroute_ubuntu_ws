@@ -12,8 +12,6 @@
 #include "Cypress_Com.h"
 #include "Cypress_Com_Base.h"
 
-// TEMP COMMIT TEST
-
 //========CLASS: Cypress_Com==========
 
 /// <summary>

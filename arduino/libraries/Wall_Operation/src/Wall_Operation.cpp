@@ -13,13 +13,13 @@
 
 //======== CLASS: WALL_OPERATION ==========
 
-/// <summary>
-/// CONSTUCTOR: Create Wall_Operation class instance
-/// </summary>
-/// <param name="_nCham">Spcify number of chambers to track [1-49]</param>
-/// <param name="do_spi">OPTIONAL: spcify if SPI should be strated, will interfere with LiquidCrystal library</param>
+/// @brief CONSTUCTOR: Create Wall_Operation class instance
+///
+/// @param _nCham: Spcify number of chambers to track [1-49]
+/// @param do_spi: OPTIONAL: spcify if SPI should be strated, will interfere with LiquidCrystal library
 Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 {
+	// Store input variables
 	nCham = _nCham;									  // store number of chambers
 	pwmDuty = _pwmDuty;								  // store pwm duty cycle
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
@@ -30,6 +30,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 		if (do_spi)
 			ESMA.start_spi();
 	}
+
 	// Create WallMapStruct lists for each function
 	_makePMS(pmsAllIO, wms.ioDown[0], wms.ioDown[1], wms.ioUp[0], wms.ioUp[1]);		 // all io pins
 	_makePMS(pmsAllPWM, wms.pwmDown[0], wms.pwmDown[1], wms.pwmUp[0], wms.pwmUp[1]); // all pwm pins
@@ -37,6 +38,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 	_makePMS(pmsDownIO, wms.ioDown[0], wms.ioDown[1]);								 // io down pins
 	_makePMS(pmsUpPWM, wms.pwmUp[0], wms.pwmUp[1]);									 // pwm up pins
 	_makePMS(pmsDownPWM, wms.pwmDown[0], wms.pwmDown[1]);							 // pwm down pins
+
 	// Update pin function map [0,1,2,3] [io down, io up, pwm down, pwm up]
 	for (size_t i = 0; i < 8; i++)
 	{														  // loop wall map entries
@@ -49,81 +51,196 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t do_spi)
 
 //++++++++++++++ ETHERCAT COMMS METHODS +++++++++++++++
 
-void Wall_Operation::_resetU(EcatMessageStruct &r_EM)
+/// @brief Set message ID entry in union and updated associated variable
+void Wall_Operation::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 {
-	// Clear union
+	// Get new message ID: itterate id and roll over to 1 if max 16 bit value is reached
+	if (msg_id == 255)
+		msg_id = r_EM.msgID < 65535 ? r_EM.msgID + 1 : 1;
+
+	// Set message ID union entry
+	r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id;
+	_uGetMsgID(sndEM); // copy from union to associated struct variable
+}
+
+/// @brief Get message ID from union
+void Wall_Operation::_uGetMsgID(EcatMessageStruct &r_EM)
+{
+	r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
+}
+
+/// @brief Set message type entry in union and updated associated variable
+void Wall_Operation::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enum)
+{
+	// Get message type value
+	uint8_t msg_type_val = static_cast<uint8_t>(msg_type_enum);
+
+	// Set message type union entry
+	r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_val;
+	_uGetMsgType(sndEM); // copy from union to associated struct variable
+}
+
+/// @brief Get message type from union
+bool Wall_Operation::_uGetMsgType(EcatMessageStruct &r_EM)
+{
+	// Get message type value
+	uint8_t msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)];
+
+	// Check for valid message type
+	bool is_found = false;
+	for (int i = 0; i < N_MessageType; ++i)
+	{
+		if (msg_type_val == i)
+		{
+			is_found = true;
+			break;
+		}
+	};
+	bool is_err = !is_found;
+
+	// Set type to none if not found
+	if (is_err)
+		msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
+
+	// Store message type value
+	r_EM.msg_tp_val = msg_type_val;
+
+	// Get message type enum
+	r_EM.msgTp = static_cast<Wall_Operation::MessageType>(msg_type_val);
+
+	// Copy string to struct
+	if (!is_err)
+		strncpy(r_EM.msg_tp_str, message_type_str[r_EM.msg_tp_val], sizeof(r_EM.msg_tp_str) - 1);
+	else
+		strncpy(r_EM.msg_tp_str, "NULL", sizeof(r_EM.msg_tp_str) - 1);
+	r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0'; // ensure null termination
+
+	return is_err;
+}
+
+/// @brief Set message argument length entry in union and updated associated variable
+void Wall_Operation::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
+{
+	r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len;
+	_uGetArgLength(sndEM); // copy from union to associated struct variable
+}
+
+/// @brief Get message argument length
+void Wall_Operation::_uGetArgLength(EcatMessageStruct &r_EM)
+{
+	// Get message argument length
+	r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)];
+}
+
+/// @brief Set 8 bit message argument data entry in union
+void Wall_Operation::_uSetArgData(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
+{
+	// Increment argument union index
+	r_EM.argUI.upd8();
+
+	// Update message argument length from argument union 8 bit index
+	_uSetArgLength(r_EM, r_EM.argUI.i8);
+
+	// Get reg union index
+	uint8_t regu8_i = r_EM.argUI.i8 + 3;
+
+	// Set message argument data in reg union
+	r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8;
+	_uGetArgData(r_EM); // copy from union to associated struct variable
+}
+/// @brief Set 16 bit message argument data entry in union
+void Wall_Operation::_uSetArgData(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
+{
+	// Increment argument union index
+	r_EM.argUI.upd16();
+
+	// Update message argument length from argument union 16 bit index
+	_uSetArgLength(r_EM, r_EM.argUI.i8);
+
+	// Get reg union index
+	uint8_t regu16_i = (r_EM.argUI.i8 + 3) / 2;
+
+	// Set message argument data in reg union
+	r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16; // set message argument data in reg union
+	_uGetArgData(r_EM);											 // copy from union to associated struct variable
+}
+
+/// @brief Get reg union message argument data and copy to arg union
+void Wall_Operation::_uGetArgData(EcatMessageStruct &r_EM)
+{
+	for (size_t i = 0; i < r_EM.argLen; i++)
+		r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy to 8 bit argument Union
+}
+
+/// @brief Set message footer entry in union and updated associated variable
+void Wall_Operation::_uSetFooter(EcatMessageStruct &r_EM)
+{
+	r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
+	r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
+	_uGetFooter(sndEM); // copy from union to associated struct variable
+}
+
+/// @brief Get message footer from union
+bool Wall_Operation::_uGetFooter(EcatMessageStruct &r_EM)
+{
+	r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()];
+	r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()];
+	return r_EM.msgFoot[0] == 254 && r_EM.msgFoot[1] == 254;
+}
+
+/// @brief Reset union data and indeces
+void Wall_Operation::_uReset(EcatMessageStruct &r_EM)
+{
+	// Reset union data
 	r_EM.RegU.ui64[0] = 0;
 	r_EM.RegU.ui64[1] = 0;
 
-	// Reset union indeces
-	r_EM.u8i = 0;
-	r_EM.u16i = 0;
+	// Reset dynamic union indeces
+	r_EM.setUI.reset();
+	r_EM.getUI.reset();
+	r_EM.argUI.reset();
 }
 
-void Wall_Operation::_seti8(EcatMessageStruct &r_EM, uint8_t dat_8)
+/// @brief Check for and log any message processing errors
+void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
 {
-	// Store data
-	r_EM.RegU.ui8[r_EM.u8i] = dat_8;
+	// Handle error
+	if (is_err)
+	{
+		// Only run once
+		if (r_EM.errTp != err_tp)
+		{
+			// Set error type
+			r_EM.errTp = err_tp;
 
-	//_DB.printMsgTime("\t_storei8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
+			// Get error string
+			uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
+			strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
+			r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
-	// Update union indeces
-	r_EM.u8i++;
-	r_EM.u16i = r_EM.u8i % 2 == 0 ? r_EM.u8i / 2 : r_EM.u8i / 2 + 1;
+			// Print error
+			_DB.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
+			_printEcatReg(0, r_EM.RegU); // TEMP
+		}
+	}
+	else if (r_EM.errTp == err_tp)
+		r_EM.errTp = ErrorType::ERROR_NONE; // unset error type
 }
 
-void Wall_Operation::_seti16(EcatMessageStruct &r_EM, uint16_t dat_16)
-{
-	// Store data
-	r_EM.RegU.ui16[r_EM.u16i] = dat_16;
-
-	//_DB.printMsgTime("\t_storei8: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
-
-	// Update union indeces
-	r_EM.u16i += 1;
-	r_EM.u8i = r_EM.u16i * 2;
-}
-
-uint8_t Wall_Operation::_geti8(EcatMessageStruct &r_EM)
-{
-	// Get data
-	uint8_t dat_8 = r_EM.RegU.ui8[r_EM.u8i];
-
-	//_DB.printMsgTime("\t_geti8: u8i[%d] u16i[%d] dat_8=%d", r_EM.u8i, r_EM.u16i, dat_8);
-
-	// Update union indeces and return data
-	r_EM.u8i++;
-	r_EM.u16i = r_EM.u8i % 2 == 0 ? r_EM.u8i / 2 : r_EM.u8i / 2 + 1;
-	return dat_8;
-}
-
-uint16_t Wall_Operation::_geti16(EcatMessageStruct &r_EM)
-{
-	// Get data
-	uint8_t dat_16 = r_EM.RegU.ui16[r_EM.u16i];
-
-	//_DB.printMsgTime("\t_geti16: u8i=%d u16i[%d] dat_16[%d]", r_EM.u8i, r_EM.u16i, dat_16);
-
-	// Update union indeces and return data
-	r_EM.u16i += 1;
-	r_EM.u8i = r_EM.u16i * 2;
-	return dat_16;
-}
-
-/// Overloaded function for printing Ethercat register values.
+/// @brief Overloaded function for printing Ethercat register values.
 /// This version of the function accepts a RegUnion object.
 /// @param d_type: Specifies the data type to print. [0, 1] corresponds to [uint8, uint16].
 /// @param u: A RegUnion object containing the register values to print.
-void Wall_Operation::_printEcatReg(uint8_t d_type, RegUnion reg_u)
+void Wall_Operation::_printEcatReg(uint8_t d_type, RegUnion u_reg)
 {
 	// Print out register
 	_DB.printMsgTime("\tEcat Register");
 	for (size_t i = 0; i < 8; i++)
 	{
 		if (d_type == 1 || i == 0)
-			_DB.printMsgTime("\t\tui16[%d] %d", i, reg_u.ui16[i]);
+			_DB.printMsgTime("\t\tui16[%d] %d", i, u_reg.ui16[i]);
 		if (d_type == 0)
-			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1]);
+			_DB.printMsgTime("\t\tui8[%d]  %d %d", i, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
 	}
 	_DB.printMsgTime(" ");
 }
@@ -152,81 +269,14 @@ void Wall_Operation::_printEcatReg(uint8_t d_type, int p_reg[])
 	_printEcatReg(d_type, u);
 }
 
-bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, MessageType msg_type_enum)
-{
-	// Get message type value
-	/// @note need to be certain this enum is a valid value
-	uint8_t msg_type_val = static_cast<uint8_t>(msg_type_enum);
-
-	// Run main function
-	return _setupMsgStruct(r_EM, msg_id, msg_type_val);
-}
-bool Wall_Operation::_setupMsgStruct(EcatMessageStruct &r_EM, uint16_t msg_id, uint8_t msg_type_val)
-{
-	// Check for valid message type
-	bool is_found = false;
-	for (int i = 0; i < N_MessageType; ++i)
-	{
-		if (msg_type_val == i)
-		{
-			is_found = true;
-			break;
-		}
-	};
-	bool is_err = !is_found;
-
-	// Set type to none if not found
-	if (is_err)
-		msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
-
-	// Store message id
-	r_EM.msgID = msg_id;
-
-	// Store message type value
-	r_EM.msg_tp_val = msg_type_val;
-
-	// Get message type enum
-	r_EM.msgTp = static_cast<Wall_Operation::MessageType>(msg_type_val);
-
-	// Copy string to struct
-	if (!is_err)
-		strncpy(r_EM.msg_tp_str, message_type_str[r_EM.msg_tp_val], sizeof(r_EM.msg_tp_str) - 1);
-	else
-		strncpy(r_EM.msg_tp_str, "NULL", sizeof(r_EM.msg_tp_str) - 1);
-	r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0'; // ensure null termination
-
-	return is_err;
-}
-
-void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
-{
-	// Handle error
-	if (is_err)
-	{
-		// Only run once
-		if (r_EM.errTp != err_tp)
-		{
-			// Set error type
-			r_EM.errTp = err_tp;
-
-			// Get error string
-			uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
-			strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
-			r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
-
-			// Print error
-			_DB.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
-			_printEcatReg(0, r_EM.RegU); // TEMP
-		}
-	}
-	else if (r_EM.errTp == err_tp)
-		r_EM.errTp = ErrorType::ERROR_NONE; // unset error type
-}
-
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
 ///
 ///	@note: The outgoing register is structured uint16[8]
 ///	with all but first 16 bit value seperated into bytes
+///
+/// @note: The message length corresponds to number of bits.
+///
+/// @details: The outgoing register is structured as follows:
 ///	i16[0]: Message ID [0-65535]
 ///	i16[1]: Message Info
 ///		i8[0] message type [0-255] [see: MessageTypeID]
@@ -238,7 +288,8 @@ void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool i
 ///	i16[x+1]: Footer
 ///		i8[0] [254]
 ///		i8[1] [254]
-/// @note: The message length corresponds to number of bits.
+///
+/// @details: The indexing of the RegUnion is is as follows:
 /// The indexing of the RegUnion is is as follows:
 ///		ui16[0], ui8[0][1]		// id
 ///		ui16[1], ui8[2][3]		// type		arg length
@@ -248,104 +299,89 @@ void Wall_Operation::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool i
 ///		ui16[5], ui8[10][11]   	// arg 7	arg 8
 ///		ui16[6], ui8[12][13]  	// arg 9	arg 10
 ///		ui16[7], ui8[14][15]  	// footer
+///
 /// @param msg_type_enum: The type of the message to be sent.
 /// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
-/// @param msg_arg_lng: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-void Wall_Operation::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_lng)
+/// @param msg_arg_len: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
+void Wall_Operation::sendEthercatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
 
 	// Reset union variables
-	_resetU(sndEM);
+	_uReset(sndEM);
 
-	// Update message id: itterate id and roll over to 1 if max 16 bit value is reached
-	uint16_t msg_id = sndEM.msgID < 65535 ? sndEM.msgID + 1 : 1;
+	// Store new message id
+	_uSetMsgID(sndEM); // in union
 
-	// Store message type info
-	_setupMsgStruct(sndEM, msg_id, msg_type_enum);
-
-	// Store message id
-	_seti16(sndEM, sndEM.msgID); // message id
-
-	// Store message type value
-	_seti8(sndEM, sndEM.msg_tp_val);
+	// Store new message type
+	_uSetMsgType(sndEM, msg_type_enum); // in union
 
 	// 	------------- STORE ARGUMENTS -------------
 
 	// CONFIRM_DONE
 	if (sndEM.msgTp == MessageType::CONFIRM_DONE)
 	{
-		_seti8(sndEM, 4);				 // message argument length
-		_seti16(sndEM, rcvEM.msgID);	 // recieved message id
-		_seti8(sndEM, rcvEM.msg_tp_val); // recieved message type value
+		_uSetArgData(sndEM, rcvEM.msgID);	   // store 16 bit recieved message id
+		_uSetArgData(sndEM, rcvEM.msg_tp_val); // recieved message type value
 	}
 
 	// HANDSHAKE
 	else if (sndEM.msgTp == MessageType::HANDSHAKE)
 	{
-		_seti8(sndEM, 0); // message argument length
+		_uSetArgLength(sndEM, 0); // message argument length to 0
 	}
 
 	// OTHER
 	else
 	{
-		// Store message argument length if provided
-		_seti8(sndEM, msg_arg_lng); // message argument length
-
-		// Store message arguments if provided
-		if (p_msg_arg_data != nullptr)
-			for (size_t i = 0; i < msg_arg_lng; i++)
-				_seti8(sndEM, p_msg_arg_data[i]);
+		_uSetArgLength(sndEM, msg_arg_len); // store message argument length if provided
+		if (p_msg_arg_data != nullptr)		// store message arguments if provided
+			for (size_t i = 0; i < msg_arg_len; i++)
+				_uSetArgData(sndEM, p_msg_arg_data[i]); // store message arguments if provided
 	}
+
+	// Update associated argument variables in struct
+	_uGetArgLength(sndEM);
 
 	// 	------------- FINISH SETUP AND WRITE -------------
 
 	// Store footer
-	_seti8(sndEM, 254);
-	_seti8(sndEM, 254);
+	_uSetFooter(sndEM); // in union
 
 	// Set flag
 	sndEM.isDone = false;
 
 	// Write message
 	for (size_t i = 0; i < 8; i++)
-		ESMA.write_reg_value(i, sndEM.RegU.ui16[i]);
+		ESMA.write_reg_value(i, sndEM.RegU.i16[i]);
 
 	// Print message
 	_DB.printMsgTime("SENT Ecat Message: id=%d type=%s", sndEM.msgID, sndEM.msg_tp_str);
 	_printEcatReg(0, sndEM.RegU); // TEMP
 }
 
-/// <summary>
-/// Used to get incoming ROS ethercat msg data.
-/// </summary>
-/// <returns>Success/error codes [0:no message, 1:new message, 2:error]</returns>
+/// @brief Used to get incoming ROS ethercat msg data.
+///
+/// @return Success/error codes [0:no message, 1:new message, 2:error]
 uint8_t Wall_Operation::getEthercatMessage()
 {
 	bool is_err = false; // error flag
 
-	// Read esmacat buffer and
-	int reg_dat[8];
-	ESMA.get_ecat_registers(reg_dat);
-
-	// Copy data into union
-	_resetU(tmpEM); // reset union variables
-	for (size_t i = 0; i < 8; i++)
-		tmpEM.RegU.ui16[i] = reg_dat[i];
+	// Read esmacat buffer to get register data
+	ESMA.get_ecat_registers(tmpEM.RegU.i16);
 
 	// Skip ethercat setup junk (255)
 	if (tmpEM.RegU.ui8[0] == 255 || tmpEM.RegU.ui8[1] == 255)
 		return 0;
 
-	// Get message id and message type value
-	uint16_t msg_id = _geti16(tmpEM);
-	uint8_t msg_type_val = _geti8(tmpEM);
+	// Get message id
+	_uGetMsgID(tmpEM);
 
 	// Skip redundant messages
-	if (msg_id == rcvEM.msgID)
+	if (tmpEM.msgID == rcvEM.msgID)
 		return 0;
 
-	// Setup message struct which will add message id and type info
-	is_err = _setupMsgStruct(tmpEM, msg_id, msg_type_val);
+	// Get message type and check if valid
+	is_err = _uGetMsgType(tmpEM);
 
 	// Run check error for valid message type
 	_checkErr(tmpEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
@@ -364,16 +400,14 @@ uint8_t Wall_Operation::getEthercatMessage()
 	if (is_err)
 		return 2; // return error flag
 
-	// Get argument length
-	tmpEM.msg_arg_lng = _geti8(tmpEM);
+	// Get argument length and arguments
+	_uGetArgLength(tmpEM);
+	_uGetArgData(tmpEM);
 
-	// Parse 8 bit message arguments
-	if (tmpEM.msg_arg_lng > 0)
-		for (size_t i = 0; i < tmpEM.msg_arg_lng; i++)
-			tmpEM.Arg8[i] = _geti8(tmpEM);
+	// Get and check for footer
+	is_err = _uGetFooter(tmpEM);
 
-	// Check for footer
-	is_err = _geti8(tmpEM) != 254 || _geti8(tmpEM) != 254;
+	// Run check error for valid footer
 	_checkErr(tmpEM, ErrorType::MISSING_FOOTER, is_err);
 	if (is_err)
 		return 2; // return error flag
@@ -384,17 +418,29 @@ uint8_t Wall_Operation::getEthercatMessage()
 	// Copy over data
 	rcvEM = tmpEM;
 
-	// 	------------- PROCESS ARGUMENTS -------------
+	_DB.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
+	_printEcatReg(0, rcvEM.RegU); // TEMP
+
+	// Return new message flag
+	return 1;
+}
+
+/// @brief Used to process new ROS ethercat msg argument data.
+///
+/// @return Success/error codes [0:no message, 1:new message, 2:error]
+uint8_t Wall_Operation::procEthercatArguments()
+{
+	_DB.printMsgTime("PROCESSING Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
 
 	// MOVE_WALLS
 	if (rcvEM.msgTp == MessageType::MOVE_WALLS)
 	{
 
 		// Loop through arguments
-		for (size_t cham_i = 0; cham_i < rcvEM.msg_arg_lng; cham_i++)
+		for (size_t cham_i = 0; cham_i < rcvEM.argLen; cham_i++)
 		{
 			// Get wall byte data
-			uint8_t wall_b = rcvEM.Arg8[cham_i];
+			uint8_t wall_b = rcvEM.ArgU.ui8[cham_i];
 
 			// Get walls to move up and down
 			uint8_t wall_u_b = ~C[cham_i].bitWallPosition & wall_b; // get walls to move up
@@ -409,16 +455,12 @@ uint8_t Wall_Operation::getEthercatMessage()
 			_DB.printMsgTime("\t\t\tdown=%s", _DB.bitIndStr(wall_d_b));
 		}
 	}
-	_DB.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
-	_printEcatReg(0, rcvEM.RegU); // TEMP
 
 	// Return new message flag
 	return 1;
 }
 
-/// <summary>
-/// Used to process incoming ROS Ethercat msg data.
-/// </summary>
+/// @brief Used to exicute incoming ROS Ethercat msg data.
 void Wall_Operation::executeEthercatMessage()
 {
 
@@ -448,26 +490,27 @@ void Wall_Operation::executeEthercatMessage()
 
 //++++++++++++ DATA HANDELING +++++++++++++
 
-/// <summary>
-/// Build @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to store information
-/// related to pin/port and wall mapping for specified functions (i.e., pwm, io, up, down)
-/// Note, these methods are only used in the construtor
-/// </summary>
-/// <param name="r_pms">Reference to PMS to be updated</param>
-/// <param name="p_port_1">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
-/// <param name="p_pin_1">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
+/// @brief Used to create @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to
+/// store information related to pin/port and wall mapping for specified functions
+/// (i.e., pwm, io, up, down)
+///
+/// @note these methods are only used in the construtor
+///
+/// @param r_pms: Reference to PMS to be updated
+/// @param p_port_1: Array of port values from an @ref Wall_Operation::WallMapStruct
+/// @param p_pin_1: Array of pin values from an @ref Wall_Operation::WallMapStruct
 void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
 	_addPinPMS(r_pms, p_port_1, p_pin_1);
 }
-/// <summary>
-/// OVERLOAD:  with option for additional @ref Wall_Operation::WallMapStruct entries used
+
+/// OVERLOAD: option for additional @ref Wall_Operation::WallMapStruct entries used
 /// for creating PMS structs that include pins both up and down (e.g., all IO or all PWM pins)
-/// </summary>
-/// <param name="p_port_2">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
-/// <param name="p_pin_2">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
+///
+/// @param p_port_2: Array of port values from an @ref Wall_Operation::WallMapStruct
+/// @param p_pin_2: Array of pin values from an @ref Wall_Operation::WallMapStruct
 void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
 {
 	_resetPMS(r_pms);
@@ -477,12 +520,11 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 	_addPinPMS(r_pms, p_port_2, p_pin_2);
 }
 
-/// <summary>
 /// Used within @ref Wall_Operation::_makePMS to do the actual work of adding the pin entries to the PMS structs.
-/// </summary>
-/// <param name="r_pms">Reference to PMS to be updated</param>
-/// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct </param>
-/// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct</param>
+///
+/// @param r_pms: Reference to PMS to be updated
+/// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct
+/// @param p_pin: Array of pin values from an @ref Wall_Operation::WallMapStruct
 void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 
@@ -501,12 +543,11 @@ void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t 
 	_sortArr(r_pms.port, 6);
 }
 
-/// <summary>
 /// Used within @ref Wall_Operation::_makePMS to do the actual work of adding the port entries to the PMS structs.
-/// </summary>
-/// <param name="r_pms">Reference to PMS to be updated.</param>
-/// <param name="p_port">Array of port values from an @ref Wall_Operation::WallMapStruct.</param>
-/// <param name="p_pin">Array of pin values from an @ref Wall_Operation::WallMapStruct.</param>
+///
+/// @param r_pms: Reference to PMS to be updated.
+/// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct.
+/// @param p_pin: Array of pin values from an @ref Wall_Operation::WallMapStruct.
 void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
@@ -539,13 +580,12 @@ void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p
 	}
 }
 
-/// <summary>
 /// Sorts array values in assending order
 /// Note, this is used exclusively by the above methods when creating the PMS structs.
-/// </summary>
-/// <param name="p_arr">Array to be sorted</param>
-/// <param name="s">Length of array</param>
-/// <param name="p_co_arr">OPTIONAL: array to be sorted in the same order as "p_arr"</param>
+///
+/// @param p_arr: Array to be sorted
+/// @param s: Length of array
+/// @param p_co_arr: OPTIONAL: array to be sorted in the same order as "p_arr"
 void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 {
 	bool is_sorted = false;
@@ -575,10 +615,9 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 	}
 }
 
-/// <summary>
 /// Resets most entries in a dynamic PMS struct to there default values.
-/// </summary>
-/// <param name="r_pms">Reference to PMS struct to be reset</param>
+///
+/// @param r_pms: Reference to PMS struct to be reset
 void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
 {
 	r_pms.nPorts = 0;
@@ -596,12 +635,11 @@ void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
 	}
 }
 
-/// <summary>
 /// Updates dynamic PMS structs based on new wall configuration input.
-/// </summary>
-/// <param name="r_pms1">PMS struct to use as the basis for entries in "r_pms2"</param>
-/// <param name="r_pms2">Reference to a PMS struct to update</param>
-/// <param name="wall_byte_mask">Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.</param>
+///
+/// @param r_pms1: PMS struct to use as the basis for entries in "r_pms2"
+/// @param r_pms2: Reference to a PMS struct to update
+/// @param wall_byte_mask: Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.
 void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2, uint8_t wall_byte_mask)
 {
 	for (size_t prt_i = 0; prt_i < r_pms1.nPorts; prt_i++)
@@ -638,11 +676,9 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 
 //++++++++++++ SETUP METHODS +++++++++++++
 
-/// <summary>
-/// Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
+/// @brief Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
 /// the wall states and errors
-/// <param name="do_full_reset">reset all variables</param>
-/// </summary>
+/// @param do_full_reset: reset all variables
 void Wall_Operation::resetMaze(uint8_t do_full_reset)
 {
 	uint8_t resp = 0;
@@ -697,14 +733,14 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 		_DB.printMsgTime("SETUP Maze Complete");
 }
 
-/// /// <summary>
-/// Setup IO pins for each chamber including the pin direction (input) a
+/// @brief Setup IO pins for each chamber including the pin direction (input) a
 /// and the type of drive mode (high impedance).
-/// Note, have to do some silly stuff with the output pins as well based on
+///
+/// @note have to do some silly stuff with the output pins as well based on
 /// page 11 of the Cypress datasheet "To  allow  input  operations  without
 /// reconfiguration, these registers [output] have to store �1�s."
-/// </summary>
-/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
+///
+/// @return method output from @ref Cypress_Com::method.
 uint8_t Wall_Operation::_setupCypressIO()
 {
 	_DB.printMsgTime("Running IO pin setup");
@@ -744,13 +780,12 @@ uint8_t Wall_Operation::_setupCypressIO()
 	return resp;
 }
 
-/// <summary>
-/// Setup PWM pins for each chamber including the specifying them as PWM outputs
+/// @brief Setup PWM pins for each chamber including the specifying them as PWM outputs
 /// and also detting the drive mode to "Strong Drive". This also sets up the PWM
 /// Source using @ref Cypress_Com::setupSourcePWM()
-/// </summary>
-/// <param name="pwm_duty">Duty cycle for the pwm [0-255]</param>
-/// <returns>Wire::method output from @ref Cypress_Com::method.</returns>
+///
+/// @param pwm_duty: Duty cycle for the pwm [0-255]
+/// @return Wire::method output from @ref Cypress_Com::method.
 uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
 {
 	_DB.printMsgTime("Running PWM setup");
@@ -785,11 +820,10 @@ uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
 	return resp;
 }
 
-/// <summary>
-/// Test up and down movment using @ref Wall_Operation::setWallCmdManual()
+/// @brief Test up and down movment using @ref Wall_Operation::setWallCmdManual()
 /// and @ref Wall_Operation::moveWalls()
-/// <returns>Success/error codes from @ref Wall_Operation::moveWalls().</returns>
-/// </summary>
+/// @return Success/error codes from @ref Wall_Operation::moveWalls().
+///
 uint8_t Wall_Operation::_setupWalls()
 {
 	_DB.printMsgTime("Running wall initialization");
@@ -818,19 +852,17 @@ uint8_t Wall_Operation::_setupWalls()
 
 //+++++++++++++ RUNTIME METHODS ++++++++++++++
 
-/// <summary>
-/// Option to speicify a given set of walls to move programmatically as an
+/// @brief Option to specify a given set of walls to move programmatically as an
 /// alternative to @ref Wall_Operation::getWallCmdSerial.
-/// Note, this function updates the byte mask specifying which walls should be up
-/// </summary>
-/// <param name="cham_i"> Index of the chamber to set [0-48]</param>
-/// <param name="bit_val_set"> Value to set the bits to [0,1]. DEFAULT[1].</param>
-/// <param name="p_wall_inc">OPTIONAL: Pointer array specifying wall numbers for walls to move [0-7] max 8 entries. DEFAULT:[all walls]</param>
-/// <param name="s">OPTIONAL: Length of "p_wall_inc". DEFAULT:[8] </param>
-/// <returns>Success/error codes [0:success, -1=255:input argument error]</returns>
-/// <example>
-/// Here's an example of how to use setWallCmdManual:
-/// <code>
+/// Note, this function updates the byte mask specifying which walls should be up.
+/// @param cham_i Index of the chamber to set [0-48].
+/// @param bit_val_set Value to set the bits to [0,1]. DEFAULT[1].
+/// @param p_wall_inc OPTIONAL: Pointer array specifying wall numbers for walls to move [0-7] max 8 entries. DEFAULT:[all walls].
+/// @param s OPTIONAL: Length of "p_wall_inc". DEFAULT:[8].
+/// @return Success/error codes [0:success, -1=255:input argument error].
+///
+/// @details Here's an example of how to use setWallCmdManual:
+/// @code
 /// cham_i = 0; //index of the chamber
 /// uint8_t bit_val_set = 1; //set walls to move up
 /// uint8_t s = 3; //number of walls
@@ -841,8 +873,7 @@ uint8_t Wall_Operation::_setupWalls()
 /// Wall_Operation::setWallCmdManual(cham_i, 0, p_wall_inc, s); //this will lower all the walls specified in "p_wall_inc"
 /// Wall_Operation::W_OPR.setWallCmdManual(0, 0); //this will lower all walls in chamber 0
 /// Wall_Operation::moveWalls(); //note that @ref Wall_Operation::moveWalls() must be run after all settings complete
-/// </code>
-/// </example>
+/// @endcode
 uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, uint8_t p_wall_inc[], uint8_t s)
 {
 	if (s > 8)
@@ -877,15 +908,14 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	return 0;
 }
 
-/// <summary>
-/// Option to change the PWM duty cycle for a given wall.
-/// Note, this is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
-/// Could be useful if some walls are running at different speeds.
-/// </summary>
-/// <param name="cham_i">Index of the chamber to set [0-48]</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Option to change the PWM duty cycle for a given wall.
+/// @note This is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
+/// @note Could be useful if some walls are running at different speeds.
+///
+/// @param cham_i: Index of the chamber to set [0-48]
+/// @param source: Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
+/// @param duty: PWM duty cycle [0-255].
+/// @return Wire::method output [0-4] or [-1=255:input argument error].
 uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
 {
 	if (cham_i > 48 || wall_i > 7 || duty > 255)
@@ -894,13 +924,12 @@ uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_
 	return resp;
 }
 
-/// <summary>
-/// The main workhorse of the class, which mannages initiating and compleating
+/// @brief The main workhorse of the class, which mannages initiating and compleating
 /// the wall movement for all active chambers based on either
 /// @ref Wall_Operation::getWallCmdSerial or @ref Wall_Operation::getWallCmdSerial.
-/// </summary>
-/// <param name="dt_timout">Time to attemp movement (ms) DEFAULT:[1000]</param>
-/// <returns>Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]</returns>
+///
+/// @param dt_timout: Time to attemp movement (ms) DEFAULT:[1000]
+/// @return Success/error codes [0:success, 1:fail:unspecified, 2:fail:i2c, 3:fail:timeout]
 uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
 	// Local vars// TEMP COMMIT TEST
@@ -1042,6 +1071,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 								 run_error == 1 ? "i2c" : run_error == 2 ? "timedout"
 																		 : "unknown",
 								 _DB.dtTrack());
+				/// @todo  set error flag for sepcific chamber/wall
 				// TEMP bitWrite(C[cham_i].bitWallErrorFlag, wall_n, 1); // set chamber/wall specific error flag
 			}
 		}
@@ -1056,10 +1086,9 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	return run_error; // return error
 }
 
-/// <summary>
-/// Sends a command to stop all walls by setting all PWM outputs to zero.
-/// </summary>
-/// <returns>Wire::method output [0-4].</returns>
+/// @brief  a command to stop all walls by setting all PWM outputs to zero.
+///
+/// @return Wire::method output [0-4].
 uint8_t Wall_Operation::forceStopWalls()
 {
 	uint8_t resp = 0;
@@ -1075,26 +1104,20 @@ uint8_t Wall_Operation::forceStopWalls()
 
 //+++++++ TESTING AND DEBUGGING METHODS ++++++++
 
-/// <summary>
-/// Used for testing the limit switch IO pins on a given Cypress chip.
-/// Note, this will loop indefinaitely. Best to put this in the Arduino
-/// Setup() function.
-/// </summary>
-/// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
-/// <param name="p_wall_inc">OPTIONAL: pointer array specifying wall index/number for wall(s) to test [0-7] max 8 entries. DEFAULT:[all walls]</param>
-/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-/// <example>
-/// Here's an example of how to use testWallIO:
-/// <code>
-/// cham_i = 0; //index of the chamber
-/// uint8_t s = 3; //number of walls
-/// uint8_t p_wall_inc[s] = {0, 2, 5}; //array with wall numbers to move
-/// Wall_Operation::testWallIO(cham_i, a_wall, s); //this can be run more than once to setup multiple chambers
-/// Wall_Operation::testWallIO(0); //this will test all walls in chamber 0
-/// </code>
-/// Mannually trigger switches to test there function
-/// </example>
+/// @brief Used for testing the limit switch IO pins on a given Cypress chip.
+/// @details This will loop indefinitely. Best to put this in the Arduino Setup() function.
+///
+/// @param cham_i Index/number of the chamber to set [0-48]
+/// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: [all walls]
+/// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: [8]
+/// @return Wire::method output [0-4] or [-1=255: input argument error].
+///
+/// @example Here's an example of how to use testWallIO
+/// uint8_t cham_i = 0; // Index of the chamber
+/// uint8_t s = 3; // Number of walls
+/// uint8_t p_wall_inc[s] = {0, 2, 5}; // Array with wall numbers to move
+/// Wall_Operation::testWallIO(cham_i, a_wall, s); // This can be run more than once to setup multiple chambers
+/// Wall_Operation::testWallIO(0); // This will test all walls in chamber 0
 uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
 {
 	if (cham_i > 48 || s > 8)
@@ -1144,17 +1167,16 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 	return resp;
 }
 
-/// <summary>
-/// Used for testing the motor PWM outputs for a given Cypress chip.
-/// Note, best to put this in the Arduino  Setup() function.
-/// </summary>
-/// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
-/// <param name="p_wall_inc">OPTIONAL: pointer array specifying wall index/number for wall(s) to test [0-7] max 8 entries. DEFAULT:[all walls]</param>
-/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-/// <example>
+/// @brief Used for testing the motor PWM outputs for a given Cypress chip.
+/// @details Note, best to put this in the Arduino Setup() function.
+///
+/// @param cham_i Index/number of the chamber to set [0-48]
+/// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: [all walls]
+/// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: [8]
+/// @return Wire::method output [0-4] or [-1=255: input argument error].
+///
 /// @see Wall_Operation::testWallIO()
-/// </example>
+/// @example Refer to the example provided in @ref Wall_Operation::testWallIO().
 uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s, uint32_t dt_run)
 {
 	if (cham_i > 48 || s > 8)
@@ -1197,17 +1219,16 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 	return resp;
 }
 
-/// <summary>
-/// Used for testing the overal wall module function for a given Cypress chip.
-/// Note, best to put this in the Arduino  Setup() function.
-/// </summary>
-/// <param name="cham_i">Index/number of the chamber to set [0-48]</param>
-/// <param name="p_wall_inc">OPTIONAL: pointer array specifying wall index/number for wall(s) to test [0-7] max 8 entries. DEFAULT:[all walls]</param>
-/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-/// <example>
+/// @brief Used for testing the overall wall module function for a given Cypress chip.
+/// @details Note, best to put this in the Arduino Setup() function.
+///
+/// @param cham_i Index/number of the chamber to set [0-48]
+/// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: [all walls]
+/// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: [8]
+/// @return Wire::method output [0-4] or [-1=255: input argument error].
+///
 /// @see Wall_Operation::testWallIO()
-/// </example>
+/// @example Refer to the example provided in @ref Wall_Operation::testWallIO().
 uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
 {
 	if (cham_i > 48 || s > 8)
@@ -1297,11 +1318,10 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 	return resp;
 }
 
-/// <summary>
-/// Used for debugging to print out all fields of a PMS struct.
-/// </summary>
-/// <param name="p_wall_inc">OPTIONAL: [0-7] max 8 entries. DEFAULT:[all walls] </param>
-/// <param name="s">OPTIONAL: length of "p_wall_inc" array. DEFAULT:[8] </param>
+/// @brief Used for debugging to print out all fields of a PMS struct.
+///
+/// @param p_wall_inc: OPTIONAL: [0-7] max 8 entries. DEFAULT:[all walls]
+/// @param s: OPTIONAL: length of @param p_wall_inc array. DEFAULT:[8]
 void Wall_Operation::printPMS(PinMapStruct pms)
 {
 	char buff[250];

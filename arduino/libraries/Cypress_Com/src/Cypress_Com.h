@@ -17,8 +17,6 @@
 #include "Cypress_Com_Base.h"
 #include "Maze_Debug.h"
 
-// TEMP COMMIT TEST
-
 /// <summary>
 /// This class handles all of the Cypress chip I2C comms.
 /// </summary>

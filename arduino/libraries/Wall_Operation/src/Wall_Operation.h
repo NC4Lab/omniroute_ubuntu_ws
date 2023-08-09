@@ -124,32 +124,71 @@ public:
 		MESSAGE_ID_DISORDERED = 1,
 		NO_MESSAGE_TYPE_MATCH = 2,
 		REGISTER_LEFTOVERS = 3,
-		MISSING_FOOTER = 4
+		MISSING_FOOTER = 4,
+		N_ErrorType
 	};
 
 	union RegUnion
 	{					  ///< union for storing ethercat 8 16-bit reg entries, shareable accross 16 and 16 8 bit data types
 		byte ui8[16];	  ///< (byte) 1 byte
+		int i16[8];		  ///< (int) 2 byte
 		uint16_t ui16[8]; ///< (uint16_t) 2 byte
 		uint64_t ui64[2]; ///< (uint64_t) 8 byte
 	};
-	RegUnion U; ///< union for storing ethercat 8 16-bit reg entries
+
+	struct UIndStruct ///< union index struct for tracking 8 and 16 bit set and get indexes
+	{
+		uint8_t i8 = 0;	 ///< 8 bit index
+		uint8_t i16 = 0; ///< 16 bit index
+
+		/// @brief Update union 8 bit and 16 bit index
+		/// @return Last updated 8 bit index
+		uint8_t upd8(uint8_t b_i = 255)
+		{
+			b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
+			i8 = b_i + 1;
+			i16 = i8 / 2;
+			return b_i;
+		}
+
+		/// @brief Update union 16 bit and 8 bit index
+		/// @return Last updated 16 bit index
+		uint8_t upd16(uint8_t b_i = 255)
+		{
+			b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
+			i16 = b_i + 1;
+			i8 = i16 * 2;
+			return b_i;
+		}
+
+		/// @brief Reset union 8 bit and 16 bit index
+		void reset()
+		{
+			i8 = 0;
+			i16 = 0;
+		}
+	};
 
 	struct EcatMessageStruct ///< class for handeling ethercat messages
 	{
-		int msgDt = 10;							   ///< delay between message send/write (ms)
-		uint16_t msgID = 0;							   ///< Ethercat message ID
+		RegUnion RegU;	  ///< Union for storing ethercat 8 16-bit reg entries
+		UIndStruct getUI; ///< Union index handler for getting union data
+		UIndStruct setUI; ///< Union index handler for getting union data
+
+		uint16_t msgID = 0;						   ///< Ethercat message ID
 		MessageType msgTp = MessageType::MSG_NONE; ///< Ethercat message error
-		ErrorType errTp = ErrorType::ERROR_NONE;   ///< Ethercat message error
-		char msg_tp_str[50] = {0};				   ///< Ethercat message type string
-		char err_tp_str[50] = {0};				   ///< Ethercat error type string
-		uint8_t msg_tp_val = 0;					   ///< Ethercat message type value
-		uint8_t msg_arg_lng = 0;				   ///< Ethercat message argument length in bytes
-		uint8_t Arg8[10] = {0};					   ///< Ethercat message arguments (8 bit)
-		RegUnion RegU;							   ///< Union for storing ethercat 8 16-bit reg entries
-		uint8_t u8i = 0;						   ///< index for RegUnion.ui8[16]
-		uint8_t u16i = 0;						   ///< index for RegUnion.ui16[8]
-		bool isDone = false;					   ///< flag for message exicution completion
+		uint8_t msgFoot[2] = {0};				   ///< Ethercat message footer [254,254]
+
+		uint8_t argLen = 0; ///< Ethercat number of 8 bit message arguments
+		RegUnion ArgU;		///< Union for storing message arguments
+		UIndStruct argUI;	///< Union index handler for argument union data
+
+		ErrorType errTp = ErrorType::ERROR_NONE; ///< Ethercat message error
+		char msg_tp_str[50] = {0};				 ///< Ethercat message type string
+		char err_tp_str[50] = {0};				 ///< Ethercat error type string
+		uint8_t msg_tp_val = 0;					 ///< Ethercat message type value
+
+		bool isDone = false; ///< flag for message exicution completion
 	};
 	EcatMessageStruct sndEM; ///<  initialize message handler instance for sending messages
 	EcatMessageStruct rcvEM; ///<  initialize message handler instance for receiving messages
@@ -166,36 +205,44 @@ public:
 	Wall_Operation(uint8_t, uint8_t, uint8_t = 1);
 
 private:
-	void _resetU(EcatMessageStruct &);
+	void _uSetMsgID(EcatMessageStruct &, uint16_t = 255);
+	void _uGetMsgID(EcatMessageStruct &);
 
 private:
-	void _seti8(EcatMessageStruct &, uint8_t);
+	void _uSetMsgType(EcatMessageStruct &, MessageType);
+	bool _uGetMsgType(EcatMessageStruct &);
 
 private:
-	void _seti16(EcatMessageStruct &, uint16_t);
+	void _uSetArgLength(EcatMessageStruct &, uint8_t);
+	void _uGetArgLength(EcatMessageStruct &);
 
 private:
-	uint8_t _geti8(EcatMessageStruct &);
+	void _uSetArgData(EcatMessageStruct &, uint8_t);
+	void _uSetArgData(EcatMessageStruct &, uint16_t);
+	void _uGetArgData(EcatMessageStruct &);
 
 private:
-	uint16_t _geti16(EcatMessageStruct &);
+	void _uSetFooter(EcatMessageStruct &);
+	bool _uGetFooter(EcatMessageStruct &);
+
+private:
+	void _uReset(EcatMessageStruct &);
+
+private:
+	void _checkErr(EcatMessageStruct &, ErrorType, bool);
 
 private:
 	void _printEcatReg(uint8_t, int[] = nullptr);
 	void _printEcatReg(uint8_t, RegUnion);
-
-private:
-	bool _setupMsgStruct(EcatMessageStruct &, uint16_t, MessageType);
-	bool _setupMsgStruct(EcatMessageStruct &, uint16_t, uint8_t);
-
-private:
-	void _checkErr(EcatMessageStruct &, ErrorType, bool);
 
 public:
 	void sendEthercatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
 
 public:
 	uint8_t getEthercatMessage();
+
+public:
+	uint8_t procEthercatArguments();
 
 public:
 	void executeEthercatMessage();
