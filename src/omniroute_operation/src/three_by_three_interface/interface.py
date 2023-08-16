@@ -58,26 +58,27 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 def rospyLogCol(level, msg, *args):
     """ Log to ROS in color """
 
+    def frmt_msg(color, msg, *args):
+        colored_message = f"{color}{msg}{Style.RESET_ALL}"
+        # Use unpacking to directly pass the arguments to the formatted string
+        return colored_message % args
+
     # Exit if DB_VERBOSE is false
     if not DB_VERBOSE:
         return
-
-    # Define colors relative to level string argument
+    
+    # Log message by type and color to ROS
     if level == 'ERROR':
-        color = Fore.RED
+        rospy.logerr(frmt_msg(Fore.RED, msg, *args))
     elif level == 'WARNING':
-        color = Fore.YELLOW
+        rospy.logwarn(frmt_msg(Fore.YELLOW, msg, *args))
     elif level == 'INFO':
-        color = Fore.BLUE
-    elif level == 'HIGHLIGHT':
-        color = Fore.GREEN
+        rospy.loginfo(frmt_msg(Fore.BLUE, msg, *args))
+    elif level == 'DEBUG':
+        rospy.logdebug(frmt_msg(Fore.GREEN, msg, *args))
     else:
-        color = Fore.BLACK
+        rospy.loginfo(frmt_msg(Fore.BLACK, msg, *args))
 
-    # Format and log message
-    colored_message = f"{color}{msg}{Style.RESET_ALL}"
-    formatted_message = colored_message % args
-    rospy.loginfo(formatted_message)
 
 #======================== GLOBAL CLASSES ========================
 
