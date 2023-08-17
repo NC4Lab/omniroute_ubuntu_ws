@@ -25,8 +25,7 @@ bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
-uint8_t resp = 0;	   ///< capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-uint8_t nCham = 2;	   ///< number of chambers being used [1-49]
+uint8_t nCham = 1;	   ///< number of chambers being used [1-49]
 uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
@@ -67,7 +66,7 @@ void loop()
 {
 
 	// Check ethercat coms
-	resp = WallOper.EsmaCom.getEcatMessage();
+	WallOper.EsmaCom.getEcatMessage();
 
 	// // TEMP
 	// int dt = 1000;
@@ -89,8 +88,7 @@ void loop()
 	// }
 
 	// Process and exicute ethercat arguments
-	if (resp == 1) // check for new message
-		WallOper.procEcatArguments();
+	WallOper.procEcatArguments();
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

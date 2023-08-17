@@ -20,7 +20,8 @@ class Esmacat_Com
 
     // ---------VARIABLES-----------------
 public:
-    uint8_t isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
+    bool isMessageNew = false; ///< flag to track new message
+    bool isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
 
     const char message_type_str[8][30] = {
         "MSG_NONE",
@@ -93,8 +94,6 @@ public:
         char msg_tp_str[50] = {0};               ///< Ethercat message type string
         char err_tp_str[50] = {0};               ///< Ethercat error type string
         uint8_t msg_tp_val = 0;                  ///< Ethercat message type value
-
-        bool isDone = false; ///< flag for message exicution completion
     };
     EcatMessageStruct sndEM; ///<  initialize message handler instance for sending messages
     EcatMessageStruct rcvEM; ///<  initialize message handler instance for receiving messages
@@ -143,7 +142,7 @@ public:
     void sendEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
 
 public:
-    uint8_t getEcatMessage();
+    void getEcatMessage();
 
 private:
     void _printEcatReg(uint8_t, int[] = nullptr);

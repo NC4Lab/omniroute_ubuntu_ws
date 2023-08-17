@@ -96,7 +96,7 @@ public:
 	Wall_Operation(uint8_t, uint8_t);
 
 public:
-	uint8_t procEcatArguments();
+	void procEcatArguments();
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);

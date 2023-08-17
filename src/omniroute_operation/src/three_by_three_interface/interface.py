@@ -380,6 +380,9 @@ class Esmacat_Com:
     # Handshake finished flag
     isHandshakeDone = False
 
+    # Message received flag
+    isMessageNew = False
+
     #------------------------ NESTED CLASSES ------------------------
 
     class RegUnion(ctypes.Union):
@@ -427,7 +430,6 @@ class Esmacat_Com:
             self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
             self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
             self.errTp = ErrorType.ERROR_NONE
-            self.isDone = False
     
     def __init__(self):
 
@@ -609,6 +611,11 @@ class Esmacat_Com:
     def msgReset(self):
         """Reset all message structs."""
 
+        # Reset message union data and indeces
+        self._uReset(self.sndEM)
+        self._uReset(self.tmpEM)
+        self._uReset(self.rcvEM)
+
         # Reset message counters
         self.sndEM.msgID = 0
         self.tmpEM.msgID = 0
@@ -652,15 +659,12 @@ class Esmacat_Com:
                 for i in range(msg_arg_len):
                     self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
             else:
-                self._uSetArgLength(self.sndEM, msg_arg_len)  # just store arg length which should be 0
+                self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
 
         # 	------------- Finish setup and write -------------
 
         # Store footer
         self._uSetFooter(self.sndEM)
-
-        # Set flag
-        self.sndEM.isDone = False
 
          # Store Union 16-bit values cast as signed and publish to ease_registers topic
         reg_arr = [0] * 8
@@ -679,11 +683,13 @@ class Esmacat_Com:
 
         Args:
             reg_arr (list): Array of length 8 from the ethercat register.
-        
-        Returns:
-            int: Success/error codes [0:no message, 1:new message, 2:error]
         """
+
         is_err = False  # error flag
+
+        # Bail if previous message not processed
+        if self.isMessageNew:
+            return 0
 
          # Copy register data into union
         self._uReset(self.sndEM) # reset union variables
@@ -736,11 +742,11 @@ class Esmacat_Com:
         if is_err:
             return 2  # return error flag
 
-        # Set flag
-        self.tmpEM.isDone = False
-
         # Copy over data
         self.rcvEM = self.tmpEM
+
+        # Set new message flag
+        self.isMessageNew = True
 
         # Print message
         rospyLogCol('INFO', "RECEIVED Ecat Message: id=%d type=%s",
@@ -965,6 +971,9 @@ class Interface(Plugin):
 
                 # Send START_SESSION message
                 self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
+
+        # Reset new message flag
+        self.EsmaCom_A0.isMessageNew = False
     
     #------------------------ CALLBACKS: ROS ------------------------
 
@@ -993,17 +1002,15 @@ class Interface(Plugin):
             ui16_arr[i] = ctypes.c_uint16(si16_arr[i]).value
 
         # Parse the message and check if its new
-        if self.EsmaCom_A0.parseEcatMessage(ui16_arr) != 1:
-            return
-        
-        # Process the message arguments
-        self.procEcatArguments()
-                
-        # Emit signal to update UI as UI should not be updated from a non-main thread
-        # TEMP self.signal_Esmacat_read_maze_ard0_ease.emit()
+        if self.EsmaCom_A0.parseEcatMessage(ui16_arr) == 1:
+            # Emit signal to process new message and update UI as UI should not be updated from a non-main thread
+            self.signal_Esmacat_read_maze_ard0_ease.emit()           
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
         """ Signal callback for Esmacat_read_maze_ard0_ease topic """
+
+        # Process new message arguments
+        self.procEcatArguments()
 
     #------------------------ CALLBACKS: Timers ------------------------
 
@@ -1122,8 +1129,7 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.sendEcatMessage(
-            MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
+        self.EsmaCom_A0.sendEcatMessage(MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""

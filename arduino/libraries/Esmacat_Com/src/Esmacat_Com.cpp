@@ -149,6 +149,7 @@ void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
     r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8;
     _uGetArgData8(r_EM); // copy from union to associated struct variable
 }
+
 /// @brief Set 16-bit message argument data and length entries in union
 ///
 /// @note calls @ref Esmacat_Com::_uSetArgLength
@@ -237,6 +238,11 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_e
 /// @brief: Reset all message structs.
 void Esmacat_Com::msgReset()
 {
+    // Reset message union data and indeces
+    _uReset(sndEM);
+    _uReset(tmpEM);
+    _uReset(rcvEM);
+
     // Reset message counters
     sndEM.msgID = 0;
     tmpEM.msgID = 0;
@@ -308,16 +314,13 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
             for (size_t i = 0; i < msg_arg_len; i++)
                 _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
         else
-            _uSetArgLength(sndEM, msg_arg_len); // just store arg length which should be 0
+            _uSetArgLength(sndEM, 0); // set arg length to 0
     }
 
     // 	------------- Finish setup and write -------------
 
     // Store footer
     _uSetFooter(sndEM); // in union
-
-    // Set flag
-    sndEM.isDone = false;
 
     // Write message
     for (size_t i = 0; i < 8; i++)
@@ -329,55 +332,62 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
-///
-/// @return Success/error codes [0:no message, 1:new message, 2:error]
-uint8_t Esmacat_Com::getEcatMessage()
+void Esmacat_Com::getEcatMessage()
 {
     bool is_err = false; // error flag
+
+    // Bail if previous message not processed
+    if (isMessageNew)
+        return;
 
     // Read esmacat buffer to get register data
     _ESMA.get_ecat_registers(tmpEM.RegU.i16);
 
+    //     // TEMP
+    // static bool is_run = false;
+    // if (isHandshakeDone && !is_run)
+    // {
+    //     _Dbg.printMsgTime("DEBUGGING!!!!!!!!!!!!!!!!!!!");
+    //     _printEcatReg(0, tmpEM.RegU); // TEMP
+    //     is_run = true;
+    // }
+
     // Skip ethercat setup junk (255)
     if (tmpEM.RegU.ui8[0] == 255 || tmpEM.RegU.ui8[1] == 255)
-        return 0;
+        return;
 
     // Get message id
     _uGetMsgID(tmpEM);
 
     // Skip redundant messages
     if (tmpEM.msgID == rcvEM.msgID)
-        return 0;
+        return;
 
     // Get message type and check if valid
     is_err = _uGetMsgType(tmpEM);
 
-    // // TEMP
-    // static bool is_run = false;
-    // if (isHandshakeDone && !is_run)
-    // {
-    //     _Dbg.printMsgTime("DEBUGGING!!!!!!!!!!!!!!!!!!!");
-    //     _printEcatReg(0, rcvEM.RegU); // TEMP
-    //     is_run = true;
-    // }
+    // Skip end session message if handshake not done
+    if (!isHandshakeDone &&
+        tmpEM.msgTp == MessageType::END_SESSION) // end session message still in buffer
+        return;
 
     // Run check error for valid message type
     _checkErr(tmpEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
     if (is_err)
-        return 2; // return error flag
+        return; 
 
     // Check if message is preceding handshake
     is_err = !isHandshakeDone &&
              (tmpEM.msgTp != MessageType::HANDSHAKE || tmpEM.msgID > 1);
     _checkErr(tmpEM, ErrorType::REGISTER_LEFTOVERS, is_err);
     if (is_err)
-        return 2; // return error flag
+        return; 
 
     // Check for skipped or out of sequence messages
     is_err = tmpEM.msgID - rcvEM.msgID != 1;
     _checkErr(tmpEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
     if (is_err)
-        return 2; // return error flag
+        return; 
 
     // Get argument length and argument data
     _uGetArgData8(tmpEM);
@@ -388,19 +398,17 @@ uint8_t Esmacat_Com::getEcatMessage()
     // Run check error for valid footer
     _checkErr(tmpEM, ErrorType::MISSING_FOOTER, is_err);
     if (is_err)
-        return 2; // return error flag
-
-    // Set flag
-    tmpEM.isDone = false;
+        return; 
 
     // Copy over data
     rcvEM = tmpEM;
 
+    // Set new message flag
+    isMessageNew = true;
+
     _Dbg.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(0, rcvEM.RegU); // TEMP
 
-    // Return new message flag
-    return 1;
 }
 
 /// @brief Overloaded function for printing Ethercat register values.
