@@ -389,7 +389,7 @@ class Esmacat_Com:
                     ("i16", ctypes.c_int16 * 8),
                     ("ui64", ctypes.c_uint64 * 2)]
     
-    class UIndStruct:
+    class UnionIndStruct:
         """ Struct for storing ethercat data shareable accross 8 and 16-bit data types """
         def __init__(self):
             self.i8 = 0  # 8-bit index
@@ -418,14 +418,14 @@ class Esmacat_Com:
         """ Struct for storing ethercat messages """
         def __init__(self):
             self.RegU = Esmacat_Com.RegUnion()    # Union for storing ethercat 8 16-bit reg entries
-            self.getUI = Esmacat_Com.UIndStruct() # Union index handler for getting union data
-            self.setUI = Esmacat_Com.UIndStruct() # Union index handler for getting union data
+            self.getUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
+            self.setUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
             self.msgID = 0
             self.msgTp = MessageType.MSG_NONE
             self.msgFoot = [0, 0]
             self.argLen = 0
             self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
-            self.argUI = Esmacat_Com.UIndStruct() # Union index handler for argument union data
+            self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
             self.errTp = ErrorType.ERROR_NONE
             self.isDone = False
     
@@ -639,18 +639,22 @@ class Esmacat_Com:
         # Store new message type
         self._uSetMsgType(self.sndEM, msg_type_enum)
 
-        # Store arguments based on the message type
+        # 	------------- Store arguments -------------
+
+        # CONFIRM_DONE
         if self.sndEM.msgTp == MessageType.CONFIRM_DONE:
             self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16-bit received message id
             self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
 
+        # OTHER
         else:
             if msg_arg_data_arr is not None:  # store message arguments if provided
                 for i in range(msg_arg_len):
                     self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
+            else:
+                self._uSetArgLength(self.sndEM, msg_arg_len)  # just store arg length which should be 0
 
-        # Update associated argument variables in struct
-        self._uGetArgLength(self.sndEM)
+        # 	------------- Finish setup and write -------------
 
         # Store footer
         self._uSetFooter(self.sndEM)

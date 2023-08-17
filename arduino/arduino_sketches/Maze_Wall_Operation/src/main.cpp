@@ -69,12 +69,12 @@ void loop()
 	// Check ethercat coms
 	resp = WallOper.EsmaCom.getEcatMessage();
 
-	// TEMP
-	int dt = 1000;
-	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
-	delay(dt);
-	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
-	delay(dt);
+	// // TEMP
+	// int dt = 1000;
+	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
+	// delay(dt);
+	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
+	// delay(dt);
 
 	// // TEMP
 	// if (resp != 1)

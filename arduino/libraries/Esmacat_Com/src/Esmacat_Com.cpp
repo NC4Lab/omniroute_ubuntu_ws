@@ -23,7 +23,7 @@ Esmacat_Com::Esmacat_Com()
 
 /// @brief Update union 8 bit and 16 bit index
 /// @return Last updated 8 bit index
-uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
+uint8_t Esmacat_Com::UnionIndStruct::upd8(uint8_t b_i)
 {
     //_Dbg.printMsgTime("\t\t\t upd8: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i8 : b_i; // if b_i is 255, use current union index
@@ -34,7 +34,7 @@ uint8_t Esmacat_Com::UIndStruct::upd8(uint8_t b_i)
 
 /// @brief Update union 16 bit and 8 bit index
 /// @return Last updated 16 bit index
-uint8_t Esmacat_Com::UIndStruct::upd16(uint8_t b_i)
+uint8_t Esmacat_Com::UnionIndStruct::upd16(uint8_t b_i)
 {
     //_Dbg.printMsgTime("\t\t\t upd16: i8=%d, i16=%d b_i=%d", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? i16 : b_i; // if b_i is 255, use current union index
@@ -44,7 +44,7 @@ uint8_t Esmacat_Com::UIndStruct::upd16(uint8_t b_i)
 }
 
 /// @brief Reset union 8 bit and 16 bit index
-void Esmacat_Com::UIndStruct::reset()
+void Esmacat_Com::UnionIndStruct::reset()
 {
     i8 = 0;
     i16 = 0;
@@ -292,7 +292,7 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
     // Store new message type
     _uSetMsgType(sndEM, msg_type_enum); // in union
 
-    // 	------------- STORE ARGUMENTS -------------
+    // 	------------- Store arguments -------------
 
     // CONFIRM_DONE
     if (sndEM.msgTp == MessageType::CONFIRM_DONE)
@@ -308,10 +308,10 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
             for (size_t i = 0; i < msg_arg_len; i++)
                 _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
         else
-            _uSetArgData8(sndEM, 0); // store message arguments if provided
+            _uSetArgLength(sndEM, msg_arg_len); // just store arg length which should be 0
     }
 
-    // 	------------- FINISH SETUP AND WRITE -------------
+    // 	------------- Finish setup and write -------------
 
     // Store footer
     _uSetFooter(sndEM); // in union

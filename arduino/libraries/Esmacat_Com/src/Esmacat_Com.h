@@ -65,7 +65,7 @@ public:
         uint64_t ui64[2]; ///< (uint64_t) 8 byte
     };
 
-    struct UIndStruct ///< union index struct for tracking 8 and 16 bit set and get indexes
+    struct UnionIndStruct ///< union index struct for tracking 8 and 16 bit set and get indexes
     {
         uint8_t i8 = 0;  ///< 8 bit index
         uint8_t i16 = 0; ///< 16 bit index
@@ -78,8 +78,8 @@ public:
     struct EcatMessageStruct ///< class for handeling ethercat messages
     {
         RegUnion RegU;    ///< Union for storing ethercat 8 16-bit reg entries
-        UIndStruct getUI; ///< Union index handler for getting union data
-        UIndStruct setUI; ///< Union index handler for getting union data
+        UnionIndStruct getUI; ///< Union index handler for getting union data
+        UnionIndStruct setUI; ///< Union index handler for getting union data
 
         uint16_t msgID = 0;                        ///< Ethercat message ID
         MessageType msgTp = MessageType::MSG_NONE; ///< Ethercat message error
@@ -87,7 +87,7 @@ public:
 
         uint8_t argLen = 0; ///< Ethercat number of 8 bit message arguments
         RegUnion ArgU;      ///< Union for storing message arguments
-        UIndStruct argUI;   ///< Union index handler for argument union data
+        UnionIndStruct argUI;   ///< Union index handler for argument union data
 
         ErrorType errTp = ErrorType::ERROR_NONE; ///< Ethercat message error
         char msg_tp_str[50] = {0};               ///< Ethercat message type string
