@@ -59,7 +59,7 @@ void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 
     // Set message ID union entry
     r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id;
-    _uGetMsgID(sndEM); // copy from union to associated struct variable
+    _uGetMsgID(r_EM); // copy from union to associated struct variable
 }
 
 /// @brief Get message ID from union
@@ -76,7 +76,7 @@ void Esmacat_Com::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enu
 
     // Set message type union entry
     r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_val;
-    _uGetMsgType(sndEM); // copy from union to associated struct variable
+    _uGetMsgType(r_EM); // copy from union to associated struct variable
 }
 
 /// @brief Get message type from union
@@ -122,7 +122,7 @@ void Esmacat_Com::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
 {
     // Set argument length union entry
     r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len;
-    _uGetArgLength(sndEM); // copy from union to associated struct variable
+    _uGetArgLength(r_EM); // copy from union to associated struct variable
 }
 
 /// @brief Get message argument length
@@ -131,7 +131,9 @@ void Esmacat_Com::_uGetArgLength(EcatMessageStruct &r_EM)
     r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)];
 }
 
-/// @brief Set 8-bit message argument data entry in union
+/// @brief Set 8-bit message argument data and length entries in union
+///
+/// @note calls @ref Esmacat_Com::_uSetArgLength
 void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
     // Increment argument union index
@@ -140,23 +142,25 @@ void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
     // Update message argument length from argument union 8-bit index
     _uSetArgLength(r_EM, r_EM.argUI.i8);
 
-    // Get reg union index
+    // Get reg union index accounting for itterative calls to store more data
     uint8_t regu8_i = r_EM.argUI.i8 + 3;
 
     // Set message argument data in reg union
     r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8;
     _uGetArgData8(r_EM); // copy from union to associated struct variable
 }
-/// @brief Set 16-bit message argument data entry in union
+/// @brief Set 16-bit message argument data and length entries in union
+///
+/// @note calls @ref Esmacat_Com::_uSetArgLength
 void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
 {
     // Increment argument union index
     r_EM.argUI.upd16();
 
-    // Update message argument length from argument union 16-bit index
+    // Update message argument length from argument union 8-bit index
     _uSetArgLength(r_EM, r_EM.argUI.i8);
 
-    // Get reg union index
+    // Get reg union index accounting for itterative calls to store more data
     uint8_t regu16_i = (r_EM.argUI.i8 + 3) / 2;
 
     // Set message argument data in reg union
@@ -167,6 +171,7 @@ void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data1
 /// @brief Get 8-bit reg union message argument data and copy to arg union
 void Esmacat_Com::_uGetArgData8(EcatMessageStruct &r_EM)
 {
+    _uGetArgLength(r_EM); // get argument length from union
     for (size_t i = 0; i < r_EM.argLen; i++)
         r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy to 8-bit argument Union
 }
@@ -176,14 +181,14 @@ void Esmacat_Com::_uSetFooter(EcatMessageStruct &r_EM)
 {
     r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
     r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
-    _uGetFooter(sndEM); // copy from union to associated struct variable
+    _uGetFooter(r_EM); // copy from union to associated struct variable
 }
 
 /// @brief Get message footer from union
 bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
 {
-    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy first footer byte
-    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy second footer byte
+    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()];             // copy first footer byte
+    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()];             // copy second footer byte
     bool is_err = r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254; // check for valid footers
     return is_err;
 }
@@ -226,7 +231,7 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_e
 
     // Unset error type
     else if (r_EM.errTp == err_tp)
-        r_EM.errTp = ErrorType::ERROR_NONE; 
+        r_EM.errTp = ErrorType::ERROR_NONE;
 }
 
 /// @brief: Reset all message structs.
@@ -296,23 +301,15 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
         _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
     }
 
-    // HANDSHAKE
-    else if (sndEM.msgTp == MessageType::HANDSHAKE)
-    {
-        _uSetArgLength(sndEM, 0); // message argument length to 0
-    }
-
     // OTHER
     else
     {
-        _uSetArgLength(sndEM, msg_arg_len); // store message argument length if provided
-        if (p_msg_arg_data != nullptr)      // store message arguments if provided
+        if (p_msg_arg_data != nullptr) // store message arguments if provided
             for (size_t i = 0; i < msg_arg_len; i++)
                 _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
+        else
+            _uSetArgData8(sndEM, 0); // store message arguments if provided
     }
-
-    // Update associated argument variables in struct
-    _uGetArgLength(sndEM);
 
     // 	------------- FINISH SETUP AND WRITE -------------
 
@@ -355,6 +352,15 @@ uint8_t Esmacat_Com::getEcatMessage()
     // Get message type and check if valid
     is_err = _uGetMsgType(tmpEM);
 
+    // // TEMP
+    // static bool is_run = false;
+    // if (isHandshakeDone && !is_run)
+    // {
+    //     _Dbg.printMsgTime("DEBUGGING!!!!!!!!!!!!!!!!!!!");
+    //     _printEcatReg(0, rcvEM.RegU); // TEMP
+    //     is_run = true;
+    // }
+
     // Run check error for valid message type
     _checkErr(tmpEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
     if (is_err)
@@ -374,7 +380,6 @@ uint8_t Esmacat_Com::getEcatMessage()
         return 2; // return error flag
 
     // Get argument length and argument data
-    _uGetArgLength(tmpEM);
     _uGetArgData8(tmpEM);
 
     // Get and check for footer

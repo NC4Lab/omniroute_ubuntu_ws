@@ -21,7 +21,7 @@
 //============ VARIABLES ===============
 
 // Global
-bool DB_VERBOSE = 1;	 //< set to control debugging behavior [0:silent, 1:verbose]
+bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
@@ -68,6 +68,25 @@ void loop()
 
 	// Check ethercat coms
 	resp = WallOper.EsmaCom.getEcatMessage();
+
+	// TEMP
+	int dt = 1000;
+	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
+	delay(dt);
+	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
+	delay(dt);
+
+	// // TEMP
+	// if (resp != 1)
+	// 	return;
+	// while (true)
+	// {
+	// 	int dt = 1000;
+	// 	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
+	// 	delay(dt);
+	// 	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
+	// 	delay(dt);
+	// }
 
 	// Process and exicute ethercat arguments
 	if (resp == 1) // check for new message

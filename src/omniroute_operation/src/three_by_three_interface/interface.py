@@ -59,8 +59,8 @@ def rospyLogCol(level, msg, *args):
     """ Log to ROS in color """
 
     def frmt_msg(color, msg, *args):
+        """ Format message with color """
         colored_message = f"{color}{msg}{Style.RESET_ALL}"
-        # Use unpacking to directly pass the arguments to the formatted string
         return colored_message % args
 
     # Exit if DB_VERBOSE is false
@@ -75,7 +75,7 @@ def rospyLogCol(level, msg, *args):
     elif level == 'INFO':
         rospy.loginfo(frmt_msg(Fore.BLUE, msg, *args))
     elif level == 'DEBUG':
-        rospy.logdebug(frmt_msg(Fore.GREEN, msg, *args))
+        rospy.loginfo(frmt_msg(Fore.GREEN, msg, *args))
     else:
         rospy.loginfo(frmt_msg(Fore.BLACK, msg, *args))
 
@@ -507,7 +507,7 @@ class Esmacat_Com:
             # Increment argument union index
             r_EM.argUI.upd8()
 
-            # Update argument length union entry
+            # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.i8)
 
             # Get 8-bit union index and set 8-bit argument data entry in union
@@ -525,7 +525,7 @@ class Esmacat_Com:
             # Increment argument union index
             r_EM.argUI.upd16()
             
-            # Update argument length union entry
+            # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.i8)
             
             # Get 16-bit union index and set 16-bit argument data entry in union
@@ -538,6 +538,7 @@ class Esmacat_Com:
     def _uGetArgData8(self, r_EM):
         """Get reg union 8-bit message argument data and copy to arg union"""
 
+        self._uGetArgLength(r_EM); # get argument length from union
         for i in range(r_EM.argLen):
             r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy to 8-bit argument Union
 
@@ -583,7 +584,7 @@ class Esmacat_Com:
                 # Print error message
                 rospyLogCol(
                     'ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgTp.name, r_EM.msgTp.value)
-                self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
+                self._printEcatReg('DEBUG', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
         else:
@@ -616,12 +617,14 @@ class Esmacat_Com:
         # Reset Ethercat handshake flag
         self.isHandshakeDone = False
 
-    def sendEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=255):
+    def sendEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
         """
         Used to parse new incoming ROS ethercat msg data.
 
         Args:
-            reg_arr: array length 8 from the ethercat register.
+            msg_type_enum (MessageType): Message type enum.
+            msg_arg_data_arr (list): Message argument data array.
+            msg_arg_len (int): Message argument length (bytes).
 
         Returns:
             int: Success/error codes [0:no message, 1:new message, 2:error]
@@ -641,11 +644,7 @@ class Esmacat_Com:
             self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16-bit received message id
             self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
 
-        elif self.sndEM.msgTp == MessageType.HANDSHAKE:
-            self._uSetArgLength(self.sndEM, 0)  # message argument length to 0
-
         else:
-            self._uSetArgLength(self.sndEM, msg_arg_len)  # store message argument length if provided
             if msg_arg_data_arr is not None:  # store message arguments if provided
                 for i in range(msg_arg_len):
                     self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
