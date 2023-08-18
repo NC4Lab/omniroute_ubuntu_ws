@@ -351,25 +351,6 @@ class Wall_Config:
         """Returns the wall configuration list as a string"""
         return str(cls.wallConfigList)
 
-class MessageType(Enum):
-    """ Enum for ethercat python to arduino message type ID """
-    MSG_NONE = 0
-    CONFIRM_DONE = 1
-    HANDSHAKE = 2
-    MOVE_WALLS = 3
-    START_SESSION = 4
-    END_SESSION = 5
-    ERROR = 6
-
-class ErrorType(Enum):
-    """ Enum for tracking errors """
-    ERROR_NONE = 0
-    MESSAGE_ID_DISORDERED = 1
-    NO_MESSAGE_TYPE_MATCH = 2
-    REGISTER_LEFTOVERS = 3
-    MISSING_FOOTER = 4
-    N_ErrorType = 5
-
 class Esmacat_Com:
     """ 
     This class is used to communicate with the arduino via ethercat.
@@ -384,6 +365,23 @@ class Esmacat_Com:
     isMessageNew = False
 
     #------------------------ NESTED CLASSES ------------------------
+
+    class MessageType(Enum):
+        """ Enum for ethercat python to arduino message type ID """
+        MSG_NONE = 0
+        ACK_WITH_STATUS = 1
+        HANDSHAKE = 2
+        MOVE_WALLS = 3
+        START_SESSION = 4
+        END_SESSION = 5
+        ERROR = 6
+
+    class MessageError(Enum):
+        """ Enum for tracking message errors """
+        ERROR_NONE = 0
+        MESSAGE_ID_DISORDERED = 1
+        NO_MESSAGE_TYPE_MATCH = 2
+        MISSING_FOOTER = 3
 
     class RegUnion(ctypes.Union):
         """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
@@ -424,19 +422,19 @@ class Esmacat_Com:
             self.getUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
             self.setUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
             self.msgID = 0
-            self.msgTp = MessageType.MSG_NONE
+            self.msgID_last = 0                     # Last message ID   
+            self.msgTp = Esmacat_Com.MessageType.MSG_NONE
             self.msgFoot = [0, 0]
             self.argLen = 0
             self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
             self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
-            self.errTp = ErrorType.ERROR_NONE
+            self.errTp = Esmacat_Com.MessageError.ERROR_NONE
     
     def __init__(self):
 
         # Initialize ethercat message handler instances
         self.sndEM = self.EcatMessageStruct()  # Initialize message handler instance for sending messages
         self.rcvEM = self.EcatMessageStruct()  # Initialize message handler instance for receiving messages
-        self.tmpEM = self.EcatMessageStruct()  # Initialize message handler instance for temporary receiving messages
 
         # ROS Publisher: Initialize ethercat message handler instances
         self.maze_ard0_pub = rospy.Publisher(
@@ -458,6 +456,7 @@ class Esmacat_Com:
     def _uGetMsgID(self, r_EM):
         """Get message ID from union"""
 
+        r_EM.msgID_last = r_EM.msgID # store last message ID if
         r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
@@ -476,15 +475,15 @@ class Esmacat_Com:
         # Get message type value
         msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
 
-        # Check if 'msg_type_val' corresponds to any value in the 'MessageType' Enum.
-        is_found = msg_type_val in [e.value for e in MessageType]
+        # Check if 'msg_type_val' corresponds to any value in the 'Esmacat_Com.MessageType' Enum.
+        is_found = msg_type_val in [e.value for e in Esmacat_Com.MessageType]
         is_err = not is_found
 
         # If not found, set message type to 'MSG_NONE'
         if is_err:
-            msg_type_val = MessageType.MSG_NONE
+            msg_type_val = Esmacat_Com.MessageType.MSG_NONE
         else:
-            r_EM.msgTp = MessageType(msg_type_val)
+            r_EM.msgTp = Esmacat_Com.MessageType(msg_type_val)
 
         return is_err
 
@@ -585,13 +584,13 @@ class Esmacat_Com:
 
                 # Print error message
                 rospyLogCol(
-                    'ERROR', "!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgTp.name, r_EM.msgTp.value)
+                    'ERROR', "!!ERROR: Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
                 self._printEcatReg('DEBUG', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
         else:
             if r_EM.errTp == err_tp:
-                r_EM.errTp = ErrorType.ERROR_NONE  
+                r_EM.errTp = Esmacat_Com.MessageError.ERROR_NONE  
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
@@ -613,12 +612,10 @@ class Esmacat_Com:
 
         # Reset message union data and indeces
         self._uReset(self.sndEM)
-        self._uReset(self.tmpEM)
         self._uReset(self.rcvEM)
 
         # Reset message counters
         self.sndEM.msgID = 0
-        self.tmpEM.msgID = 0
         self.rcvEM.msgID = 0
 
         # Reset Ethercat handshake flag
@@ -629,7 +626,7 @@ class Esmacat_Com:
         Used to parse new incoming ROS ethercat msg data.
 
         Args:
-            msg_type_enum (MessageType): Message type enum.
+            msg_type_enum (Esmacat_Com.MessageType): Message type enum.
             msg_arg_data_arr (list): Message argument data array.
             msg_arg_len (int): Message argument length (bytes).
 
@@ -648,8 +645,8 @@ class Esmacat_Com:
 
         # 	------------- Store arguments -------------
 
-        # CONFIRM_DONE
-        if self.sndEM.msgTp == MessageType.CONFIRM_DONE:
+        # ACK_WITH_STATUS
+        if self.sndEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
             self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16-bit received message id
             self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
 
@@ -692,58 +689,45 @@ class Esmacat_Com:
             return 0
 
          # Copy register data into union
-        self._uReset(self.sndEM) # reset union variables
         for i in range(8):
-            self.tmpEM.RegU.ui16[i] = reg_arr[i]
+            self.rcvEM.RegU.ui16[i] = reg_arr[i]
 
-        # Skip ethercat setup junk (255)
-        if self.tmpEM.RegU.ui8[0] == 255 or self.tmpEM.RegU.ui8[1] == 255:
+        # Skip leftover register entries and ethercat setup junk (e.g., ui16[0] == 65535)
+        if self.rcvEM.RegU.ui16[0] != 1 and not self.isHandshakeDone: # directly check message id entry for first message
             return 0
 
         # Get message id
-        self._uGetMsgID(self.tmpEM)
+        self._uGetMsgID(self.rcvEM)
 
         # Skip redundant messages
-        if self.tmpEM.msgID == self.rcvEM.msgID:
+        if self.rcvEM.msgID == self.rcvEM.msgID_last:
             return 0
 
         # Get message type and check if valid
-        is_err = self._uGetMsgType(self.tmpEM)
+        is_err = self._uGetMsgType(self.rcvEM)
 
         # Run check error for valid message type
-        self._checkErr(self.tmpEM, ErrorType.NO_MESSAGE_TYPE_MATCH, is_err)
-        if is_err:
-            return 2  # return error flag
-
-        # Check if message is preceding handshake and confirm done messages
-        is_err = not self.isHandshakeDone and (
-            self.tmpEM.msgTp != MessageType.CONFIRM_DONE or self.tmpEM.msgID > 1
-        )
-
-        self._checkErr(self.tmpEM, ErrorType.REGISTER_LEFTOVERS, is_err)
+        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.NO_MESSAGE_TYPE_MATCH, is_err)
         if is_err:
             return 2  # return error flag
 
         # Check for skipped or out of sequence messages
-        is_err = self.tmpEM.msgID - self.rcvEM.msgID != 1
-        self._checkErr(self.tmpEM, ErrorType.MESSAGE_ID_DISORDERED, is_err)
+        is_err = self.rcvEM.msgID - self.rcvEM.msgID_last != 1
+        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.MESSAGE_ID_DISORDERED, is_err)
         if is_err:
             return 2  # return error flag
 
         # Get argument length and arguments
-        self._uGetArgLength(self.tmpEM)
-        self._uGetArgData8(self.tmpEM) 
+        self._uGetArgLength(self.rcvEM)
+        self._uGetArgData8(self.rcvEM) 
 
         # Get and check for footer
-        is_err = self._uGetFooter(self.tmpEM)
+        is_err = self._uGetFooter(self.rcvEM)
 
         # Run check error for valid footer
-        self._checkErr(self.tmpEM, ErrorType.MISSING_FOOTER, is_err)
+        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.MISSING_FOOTER, is_err)
         if is_err:
             return 2  # return error flag
-
-        # Copy over data
-        self.rcvEM = self.tmpEM
 
         # Set new message flag
         self.isMessageNew = True
@@ -940,37 +924,37 @@ class Interface(Plugin):
         # Create temp EcatMessageStruct object for confirmation message
         cnf_em = self.EsmaCom_A0.EcatMessageStruct()
 
-        # CONFIRM_DONE
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
+        # ACK_WITH_STATUS
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
 
             # Get confirmation message number
             cnf_em.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
 
             # Get message number
-            cnf_em.msgTp = MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
+            cnf_em.msgTp = Esmacat_Com.MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
 
             # Print confirmation message
-            rospyLogCol('INFO', "CONFIRMED DONE Ecat Message: type=%s id=%d",
+            rospyLogCol('INFO', "Ecat Message Acknowledgment With Status: type=%s id=%d",
                         cnf_em.msgTp, cnf_em.msgID)
 
         # ERROR
-        elif self.EsmaCom_A0.rcvEM.msgTp == MessageType.ERROR:
+        elif self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ERROR:
             pass
 
         #................ Execute Arguments ................ 
 
-        # CONFIRM_DONE
-        if self.EsmaCom_A0.rcvEM.msgTp == MessageType.CONFIRM_DONE:
+        # ACK_WITH_STATUS
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
 
             # Check if message is a handshake confirmation
-            if cnf_em.msgTp == MessageType.HANDSHAKE:
+            if cnf_em.msgTp == Esmacat_Com.MessageType.HANDSHAKE:
 
                 # Set the handshake flag
                 self.EsmaCom_A0.isHandshakeDone = True
                 rospyLogCol('INFO', "ECAT COMMS ESTABLISHED");
 
                 # Send START_SESSION message
-                self.EsmaCom_A0.sendEcatMessage(MessageType.START_SESSION)
+                self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.START_SESSION)
 
         # Reset new message flag
         self.EsmaCom_A0.isMessageNew = False
@@ -1033,7 +1017,7 @@ class Interface(Plugin):
                     'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino 
-            self.EsmaCom_A0.sendEcatMessage(MessageType.HANDSHAKE)
+            self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1129,7 +1113,7 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.sendEcatMessage(MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
+        self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
@@ -1232,7 +1216,7 @@ class Interface(Plugin):
         """ Function to end the ROS session """
 
         # Send END_SESSION message to arduino
-        self.EsmaCom_A0.sendEcatMessage(MessageType.END_SESSION)
+        self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.END_SESSION)
 
         # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
         # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()

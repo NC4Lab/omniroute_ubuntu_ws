@@ -111,7 +111,7 @@ void Wall_Operation::procEcatArguments()
 	}
 
 	// Send done confirmaton
-	EsmaCom.sendEcatMessage(EsmaCom.MessageType::CONFIRM_DONE);
+	EsmaCom.sendEcatMessage(EsmaCom.MessageType::ACK_WITH_STATUS);
 
 	// Reset new message flag
 	EsmaCom.isMessageNew = false;

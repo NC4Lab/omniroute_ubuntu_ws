@@ -65,6 +65,7 @@ void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 /// @brief Get message ID from union
 void Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
 {
+    r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
 }
 
@@ -85,9 +86,9 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     // Get message type value
     uint8_t msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)];
 
-    // Check for valid message type
+    // Check if 'msg_type_val' corresponds to any value in the 'MessageType' Enum.
     bool is_found = false;
-    for (int i = 0; i < N_MessageType; ++i)
+    for (int i = 0; i < nMsgTypEnum; ++i)
     {
         if (msg_type_val == i)
         {
@@ -208,7 +209,7 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 }
 
 /// @brief Check for and log any message processing errors
-void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_err)
+void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, MessageError err_tp, bool is_err)
 {
     // Check for error
     if (is_err)
@@ -221,18 +222,18 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool is_e
 
             // Get error string
             uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
-            strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
+            strncpy(r_EM.err_tp_str, message_error_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
-            _Dbg.printMsgTime("!!ERROR: Ecat: %s: id=%d type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msg_tp_str, r_EM.msg_tp_val);
+            _Dbg.printMsgTime("!!ERROR: Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]!!", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msg_tp_str, r_EM.msg_tp_val);
             _printEcatReg(0, r_EM.RegU); // TEMP
         }
     }
 
     // Unset error type
     else if (r_EM.errTp == err_tp)
-        r_EM.errTp = ErrorType::ERROR_NONE;
+        r_EM.errTp = MessageError::ERROR_NONE;
 }
 
 /// @brief: Reset all message structs.
@@ -240,12 +241,10 @@ void Esmacat_Com::msgReset()
 {
     // Reset message union data and indeces
     _uReset(sndEM);
-    _uReset(tmpEM);
     _uReset(rcvEM);
 
     // Reset message counters
     sndEM.msgID = 0;
-    tmpEM.msgID = 0;
     rcvEM.msgID = 0;
 
     // Reset Ethercat handshake flag
@@ -300,8 +299,8 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
 
     // 	------------- Store arguments -------------
 
-    // CONFIRM_DONE
-    if (sndEM.msgTp == MessageType::CONFIRM_DONE)
+    // ACK_WITH_STATUS
+    if (sndEM.msgTp == MessageType::ACK_WITH_STATUS)
     {
         _uSetArgData16(sndEM, rcvEM.msgID);     // store 16-bit recieved message id
         _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
@@ -341,74 +340,63 @@ void Esmacat_Com::getEcatMessage()
         return;
 
     // Read esmacat buffer to get register data
-    _ESMA.get_ecat_registers(tmpEM.RegU.i16);
+    _ESMA.get_ecat_registers(rcvEM.RegU.i16);
 
-    //     // TEMP
-    // static bool is_run = false;
-    // if (isHandshakeDone && !is_run)
-    // {
-    //     _Dbg.printMsgTime("DEBUGGING!!!!!!!!!!!!!!!!!!!");
-    //     _printEcatReg(0, tmpEM.RegU); // TEMP
-    //     is_run = true;
-    // }
-
-    // Skip ethercat setup junk (255)
-    if (tmpEM.RegU.ui8[0] == 255 || tmpEM.RegU.ui8[1] == 255)
+    // Skip leftover register entries and ethercat setup junk (e.g., ui16[0] == 65535)
+    if (!isHandshakeDone && rcvEM.RegU.ui16[0] != 1) // directly check message id entry for first message
         return;
 
+    // // TEMP
+    // static bool is_run_1 = false;
+    // if (!is_run_1)
+    // {
+    //     _Dbg.printMsgTime("(1) DEBUGGING!!!!!!!!!!!!!!!!!!!");
+    //     _printEcatReg(0, rcvEM.RegU); // TEMP
+    //     is_run_1 = true;
+    // }
+
     // Get message id
-    _uGetMsgID(tmpEM);
+    _uGetMsgID(rcvEM);
 
     // Skip redundant messages
-    if (tmpEM.msgID == rcvEM.msgID)
+    if (rcvEM.msgID == rcvEM.msgID_last)
         return;
 
     // Get message type and check if valid
-    is_err = _uGetMsgType(tmpEM);
+    is_err = _uGetMsgType(rcvEM);
 
     // Skip end session message if handshake not done
     if (!isHandshakeDone &&
-        tmpEM.msgTp == MessageType::END_SESSION) // end session message still in buffer
+        rcvEM.msgTp == MessageType::END_SESSION) // end session message still in buffer
         return;
 
     // Run check error for valid message type
-    _checkErr(tmpEM, ErrorType::NO_MESSAGE_TYPE_MATCH, is_err);
+    _checkErr(rcvEM, MessageError::NO_MESSAGE_TYPE_MATCH, is_err);
     if (is_err)
-        return; 
-
-    // Check if message is preceding handshake
-    is_err = !isHandshakeDone &&
-             (tmpEM.msgTp != MessageType::HANDSHAKE || tmpEM.msgID > 1);
-    _checkErr(tmpEM, ErrorType::REGISTER_LEFTOVERS, is_err);
-    if (is_err)
-        return; 
+        return;
 
     // Check for skipped or out of sequence messages
-    is_err = tmpEM.msgID - rcvEM.msgID != 1;
-    _checkErr(tmpEM, ErrorType::MESSAGE_ID_DISORDERED, is_err);
+    is_err = rcvEM.msgID - rcvEM.msgID_last != 1;
+    _checkErr(rcvEM, MessageError::MESSAGE_ID_DISORDERED, is_err);
     if (is_err)
-        return; 
+        return;
 
     // Get argument length and argument data
-    _uGetArgData8(tmpEM);
+    _uGetArgData8(rcvEM);
 
     // Get and check for footer
-    is_err = _uGetFooter(tmpEM);
+    is_err = _uGetFooter(rcvEM);
 
     // Run check error for valid footer
-    _checkErr(tmpEM, ErrorType::MISSING_FOOTER, is_err);
+    _checkErr(rcvEM, MessageError::MISSING_FOOTER, is_err);
     if (is_err)
-        return; 
-
-    // Copy over data
-    rcvEM = tmpEM;
+        return;
 
     // Set new message flag
     isMessageNew = true;
 
     _Dbg.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(0, rcvEM.RegU); // TEMP
-
 }
 
 /// @brief Overloaded function for printing Ethercat register values.

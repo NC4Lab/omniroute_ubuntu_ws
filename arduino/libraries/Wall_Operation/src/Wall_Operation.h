@@ -78,7 +78,7 @@ public:
 		uint8_t bitWallPosition = 0;   ///< bitwise variable, current wall position [0:down, 1:up]
 		uint8_t bitWallErrorFlag = 0;  ///< bitwise variable, flag move errors for a given wall
 		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be updated
-		uint8_t bitOutRegLast[6];	   ///< stores output registry values
+		uint8_t bitOutRegLast[6];	   ///< stores output registry values TEMP: may not be needed
 		PinMapStruct pmsDynPWM;		   ///< reusable dynamic instance for active PWM
 		PinMapStruct pmsDynIO;		   ///< reusable dynamic instance for active IO
 	};

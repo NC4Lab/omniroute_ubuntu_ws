@@ -20,12 +20,12 @@ class Esmacat_Com
 
     // ---------VARIABLES-----------------
 public:
-    bool isMessageNew = false; ///< flag to track new message
+    bool isMessageNew = false;    ///< flag to track new message
     bool isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
 
     const char message_type_str[8][30] = {
         "MSG_NONE",
-        "CONFIRM_DONE",
+        "ACK_WITH_STATUS",
         "HANDSHAKE",
         "MOVE_WALLS",
         "START_SESSION",
@@ -34,28 +34,26 @@ public:
     enum MessageType
     {
         MSG_NONE = 0,
-        CONFIRM_DONE = 1,
+        ACK_WITH_STATUS = 1,
         HANDSHAKE = 2,
         MOVE_WALLS = 3,
         START_SESSION = 4,
         END_SESSION = 5,
         ERROR = 6,
-        N_MessageType
+        nMsgTypEnum
     };
-    const char error_type_str[5][30] = {
+    const char message_error_str[4][30] = {
         "ERROR_NONE",
         "MESSAGE_ID_DISORDERED",
         "NO_MESSAGE_TYPE_MATCH",
-        "REGISTER_LEFTOVERS",
         "MISSING_FOOTER"};
-    enum ErrorType
+    enum MessageError
     {
         ERROR_NONE = 0,
         MESSAGE_ID_DISORDERED = 1,
         NO_MESSAGE_TYPE_MATCH = 2,
-        REGISTER_LEFTOVERS = 3,
-        MISSING_FOOTER = 4,
-        N_ErrorType
+        MISSING_FOOTER = 3,
+        N_MessageError
     };
 
     union RegUnion
@@ -78,19 +76,20 @@ public:
 
     struct EcatMessageStruct ///< class for handeling ethercat messages
     {
-        RegUnion RegU;    ///< Union for storing ethercat 8 16-bit reg entries
+        RegUnion RegU;        ///< Union for storing ethercat 8 16-bit reg entries
         UnionIndStruct getUI; ///< Union index handler for getting union data
         UnionIndStruct setUI; ///< Union index handler for getting union data
 
         uint16_t msgID = 0;                        ///< Ethercat message ID
+        uint16_t msgID_last = 0;                    ///< Last Ethercat message ID
         MessageType msgTp = MessageType::MSG_NONE; ///< Ethercat message error
         uint8_t msgFoot[2] = {0};                  ///< Ethercat message footer [254,254]
 
-        uint8_t argLen = 0; ///< Ethercat number of 8 bit message arguments
-        RegUnion ArgU;      ///< Union for storing message arguments
-        UnionIndStruct argUI;   ///< Union index handler for argument union data
+        uint8_t argLen = 0;   ///< Ethercat number of 8 bit message arguments
+        RegUnion ArgU;        ///< Union for storing message arguments
+        UnionIndStruct argUI; ///< Union index handler for argument union data
 
-        ErrorType errTp = ErrorType::ERROR_NONE; ///< Ethercat message error
+        MessageError errTp = MessageError::ERROR_NONE; ///< Ethercat message error
         char msg_tp_str[50] = {0};               ///< Ethercat message type string
         char err_tp_str[50] = {0};               ///< Ethercat error type string
         uint8_t msg_tp_val = 0;                  ///< Ethercat message type value
@@ -100,8 +99,8 @@ public:
     EcatMessageStruct tmpEM; ///<  initialize message handler instance for temporary receiving messages
 
 private:
-    static Maze_Debug _Dbg;     ///< local instance of Maze_Debug class 
-    Esmacatshield _ESMA; //< instance of Esmacatshield class
+    static Maze_Debug _Dbg; ///< local instance of Maze_Debug class
+    Esmacatshield _ESMA;    //< instance of Esmacatshield class
 
     // -----------METHODS-----------------
 
@@ -133,7 +132,7 @@ private:
     void _uReset(EcatMessageStruct &);
 
 private:
-    void _checkErr(EcatMessageStruct &, ErrorType, bool);
+    void _checkErr(EcatMessageStruct &, MessageError, bool);
 
 public:
     void msgReset();
