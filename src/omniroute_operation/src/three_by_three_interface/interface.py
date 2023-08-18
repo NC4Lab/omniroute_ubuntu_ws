@@ -361,20 +361,17 @@ class Esmacat_Com:
     # Handshake finished flag
     isHandshakeDone = False
 
-    # Message received flag
-    isMessageNew = False
-
     #------------------------ NESTED CLASSES ------------------------
 
     class MessageType(Enum):
         """ Enum for ethercat python to arduino message type ID """
         MSG_NONE = 0
         ACK_WITH_STATUS = 1
-        HANDSHAKE = 2
-        MOVE_WALLS = 3
+        ACK_WITH_ERROR = 2
+        HANDSHAKE = 3
         START_SESSION = 4
         END_SESSION = 5
-        ERROR = 6
+        MOVE_WALLS = 6
 
     class RunError(Enum):
         """ Enum for tracking message errors """
@@ -421,14 +418,19 @@ class Esmacat_Com:
             self.RegU = Esmacat_Com.RegUnion()    # Union for storing ethercat 8 16-bit reg entries
             self.getUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
             self.setUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
+
             self.msgID = 0
             self.msgID_last = 0                     # Last message ID   
-            self.msgTp = Esmacat_Com.MessageType.MSG_NONE
-            self.msgFoot = [0, 0]
-            self.argLen = 0
+            self.msgTp = Esmacat_Com.MessageType.MSG_NONE # Message type
+            self.msgFoot = [0, 0]                  # Message footer
+
+            self.argLen = 0                       # Message argument length
             self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
             self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
-            self.errTp = Esmacat_Com.RunError.ERROR_NONE
+
+            self.isNew = False                         # New message flag
+            self.isErr = False                         # Message error flag
+            self.errTp = Esmacat_Com.RunError.ERROR_NONE # Message error type
     
     def __init__(self):
 
@@ -477,15 +479,13 @@ class Esmacat_Com:
 
         # Check if 'msg_type_val' corresponds to any value in the 'Esmacat_Com.MessageType' Enum.
         is_found = msg_type_val in [e.value for e in Esmacat_Com.MessageType]
-        is_err = not is_found
+        r_EM.isErr = not is_found # Update struct error flag
 
         # If not found, set message type to 'MSG_NONE'
-        if is_err:
+        if r_EM.isErr:
             msg_type_val = Esmacat_Com.MessageType.MSG_NONE
         else:
             r_EM.msgTp = Esmacat_Com.MessageType(msg_type_val)
-
-        return is_err
 
     def _uSetArgLength(self, r_EM, msg_arg_len):
         """Set message argument length entry in union and update associated variable"""
@@ -570,7 +570,7 @@ class Esmacat_Com:
         r_EM.getUI.reset()
         r_EM.argUI.reset()
 
-    def _logEcatErr(self, r_EM, err_tp, is_err):
+    def _checkEcatErr(self, r_EM, err_tp, is_err):
         """Check if error type is valid and set error type"""
 
         # Check for error
@@ -579,8 +579,9 @@ class Esmacat_Com:
             # Run only once
             if r_EM.errTp != err_tp:  
                 
-                # Set error type
+                # Set error type and flag
                 r_EM.errTp = err_tp
+                r_EM.isErr = True
 
                 # Print error message
                 rospyLogCol(
@@ -685,7 +686,7 @@ class Esmacat_Com:
         is_err = False  # error flag
 
         # Bail if previous message not processed
-        if self.isMessageNew:
+        if self.rcvEM.isNew:
             return 0
 
          # Copy register data into union
@@ -704,16 +705,16 @@ class Esmacat_Com:
             return 0
 
         # Get message type and check if valid
-        is_err = self._uGetMsgType(self.rcvEM)
+        self._uGetMsgType(self.rcvEM)
 
         # Check/log error for valid message type
-        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_NO_TYPE_MATCH, is_err)
+        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_NO_TYPE_MATCH, is_err)
         if is_err:
             return 2  # return error flag
 
         # Check/log error skipped or out of sequence messages
         is_err = self.rcvEM.msgID - self.rcvEM.msgID_last != 1
-        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_ID_DISORDERED, is_err)
+        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_ID_DISORDERED, is_err)
         if is_err:
             return 2  # return error flag
 
@@ -725,12 +726,12 @@ class Esmacat_Com:
         is_err = self._uGetFooter(self.rcvEM)
 
         # Check/log error for valid footer
-        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_MISSING_FOOTER, is_err)
+        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_MISSING_FOOTER, is_err)
         if is_err:
             return 2  # return error flag
 
         # Set new message flag
-        self.isMessageNew = True
+        self.rcvEM.isNew = True
 
         # Print message
         rospyLogCol('INFO', "RECEIVED Ecat Message: id=%d type=%s",
@@ -911,7 +912,7 @@ class Interface(Plugin):
 
     #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
-    def procEcatArguments(self):
+    def procEcatMessage(self):
         """
         Used to parse new incoming ROS ethercat msg data.
         
@@ -937,8 +938,8 @@ class Interface(Plugin):
             rospyLogCol('INFO', "Ecat Message Acknowledgment With Status: type=%s id=%d",
                         cnf_em.msgTp, cnf_em.msgID)
 
-        # ERROR
-        elif self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ERROR:
+        # ACK_WITH_ERROR
+        elif self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_ERROR:
             pass
 
         #................ Execute Arguments ................ 
@@ -957,7 +958,7 @@ class Interface(Plugin):
                 self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.START_SESSION)
 
         # Reset new message flag
-        self.EsmaCom_A0.isMessageNew = False
+        self.EsmaCom_A0.rcvEM.isNew = False
     
     #------------------------ CALLBACKS: ROS ------------------------
 
@@ -994,7 +995,7 @@ class Interface(Plugin):
         """ Signal callback for Esmacat_read_maze_ard0_ease topic """
 
         # Process new message arguments
-        self.procEcatArguments()
+        self.procEcatMessage()
 
     #------------------------ CALLBACKS: Timers ------------------------
 

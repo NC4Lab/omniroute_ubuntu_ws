@@ -14,32 +14,79 @@
 
 extern bool DO_ECAT_SPI; ///< set this variable in your INO file to control block SPI [0:dont start, 1:start]
 
-/// @brief This class deals with incoming and outgoing Ethercat communication.
+/// @brief This class deals with Ethercat communication between a Python master and the Arduino slave. 
+///
+/// @details: The Ethercat register a total of 8 16-bit entries to work with for each message. 
+/// Some components of the message use the for 16-bit registry entry and some seperate it 
+/// into 2 8-bit entries using the Union data type (@see: RegUnion). 
+/// 
+/// @details: Message Structure Overview:
+///
+///     Incoming/outgoing Ethercat register message entries overview:
+///	    INT 0:
+///         i16[0]: Message ID [0-65535] (unique message id)
+///	    INT 1:
+///         i8[0]: Message Type [0-255] (@see: MessageType)
+///	        i8[1]: Argument Length [0-10] (number of message args in bytes)
+///	    INT NA or 2-N:
+///         i16[NA or 2-6]: 16 Bit Data [0-65535]
+///		    i8[NA or 4-13]: 8 Bit Data [0-255]
+///	    INT N+1
+///		    i8[0]: Footer [254]
+///		    i8[1]: Footer [254]
+///
+///     Incoming/outgoing RegUnion message structure:
+///		ui16[0], ui8[0][1]		// ui16 [snd/rcv id]
+///		ui16[1], ui8[2][3]		// ui8  [type]   [arg length]
+///		ui16[2], ui8[4][5]		// ui8  [arg 1]  [arg 2]
+///		ui16[3], ui8[6][7]		// ui8  [arg 3]  [arg 4]
+///     ui16[4], ui8[8][9]     	// ui8  [arg 5]  [arg 6]
+///     ui16[5], ui8[10][11]   	// ui8  [arg 7]  [arg 8]
+///     ui16[6], ui8[12][13]  	// ui8  [arg 9]  [arg 10]
+///     ui16[7], ui8[14][15]  	// ui8  [footer] [footer]
+///
+/// @details: Message Type Overview:
+///
+///     MessageType.ACK_WITH_SUCCESS message structure:
+///		ui16[0], ui8[0][1]		// ui16 [rcv id]
+///		ui16[1], ui8[2][3]		// ui8  [type: ack suc]   [arg length = 0]
+///
+///     MessageType.ACK_WITH_ERROR message structure:
+///		ui16[0], ui8[0][1]		// ui16 [rcv id]
+///		ui16[1], ui8[2][3]		// ui8  [type: ack err]   [arg length = N]
+///
+///     MessageType.MOVE_WALLS argument structure:
+///		    ui16[2], ui8[4][5]		// ui8[cham 1 wall byte]  [cham 2 wall byte]
+///		    ui16[3], ui8[6][7]		// ui8[cham 3 wall byte]  [cham 4 wall byte]
+///         ui16[4], ui8[8][9]     	// ui8[cham 5 wall byte]  [cham 6 wall byte]
+///         ui16[5], ui8[10][11]   	// ui8[cham 7 wall byte]  [cham 8 wall byte]
+///         ui16[6], ui8[12][13]  	// ui8[cham 9 wall byte]  [cham 10 wall byte]
+///
 class Esmacat_Com
 {
 
     // ---------VARIABLES-----------------
 public:
-    bool isMessageNew = false;    ///< flag to track new message
-    bool isHandshakeDone = false; ///< flag to track setup handshake of ethercat coms
+    bool isHandshakeDone = false;   ///< flag to track setup handshake of ethercat coms
 
     const char message_type_str[8][30] = {
         "MSG_NONE",
-        "ACK_WITH_STATUS",
+        "ACK_WITH_SUCCESS",
+        "ACK_WITH_ERROR"
         "HANDSHAKE",
-        "MOVE_WALLS",
         "START_SESSION",
         "END_SESSION",
-        "ERROR"};
+        "MOVE_WALLS",
+    };
     enum MessageType
     {
         MSG_NONE = 0,
-        ACK_WITH_STATUS = 1,
-        HANDSHAKE = 2,
-        MOVE_WALLS = 3,
+        ACK_WITH_SUCCESS = 1,
+        ACK_WITH_ERROR = 2,
+        HANDSHAKE = 3,
         START_SESSION = 4,
         END_SESSION = 5,
-        ERROR = 6,
+        MOVE_WALLS = 6,
         nMsgTypEnum
     };
     const char run_error_str[4][30] = {
@@ -81,7 +128,7 @@ public:
         UnionIndStruct setUI; ///< Union index handler for getting union data
 
         uint16_t msgID = 0;                        ///< Ethercat message ID
-        uint16_t msgID_last = 0;                    ///< Last Ethercat message ID
+        uint16_t msgID_last = 0;                   ///< Last Ethercat message ID
         MessageType msgTp = MessageType::MSG_NONE; ///< Ethercat message error
         uint8_t msgFoot[2] = {0};                  ///< Ethercat message footer [254,254]
 
@@ -89,14 +136,16 @@ public:
         RegUnion ArgU;        ///< Union for storing message arguments
         UnionIndStruct argUI; ///< Union index handler for argument union data
 
+        bool isNew = false;                    ///< Ethercat message new flag
+        bool isErr = false;                    ///< Ethercat message error flag
         RunError errTp = RunError::ERROR_NONE; ///< Ethercat message error
-        char msg_tp_str[50] = {0};               ///< Ethercat message type string
-        char err_tp_str[50] = {0};               ///< Ethercat error type string
-        uint8_t msg_tp_val = 0;                  ///< Ethercat message type value
+
+        char msg_tp_str[50] = {0};             ///< Ethercat message type string
+        char err_tp_str[50] = {0};             ///< Ethercat error type string
+        uint8_t msg_tp_val = 0;                ///< Ethercat message type value
     };
     EcatMessageStruct sndEM; ///<  initialize message handler instance for sending messages
     EcatMessageStruct rcvEM; ///<  initialize message handler instance for receiving messages
-    
 
 private:
     static Maze_Debug _Dbg; ///< local instance of Maze_Debug class
@@ -113,7 +162,7 @@ private:
 
 private:
     void _uSetMsgType(EcatMessageStruct &, MessageType);
-    bool _uGetMsgType(EcatMessageStruct &);
+    void _uGetMsgType(EcatMessageStruct &);
 
 private:
     void _uSetArgLength(EcatMessageStruct &, uint8_t);
@@ -126,19 +175,19 @@ private:
 
 private:
     void _uSetFooter(EcatMessageStruct &);
-    bool _uGetFooter(EcatMessageStruct &);
+    void _uGetFooter(EcatMessageStruct &);
 
 private:
     void _uReset(EcatMessageStruct &);
 
 private:
-    void _logEcatErr(EcatMessageStruct &, RunError, bool);
+    void _trackEcatErr(EcatMessageStruct &, RunError);
 
 public:
     void resetEcat();
 
 public:
-    void sendEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
+    void sendEcatAcknowledge(MessageType, uint8_t[] = nullptr, uint8_t = 0);
 
 public:
     void getEcatMessage();

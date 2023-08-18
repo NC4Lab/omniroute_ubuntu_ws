@@ -47,11 +47,11 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty)
 /// @brief Used to process new ROS ethercat msg argument data.
 ///
 /// @return Success/error codes [0:no message, 1:new message, 2:error]
-void Wall_Operation::procEcatArguments()
+void Wall_Operation::procEcatMessage()
 {
 
 	// Check for new message
-	if (!EsmaCom.isMessageNew)
+	if (!EsmaCom.rcvEM.isNew)
 		return;
 
 	_Dbg.printMsgTime("PROCESSING Ecat Message: id=%d type=%s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
@@ -112,10 +112,10 @@ void Wall_Operation::procEcatArguments()
 	}
 
 	// Send done confirmaton
-	EsmaCom.sendEcatMessage(EsmaCom.MessageType::ACK_WITH_STATUS);
+	EsmaCom.sendEcatAcknowledge(EsmaCom.MessageType::ACK_WITH_SUCCESS);
 
 	// Reset new message flag
-	EsmaCom.isMessageNew = false;
+	EsmaCom.rcvEM.isNew = false;
 
 	return;
 }

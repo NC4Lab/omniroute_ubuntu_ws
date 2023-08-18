@@ -69,7 +69,7 @@ void loop()
 	WallOper.EsmaCom.getEcatMessage();
 
 	// Process and exicute ethercat arguments
-	WallOper.procEcatArguments();
+	WallOper.procEcatMessage();
 
 	// Check for reset 
 	WallOper.checkSoftwareReset();

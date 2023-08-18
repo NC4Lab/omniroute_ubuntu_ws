@@ -53,10 +53,6 @@ void Esmacat_Com::UnionIndStruct::reset()
 /// @brief Set message ID entry in union and updated associated variable
 void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 {
-    // Get new message ID: itterate id and roll over to 1 if max 16-bit value is reached
-    if (msg_id == 255)
-        msg_id = r_EM.msgID < 65535 ? r_EM.msgID + 1 : 1;
-
     // Set message ID union entry
     r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id;
     _uGetMsgID(r_EM); // copy from union to associated struct variable
@@ -67,6 +63,10 @@ void Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
 {
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
+    // Check/log error skipped or out of sequence messages
+    if (rcvEM.msgID - rcvEM.msgID_last != 1 &&
+        rcvEM.msgID != rcvEM.msgID_last) // ingnore redundant messages
+        _trackEcatErr(r_EM, RunError::ECAT_ID_DISORDERED);
 }
 
 /// @brief Set message type entry in union and updated associated variable
@@ -81,7 +81,7 @@ void Esmacat_Com::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enu
 }
 
 /// @brief Get message type from union
-bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
+void Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
 {
     // Get message type value
     uint8_t msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)];
@@ -96,10 +96,10 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
             break;
         }
     };
-    bool is_err = !is_found;
+    r_EM.isErr = !is_found;
 
     // Set type to none if not found
-    if (is_err)
+    if (r_EM.isErr)
         msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
 
     // Store message type value
@@ -109,13 +109,11 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     r_EM.msgTp = static_cast<Esmacat_Com::MessageType>(msg_type_val);
 
     // Copy string to struct
-    if (!is_err)
+    if (!r_EM.isErr)
         strncpy(r_EM.msg_tp_str, message_type_str[r_EM.msg_tp_val], sizeof(r_EM.msg_tp_str) - 1);
     else
         strncpy(r_EM.msg_tp_str, "NULL", sizeof(r_EM.msg_tp_str) - 1);
     r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0'; // ensure null termination
-
-    return is_err;
 }
 
 /// @brief Set message argument length entry in union and updated associated variable
@@ -187,12 +185,12 @@ void Esmacat_Com::_uSetFooter(EcatMessageStruct &r_EM)
 }
 
 /// @brief Get message footer from union
-bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
+void Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
 {
-    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()];             // copy first footer byte
-    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()];             // copy second footer byte
-    bool is_err = r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254; // check for valid footers
-    return is_err;
+    r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()];     // copy first footer byte
+    r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()];     // copy second footer byte
+    if (r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254)   // check for valid footers
+        _trackEcatErr(r_EM, RunError::ECAT_MISSING_FOOTER); // set error flag
 }
 
 /// @brief Reset union data and indeces
@@ -209,16 +207,17 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 }
 
 /// @brief Check for and log any message processing errors
-void Esmacat_Com::_logEcatErr(EcatMessageStruct &r_EM, RunError err_tp, bool is_err)
+void Esmacat_Com::_trackEcatErr(EcatMessageStruct &r_EM, RunError err_tp)
 {
     // Check for error
-    if (is_err)
+    if (r_EM.isErr)
     {
         // Only run once
         if (r_EM.errTp != err_tp)
         {
-            // Set error type
+            // Set error type and flag
             r_EM.errTp = err_tp;
+            r_EM.isErr = true;
 
             // Get error string
             uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
@@ -256,55 +255,42 @@ void Esmacat_Com::resetEcat()
 ///	@note: The outgoing register is structured uint16[8]
 ///	with all but first 16-bit value seperated into bytes
 ///
-/// @note: The message length corresponds to number of bits.
-///
-/// @details: The outgoing register is structured as follows:
-///	i16[0]: Message ID [0-65535]
-///	i16[1]: Message Info
-///		i8[0] message type [0-255] [see: MessageTypeID]
-///		i8[1] arg length [0-10] [number of message args in bytes]
-///	i16[NA,2:6] Arguments
-///		i16[2-3] message confirmation
-///			i16[2] rcv message id [0-65535]
-///			i16[2] rcv message type [0-65535]
-///	i16[x+1]: Footer
-///		i8[0] [254]
-///		i8[1] [254]
-///
-/// @details: The indexing of the RegUnion is is as follows:
-/// The indexing of the RegUnion is is as follows:
-///		ui16[0], ui8[0][1]		// id
-///		ui16[1], ui8[2][3]		// type		arg length
-///		ui16[2], ui8[4][5]		// arg 1	arg 2
-///		ui16[3], ui8[6][7]		// arg 3	arg 4
-///		ui16[4], ui8[8][9]     	// arg 5	arg 6
-///		ui16[5], ui8[10][11]   	// arg 7	arg 8
-///		ui16[6], ui8[12][13]  	// arg 9	arg 10
-///		ui16[7], ui8[14][15]  	// footer
+/// @note: The message length corresponds to number of bytes.
 ///
 /// @param msg_type_enum: The type of the message to be sent.
 /// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
 /// @param msg_arg_len: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
+void Esmacat_Com::sendEcatAcknowledge(MessageType msg_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
 
     // Reset union variables
     _uReset(sndEM);
 
-    // Store new message id
-    _uSetMsgID(sndEM); // in union
+    // Store reused recieve message id in union
+    _uSetMsgID(sndEM, rcvEM.msgID);
 
-    // Store new message type
-    _uSetMsgType(sndEM, msg_type_enum); // in union
+    // Store new message type in union
+    _uSetMsgType(sndEM, msg_type_enum); 
 
     // 	------------- Store arguments -------------
 
-    // ACK_WITH_STATUS
-    if (sndEM.msgTp == MessageType::ACK_WITH_STATUS)
+    // ACK_WITH_SUCCESS
+    if (sndEM.msgTp == MessageType::ACK_WITH_SUCCESS)
     {
         // Store last recieved message id and type
         _uSetArgData16(sndEM, rcvEM.msgID);     // store 16-bit recieved message id
         _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
+    }
+
+    // ACK_WITH_ERROR
+    else if (sndEM.msgTp == MessageType::ACK_WITH_ERROR)
+    {
+        // Store last recieved message id and type
+        _uSetArgData16(sndEM, rcvEM.msgID);     // store 16-bit recieved message id
+        _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
+
+        // Store error type
+        _uSetArgData8(sndEM, rcvEM.errTp); // recieved error type
     }
 
     // OTHER
@@ -334,10 +320,9 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
 /// @brief Used to get incoming ROS ethercat msg data.
 void Esmacat_Com::getEcatMessage()
 {
-    bool is_err = false; // error flag
 
     // Bail if previous message not processed
-    if (isMessageNew)
+    if (rcvEM.isNew)
         return;
 
     // Read esmacat buffer to get register data
@@ -347,16 +332,7 @@ void Esmacat_Com::getEcatMessage()
     if (!isHandshakeDone && rcvEM.RegU.ui16[0] != 1) // directly check message id entry for first message
         return;
 
-    // // TEMP
-    // static bool is_run_1 = false;
-    // if (!is_run_1)
-    // {
-    //     _Dbg.printMsgTime("(1) DEBUGGING!!!!!!!!!!!!!!!!!!!");
-    //     _printEcatReg(0, rcvEM.RegU); // TEMP
-    //     is_run_1 = true;
-    // }
-
-    // Get message id
+    // Get message id and check for out of sequence messages
     _uGetMsgID(rcvEM);
 
     // Skip redundant messages
@@ -364,37 +340,28 @@ void Esmacat_Com::getEcatMessage()
         return;
 
     // Get message type and check if valid
-    is_err = _uGetMsgType(rcvEM);
+    _uGetMsgType(rcvEM);
 
     // Skip end session message if handshake not done
     if (!isHandshakeDone &&
         rcvEM.msgTp == MessageType::END_SESSION) // end session message still in buffer
         return;
 
-    // Check/log error for valid message type
-    _logEcatErr(rcvEM, RunError::ECAT_NO_TYPE_MATCH, is_err);
-    if (is_err)
-        return;
-
-    // Check/log error skipped or out of sequence messages
-    is_err = rcvEM.msgID - rcvEM.msgID_last != 1;
-    _logEcatErr(rcvEM, RunError::ECAT_ID_DISORDERED, is_err);
-    if (is_err)
-        return;
-
     // Get argument length and argument data
     _uGetArgData8(rcvEM);
 
     // Get and check for footer
-    is_err = _uGetFooter(rcvEM);
+    _uGetFooter(rcvEM);
 
-    // Check/log error for valid footer
-    _logEcatErr(rcvEM, RunError::ECAT_MISSING_FOOTER, is_err);
-    if (is_err)
+    // Check for error and send error status
+    if (rcvEM.isErr)
+    {
+        sendEcatAcknowledge(MessageType::ACK_WITH_ERROR);
         return;
+    }
 
     // Set new message flag
-    isMessageNew = true;
+    rcvEM.isNew = true;
 
     _Dbg.printMsgTime("RECIEVED Ecat Message: id=%d type=%s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(0, rcvEM.RegU); // TEMP
