@@ -209,7 +209,7 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 }
 
 /// @brief Check for and log any message processing errors
-void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, MessageError err_tp, bool is_err)
+void Esmacat_Com::_logEcatErr(EcatMessageStruct &r_EM, RunError err_tp, bool is_err)
 {
     // Check for error
     if (is_err)
@@ -222,7 +222,7 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, MessageError err_tp, bool i
 
             // Get error string
             uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
-            strncpy(r_EM.err_tp_str, message_error_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
+            strncpy(r_EM.err_tp_str, run_error_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
@@ -233,11 +233,11 @@ void Esmacat_Com::_checkErr(EcatMessageStruct &r_EM, MessageError err_tp, bool i
 
     // Unset error type
     else if (r_EM.errTp == err_tp)
-        r_EM.errTp = MessageError::ERROR_NONE;
+        r_EM.errTp = RunError::ERROR_NONE;
 }
 
-/// @brief: Reset all message structs.
-void Esmacat_Com::msgReset()
+/// @brief: Reset all Ecat varables structs.
+void Esmacat_Com::resetEcat()
 {
     // Reset message union data and indeces
     _uReset(sndEM);
@@ -302,6 +302,7 @@ void Esmacat_Com::sendEcatMessage(MessageType msg_type_enum, uint8_t p_msg_arg_d
     // ACK_WITH_STATUS
     if (sndEM.msgTp == MessageType::ACK_WITH_STATUS)
     {
+        // Store last recieved message id and type
         _uSetArgData16(sndEM, rcvEM.msgID);     // store 16-bit recieved message id
         _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
     }
@@ -370,14 +371,14 @@ void Esmacat_Com::getEcatMessage()
         rcvEM.msgTp == MessageType::END_SESSION) // end session message still in buffer
         return;
 
-    // Run check error for valid message type
-    _checkErr(rcvEM, MessageError::NO_MESSAGE_TYPE_MATCH, is_err);
+    // Check/log error for valid message type
+    _logEcatErr(rcvEM, RunError::ECAT_NO_TYPE_MATCH, is_err);
     if (is_err)
         return;
 
-    // Check for skipped or out of sequence messages
+    // Check/log error skipped or out of sequence messages
     is_err = rcvEM.msgID - rcvEM.msgID_last != 1;
-    _checkErr(rcvEM, MessageError::MESSAGE_ID_DISORDERED, is_err);
+    _logEcatErr(rcvEM, RunError::ECAT_ID_DISORDERED, is_err);
     if (is_err)
         return;
 
@@ -387,8 +388,8 @@ void Esmacat_Com::getEcatMessage()
     // Get and check for footer
     is_err = _uGetFooter(rcvEM);
 
-    // Run check error for valid footer
-    _checkErr(rcvEM, MessageError::MISSING_FOOTER, is_err);
+    // Check/log error for valid footer
+    _logEcatErr(rcvEM, RunError::ECAT_MISSING_FOOTER, is_err);
     if (is_err)
         return;
 

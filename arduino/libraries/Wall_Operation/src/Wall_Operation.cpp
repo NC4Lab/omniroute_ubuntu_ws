@@ -52,7 +52,7 @@ void Wall_Operation::procEcatArguments()
 
 	// Check for new message
 	if (!EsmaCom.isMessageNew)
-		return; 
+		return;
 
 	_Dbg.printMsgTime("PROCESSING Ecat Message: id=%d type=%s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
 
@@ -91,23 +91,24 @@ void Wall_Operation::procEcatArguments()
 		_Dbg.printMsgTime("ECAT COMMS ESTABLISHED");
 		EsmaCom.isHandshakeDone = true;
 	}
-	
+
 	// MOVE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
 	{
 		moveWalls();
 	}
-	
+
 	// START_SESSION
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_SESSION)
 	{
-		resetMaze(false); // dont reset certain variables
+		resetHardware(); // reset all hardware
 	}
-	
+
 	// END_SESSION
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::END_SESSION)
 	{
-		resetMaze(true); // reset everything
+		resetHardware();		// reset all hardware
+		doSoftwareReset = true; // set software reset flag
 	}
 
 	// Send done confirmaton
@@ -307,10 +308,33 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 
 //------------------------ SETUP METHODS ------------------------
 
-/// @brief Reset @ref Wall_Operation::ChamberTrackStruct struct flags, which are used to track
-/// the wall states and errors
-/// @param do_full_reset: reset all variables
-void Wall_Operation::resetMaze(uint8_t do_full_reset)
+/// @brief Reset all relivant runtime variables to prepare for new session
+void Wall_Operation::checkSoftwareReset()
+{
+	// Bail if software reset is not required
+	if (!doSoftwareReset)
+		return;
+
+	// Reset all chamber flags
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
+	{
+		C[cham_i].bitWallMoveFlag = 0;
+		C[cham_i].bitWallPosition = 0;
+		C[cham_i].bitWallErrorFlag = 0;
+		C[cham_i].bitWallUpdateFlag = 0;
+	}
+
+	// Reset flag
+	doSoftwareReset = false;
+
+	// Reset ecat message variables
+	EsmaCom.resetEcat();
+
+	_Dbg.printMsgTime("SOFTWARE RESET COMPLETE");
+}
+
+/// @brief Reset Cypress hardware and reinitialize wall states
+void Wall_Operation::resetHardware()
 {
 	uint8_t resp = 0;
 
@@ -332,31 +356,10 @@ void Wall_Operation::resetMaze(uint8_t do_full_reset)
 	// Setup PWM pins for each chamber
 	resp = _setupCypressPWM(pwmDuty);
 
-	// Reset to starting state
-	if (do_full_reset)
-	{
-		// Reset all chamber flags
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
-		{
-			C[cham_i].bitWallMoveFlag = 0;
-			C[cham_i].bitWallPosition = 0;
-			C[cham_i].bitWallErrorFlag = 0;
-			C[cham_i].bitWallUpdateFlag = 0;
-			for (size_t i = 0; i < 6; i++)
-				C[cham_i].bitOutRegLast[i] = 0;
-		}
-
-		// Reset ecat message variables
-		EsmaCom.msgReset();
-	}
-
 	// Test and reset all walls
 	resp = _setupWalls();
 
-	if (do_full_reset)
-		_Dbg.printMsgTime("RESET Maze Complete");
-	else
-		_Dbg.printMsgTime("SETUP Maze Complete");
+	_Dbg.printMsgTime("HARDWARE RESET COMPLETE");
 }
 
 /// @brief Setup IO pins for each chamber including the pin direction (input) a
@@ -697,8 +700,6 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 								  run_error == 1 ? "i2c" : run_error == 2 ? "timedout"
 																		  : "unknown",
 								  _Dbg.dtTrack());
-				/// @todo  set error flag for sepcific chamber/wall
-				// TEMP bitWrite(C[cham_i].bitWallErrorFlag, wall_n, 1); // set chamber/wall specific error flag
 			}
 		}
 	}

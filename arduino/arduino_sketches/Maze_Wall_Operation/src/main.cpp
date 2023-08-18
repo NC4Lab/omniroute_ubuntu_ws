@@ -68,6 +68,12 @@ void loop()
 	// Check ethercat coms
 	WallOper.EsmaCom.getEcatMessage();
 
+	// Process and exicute ethercat arguments
+	WallOper.procEcatArguments();
+
+	// Check for reset 
+	WallOper.checkSoftwareReset();
+
 	// // TEMP
 	// int dt = 1000;
 	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
@@ -87,8 +93,6 @@ void loop()
 	// 	delay(dt);
 	// }
 
-	// Process and exicute ethercat arguments
-	WallOper.procEcatArguments();
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

@@ -376,12 +376,12 @@ class Esmacat_Com:
         END_SESSION = 5
         ERROR = 6
 
-    class MessageError(Enum):
+    class RunError(Enum):
         """ Enum for tracking message errors """
         ERROR_NONE = 0
-        MESSAGE_ID_DISORDERED = 1
-        NO_MESSAGE_TYPE_MATCH = 2
-        MISSING_FOOTER = 3
+        ECAT_ID_DISORDERED = 1
+        ECAT_NO_TYPE_MATCH = 2
+        ECAT_MISSING_FOOTER = 3
 
     class RegUnion(ctypes.Union):
         """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
@@ -428,7 +428,7 @@ class Esmacat_Com:
             self.argLen = 0
             self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
             self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
-            self.errTp = Esmacat_Com.MessageError.ERROR_NONE
+            self.errTp = Esmacat_Com.RunError.ERROR_NONE
     
     def __init__(self):
 
@@ -570,7 +570,7 @@ class Esmacat_Com:
         r_EM.getUI.reset()
         r_EM.argUI.reset()
 
-    def _checkErr(self, r_EM, err_tp, is_err):
+    def _logEcatErr(self, r_EM, err_tp, is_err):
         """Check if error type is valid and set error type"""
 
         # Check for error
@@ -590,7 +590,7 @@ class Esmacat_Com:
         # Unset error type
         else:
             if r_EM.errTp == err_tp:
-                r_EM.errTp = Esmacat_Com.MessageError.ERROR_NONE  
+                r_EM.errTp = Esmacat_Com.RunError.ERROR_NONE  
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
@@ -706,14 +706,14 @@ class Esmacat_Com:
         # Get message type and check if valid
         is_err = self._uGetMsgType(self.rcvEM)
 
-        # Run check error for valid message type
-        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.NO_MESSAGE_TYPE_MATCH, is_err)
+        # Check/log error for valid message type
+        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_NO_TYPE_MATCH, is_err)
         if is_err:
             return 2  # return error flag
 
-        # Check for skipped or out of sequence messages
+        # Check/log error skipped or out of sequence messages
         is_err = self.rcvEM.msgID - self.rcvEM.msgID_last != 1
-        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.MESSAGE_ID_DISORDERED, is_err)
+        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_ID_DISORDERED, is_err)
         if is_err:
             return 2  # return error flag
 
@@ -724,8 +724,8 @@ class Esmacat_Com:
         # Get and check for footer
         is_err = self._uGetFooter(self.rcvEM)
 
-        # Run check error for valid footer
-        self._checkErr(self.rcvEM, Esmacat_Com.MessageError.MISSING_FOOTER, is_err)
+        # Check/log error for valid footer
+        self._logEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_MISSING_FOOTER, is_err)
         if is_err:
             return 2  # return error flag
 
@@ -1198,19 +1198,6 @@ class Interface(Plugin):
         for str in list_output.decode().split("\n"):
             if (str.startswith(s)):
                 os.system("rosnode kill " + str)
-
-    def terminate_process_and_children(self, p):
-        """ Function to terminate a process and all its children when exiting the application """
-
-        ps_command = subprocess.Popen(
-            "ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
-        ps_output = ps_command.stdout.read()
-        retcode = ps_command.wait()
-        assert retcode == 0, "ps command returned %d" % retcode
-        for pid_str in ps_output.split("\n")[:-1]:
-            os.kill(int(pid_str), signal.SIGINT)
-        p.terminate()
-        p.kill()
 
     def endRosSession(self):
         """ Function to end the ROS session """

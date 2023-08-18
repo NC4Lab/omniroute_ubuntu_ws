@@ -42,18 +42,18 @@ public:
         ERROR = 6,
         nMsgTypEnum
     };
-    const char message_error_str[4][30] = {
+    const char run_error_str[4][30] = {
         "ERROR_NONE",
-        "MESSAGE_ID_DISORDERED",
-        "NO_MESSAGE_TYPE_MATCH",
-        "MISSING_FOOTER"};
-    enum MessageError
+        "ECAT_ID_DISORDERED",
+        "ECAT_NO_TYPE_MATCH",
+        "ECAT_MISSING_FOOTER"};
+    enum RunError
     {
         ERROR_NONE = 0,
-        MESSAGE_ID_DISORDERED = 1,
-        NO_MESSAGE_TYPE_MATCH = 2,
-        MISSING_FOOTER = 3,
-        N_MessageError
+        ECAT_ID_DISORDERED = 1,
+        ECAT_NO_TYPE_MATCH = 2,
+        ECAT_MISSING_FOOTER = 3,
+        N_RunError
     };
 
     union RegUnion
@@ -89,14 +89,14 @@ public:
         RegUnion ArgU;        ///< Union for storing message arguments
         UnionIndStruct argUI; ///< Union index handler for argument union data
 
-        MessageError errTp = MessageError::ERROR_NONE; ///< Ethercat message error
+        RunError errTp = RunError::ERROR_NONE; ///< Ethercat message error
         char msg_tp_str[50] = {0};               ///< Ethercat message type string
         char err_tp_str[50] = {0};               ///< Ethercat error type string
         uint8_t msg_tp_val = 0;                  ///< Ethercat message type value
     };
     EcatMessageStruct sndEM; ///<  initialize message handler instance for sending messages
     EcatMessageStruct rcvEM; ///<  initialize message handler instance for receiving messages
-    EcatMessageStruct tmpEM; ///<  initialize message handler instance for temporary receiving messages
+    
 
 private:
     static Maze_Debug _Dbg; ///< local instance of Maze_Debug class
@@ -132,10 +132,10 @@ private:
     void _uReset(EcatMessageStruct &);
 
 private:
-    void _checkErr(EcatMessageStruct &, MessageError, bool);
+    void _logEcatErr(EcatMessageStruct &, RunError, bool);
 
 public:
-    void msgReset();
+    void resetEcat();
 
 public:
     void sendEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);

@@ -25,8 +25,9 @@ class Wall_Operation
 	// ---------VARIABLES-----------------
 public:
 	// -----------GENERAL-----------------
-	uint8_t nCham;	 ///< number of chambers [1-9]
-	uint8_t pwmDuty; ///< pwm duty cycle [0-255]
+	uint8_t nCham;				  ///< number of chambers [1-9]
+	uint8_t pwmDuty;			  ///< pwm duty cycle [0-255]
+	bool doSoftwareReset = false; ///< flag to reset software
 
 	// -----------CYPRESS-----------------
 	struct WallMapStruct ///< pin mapping organized by wall with entries corresponding to the associated port or pin
@@ -77,8 +78,7 @@ public:
 		uint8_t bitWallMoveFlag = 0;   ///< bitwise variable, current wall active flag [0:inactive, 1:active]
 		uint8_t bitWallPosition = 0;   ///< bitwise variable, current wall position [0:down, 1:up]
 		uint8_t bitWallErrorFlag = 0;  ///< bitwise variable, flag move errors for a given wall
-		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be updated
-		uint8_t bitOutRegLast[6];	   ///< stores output registry values TEMP: may not be needed
+		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be update
 		PinMapStruct pmsDynPWM;		   ///< reusable dynamic instance for active PWM
 		PinMapStruct pmsDynIO;		   ///< reusable dynamic instance for active IO
 	};
@@ -87,7 +87,7 @@ public:
 	Esmacat_Com EsmaCom; //< instance of Esmacatshield class
 
 private:
-	Maze_Debug _Dbg;		///< local instance of Maze_Debug class
+	Maze_Debug _Dbg;	 ///< local instance of Maze_Debug class
 	Cypress_Com _CypCom; ///< local instance of Cypress_Com class
 
 	// -----------METHODS-----------------
@@ -118,7 +118,10 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	void resetMaze(uint8_t);
+	void checkSoftwareReset();
+
+public:
+	void resetHardware();
 
 private:
 	uint8_t _setupCypressIO();
