@@ -52,6 +52,7 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     7: [1, 3, 5, 7, 6],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
+N_CHAMBERS = 9  # number of chambers in maze
 
 #======================== GLOBAL FUNCTIONS ========================
 
@@ -78,7 +79,6 @@ def rospyLogCol(level, msg, *args):
         rospy.loginfo(frmt_msg(Fore.GREEN, msg, *args))
     else:
         rospy.loginfo(frmt_msg(Fore.BLACK, msg, *args))
-
 
 #======================== GLOBAL CLASSES ========================
 
@@ -284,7 +284,15 @@ class Wall_Config:
 
     @classmethod
     def makeByte2WallList(cls, wall_byte_config_list):
-        """Converts a list of byte values to a wall configuration list entries"""
+        """
+        Used to convert imported CSV with wall byte mask values to a list with wall numbers
+
+        Args:
+            wall_byte_config_list (list): 2D list: col1 = chamber number, col2 = wall byte mask
+        
+        Returns:
+            2D list: col1 = chamber number, col2 = nested wall numbers
+        """
 
         # Clear the existing wall_config_list
         cls.wallConfigList = []
@@ -299,9 +307,15 @@ class Wall_Config:
 
             cls.wallConfigList.append([chamber_num, wall_numbers])
 
+            return cls.wallConfigList
+
     @classmethod
     def makeWall2ByteList(cls):
-        """Returns a list with byte values for each chamber corespoinding to the wall configuration"""  
+        """
+        Used to covert wall number arrays to byte values for saving to CSV
+        
+        Returns:
+            2D list: col1 = chamber number, col2 = wall byte mask"""  
 
         wall_byte_config_list = []
         for row in cls.wallConfigList:  # row = [chamber_num, wall_numbers]
@@ -315,16 +329,22 @@ class Wall_Config:
                     # Set the corresponding bit to 1 using bitwise OR
                     byte_value |= (1 << wall_i)
             wall_byte_config_list.append([chamber_num, byte_value])
+
         return wall_byte_config_list
 
     @classmethod
-    def getWall2ByteList(cls):
-        """Returns a list with byte values for each chamber corespoinding to the wall configuration"""
+    def getWallByteOnlyList(cls):
+        """
+        Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
+        
+        Returns: 
+            1D list with byte values for all chambers"""
 
         wall_byte_config_list = cls.makeWall2ByteList()
 
         # Update U_arr with corresponding chamber and wall byte
-        wall_arr = [0] * len(cls.wallConfigList)
+        wall_arr = [0] * N_CHAMBERS
+        #wall_arr = [0] * len(cls.wallConfigList)
         for cw in wall_byte_config_list:
             wall_arr[cw[0]] = cw[1]
 
@@ -359,58 +379,61 @@ class Esmacat_Com:
     #------------------------ CLASS VARIABLES ------------------------
 
     # Handshake finished flag
-    isHandshakeDone = False
+    isEcatConnected = False
 
     #------------------------ NESTED CLASSES ------------------------
 
     class MessageType(Enum):
         """ Enum for ethercat python to arduino message type ID """
         MSG_NONE = 0
-        ACK_WITH_STATUS = 1
-        ACK_WITH_ERROR = 2
-        HANDSHAKE = 3
+        HANDSHAKE = 1 # handshake must equal 1
+        ACK_WITH_SUCCESS = 2
+        ACK_WITH_ERROR = 3
         START_SESSION = 4
         END_SESSION = 5
         MOVE_WALLS = 6
 
-    class RunError(Enum):
+    class ErrorType(Enum):
         """ Enum for tracking message errors """
         ERROR_NONE = 0
         ECAT_ID_DISORDERED = 1
         ECAT_NO_TYPE_MATCH = 2
         ECAT_MISSING_FOOTER = 3
+        I2C_FAILED = 4
+        WALL_MOVE_FAILED = 5
 
     class RegUnion(ctypes.Union):
         """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
-        _fields_ = [("ui8", ctypes.c_uint8 * 16),
+        _fields_ = [("ui8", ctypes.c_uint8 * 16), 
                     ("ui16", ctypes.c_uint16 * 8),
-                    ("i16", ctypes.c_int16 * 8),
-                    ("ui64", ctypes.c_uint64 * 2)]
+                    ("si16", ctypes.c_int16 * 8),
+                    ("ui64", ctypes.c_uint64 * 2),
+                    ("si64", ctypes.c_int64 * 2)]
     
     class UnionIndStruct:
         """ Struct for storing ethercat data shareable accross 8 and 16-bit data types """
         def __init__(self):
-            self.i8 = 0  # 8-bit index
-            self.i16 = 0 # 16-bit index
+            self.ii8 = 0  # 8-bit index
+            self.ii16 = 0 # 16-bit index
         
         def upd8(self, b_i=255):
             """Update union 8-bit and 16-bit index and return last updated 8-bit index"""
-            b_i = b_i if b_i != 255 else self.i8
-            self.i8 = b_i + 1
-            self.i16 = self.i8 // 2
+            b_i = b_i if b_i != 255 else self.ii8
+            self.ii8 = b_i + 1
+            self.ii16 = self.ii8 // 2
             return b_i
 
         def upd16(self, b_i=255):
             """Update union 16-bit and 8-bit index and return last updated 16-bit index"""
-            b_i = b_i if b_i != 255 else self.i16
-            self.i16 = b_i + 1
-            self.i8 = self.i16 * 2
+            b_i = b_i if b_i != 255 else self.ii16
+            self.ii16 = b_i + 1
+            self.ii8 = self.ii16 * 2
             return b_i
 
         def reset(self):
             """Reset union 8-bit and 16-bit index"""
-            self.i8 = 0
-            self.i16 = 0
+            self.ii8 = 0
+            self.ii16 = 0
     
     class EcatMessageStruct:
         """ Struct for storing ethercat messages """
@@ -430,7 +453,7 @@ class Esmacat_Com:
 
             self.isNew = False                         # New message flag
             self.isErr = False                         # Message error flag
-            self.errTp = Esmacat_Com.RunError.ERROR_NONE # Message error type
+            self.errTp = Esmacat_Com.ErrorType.ERROR_NONE # Message error type
     
     def __init__(self):
 
@@ -443,6 +466,19 @@ class Esmacat_Com:
             '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
 
     #------------------------ PRIVATE METHODS ------------------------
+    
+    def _uSetCheckReg(self, r_EM, reg_arr_si16):
+        """Set register values in union and check for -1 values indicating no or incomplete messages"""
+
+        # Bail if any register values are equal to -1
+        if -1 in reg_arr_si16:
+            return False
+
+        # Set register values in union uint16 type
+        for i in range(8):
+            r_EM.RegU.si16[i] = reg_arr_si16[i]
+
+        return True
 
     def _uSetMsgID(self, r_EM, msg_id=255):
         """Set message ID entry in union and update associated variable"""
@@ -460,6 +496,12 @@ class Esmacat_Com:
 
         r_EM.msgID_last = r_EM.msgID # store last message ID if
         r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
+
+        # Check/log error skipped or out of sequence messages
+        if r_EM.msgID - r_EM.msgID_last != 1 and \
+            r_EM.msgID != r_EM.msgID_last: # don't log errors for repeat message reads
+            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_ID_DISORDERED)
+
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
         """Set message type entry in union and update associated variable"""
@@ -481,9 +523,10 @@ class Esmacat_Com:
         is_found = msg_type_val in [e.value for e in Esmacat_Com.MessageType]
         r_EM.isErr = not is_found # Update struct error flag
 
-        # If not found, set message type to 'MSG_NONE'
+        # Log error and set message type to none if not found
         if r_EM.isErr:
             msg_type_val = Esmacat_Com.MessageType.MSG_NONE
+            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_NO_TYPE_MATCH) 
         else:
             r_EM.msgTp = Esmacat_Com.MessageType(msg_type_val)
 
@@ -509,10 +552,10 @@ class Esmacat_Com:
             r_EM.argUI.upd8()
 
             # Update message argument length from argument union 8-bit index
-            self._uSetArgLength(r_EM, r_EM.argUI.i8)
+            self._uSetArgLength(r_EM, r_EM.argUI.ii8)
 
             # Get 8-bit union index and set 8-bit argument data entry in union
-            regu8_i = r_EM.argUI.i8 + 3
+            regu8_i = r_EM.argUI.ii8 + 3
 
             # Set message argument data in reg union
             r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
@@ -527,10 +570,10 @@ class Esmacat_Com:
             r_EM.argUI.upd16()
             
             # Update message argument length from argument union 8-bit index
-            self._uSetArgLength(r_EM, r_EM.argUI.i8)
+            self._uSetArgLength(r_EM, r_EM.argUI.ii8)
             
             # Get 16-bit union index and set 16-bit argument data entry in union
-            regu16_i = (r_EM.argUI.i8 + 3) // 2
+            regu16_i = (r_EM.argUI.ii8 + 3) // 2
             
             # Set message argument data in reg union
             r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
@@ -555,26 +598,39 @@ class Esmacat_Com:
 
         r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy first footer byte
         r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy second footer byte
-        is_err = r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254 # check if footer is valid
-        return is_err
+
+        # Log missing footer error
+        if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254: # check if footer is valid
+            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_MISSING_FOOTER) 
 
     def _uReset(self, r_EM):
         """Reset union data and indices"""
 
-        # Reset union data
-        r_EM.RegU.ui64[0] = 0
-        r_EM.RegU.ui64[1] = 0
+        # Reset union data to 0
+        r_EM.RegU.si64[0] = 0
+        r_EM.RegU.si64[1] = 0
 
         # Reset union indices
         r_EM.setUI.reset()
         r_EM.getUI.reset()
         r_EM.argUI.reset()
 
-    def _checkEcatErr(self, r_EM, err_tp, is_err):
-        """Check if error type is valid and set error type"""
+    def _resetReg(self):
+        """
+        Reset EtherCAT register data by setting all values to -1
+        
+        Note: This is a workaround for the fact that the Esmacat does not clear
+        this can lead to only partial or overlapping messages being read
+        """
+        
+        reg_arr = [-1] * 8
+        self.maze_ard0_pub.publish(*reg_arr) 
+
+    def _trackEcatErr(self, r_EM, err_tp, do_reset=False):
+        """Check for and log any Ecat or runtime errors"""
 
         # Check for error
-        if is_err:
+        if not do_reset:
 
             # Run only once
             if r_EM.errTp != err_tp:  
@@ -586,12 +642,12 @@ class Esmacat_Com:
                 # Print error message
                 rospyLogCol(
                     'ERROR', "!!ERROR: Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
-                self._printEcatReg('DEBUG', 0, r_EM.RegU)  # TEMP
+                self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
-        else:
-            if r_EM.errTp == err_tp:
-                r_EM.errTp = Esmacat_Com.RunError.ERROR_NONE  
+        elif r_EM.errTp == err_tp:
+                r_EM.errTp = Esmacat_Com.ErrorType.ERROR_NONE  
+                r_EM.isErr = False
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
@@ -601,15 +657,20 @@ class Esmacat_Com:
 
         # Print message data
         for i in range(8):
-            if d_type == 1 or i == 0:
+            if d_type == 2:
+                rospyLogCol(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
+            if d_type == 1:
                 rospyLogCol(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                rospyLogCol(level, "\t\t\t ui8[%d]  %d %d", i, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                rospyLogCol(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
-    def msgReset(self):
+    def resetEcat(self):
         """Reset all message structs."""
+
+        # Reset EtherCAT register data
+        self._resetReg()
 
         # Reset message union data and indeces
         self._uReset(self.sndEM)
@@ -619,12 +680,12 @@ class Esmacat_Com:
         self.sndEM.msgID = 0
         self.rcvEM.msgID = 0
 
-        # Reset Ethercat handshake flag
-        self.isHandshakeDone = False
+        # Setup Ethercat handshake flag
+        self.isEcatConnected = False
 
-    def sendEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
         """
-        Used to parse new incoming ROS ethercat msg data.
+        Used to send outgoing ROS ethercat msg data.
 
         Args:
             msg_type_enum (Esmacat_Com.MessageType): Message type enum.
@@ -635,6 +696,9 @@ class Esmacat_Com:
             int: Success/error codes [0:no message, 1:new message, 2:error]
         """
 
+        # Set all register values to -1 to clear buffer
+        self._resetReg()
+        
         # Reset union variables
         self._uReset(self.sndEM)
 
@@ -646,100 +710,76 @@ class Esmacat_Com:
 
         # 	------------- Store arguments -------------
 
-        # ACK_WITH_STATUS
-        if self.sndEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
-            self._uSetArgData16(self.sndEM, self.rcvEM.msgID)  # store 16-bit received message id
-            self._uSetArgData8(self.sndEM, self.rcvEM.msgTp.value)  # received message type value
-
-        # OTHER
+        if msg_arg_data_arr is not None:  # store message arguments if provided
+            for i in range(msg_arg_len):
+                self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
         else:
-            if msg_arg_data_arr is not None:  # store message arguments if provided
-                for i in range(msg_arg_len):
-                    self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
-            else:
-                self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
+            self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
 
         # 	------------- Finish setup and write -------------
 
         # Store footer
         self._uSetFooter(self.sndEM)
 
-         # Store Union 16-bit values cast as signed and publish to ease_registers topic
-        reg_arr = [0] * 8
-        for i in range(8):
-            reg_arr[i] = self.sndEM.RegU.i16[i] # cast as ctype signed int (e.g., uint16))
-        self.maze_ard0_pub.publish(*reg_arr)  
+         # Publish to union uint16 type data to ease_registers topic
+        self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)  
 
         # Print message
-        rospyLogCol('INFO', "SENT Ecat Message: id=%d type=%s",
-                    self.sndEM.msgID, self.sndEM.msgTp.name)
+        rospyLogCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
 
-    def parseEcatMessage(self, reg_arr):
+    def parseEcatMessage(self, reg_arr_si16):
         """
         Used to parse new incoming ROS ethercat msg data.
 
         Args:
-            reg_arr (list): Array of length 8 from the ethercat register.
-        """
+            reg_arr_si16 (list): Register array (signed int16).
 
-        is_err = False  # error flag
+        Returns:
+            int: new message flag [0:no message, 1:new message].
+        """
 
         # Bail if previous message not processed
         if self.rcvEM.isNew:
-            return 0
+            return False
 
-         # Copy register data into union
-        for i in range(8):
-            self.rcvEM.RegU.ui16[i] = reg_arr[i]
+        # Check register for garbage or incomplete data and copy register data into union
+        if not self._uSetCheckReg(self.rcvEM, reg_arr_si16):
+            return False
 
-        # Skip leftover register entries and ethercat setup junk (e.g., ui16[0] == 65535)
-        if self.rcvEM.RegU.ui16[0] != 1 and not self.isHandshakeDone: # directly check message id entry for first message
-            return 0
+        # # Skip leftover register entries and ethercat setup junk (e.g., ui16[0] == 65535)
+        # # Check if still waiting for handshake
+        # # Directly check union id entry for first message
+        # if self.isEcatConnected != 1 and \
+        #     self.rcvEM.RegU.ui16[0] != 1:
+        #     return False
 
         # Get message id
         self._uGetMsgID(self.rcvEM)
 
         # Skip redundant messages
         if self.rcvEM.msgID == self.rcvEM.msgID_last:
-            return 0
+            return False
 
         # Get message type and check if valid
         self._uGetMsgType(self.rcvEM)
 
-        # Check/log error for valid message type
-        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_NO_TYPE_MATCH, is_err)
-        if is_err:
-            return 2  # return error flag
-
-        # Check/log error skipped or out of sequence messages
-        is_err = self.rcvEM.msgID - self.rcvEM.msgID_last != 1
-        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_ID_DISORDERED, is_err)
-        if is_err:
-            return 2  # return error flag
-
         # Get argument length and arguments
-        self._uGetArgLength(self.rcvEM)
         self._uGetArgData8(self.rcvEM) 
 
         # Get and check for footer
-        is_err = self._uGetFooter(self.rcvEM)
+        self._uGetFooter(self.rcvEM)
 
-        # Check/log error for valid footer
-        self._checkEcatErr(self.rcvEM, Esmacat_Com.RunError.ECAT_MISSING_FOOTER, is_err)
-        if is_err:
-            return 2  # return error flag
+        # @todo: figure out what to do if message corrupted
 
         # Set new message flag
         self.rcvEM.isNew = True
 
         # Print message
-        rospyLogCol('INFO', "RECEIVED Ecat Message: id=%d type=%s",
-                    self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        rospyLogCol('INFO', "(%d)ECAT RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
 
-        # Return new message flag
-        return 1
+        return True
 
 #======================== MAIN UI CLASS ========================
 # CLASS: Interface plugin
@@ -858,11 +898,13 @@ class Interface(Plugin):
         # Store the time the interface was initialized
         self.ts_interface_init = rospy.get_time() # (sec)
 
-        # Specify delay to start reading/writing Esmacat data 
+        # Specify delay to start and check reading/writing Esmacat data 
         self.dt_ecat_start = 1 # (sec)
-
-        # Specify delay between Esmacat checks reads
         self.dt_ecat_check = 0.5 # (sec)
+
+        # Couter to incrementally shut down opperations
+        self.cnt_shutdown_step = 0
+        self.dt_shutdown_step = 0.5 # (sec)
 
         #................ QT Callback Setup ................
 
@@ -896,6 +938,12 @@ class Interface(Plugin):
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
         self.timer_sendHandshake.start(self.dt_ecat_start*1000) # (ms)
 
+        # QT timer to send and check handshake confirmation after a delay
+        self.timer_endSession = QTimer()
+        self.timer_endSession.timeout.connect(
+            self.timer_callback_endSession_once)
+        self.timer_endSession.setSingleShot(True)  # Run only once
+
         #................ ROS Setup ................
 
         # @obsolete ROS Sublisher: @obsolete 
@@ -920,42 +968,42 @@ class Interface(Plugin):
             int: Success/error codes [0:no message, 1:new message, 2:error]
         """
 
-        #................ Process Arguments ................ 
+        # Get message type of message being confirmed
+        msg_typ_ack = Esmacat_Com.MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[0])
 
-        # Create temp EcatMessageStruct object for confirmation message
-        cnf_em = self.EsmaCom_A0.EcatMessageStruct()
+        # Print confirmation message
+        rospyLogCol('INFO', "(%d)PROCESSING ECAT ACK: %s FOR %s", 
+                    self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name, msg_typ_ack.name)
+        
+        #................ Process Ack Success ................ 
 
-        # ACK_WITH_STATUS
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_SUCCESS:
 
-            # Get confirmation message number
-            cnf_em.msgID = self.EsmaCom_A0.rcvEM.ArgU.ui16[0]
-
-            # Get message number
-            cnf_em.msgTp = Esmacat_Com.MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[2])
-
-            # Print confirmation message
-            rospyLogCol('INFO', "Ecat Message Acknowledgment With Status: type=%s id=%d",
-                        cnf_em.msgTp, cnf_em.msgID)
-
-        # ACK_WITH_ERROR
-        elif self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_ERROR:
-            pass
-
-        #................ Execute Arguments ................ 
-
-        # ACK_WITH_STATUS
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_STATUS:
-
-            # Check if message is a handshake confirmation
-            if cnf_em.msgTp == Esmacat_Com.MessageType.HANDSHAKE:
+            # HANDSHAKE
+            if msg_typ_ack == Esmacat_Com.MessageType.HANDSHAKE:
 
                 # Set the handshake flag
-                self.EsmaCom_A0.isHandshakeDone = True
-                rospyLogCol('INFO', "ECAT COMMS ESTABLISHED");
+                self.EsmaCom_A0.isEcatConnected = True
+                rospyLogCol('INFO', "=== ECAT COMMS CONNECTED ===");
 
                 # Send START_SESSION message
-                self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.START_SESSION)
+                self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.START_SESSION)
+
+            # END_SESSION
+            if msg_typ_ack == Esmacat_Com.MessageType.END_SESSION:
+                # Set the handshake flag
+                self.EsmaCom_A0.isEcatConnected = False
+                rospyLogCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
+
+        #................ Process Ack Error ................ 
+
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_ERROR:
+
+            # Get error type 
+            err_typ = Esmacat_Com.ErrorType(self.EsmaCom_A0.rcvEM.ArgU.ui8[1])
+
+            rospyLogCol(
+                'ERROR', "!!ERROR: ECAT ERROR: %s!!", err_typ.name)
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -971,23 +1019,18 @@ class Interface(Plugin):
             return
 
         # Store ethercat message in class variable
-        si16_arr = [0]*8
-        si16_arr[0] = msg.INT0
-        si16_arr[1] = msg.INT1
-        si16_arr[2] = msg.INT2
-        si16_arr[3] = msg.INT3
-        si16_arr[4] = msg.INT4
-        si16_arr[5] = msg.INT5
-        si16_arr[6] = msg.INT6
-        si16_arr[7] = msg.INT7
+        reg_arr_si16 = [0]*8
+        reg_arr_si16[0] = msg.INT0
+        reg_arr_si16[1] = msg.INT1
+        reg_arr_si16[2] = msg.INT2
+        reg_arr_si16[3] = msg.INT3
+        reg_arr_si16[4] = msg.INT4
+        reg_arr_si16[5] = msg.INT5
+        reg_arr_si16[6] = msg.INT6
+        reg_arr_si16[7] = msg.INT7
 
-        # Convert 16-bit signed ints to 16-bit unsigned ints array
-        ui16_arr = [0]*8
-        for i in range(8):
-            ui16_arr[i] = ctypes.c_uint16(si16_arr[i]).value
-
-        # Parse the message and check if its new
-        if self.EsmaCom_A0.parseEcatMessage(ui16_arr) == 1:
+        # Parse the message and check if it is new
+        if self.EsmaCom_A0.parseEcatMessage(reg_arr_si16):
             # Emit signal to process new message and update UI as UI should not be updated from a non-main thread
             self.signal_Esmacat_read_maze_ard0_ease.emit()           
 
@@ -999,14 +1042,18 @@ class Interface(Plugin):
 
     #------------------------ CALLBACKS: Timers ------------------------
 
+    def timer_callback_updateUI_loop(self):
+            """ Timer callback to update UI. """
+
+            # Update graphics
+            self.scene.update()
+            self._widget.plotMazeView.update()
+
     def timer_callback_sendHandshake_once(self):
         """ Timer callback to send handshake message once resend till confirmation. """
-
-        # Kill handshake check timer
-        # self.timer_sendHandshake.stop()
         
         # Check for HANDSHAKE message confirm recieved flag
-        if self.EsmaCom_A0.isHandshakeDone == False:
+        if self.EsmaCom_A0.isEcatConnected == False:
 
             # Give up is more that 3 messages have been sent
             if self.EsmaCom_A0.sndEM.msgID > 3:
@@ -1018,17 +1065,67 @@ class Interface(Plugin):
                     'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino 
-            self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.HANDSHAKE)
+            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
 
-    def timer_callback_updateUI_loop(self):
-        """ Timer callback to update UI. """
+    def timer_callback_endSession_once(self):
+        """ Timer callback to incrementally shutdown session. """
+        
+        if self.cnt_shutdown_step == 0:
+            # Send END_SESSION message to arduino
+            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.END_SESSION)
 
-        # Update graphics
-        self.scene.update()
-        self._widget.plotMazeView.update()
+        elif self.EsmaCom_A0.isEcatConnected == True:
+            # Wait for END_SESSION message confirmation and restart timer
+            self.timer_endSession.start(self.dt_shutdown_step*1000)
+            return
+            
+        elif self.cnt_shutdown_step == 1:
+            # Kill self.signal_Esmacat_read_maze_ard0_ease thread
+            self.signal_Esmacat_read_maze_ard0_ease.disconnect()
+            rospyLogCol('INFO', "Disconnected from Esmacat read timer thread");
+
+        elif self.cnt_shutdown_step == 2:
+            # Kill specific nodes
+            self.terminate_ros_node("/Esmacat_application_node")
+            self.terminate_ros_node("/interface_test_node")
+            rospyLogCol('INFO', "Killed specific nodes");
+
+        elif self.cnt_shutdown_step == 3:
+            # Kill all nodes (This will also kill this script's node)
+            os.system("rosnode kill -a")
+            rospyLogCol('INFO', "Killed all nodes");
+
+        elif self.cnt_shutdown_step == 4:
+            # Process any pending events in the event loop
+            QCoreApplication.processEvents()
+            rospyLogCol('INFO', "Processed all events");
+
+        elif self.cnt_shutdown_step == 5:
+            # Close the UI window
+            self._widget.close()
+            rospyLogCol('INFO', "Closed UI window");
+
+        elif self.cnt_shutdown_step == 6:
+            # Send a shutdown request to the ROS master
+            rospy.signal_shutdown("User requested shutdown")
+            rospyLogCol('INFO', "Sent shutdown request to ROS master");
+
+        elif self.cnt_shutdown_step == 7:
+            # End the application
+            QApplication.quit()
+            rospyLogCol('INFO', "Ended application");
+            return  # Return here to prevent the timer from being restarted after the application is closed
+        
+        # Increment the shutdown step after ecat disconnected
+        self.cnt_shutdown_step += 1
+
+        # Restart the timer for the next step
+        self.timer_endSession.start(self.dt_shutdown_step*1000)
+
+    #------------------------ CALLBACKS: UI ------------------------
 
     def qt_callback_fileBrowseBtn_clicked(self):
         """ Callback for the "Browse" button. """
@@ -1114,15 +1211,13 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, 9, Wall_Config.getWall2ByteList())
+        self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, Wall_Config.getWallByteOnlyList(), N_CHAMBERS)
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
 
-        # Call function to shut down the ROS session
-        self.endRosSession()
-        # End the application
-        QApplication.quit()
+        # Call timer callback to incrementally shutdown session
+        self.timer_endSession.start(0)
 
     #------------------------ FUNCTIONS: CSV File Handling ------------------------
 
@@ -1200,40 +1295,12 @@ class Interface(Plugin):
             if (str.startswith(s)):
                 os.system("rosnode kill " + str)
 
-    def endRosSession(self):
-        """ Function to end the ROS session """
-
-        # Send END_SESSION message to arduino
-        self.EsmaCom_A0.sendEcatMessage(Esmacat_Com.MessageType.END_SESSION)
-
-        # Kill self.signal_Esmacat_read_maze_ard0_ease.emit() thread
-        # TEMP self.thread_Esmacat_read_maze_ard0_ease.terminate()
-
-        # Kill specific nodes
-        self.terminate_ros_node("/Esmacat_application_node")
-        self.terminate_ros_node("/interface_test_node")
-
-        # Wait for nodes to shutdown
-        time.sleep(1)  # (sec)
-
-        # Kill all nodes (This will also kill this script's node)
-        os.system("rosnode kill -a")
-
-        # Process any pending events in the event loop
-        QCoreApplication.processEvents()
-
-        # Close the UI window
-        self._widget.close()
-
-        # Send a shutdown request to the ROS master
-        rospy.signal_shutdown("User requested shutdown")
-
     """ @todo: Implement this function to handle the window close event """
     def closeEvent(self, event):
         """ Function to handle the window close event """
         
         rospyLogCol('INFO', "Closing window...")
         # Call function to shut down the ROS session
-        self.endRosSession()
+        self.end_ros_session()
         event.accept()  # let the window close
 

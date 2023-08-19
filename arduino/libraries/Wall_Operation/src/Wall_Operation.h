@@ -25,12 +25,12 @@ class Wall_Operation
 	// ---------VARIABLES-----------------
 public:
 	// -----------GENERAL-----------------
-	uint8_t nCham;				  ///< number of chambers [1-9]
-	uint8_t pwmDuty;			  ///< pwm duty cycle [0-255]
-	bool doSoftwareReset = false; ///< flag to reset software
+	uint8_t nCham;				  // number of chambers [1-9]
+	uint8_t pwmDuty;			  // pwm duty cycle [0-255]
+	bool doSoftwareReset = false; // flag to reset software
 
 	// -----------CYPRESS-----------------
-	struct WallMapStruct ///< pin mapping organized by wall with entries corresponding to the associated port or pin
+	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
 			{4, 6, 7, 5, 3, 1, 0, 2};
@@ -50,45 +50,45 @@ public:
 			{4, 1, 0, 0, 3, 3, 2, 4}, // port
 			{1, 4, 4, 5, 6, 7, 2, 6}  // pin/bit
 		};
-		uint8_t funMap[6][8] = {0}; ///< map of pin function [0:none, 1:io_down, 2:io_up, 3:pwm_down, 4:pwm_up]
+		uint8_t funMap[6][8] = {0}; // map of pin function [0:none, 1:io_down, 2:io_up, 3:pwm_down, 4:pwm_up]
 	};
-	WallMapStruct wms; ///< only one instance used
+	WallMapStruct wms; // only one instance used
 
-	struct PinMapStruct ///< pin mapping orgnanized by port / pin number
+	struct PinMapStruct // pin mapping orgnanized by port / pin number
 	{
-		uint8_t port[6];		///< stores port numbers
-		uint8_t pin[6][8];		///< stores pin numbers
-		uint8_t wall[6][8];		///< stores wall numbers
-		uint8_t bitMask[6];		///< stores registry mask byte for each used port
-		uint8_t bitMaskLong[6]; ///< stores registry mask byte for all ports in registry
-		uint8_t nPorts;			///< stores number of ports in list
-		uint8_t nPins[6];		///< stores number of pins in list
+		uint8_t port[6];		// stores port numbers
+		uint8_t pin[6][8];		// stores pin numbers
+		uint8_t wall[6][8];		// stores wall numbers
+		uint8_t bitMask[6];		// stores registry mask byte for each used port
+		uint8_t bitMaskLong[6]; // stores registry mask byte for all ports in registry
+		uint8_t nPorts;			// stores number of ports in list
+		uint8_t nPins[6];		// stores number of pins in list
 	};
-	PinMapStruct pmsAllIO;	 ///< all io pins
-	PinMapStruct pmsAllPWM;	 ///< all pwm pins
-	PinMapStruct pmsUpIO;	 ///< io up pins
-	PinMapStruct pmsDownIO;	 ///< io down pins
-	PinMapStruct pmsUpPWM;	 ///< pwm up pins
-	PinMapStruct pmsDownPWM; ///< pwm down pins
+	PinMapStruct pmsAllIO;	 // all io pins
+	PinMapStruct pmsAllPWM;	 // all pwm pins
+	PinMapStruct pmsUpIO;	 // io up pins
+	PinMapStruct pmsDownIO;	 // io down pins
+	PinMapStruct pmsUpPWM;	 // pwm up pins
+	PinMapStruct pmsDownPWM; // pwm down pins
 
-	struct ChamberStruct ///< struct for tracking each chamber
+	struct ChamberStruct // struct for tracking each chamber
 	{
-		uint8_t num = 0;			   ///< chamber number
-		uint8_t addr = 0;			   ///< chamber I2C address
-		uint8_t bitWallMoveFlag = 0;   ///< bitwise variable, current wall active flag [0:inactive, 1:active]
-		uint8_t bitWallPosition = 0;   ///< bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallErrorFlag = 0;  ///< bitwise variable, flag move errors for a given wall
-		uint8_t bitWallUpdateFlag = 0; ///< bitwise variable, flag that wall position should be update
-		PinMapStruct pmsDynPWM;		   ///< reusable dynamic instance for active PWM
-		PinMapStruct pmsDynIO;		   ///< reusable dynamic instance for active IO
+		uint8_t num = 0;			   // chamber number
+		uint8_t addr = 0;			   // chamber I2C address
+		uint8_t bitWallMoveFlag = 0;   // bitwise variable, current wall active flag [0:inactive, 1:active]
+		uint8_t bitWallPosition = 0;   // bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
+		uint8_t bitWallUpdateFlag = 0; // bitwise variable, flag that wall position should be update
+		PinMapStruct pmsDynPWM;		   // reusable dynamic instance for active PWM
+		PinMapStruct pmsDynIO;		   // reusable dynamic instance for active IO
 	};
-	ChamberStruct C[9]; ///< initialize with max number of chambers for 3x3
+	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
 
 	Esmacat_Com EsmaCom; //< instance of Esmacatshield class
 
 private:
-	Maze_Debug _Dbg;	 ///< local instance of Maze_Debug class
-	Cypress_Com _CypCom; ///< local instance of Cypress_Com class
+	Maze_Debug _Dbg;	 // local instance of Maze_Debug class
+	Cypress_Com _CypCom; // local instance of Cypress_Com class
 
 	// -----------METHODS-----------------
 
@@ -118,10 +118,10 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	void checkSoftwareReset();
+	void resetSoftwareCheck();
 
 public:
-	void resetHardware();
+	uint8_t resetHardware(bool);
 
 private:
 	uint8_t _setupCypressIO();
@@ -130,7 +130,7 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 private:
-	uint8_t _setupWalls();
+	uint8_t _resetWalls(bool);
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);

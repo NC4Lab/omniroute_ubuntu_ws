@@ -487,8 +487,6 @@ uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool print_err)
 {
 	uint8_t resp = Wire.endTransmission(send_stop);
 	if (resp != 0 && print_err)
-	{
 		_Dbg.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
-	}
 	return resp;
 }
