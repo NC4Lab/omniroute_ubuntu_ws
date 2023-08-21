@@ -133,7 +133,7 @@ void Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     if (!r_EM.isErr)
         strncpy(r_EM.msg_tp_str, message_type_str[r_EM.msg_tp_val], sizeof(r_EM.msg_tp_str) - 1);
     else
-        strncpy(r_EM.msg_tp_str, "NULL", sizeof(r_EM.msg_tp_str) - 1);
+        strncpy(r_EM.msg_tp_str, "MSG_NONE", sizeof(r_EM.msg_tp_str) - 1); // set to none if error
     r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0'; // ensure null termination
 }
 
@@ -254,7 +254,7 @@ void Esmacat_Com::_trackEcatErr(EcatMessageStruct &r_EM, ErrorType err_tp, bool 
 
             // Get error string
             uint8_t err_tp_val = static_cast<uint8_t>(err_tp);
-            strncpy(r_EM.err_tp_str, run_error_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
+            strncpy(r_EM.err_tp_str, error_type_str[err_tp_val], sizeof(r_EM.err_tp_str) - 1);
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
@@ -297,6 +297,58 @@ void Esmacat_Com::resetEcat(bool do_final_reset)
 
     if (do_final_reset)
         _Dbg.printMsgTime("=== ECAT COMMS DISCONNECTED ===");
+}
+
+/// @brief Used to get incoming ROS ethercat msg data.
+void Esmacat_Com::readEcatMessage()
+{
+
+    // Bail if previous message not processed
+    if (rcvEM.isNew)
+        return;
+
+    // Read esmacat buffer to get register data
+    int reg_arr[8];
+    _ESMA.get_ecat_registers(reg_arr);
+
+    // Check register for garbage or incomplete data and copy register data into union
+    if (!_uSetCheckReg(rcvEM, reg_arr))
+        return;
+
+    // // Skip leftover register entries and ethercat setup junk (e.g., ui8 == 255)
+    // if (!isEcatConnected &&         // check if still waiting for handshake
+    //     (rcvEM.RegU.ui16[0] != 1 || // directly check union id entry for first message
+    //      rcvEM.RegU.ui8[2] != 1))   // directly check union type entry for handshake (e.g., 1)
+    //     return;
+
+    // Get message id and check for out of sequence messages
+    _uGetMsgID(rcvEM);
+
+    // Skip redundant messages
+    if (rcvEM.msgID == rcvEM.msgID_last)
+        return;
+
+    // Get message type and check if valid
+    _uGetMsgType(rcvEM);
+
+    // Get argument length and argument data
+    _uGetArgData8(rcvEM);
+
+    // Get and check for footer
+    _uGetFooter(rcvEM);
+
+    // Check for error and send error status
+    if (rcvEM.isErr)
+    {
+        writeEcatMessage(MessageType::ACK_WITH_ERROR, rcvEM.errTp);
+        return; // skip processing message
+    }
+
+    // Set new message flag
+    rcvEM.isNew = true;
+
+    _Dbg.printMsgTime("(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
+    _printEcatReg(0, rcvEM.RegU); // TEMP
 }
 
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
@@ -343,9 +395,6 @@ void Esmacat_Com::writeEcatMessage(MessageType msg_type_enum, ErrorType error_ty
     // ACK_WITH_ERROR
     else if (sndEM.msgTp == MessageType::ACK_WITH_ERROR)
     {
-        // Store last recieved message type
-        _uSetArgData8(sndEM, rcvEM.msg_tp_val); // recieved message type value
-
         // Store error type
         _uSetArgData8(sndEM, error_type_enum); // recieved error type
 
@@ -372,61 +421,9 @@ void Esmacat_Com::writeEcatMessage(MessageType msg_type_enum, ErrorType error_ty
     // Reset new rcv message flag
     rcvEM.isNew = false;
 
-    // Print message
-    _Dbg.printMsgTime("(%d)ECAT SENT: %s", sndEM.msgID, sndEM.msg_tp_str);
+    // Print ack message info with message type being acked
+    _Dbg.printMsgTime("(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, rcvEM.msg_tp_str);
     _printEcatReg(0, sndEM.RegU); // TEMP
-}
-
-/// @brief Used to get incoming ROS ethercat msg data.
-void Esmacat_Com::readEcatMessage()
-{
-
-    // Bail if previous message not processed
-    if (rcvEM.isNew)
-        return;
-
-    // Read esmacat buffer to get register data
-    int reg_arr[8];
-    _ESMA.get_ecat_registers(reg_arr);
-
-    // Check register for garbage or incomplete data and copy register data into union
-    if (!_uSetCheckReg(rcvEM, reg_arr))
-        return;
-
-    // Skip leftover register entries and ethercat setup junk (e.g., ui8 == 255)
-    if (!isEcatConnected &&         // check if still waiting for handshake
-        (rcvEM.RegU.ui16[0] != 1 || // directly check union id entry for first message
-         rcvEM.RegU.ui8[2] != 1))   // directly check union type entry for handshake (e.g., 1)
-        return;
-
-    // Get message id and check for out of sequence messages
-    _uGetMsgID(rcvEM);
-
-    // Skip redundant messages
-    if (rcvEM.msgID == rcvEM.msgID_last)
-        return;
-
-    // Get message type and check if valid
-    _uGetMsgType(rcvEM);
-
-    // Get argument length and argument data
-    _uGetArgData8(rcvEM);
-
-    // Get and check for footer
-    _uGetFooter(rcvEM);
-
-    // Check for error and send error status
-    if (rcvEM.isErr)
-    {
-        writeEcatMessage(MessageType::ACK_WITH_ERROR, rcvEM.errTp);
-        return; // skip processing message
-    }
-
-    // Set new message flag
-    rcvEM.isNew = true;
-
-    _Dbg.printMsgTime("(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    _printEcatReg(0, rcvEM.RegU); // TEMP
 }
 
 /// @brief Overloaded function for printing Ethercat register values.

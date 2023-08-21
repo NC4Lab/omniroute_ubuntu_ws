@@ -73,9 +73,9 @@ public:
         "MSG_NONE",
         "HANDSHAKE",
         "ACK_WITH_SUCCESS",
-        "ACK_WITH_ERROR"
-        "START_SESSION",
-        "END_SESSION",
+        "ACK_WITH_ERROR",
+        "INITIALIZE_SYSTEM",
+        "REINITIALIZE_SYSTEM",
         "MOVE_WALLS",
     };
     enum MessageType
@@ -84,12 +84,12 @@ public:
         HANDSHAKE = 1, // handshake must equal 1
         ACK_WITH_SUCCESS = 2,
         ACK_WITH_ERROR = 3,
-        START_SESSION = 4,
-        END_SESSION = 5,
+        INITIALIZE_SYSTEM = 4,
+        REINITIALIZE_SYSTEM = 5,
         MOVE_WALLS = 6,
         nMsgTypEnum
     };
-    const char run_error_str[6][30] = {
+    const char error_type_str[6][30] = {
         "ERROR_NONE",
         "ECAT_ID_DISORDERED",
         "ECAT_NO_TYPE_MATCH",
@@ -198,11 +198,11 @@ public:
     void resetEcat(bool = true);
 
 public:
+    void readEcatMessage();
+    
+public:
     void writeEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
     void writeEcatMessage(MessageType, ErrorType, uint8_t[] = nullptr, uint8_t = 0);
-
-public:
-    void readEcatMessage();
 
 private:
     void _printEcatReg(uint8_t, int[] = nullptr);

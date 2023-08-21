@@ -389,8 +389,8 @@ class Esmacat_Com:
         HANDSHAKE = 1 # handshake must equal 1
         ACK_WITH_SUCCESS = 2
         ACK_WITH_ERROR = 3
-        START_SESSION = 4
-        END_SESSION = 5
+        INITIALIZE_SYSTEM = 4
+        REINITIALIZE_SYSTEM = 5
         MOVE_WALLS = 6
 
     class ErrorType(Enum):
@@ -683,51 +683,6 @@ class Esmacat_Com:
         # Setup Ethercat handshake flag
         self.isEcatConnected = False
 
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
-        """
-        Used to send outgoing ROS ethercat msg data.
-
-        Args:
-            msg_type_enum (Esmacat_Com.MessageType): Message type enum.
-            msg_arg_data_arr (list): Message argument data array.
-            msg_arg_len (int): Message argument length (bytes).
-
-        Returns:
-            int: Success/error codes [0:no message, 1:new message, 2:error]
-        """
-
-        # Set all register values to -1 to clear buffer
-        self._resetReg()
-        
-        # Reset union variables
-        self._uReset(self.sndEM)
-
-        # Store new message id
-        self._uSetMsgID(self.sndEM)
-
-        # Store new message type
-        self._uSetMsgType(self.sndEM, msg_type_enum)
-
-        # 	------------- Store arguments -------------
-
-        if msg_arg_data_arr is not None:  # store message arguments if provided
-            for i in range(msg_arg_len):
-                self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
-        else:
-            self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
-
-        # 	------------- Finish setup and write -------------
-
-        # Store footer
-        self._uSetFooter(self.sndEM)
-
-         # Publish to union uint16 type data to ease_registers topic
-        self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)  
-
-        # Print message
-        rospyLogCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
-        self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
-
     def parseEcatMessage(self, reg_arr_si16):
         """
         Used to parse new incoming ROS ethercat msg data.
@@ -776,10 +731,55 @@ class Esmacat_Com:
         self.rcvEM.isNew = True
 
         # Print message
-        rospyLogCol('INFO', "(%d)ECAT RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        rospyLogCol('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
 
         return True
+
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
+        """
+        Used to send outgoing ROS ethercat msg data.
+
+        Args:
+            msg_type_enum (Esmacat_Com.MessageType): Message type enum.
+            msg_arg_data_arr (list): Message argument data array.
+            msg_arg_len (int): Message argument length (bytes).
+
+        Returns:
+            int: Success/error codes [0:no message, 1:new message, 2:error]
+        """
+
+        # Set all register values to -1 to clear buffer
+        self._resetReg()
+        
+        # Reset union variables
+        self._uReset(self.sndEM)
+
+        # Store new message id
+        self._uSetMsgID(self.sndEM)
+
+        # Store new message type
+        self._uSetMsgType(self.sndEM, msg_type_enum)
+
+        # 	------------- Store arguments -------------
+
+        if msg_arg_data_arr is not None:  # store message arguments if provided
+            for i in range(msg_arg_len):
+                self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
+        else:
+            self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
+
+        # 	------------- Finish setup and write -------------
+
+        # Store footer
+        self._uSetFooter(self.sndEM)
+
+         # Publish to union uint16 type data to ease_registers topic
+        self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)  
+
+        # Print message
+        rospyLogCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
+        self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
 
 #======================== MAIN UI CLASS ========================
 # CLASS: Interface plugin
@@ -986,11 +986,11 @@ class Interface(Plugin):
                 self.EsmaCom_A0.isEcatConnected = True
                 rospyLogCol('INFO', "=== ECAT COMMS CONNECTED ===");
 
-                # Send START_SESSION message
-                self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.START_SESSION)
+                # Send INITIALIZE_SYSTEM message
+                self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.INITIALIZE_SYSTEM)
 
-            # END_SESSION
-            if msg_typ_ack == Esmacat_Com.MessageType.END_SESSION:
+            # REINITIALIZE_SYSTEM
+            if msg_typ_ack == Esmacat_Com.MessageType.REINITIALIZE_SYSTEM:
                 # Set the handshake flag
                 self.EsmaCom_A0.isEcatConnected = False
                 rospyLogCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
@@ -1074,11 +1074,11 @@ class Interface(Plugin):
         """ Timer callback to incrementally shutdown session. """
         
         if self.cnt_shutdown_step == 0:
-            # Send END_SESSION message to arduino
-            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.END_SESSION)
+            # Send REINITIALIZE_SYSTEM message to arduino
+            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.REINITIALIZE_SYSTEM)
 
         elif self.EsmaCom_A0.isEcatConnected == True:
-            # Wait for END_SESSION message confirmation and restart timer
+            # Wait for REINITIALIZE_SYSTEM message confirmation and restart timer
             self.timer_endSession.start(self.dt_shutdown_step*1000)
             return
             

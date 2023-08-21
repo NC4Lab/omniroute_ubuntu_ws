@@ -103,15 +103,15 @@ void Wall_Operation::procEcatMessage()
 		run_status = moveWalls();
 	}
 
-	// START_SESSION
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_SESSION)
+	// INITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_SYSTEM)
 	{
 		// Reset all hardware now
 		run_status = resetHardware(true); // do full initialization of walls
 	}
 
-	// END_SESSION
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::END_SESSION)
+	// REINITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
 	{
 		// Reset all hardware now
 		run_status = resetHardware(false); // only run walls down
@@ -500,13 +500,13 @@ uint8_t Wall_Operation::_resetWalls(bool do_full_init)
 		{
 			setWallCmdManual(cham_i, 1);
 			resp = moveWalls();								  // move walls up
-			run_status = run_status != 0 ? resp : run_status; // update run status
+			run_status = run_status == 0 ? resp : run_status; // update run status
 		}
 
 		// Run walls down
 		setWallCmdManual(cham_i, 0);
 		resp = moveWalls();								  // move walls down
-		run_status = run_status != 0 ? resp : run_status; // update run status
+		run_status = run_status == 0 ? resp : run_status; // update run status
 
 		if (resp != 0)
 			_Dbg.printMsgTime("\t !!failed wall initialization: chamber=%d", cham_i);
