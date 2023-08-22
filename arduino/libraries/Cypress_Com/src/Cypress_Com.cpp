@@ -1,12 +1,10 @@
-// ######################################
+// // ######################################
 
 //========= Cypress_Com.cpp ===========
 
 // ######################################
 
-/// <file>
-/// Used for the Cypress_Com class
-/// <file>
+/// @file Used for the Cypress_Com class
 
 //============= INCLUDE ================
 #include "Cypress_Com.h"
@@ -21,14 +19,28 @@ Cypress_Com::Cypress_Com() {}
 
 //+++++++++ Low-level Methods +++++++++++
 
-/// <summary>
-/// Lowest level funtion to read from a given Cypress register.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="reg">Register to read from.</param>
-/// <param name="p_byte_out_arr">Byte array from the register (used as output).</param>
-/// <param name="s">Length of p_byte_out_arr [1-16].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Wrapper for Wire::endTransmission() to catch and print errors.
+///
+/// @param send_stop Indicates whether or not a STOP should be performed on the bus [default=true].
+/// @param print_err Indicates whether or not to print error if received [default=true].
+///
+/// @return Output from Wire::method call.
+uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool do_print_err)
+{
+	uint8_t resp = Wire.endTransmission(send_stop);
+	if (resp != 0 && do_print_err)
+		_Dbg.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
+	return resp;
+}
+
+/// @brief Lowest level function to read from a given Cypress register.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param reg Register to read from.
+/// @param p_byte_out_arr Byte array from the register (used as output).
+/// @param s Length of p_byte_out_arr [1-16].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
 {
 	if (s > 16)
@@ -52,18 +64,16 @@ uint8_t Cypress_Com::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_ar
 		return 0;
 	}
 	else
-	{
 		return resp;
-	}
 }
 
-/// <summary>
-/// Lowest level funtion to write to a given Cypress register.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="reg">Register to read from.</param>
-/// <param name="byte_val_in">Value to set the registry pin/bit to [0,1].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Lowest level function to write to a given Cypress register.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param reg Register to read from.
+/// @param byte_val_in Value to set the registry pin/bit to [0,1].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
 {
 	Wire.beginTransmission(address);
@@ -71,12 +81,12 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
 	Wire.write(byte_val_in);
 	return wireEndTransmissionWrapper();
 }
-/// <summary>
-/// OVERLOAD: Option to pass an array of bytes "array "p_byte_val_in_arr" to set multiple
-/// registers begining at register specified by "reg".
-/// </summary>
-/// <param name="p_byte_val_in_arr">Byte pointer array with the registry values.</param>
-/// <param name="s">Length of the "p_byte_val_in_arr" array [1-16]</param>
+/// @brief OVERLOAD: Option to pass an array of bytes "array "p_byte_val_in_arr" to set multiple registers beginning at register specified by "reg".
+///
+/// @param p_byte_val_in_arr Byte pointer array with the registry values.
+/// @param s Length of the "p_byte_val_in_arr" array [1-16]
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_in_arr[], uint8_t s)
 {
 	if (s > 16)
@@ -90,15 +100,13 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_i
 	return wireEndTransmissionWrapper();
 }
 
-/// <summary>
-/// Updates a given byte value based on a given mask.
-/// Note, this is used by several of the write methods to update the byte values
-/// read in from a register based on the provided byte mask before they are updated
-/// in the register.
-/// </summary>
-/// <param name="r_byte_val_out">Reference to the byte value to change (used as output)</param>
-/// <param name="byte_mask">Byte value in which bits set to one denote the bit to set in "r_byte_val_out".</param>
-/// <param name="bit_val_set">Value to set the bits to [0,1].</param>
+/// @brief Updates a given byte value based on a given mask.
+///
+/// @note This is used by several of the write methods to update the byte values read in from a register based on the provided byte mask before they are updated in the register.
+///
+/// @param r_byte_val_out Reference to the byte value to change (used as output).
+/// @param byte_mask Byte value in which bits set to one denote the bit to set in "r_byte_val_out".
+/// @param bit_val_set Value to set the bits to [0,1].
 void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (bit_val_set == 1)
@@ -113,16 +121,17 @@ void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uin
 
 //+++++++++ Mid-level Methods +++++++++++
 
-/// <summary>
-/// Read from a given IO pin associated with a given limit switch.
-/// Note, this is only setup for input, not output, registers.
-/// Note, see, for example, @ref Wall_Operation::wms.ioUp for wall to port mapping.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="port">Number of port to set [0-5].</param>
-/// <param name="pin">Pin number to read [0,7] </param>
-/// <param name="r_bit_val_out">Reference with the registry bit value (used as output).</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Read from a given IO pin associated with a given limit switch.
+///
+/// @note This is only setup for input, not output, registers.
+/// @note See, for example, @ref Wall_Operation::wms.ioUp for wall to port mapping.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param port Number of port to set [0-5].
+/// @param pin Pin number to read [0,7].
+/// @param r_bit_val_out Reference with the registry bit value (used as output).
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8_t &r_bit_val_out)
 {
 	if (port > 5 || pin > 7)
@@ -131,25 +140,23 @@ uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8
 	{
 		uint8_t byte_val_out_arr[1];
 		uint8_t resp = i2cRead(address, REG_GI0 + port, byte_val_out_arr, 1);
-		delay(1); // hack to deal with strange resp variable behavior
+		delay(1); // TEMP hack to deal with strange resp variable behavior
 		if (!resp)
-		{
 			r_bit_val_out = bitRead(byte_val_out_arr[0], pin);
-		}
-		else
-			return resp;
+		return resp;
 	}
 }
 
-/// <summary>
-/// Read from a given IO pin associated with a given limit switch.
-/// Note, see, for example, @ref Wall_Operation::wms.pwmUp for wall to port mapping.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="port">Number of port to set [0-5]</param>
-/// <param name="pin">Pin number to read [0,7] </param>
-/// <param name="bit_val_set">Value to set the bits to [0,1].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Read from a given IO pin associated with a given limit switch.
+///
+/// @note See, for example, @ref Wall_Operation::wms.pwmUp for wall to port mapping.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param port Number of port to set [0-5].
+/// @param pin Pin number to read [0,7].
+/// @param bit_val_set Value to set the bits to [0,1].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint8_t bit_val_set)
 {
 	if (port > 5 || pin > 7)
@@ -157,52 +164,45 @@ uint8_t Cypress_Com::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint
 	else
 	{
 		uint8_t byte_val_out_arr[1];
-		uint8_t resp1 = i2cRead(address, REG_GO0 + port, byte_val_out_arr, 1); // get current port registry value
-		if (!resp1)
+		uint8_t resp = i2cRead(address, REG_GO0 + port, byte_val_out_arr, 1); // get current port registry value
+		if (!resp)
 		{
 			uint8_t byte_val_in = byte_val_out_arr[0];
-			bitWrite(byte_val_in, pin, bit_val_set);						// set pin specific bit of uint8_t
-			uint8_t resp2 = i2cWrite(address, REG_GO0 + port, byte_val_in); // update register
-			return resp2;
+			bitWrite(byte_val_in, pin, bit_val_set);			   // set pin specific bit of uint8_t
+			resp = i2cWrite(address, REG_GO0 + port, byte_val_in); // update register
 		}
-		else
-			return resp1;
+		return resp;
 	}
 }
 
-/// <summary>
-/// Read from a given IO port.
-/// Note, this can be an input or output port depending on what value you pass for "reg" (e.g., REG_GI0, REG_GO0).
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="reg">Register to read from.</param>
-/// <param name="port">Number of port to set [0-5].</param>
-/// <param name="r_byte_val_out">Byte reference with the registry value (used as output).</param></param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Read from a given IO port.
+/// This can be an input or output port depending on what value you pass for "reg" (e.g., REG_GI0, REG_GO0).
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param reg Register to read from.
+/// @param port Number of port to set [0-5].
+/// @param r_byte_val_out Byte reference with the registry value (used as output).
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioReadPort(uint8_t address, uint8_t reg, uint8_t port, uint8_t &r_byte_val_out)
 {
 	if (port > 5)
 		return -1;
-	uint8_t resp1 = reg > REG_GO5 ? i2cWrite(address, REG_PORT_SEL, port) : 0; // specify port to set for reading non io registers
-	if (!resp1)
-	{
-		uint8_t resp2 = i2cRead(address, reg + port, &r_byte_val_out, 1);
-		if (resp2)
-			return resp2;
-	}
-	return resp1;
+	uint8_t resp = reg > REG_GO5 ? i2cWrite(address, REG_PORT_SEL, port) : 0; // specify port to set for reading non io registers
+	if (!resp)
+		resp = i2cRead(address, reg + port, &r_byte_val_out, 1);
+	return resp;
 }
 
-/// <summary>
-/// Writes to a given IO port.
-/// Note, only applies to ouptut ports.
-/// Note, only changes bit values specied by the "byte_mask" argument.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="port">Number of port to set [0-5].</param>
-/// <param name="byte_mask">Byte value in which bits set to one denote the pin/bit to set in the register.</param>
-/// <param name="bit_val_set">Value to set the bits to [0,1].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Writes to a given IO port.
+/// Only applies to output ports. Only changes bit values specified by the "byte_mask" argument.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param port Number of port to set [0-5].
+/// @param byte_mask Byte value in which bits set to one denote the pin/bit to set in the register.
+/// @param bit_val_set Value to set the bits to [0,1].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioWritePort(uint8_t address, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (port > 5)
@@ -217,14 +217,14 @@ uint8_t Cypress_Com::ioWritePort(uint8_t address, uint8_t port, uint8_t byte_mas
 	}
 }
 
-/// <summary>
-/// Reads from one or multiple sequential registers.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="reg">Register to read from.</param>
-/// <param name="p_byte_out_arr">Byte pointer array with the registry values (used as output).</param>
-/// <param name="s">Length of the "p_byte_out_arr" array [1-16]</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Reads from one or multiple sequential registers.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param reg Register to read from.
+/// @param p_byte_out_arr Byte pointer array with the registry values (used as output).
+/// @param s Length of the "p_byte_out_arr" array [1-16].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioReadReg(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
 {
 	if (s > 16)
@@ -233,18 +233,19 @@ uint8_t Cypress_Com::ioReadReg(uint8_t address, uint8_t reg, uint8_t p_byte_out_
 	return resp;
 }
 
-/// <summary>
-/// Write to one or multiple sequential registers.
-/// Note, an option is included to provide the previous registry value in order to bypass the additional ioReadReg() step
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="p_byte_mask_arr">Byte value pointer array in which bits set to one denote the pin/bit to set in the registers.</param>
-/// <param name="s">Length of the "p_byte_mask_arr" array [1-16]</param>
-/// <param name="bit_val_set">Value to set the bits to [0,1].</param>
-/// <param name="p_reg_last_byte_arr">OPTIONAL: pointer byte array of the previous registry. Should be same s as "s".</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
+/// @brief Write to one or multiple sequential registers.
+/// An option is included to provide the previous registry value in order to bypass the additional ioReadReg() step.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param p_byte_mask_arr Byte value pointer array in which bits set to one denote the pin/bit to set in the registers.
+/// @param s Length of the "p_byte_mask_arr" array [1-16].
+/// @param bit_val_set Value to set the bits to [0,1].
+/// @param p_reg_last_byte_arr OPTIONAL: pointer byte array of the previous registry. Should be same length as "s".
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint8_t s, uint8_t bit_val_set, uint8_t p_reg_last_byte_arr[])
 {
+	uint8_t resp = 0;
 	if (s > 16)
 		return -1;
 
@@ -252,7 +253,7 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 	uint8_t p_byte_val[s]; // initialize array to handle null array argument
 	if (p_reg_last_byte_arr == nullptr)
 	{
-		uint8_t resp = ioReadReg(address, REG_GO0, p_byte_val, s); // get current registry values
+		resp = ioReadReg(address, REG_GO0, p_byte_val, s); // get current registry values
 		if (resp)
 			return resp;
 	}
@@ -267,20 +268,144 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 	{
 		_updateRegByte(p_byte_val[i], p_byte_mask_arr[i], bit_val_set);
 	}
-	uint8_t resp = i2cWrite(address, REG_GO0, p_byte_val, s); // update register
+	resp = i2cWrite(address, REG_GO0, p_byte_val, s); // update register
 	return resp;
 }
 
 //+++++++++ High-level Methods +++++++++++
 
-/// <summary>
-/// Scans for I2C addresses and prints to Serial Output Window along with
-/// espected address (TO BE ADDED).
-/// Note, this library was designed to support the Cypress CY8C9540A
-/// and should work for the CY8C9520A but will not support the additional
-/// registries of the CY8C9560A
-/// </summary>
-/// /// <returns>Last address found.</returns>
+/// @brief Checks the I2C status and sets up the Cypress chip for a new session by reinitializing the settings.
+///
+/// @param address I2C address for a given Cypress chip.
+///
+/// @return Status codes from @ref Wire::beginTransmission().
+uint8_t Cypress_Com::setupCypress(uint8_t address)
+{
+
+	// Check I2C lines
+#ifdef ARDUINO_SAM_DUE
+	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
+	{
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
+	}
+#endif
+#ifdef __AVR_ATmega2560__
+	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
+	{
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
+	}
+#endif
+#ifdef ARDUINO_AVR_UNO
+	if ((digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW))
+	{
+		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
+	}
+#endif
+
+	// Test I2C connection
+	Wire.beginTransmission(address);
+	Wire.write((uint8_t)0);
+	uint8_t resp = wireEndTransmissionWrapper();
+
+	// Setup Cypress chip
+	if (!resp)
+	{
+		// Restore chip
+		resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
+		if (resp)
+			_Dbg.printMsg("!!ERROR: Cypress Chip Restore!!");
+
+		// Reset chip
+		resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
+		if (resp)
+			_Dbg.printMsg("!!ERROR: Cypress Chip Reconfigure!!");
+	}
+
+	return resp;
+}
+
+/// @brief Sets up the different properties of the PWM source.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param source Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
+/// @param duty PWM duty cycle [0-255].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
+uint8_t Cypress_Com::setupSourcePWM(uint8_t address, uint8_t source, uint8_t duty)
+{
+	if (source > 7 || duty > 255)
+		return -1;
+	else
+	{
+		uint8_t resp = i2cWrite(address, REG_SEL_PWM, source); // specify pwm source to set
+		if (!resp)
+		{
+			resp = i2cWrite(address, REG_CONF_PWM, pwmClockVal); // set hardware clock to 0 (32kHz)
+			if (!resp)
+			{
+				resp = i2cWrite(address, REG_PERI_PWM, pwmPeriodVal); // set period to 32 (clock = 32kHz/32 = 1kHz)
+				if (!resp)
+				{
+					resp = setSourceDutyPWM(address, source, duty); // set duty cycle to duty
+				}
+			}
+		}
+		return resp;
+	}
+}
+
+/// @brief Option to change the PWM duty cycle for a given source.
+/// Sets up the different properties of the PWM source.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param source Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
+/// @param duty PWM duty cycle [0-255].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
+uint8_t Cypress_Com::setSourceDutyPWM(uint8_t address, uint8_t source, uint8_t duty)
+{
+	if (source > 7 || duty > 255)
+		return -1;
+	uint8_t pulse_wd = (float(duty) / 255) * (float)pwmPeriodVal; // compute pulse width
+	uint8_t resp = i2cWrite(address, REG_PW_PWM, pulse_wd);		  // set duty cycle to duty
+	return resp;
+}
+
+/// @brief Set a given port register.
+///
+/// @param address I2C address for a given Cypress chip.
+/// @param reg Register to read from.
+/// @param port Number of port to set [0-5].
+/// @param byte_mask Byte value in which bits set to one denote the pin/bit to set in the register.
+/// @param bit_val_set Value to set the bits to [0,1].
+///
+/// @return Output from @ref Wire::beginTransmission() [0-4] or [-1=255:input argument error].
+uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
+{
+	if (port > 5)
+		return -1;
+	uint8_t resp = i2cWrite(address, REG_PORT_SEL, port); // specify port to set
+	if (!resp)
+	{
+		uint8_t port_byte;
+		resp = i2cRead(address, reg, &port_byte, 1); // get port registry byte
+		if (!resp)
+		{
+			_updateRegByte(port_byte, byte_mask, bit_val_set);
+			resp = i2cWrite(address, reg, port_byte); // update register
+		}
+	}
+	return resp;
+}
+
+//+++++++ Testing and Debugging Methods ++++++++
+
+/// @brief Scans for I2C addresses and prints to Serial Output Window along with expected address.
+///
+/// @note This library was designed to support the Cypress CY8C9540A and should work for the CY8C9520A 
+///	but will not support the additional registries of the CY8C9560A.
+///
+/// @return Last address found.
 uint8_t Cypress_Com::i2cScan()
 {
 	uint8_t addr;
@@ -331,162 +456,4 @@ uint8_t Cypress_Com::i2cScan()
 
 	// Return last address
 	return list_addr[cnt_addr];
-}
-
-/// @brief Checks the I2C status and sets up the Cypress chip for a new session
-/// by reinitializing the settings.
-///
-/// @param address: I2C address for a given Cypress chip.
-///
-/// @return Status codes from @ref Wire::beginTransmission()
-uint8_t Cypress_Com::setupCypress(uint8_t address)
-{
-	uint8_t resp;
-
-	// Check I2C lines
-#ifdef ARDUINO_SAM_DUE
-	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
-	{
-		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
-	}
-#endif
-#ifdef __AVR_ATmega2560__
-	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
-	{
-		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
-	}
-#endif
-#ifdef ARDUINO_AVR_UNO
-	if ((digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW))
-	{
-		_Dbg.printMsg("!!ERROR: i2c lines LOW!!");
-	}
-#endif
-
-	// Test i2c
-	Wire.beginTransmission(address);
-	Wire.write((uint8_t)0);
-	resp = wireEndTransmissionWrapper();
-	if (resp != 0)
-	{
-		// TEMP_Dbg.printMsg("!!ERROR: i2c failed!!");
-		return resp;
-	}
-
-	// Restore chip
-	resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
-	if (resp != 0)
-	{
-		_Dbg.printMsg("!!ERROR: Cypress Chip Restore!!");
-		return resp;
-	}
-
-	// Reset chip
-	resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
-	if (resp != 0)
-	{
-		_Dbg.printMsg("!!ERROR: Cypress Chip Reconfigure!!");
-		return resp;
-	}
-
-	return resp;
-}
-
-/// <summary>
-/// Sets up the different properties of the PWM source.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Cypress_Com::setupSourcePWM(uint8_t address, uint8_t source, uint8_t duty)
-{
-	if (source > 7 || duty > 255)
-		return -1;
-	else
-	{
-		uint8_t resp1 = i2cWrite(address, REG_SEL_PWM, source); // specify pwm source to set
-		if (!resp1)
-		{
-			uint8_t resp2 = i2cWrite(address, REG_CONF_PWM, pwmClockVal); // set hardware clock to 0 (32kHz)
-			if (!resp2)
-			{
-				uint8_t resp3 = i2cWrite(address, REG_PERI_PWM, pwmPeriodVal); // set period to 32 (clock = 32kHz/32 = 1kHz)
-				if (!resp3)
-				{
-					uint8_t resp4 = setSourceDutyPWM(address, source, duty); // set duty cycle to duty
-					return resp4;
-				}
-				else
-					return resp3;
-			}
-			else
-				return resp2;
-		}
-		else
-			return resp1;
-	}
-}
-
-/// <summary>
-/// Option to change the PWM duty cycle for a given source Sets up the different properties of the PWM source.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="source">Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.</param>
-/// <param name="duty">PWM duty cycle [0-255].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Cypress_Com::setSourceDutyPWM(uint8_t address, uint8_t source, uint8_t duty)
-{
-	if (source > 7 || duty > 255)
-		return -1;
-	uint8_t pulse_wd = (float(duty) / 255) * (float)pwmPeriodVal; // compute pulse width
-	uint8_t resp = i2cWrite(address, REG_PW_PWM, pulse_wd);		  // set duty cycle to duty
-	return resp;
-}
-
-/// <summary>
-/// Set a given port register.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <param name="reg">Register to read from.</param>
-/// <param name="port">Number of port to set [0-5].</param>
-/// <param name="byte_mask">Byte value in which bits set to one denote the pin/bit to set in the register.</param>
-/// <param name="bit_val_set">Value to set the bits to [0,1].</param>
-/// <returns>Wire::method output [0-4] or [-1=255:input argument error].</returns>
-uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
-{
-	if (port > 5)
-		return -1;
-	uint8_t resp1 = i2cWrite(address, REG_PORT_SEL, port); // specify port to set
-	if (!resp1)
-	{
-		uint8_t port_byte;
-		uint8_t resp2 = i2cRead(address, reg, &port_byte, 1); // get port registry byte
-		if (!resp2)
-		{
-			_updateRegByte(port_byte, byte_mask, bit_val_set);
-			uint8_t resp3 = i2cWrite(address, reg, port_byte); // update register
-			return resp3;
-		}
-		else
-			return resp2;
-	}
-	else
-		return resp1;
-}
-
-//+++++++ Testing and Debugging Methods ++++++++
-
-/// <summary>
-/// Wrapper for Wire::endTransmission() to catch and print errors.
-/// </summary>
-/// <param name="send_stop">Parameter indicating whether or not a STOP should be performed on the bus [default=true].</param>
-/// /// <param name="print_err">Parameter indicating whether or not to print error if recieved [default=true].</param>
-/// <returns>Output from Wire::method call.</returns>
-uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool do_print_err)
-{
-	uint8_t resp = Wire.endTransmission(send_stop);
-	if (resp != 0 && do_print_err)
-		_Dbg.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
-	return resp;
 }
