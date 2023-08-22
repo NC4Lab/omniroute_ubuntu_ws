@@ -50,6 +50,9 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty)
 void Wall_Operation::procEcatMessage()
 {
 	uint8_t run_status = 0; // track run status
+	uint8_t n_chambers = 0; // store number of chambers
+	uint8_t msg_arg_arr[9]; // store message arguments
+	uint8_t arg_len = 0;	// store argument length
 
 	// Check for new message
 	if (!EsmaCom.rcvEM.isNew)
@@ -59,8 +62,15 @@ void Wall_Operation::procEcatMessage()
 
 	//........................ Process Arguments ........................
 
+	// INITIALIZE_SYSTEM
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_SYSTEM)
+	{
+		// Get number of chambers
+		n_chambers = EsmaCom.rcvEM.ArgU.ui8[0];
+	}
+
 	// MOVE_WALLS
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
 	{
 
 		// Loop through arguments
@@ -96,6 +106,22 @@ void Wall_Operation::procEcatMessage()
 		EsmaCom.isEcatConnected = true;
 	}
 
+	// INITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_SYSTEM)
+	{
+		// Initialize all softare then hardware 
+		initSoftware(n_chambers);
+		run_status = initHardware(2); // do full initialization of walls
+	}
+
+	// REINITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
+	{
+		// Reinitialize all hardware then software
+		run_status = initHardware(1); // only run walls down
+		initSoftware(nCham);
+	}
+
 	// MOVE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
 	{
@@ -103,41 +129,65 @@ void Wall_Operation::procEcatMessage()
 		run_status = moveWalls();
 	}
 
-	// INITIALIZE_SYSTEM
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_SYSTEM)
+	//........................ Format Ecat Ack Data ........................
+
+	// I2C_FAILED
+	if (run_status == 1)
 	{
-		// Reset all hardware now
-		run_status = resetHardware(true); // do full initialization of walls
+		// Check for any I2C errors
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		{
+			if (C[cham_i].i2cStatus != 0) // check for any chamber/chip I2C errors
+			{
+				msg_arg_arr[arg_len] = C[cham_i].i2cStatus; // store chamber index
+				arg_len++;									// increment argument length
+			}
+		}
 	}
 
-	// REINITIALIZE_SYSTEM
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
+	// WALL_MOVE_FAILED
+	if (run_status == 2)
 	{
-		// Reset all hardware now
-		run_status = resetHardware(false); // only run walls down
-
-		// Set software reset flag to reset software after last ack is sent
-		doSoftwareReset = true;
+		// Check for any I2C errors
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		{
+			if (C[cham_i].bitWallErrorFlag != 0) // check for any flagged walls in wall byte
+			{
+				msg_arg_arr[arg_len] = C[cham_i].bitWallErrorFlag; // store wall byte mask
+				arg_len++;										   // increment argument length
+			}
+		}
 	}
 
 	//........................ Send Ecat Ack ........................
 
-	// I2C error
+	// I2C_FAILED
 	if (run_status == 1)
 	{
-		EsmaCom.writeEcatMessage(EsmaCom.MessageType::ACK_WITH_ERROR, EsmaCom.ErrorType::I2C_FAILED);
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
 	}
 
-	// Wall movement error
+	// WALL_MOVE_FAILED
 	else if (run_status == 2)
 	{
-		EsmaCom.writeEcatMessage(EsmaCom.MessageType::ACK_WITH_ERROR, EsmaCom.ErrorType::WALL_MOVE_FAILED);
+		// // Copy over chamber wall error bytes
+		// for (size_t cham_i = 0; cham_i < EsmaCom.rcvEM.argLen; cham_i++)
+		// 	EsmaCom.writeEcatAckData(i, C[i].bitWallMoveFlag);
+
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
 	}
 
-	// Send success confirmaton
+	// NO ERROR
 	else
-		EsmaCom.writeEcatMessage(EsmaCom.MessageType::ACK_WITH_SUCCESS);
+		EsmaCom.writeEcatAck();
 
+	//........................ Reinitialize Software ........................
+
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
+	{
+		// Initialize/reset ecat message variables after final ack is sent
+		EsmaCom.initEcat();
+	}
 }
 
 //------------------------ DATA HANDELING ------------------------
@@ -328,193 +378,192 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 
 //------------------------ SETUP METHODS ------------------------
 
-/// @brief Reset all relivant runtime variables to prepare for new session
-void Wall_Operation::resetSoftwareCheck()
+/// @brief Initialize/reset all relivant runtime variables to prepare for new session
+void Wall_Operation::initSoftware(uint8_t n_chambers)
 {
-	// Bail if software reset is not required
-	if (!doSoftwareReset)
-		return;
 
-	// Reset all chamber flags
+	// Sepcify number of chambers and addressing
+	nCham = n_chambers;
+
+	// Update chamber address and number
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
 	{
+		C[cham_i].num = cham_i;
+		C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
+	}
+
+	// Reset all status tracking chamber variables
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
+	{
+		C[cham_i].i2cStatus = 0;
+		C[cham_i].bitWallErrorFlag = 0;
 		C[cham_i].bitWallMoveFlag = 0;
 		C[cham_i].bitWallPosition = 0;
-		C[cham_i].bitWallErrorFlag = 0;
 		C[cham_i].bitWallUpdateFlag = 0;
 	}
 
-	// Reset flag
-	doSoftwareReset = false;
-
-	// Reset ecat message variables
-	EsmaCom.resetEcat();
-
-	_Dbg.printMsgTime("SOFTWARE RESET COMPLETE");
+	_Dbg.printMsgTime("FINISHED: SOFTWARE INITIALIZATION");
 }
 
-/// @brief Reset Cypress hardware and reinitialize wall states
+/// @brief Initialize/reset Cypress hardware and wall states
 ///
-/// @param do_full_init: For use with @see Wall_Operation::_resetWalls()
+/// @param init_walls: Specify wall iniialization [0=none, 1=down, 2=up/down].
+/// @note Running walls in both directions (init_walls=2) will allow the system to
+/// 	 identify and flag any walls that are not moving properly.
+///
 /// @return Success/error codes [0:success, 1:error:i2c, 2:error:timeout, 3:error:unspecified]
-uint8_t Wall_Operation::resetHardware(bool do_full_init)
+uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 {
 	uint8_t resp = 0;
-	uint8_t run_status = 0; // track run status
-	uint8_t i2c_status = 0; // track i2c status
-
-	// Setup cypress chips
-	for (size_t ch_i = 0; ch_i < nCham; ch_i++)
-	{
-		resp = _CypCom.setupCypress(C[ch_i].addr);
-		i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-		if (resp != 0)
-			_Dbg.printMsgTime("!!ERROR: Failed Cypress setup: chamber=%d address=%s!!", ch_i, _Dbg.hexStr(C[ch_i].addr));
-		else if (ch_i + 1 == nCham)
-		{ // print success for last itteration
-			_Dbg.printMsgTime("Finished Cypress setup: chamber=%d address=%s", ch_i, _Dbg.hexStr(C[ch_i].addr));
-		}
-	}
-
-	// Setup IO pins for each chamber
-	resp = _setupCypressIO();
-	i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-
-	// Setup PWM pins for each chamber
-	resp = _setupCypressPWM(pwmDuty);
-	i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-
-	// Test and reset all walls
-	resp = _resetWalls(do_full_init);
-	run_status = i2c_status != 0 ? 1 : resp; // update run status
-
-	_Dbg.printMsgTime("HARDWARE RESET COMPLETE: run_status=%d", run_status);
-	return run_status;
-}
-
-/// @brief Setup IO pins for each chamber including the pin direction (input) a
-/// and the type of drive mode (high impedance).
-///
-/// @note have to do some silly stuff with the output pins as well based on
-/// page 11 of the Cypress datasheet "To  allow  input  operations  without
-/// reconfiguration, these registers [output] have to store �1�s."
-///
-/// @return method output from @ref Cypress_Com::method.
-uint8_t Wall_Operation::_setupCypressIO()
-{
-	_Dbg.printMsgTime("Running IO pin setup");
-	uint8_t resp = 0;
-
-	// Setup wall io pins
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-	{
-		// Set entire output register to off
-		uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-		resp = _CypCom.ioWriteReg(C[cham_i].addr, p_byte_mask_in, 6, 0);
-
-		if (resp == 0)
-		{
-			for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
-			{ // loop through port list
-				// Set input pins as input
-				resp = _CypCom.setPortRegister(C[cham_i].addr, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-				if (resp == 0)
-				{
-					// Set pins as pull down
-					resp = _CypCom.setPortRegister(C[cham_i].addr, DRIVE_PULLDOWN, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-					if (resp == 0)
-					{
-						// Set corrisponding output register entries to 1 as per datasheet
-						resp = _CypCom.ioWritePort(C[cham_i].addr, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
-						if (resp != 0)
-							return resp;
-					}
-				}
-			}
-		}
-		if (resp != 0)
-			_Dbg.printMsgTime("\t !!failed IO pin setup: chamber=%d", cham_i);
-	}
-	_Dbg.printMsgTime("Finished IO pin setup");
-	return resp;
-}
-
-/// @brief Setup PWM pins for each chamber including the specifying them as PWM outputs
-/// and also detting the drive mode to "Strong Drive". This also sets up the PWM
-/// Source using @ref Cypress_Com::setupSourcePWM()
-///
-/// @param pwm_duty: Duty cycle for the pwm [0-255]
-/// @return Wire::method output from @ref Cypress_Com::method.
-uint8_t Wall_Operation::_setupCypressPWM(uint8_t pwm_duty)
-{
-	_Dbg.printMsgTime("Running PWM setup");
-	uint8_t resp = 0;
-
-	// Setup pwm
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-	{
-		// Setup source
-		for (size_t src_i = 0; src_i < 8; src_i++)
-		{
-			resp = _CypCom.setupSourcePWM(C[cham_i].addr, wms.pwmSrc[src_i], pwm_duty);
-			if (resp != 0)
-				_Dbg.printMsgTime("\t !!failed PWM source setup: source=%d", src_i);
-		}
-
-		// Setup wall pwm pins
-		for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
-		{ // loop through port list
-			// Set pwm pins as pwm output
-			resp = _CypCom.setPortRegister(C[cham_i].addr, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			if (resp == 0)
-			{
-				// Set pins as strong drive
-				resp = _CypCom.setPortRegister(C[cham_i].addr, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
-			}
-		}
-		if (resp != 0)
-			_Dbg.printMsgTime("\t !!failed PWM pin setup: chamber=%d", cham_i);
-	}
-	_Dbg.printMsgTime("Finished PWM setup");
-	return resp;
-}
-
-/// @brief Test up and down movment using @ref Wall_Operation::setWallCmdManual()
-/// and @ref Wall_Operation::moveWalls()
-///
-/// @param do_full_init: If true, run all walls up then down to initialize, if false, run down only
-/// @return Success/error codes from @ref Wall_Operation::moveWalls().
-uint8_t Wall_Operation::_resetWalls(bool do_full_init)
-{
-	uint8_t resp = 0;
+	uint8_t ruturn_code = 0;
 	uint8_t run_status = 0; // track run status
 
-	_Dbg.printMsgTime("Running wall initialization");
+	_Dbg.printMsgTime("RUNNING: HARDWARE INITIALIZATION");
 
-	// Run all walls up then down for each chamber
+	// Loop through all chambers
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{
+
+		//........................ Initialize Cypress Chip ........................
+
+		// Get current cypress address
+		uint8_t address = C[cham_i].addr;
+
+		//........................ Initialize Cypress Chip ........................
+
+		// Setup Cypress chips and check I2C
+		resp = _CypCom.setupCypress(address);
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
+		if (resp != 0)
+		{ // print error if failed
+			_Dbg.printMsgTime("\t!!ERROR: I2C[%d] Cypress Chip Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+			continue; // skip chamber if failed
+		}
+
+		//........................ Initialize Cypress IO ........................
+
+		// Setup IO pins for each chamber
+		resp = _setupCypressIO(address);
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
+		if (resp != 0)																 // print error if failed
+			_Dbg.printMsgTime("\t!!ERROR: I2C[%d] Cypress IO Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+
+		//........................ Initialize Cypress PWM ........................
+
+		// Setup PWM pins for each chamber
+		resp = _setupCypressPWM(address);
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
+		if (resp != 0)																 // print error if failed
+			_Dbg.printMsgTime("\t!!ERROR: I2C[%d] Cypress IO Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+
+		//........................ Initialize Walls ........................
 
 		// Run walls up
-		if (do_full_init)
+		if (init_walls == 2)
 		{
 			setWallCmdManual(cham_i, 1);
 			resp = moveWalls();								  // move walls up
 			run_status = run_status == 0 ? resp : run_status; // update run status
 		}
 
-		// Run walls down
-		setWallCmdManual(cham_i, 0);
-		resp = moveWalls();								  // move walls down
-		run_status = run_status == 0 ? resp : run_status; // update run status
-
-		if (resp != 0)
-			_Dbg.printMsgTime("\t !!failed wall initialization: chamber=%d", cham_i);
+		// Run walls Down
+		if (init_walls == 1 || init_walls == 2)
+		{
+			setWallCmdManual(cham_i, 0);
+			resp = moveWalls();								  // move walls down
+			run_status = run_status == 0 ? resp : run_status; // update run status
+		}
 	}
 
-	// Set resp to any non-zero flag and return
-	_Dbg.printMsgTime("Finished wall initialization: status=%d", run_status);
-	return run_status;
+	// Set return flag to i2c error otherwise run status
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+	{
+		ruturn_code = C[cham_i].i2cStatus != 0 ? 1 : run_status; // update run status
+	}
+
+	_Dbg.printMsgTime("FINISHED: HARDWARE INITIALIZATION: run_status=%d", ruturn_code);
+	return ruturn_code;
+}
+
+/// @brief Setup IO pins for each chamber including the pin direction (input) a
+/// and the type of drive mode (high impedance).
+///
+/// @note have to do some silly stuff with the output pins as well based on
+/// page 11 of the Cypress datasheet "To  allow  input  operations without
+/// reconfiguration, these [output] registers have to store 1's."
+///
+/// @param address: I2C address of Cypress chip to setup.
+///
+/// @return method output from @ref Wire::endTransmission().
+uint8_t Wall_Operation::_setupCypressIO(uint8_t address)
+{
+	uint8_t resp = 0;
+	uint8_t i2c_status = 0;
+
+	// Set entire output register to off
+	uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	resp = _CypCom.ioWriteReg(address, p_byte_mask_in, 6, 0);
+	i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
+
+	if (resp == 0)
+	{
+		for (size_t prt_i = 0; prt_i < pmsAllIO.nPorts; prt_i++)
+		{ // loop through port list
+			// Set input pins as input
+			resp = _CypCom.setPortRegister(address, REG_PIN_DIR, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+			i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
+			if (resp == 0)
+			{
+				// Set pins as pull down
+				resp = _CypCom.setPortRegister(address, DRIVE_PULLDOWN, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+				i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
+				if (resp == 0)
+				{
+					// Set corrisponding output register entries to 1 as per datasheet
+					resp = _CypCom.ioWritePort(address, pmsAllIO.port[prt_i], pmsAllIO.bitMask[prt_i], 1);
+					i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
+					if (resp != 0)
+						return resp;
+				}
+			}
+		}
+	}
+
+	return i2c_status;
+}
+
+/// @brief Setup PWM pins for each chamber including the specifying them as PWM outputs
+/// and also detting the drive mode to "Strong Drive". This also sets up the PWM
+/// Source using @ref Cypress_Com::setupSourcePWM()
+///
+/// @param address: I2C address of Cypress chip to setup.
+///
+/// @return Wire::method output from @ref Wire::endTransmission().
+uint8_t Wall_Operation::_setupCypressPWM(uint8_t address)
+{
+	uint8_t resp = 0;
+
+	// Setup PWM sources
+	for (size_t src_i = 0; src_i < 8; src_i++)
+	{
+		resp = _CypCom.setupSourcePWM(address, wms.pwmSrc[src_i], pwmDuty);
+		if (resp != 0)
+			_Dbg.printMsgTime("\t !!failed PWM source setup: source=%d", src_i);
+	}
+
+	// Setup wall pwm pins
+	for (size_t prt_i = 0; prt_i < pmsAllPWM.nPorts; prt_i++)
+	{ // loop through port list
+		// Set pwm pins as pwm output
+		resp = _CypCom.setPortRegister(address, REG_SEL_PWM_PORT_OUT, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
+		if (resp == 0)
+		{
+			// Set pins as strong drive
+			resp = _CypCom.setPortRegister(address, DRIVE_STRONG, pmsAllPWM.port[prt_i], pmsAllPWM.bitMask[prt_i], 1);
+		}
+	}
+
+	return resp;
 }
 
 //------------------------ RUNTIME METHODS ------------------------
@@ -567,7 +616,7 @@ uint8_t Wall_Operation::setWallCmdManual(uint8_t cham_i, uint8_t bit_val_set, ui
 	uint8_t wall_d_b = C[cham_i].bitWallPosition & ~wall_b; // get walls to move down
 	C[cham_i].bitWallMoveFlag = wall_u_b | wall_d_b;		// store values in bit flag
 
-	_Dbg.printMsgTime("\t Running manual wall move command", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsgTime("\t RUNNING: manual wall move command", cham_i, _Dbg.arrayStr(p_wi, s));
 	_Dbg.printMsgTime("\t\t set move walls: chamber=%d", cham_i);
 	_Dbg.printMsgTime("\t\t\t up=%s", _Dbg.bitIndStr(wall_u_b));
 	_Dbg.printMsgTime("\t\t\t down=%s", _Dbg.bitIndStr(wall_d_b));
@@ -748,7 +797,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	if (run_status != 0)
 		resp = forceStopWalls();
 	else
-		_Dbg.printMsgTime("\t Finished all movement");
+		_Dbg.printMsgTime("\t FINISHED: all movement");
 
 	return run_status; // return error
 }
@@ -759,7 +808,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 uint8_t Wall_Operation::forceStopWalls()
 {
 	uint8_t resp = 0;
-	// TEMP _Dbg.printMsgTime("\t !!Running forse stop!!");
+	// TEMP _Dbg.printMsgTime("\t !!RUNNING: forse stop!!");
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{																			// loop chambers
 		resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
@@ -921,7 +970,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 	for (size_t i = 0; i < s; i++)
 	{ // loop walls
 		uint8_t wall_n = p_wi[i];
-		_Dbg.printMsgTime("Running wall %d", wall_n);
+		_Dbg.printMsgTime("Moving wall %d", wall_n);
 
 		// Run up
 		_Dbg.printMsgTime("\t up start");

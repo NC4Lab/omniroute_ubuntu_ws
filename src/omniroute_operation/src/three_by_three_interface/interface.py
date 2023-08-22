@@ -343,12 +343,12 @@ class Wall_Config:
         wall_byte_config_list = cls.makeWall2ByteList()
 
         # Update U_arr with corresponding chamber and wall byte
-        wall_arr = [0] * N_CHAMBERS
+        wall_byte_arr = [0] * N_CHAMBERS
         #wall_arr = [0] * len(cls.wallConfigList)
         for cw in wall_byte_config_list:
-            wall_arr[cw[0]] = cw[1]
+            wall_byte_arr[cw[0]] = cw[1]
 
-        return wall_arr
+        return wall_byte_arr
 
     @classmethod
     def sortEntries(cls):
@@ -385,22 +385,21 @@ class Esmacat_Com:
 
     class MessageType(Enum):
         """ Enum for ethercat python to arduino message type ID """
-        MSG_NONE = 0
+        MSG_NULL = 0
         HANDSHAKE = 1 # handshake must equal 1
-        ACK_WITH_SUCCESS = 2
-        ACK_WITH_ERROR = 3
-        INITIALIZE_SYSTEM = 4
-        REINITIALIZE_SYSTEM = 5
-        MOVE_WALLS = 6
+        INITIALIZE_SYSTEM = 2
+        REINITIALIZE_SYSTEM = 3
+        MOVE_WALLS = 4
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
-        ERROR_NONE = 0
+        ERR_NULL = 0
         ECAT_ID_DISORDERED = 1
-        ECAT_NO_TYPE_MATCH = 2
-        ECAT_MISSING_FOOTER = 3
-        I2C_FAILED = 4
-        WALL_MOVE_FAILED = 5
+        ECAT_NO_MSG_TYPE_MATCH = 2
+        ECAT_NO_ERR_TYPE_MATCH = 3
+        ECAT_MISSING_FOOTER = 4
+        I2C_FAILED = 5
+        WALL_MOVE_FAILED = 6
 
     class RegUnion(ctypes.Union):
         """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
@@ -444,7 +443,7 @@ class Esmacat_Com:
 
             self.msgID = 0
             self.msgID_last = 0                     # Last message ID   
-            self.msgTp = Esmacat_Com.MessageType.MSG_NONE # Message type
+            self.msgTp = Esmacat_Com.MessageType.MSG_NULL # Message type
             self.msgFoot = [0, 0]                  # Message footer
 
             self.argLen = 0                       # Message argument length
@@ -453,7 +452,7 @@ class Esmacat_Com:
 
             self.isNew = False                         # New message flag
             self.isErr = False                         # Message error flag
-            self.errTp = Esmacat_Com.ErrorType.ERROR_NONE # Message error type
+            self.errTp = Esmacat_Com.ErrorType.ERR_NULL # Message error type
     
     def __init__(self):
 
@@ -500,17 +499,13 @@ class Esmacat_Com:
         # Check/log error skipped or out of sequence messages
         if r_EM.msgID - r_EM.msgID_last != 1 and \
             r_EM.msgID != r_EM.msgID_last: # don't log errors for repeat message reads
-            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_ID_DISORDERED)
-
+            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_ID_DISORDERED)
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
         """Set message type entry in union and update associated variable"""
 
-        # Get new message type: convert enum to int
-        msg_type_val = msg_type_enum.value
-
         # Set message type entry in union
-        r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_val
+        r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_enum.value
         self._uGetMsgType(r_EM)  # copy from union to associated struct variable
 
     def _uGetMsgType(self, r_EM):
@@ -525,23 +520,47 @@ class Esmacat_Com:
 
         # Log error and set message type to none if not found
         if r_EM.isErr:
-            msg_type_val = Esmacat_Com.MessageType.MSG_NONE
-            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_NO_TYPE_MATCH) 
+            msg_type_val = Esmacat_Com.MessageType.MSG_NULL
+            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_NO_MSG_TYPE_MATCH) 
         else:
             r_EM.msgTp = Esmacat_Com.MessageType(msg_type_val)
+
+    def _uSetErrType(self, r_EM, err_type_enum):
+        """Set message type entry in union and update associated variable"""
+
+        # Set message type entry in union
+        r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = err_type_enum.value
+        self._uGetErrType(r_EM)  # copy from union to associated struct variable
+
+    def _uGetErrType(self, r_EM):
+        """Get message type from union and check if valid"""
+
+        # Get message type value
+        err_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
+
+        # Check if 'err_type_val' corresponds to any value in the 'Esmacat_Com.ErrorType' Enum.
+        is_found = err_type_val in [e.value for e in Esmacat_Com.ErrorType]
+        r_EM.isErr = not is_found # Update struct error flag
+
+        # Log error and set error type to none if not found
+        if r_EM.isErr:
+            err_type_val = Esmacat_Com.ErrorType.ERR_NULL
+            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_NO_ERR_TYPE_MATCH) 
+        else:
+            r_EM.errTp = Esmacat_Com.ErrorType(err_type_val)
 
     def _uSetArgLength(self, r_EM, msg_arg_len):
         """Set message argument length entry in union and update associated variable"""
         
         # Set argument length union entry
-        r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = msg_arg_len
+        r_EM.RegU.ui8[r_EM.setUI.upd8(4)] = msg_arg_len
         self._uGetArgLength(r_EM) # copy from union to associated struct variable
 
     def _uGetArgLength(self, r_EM):
         """Get message argument length"""
 
         # Get argument length union entry
-        r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
+        r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(4)]
 
     def _uSetArgData8(self, r_EM, msg_arg_data8):
         """Set message 8-bit argument data entry in union"""
@@ -555,7 +574,7 @@ class Esmacat_Com:
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
 
             # Get 8-bit union index and set 8-bit argument data entry in union
-            regu8_i = r_EM.argUI.ii8 + 3
+            regu8_i = r_EM.argUI.ii8 + 4
 
             # Set message argument data in reg union
             r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
@@ -573,7 +592,7 @@ class Esmacat_Com:
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
             
             # Get 16-bit union index and set 16-bit argument data entry in union
-            regu16_i = (r_EM.argUI.ii8 + 3) // 2
+            regu16_i = (r_EM.argUI.ii8 + 4) // 2
             
             # Set message argument data in reg union
             r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
@@ -601,7 +620,7 @@ class Esmacat_Com:
 
         # Log missing footer error
         if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254: # check if footer is valid
-            self._trackEcatErr(r_EM, Esmacat_Com.ErrorType.ECAT_MISSING_FOOTER) 
+            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_MISSING_FOOTER) 
 
     def _uReset(self, r_EM):
         """Reset union data and indices"""
@@ -626,7 +645,7 @@ class Esmacat_Com:
         reg_arr = [-1] * 8
         self.maze_ard0_pub.publish(*reg_arr) 
 
-    def _trackEcatErr(self, r_EM, err_tp, do_reset=False):
+    def _trackErrType(self, r_EM, err_tp, do_reset=False):
         """Check for and log any Ecat or runtime errors"""
 
         # Check for error
@@ -646,7 +665,7 @@ class Esmacat_Com:
         
         # Unset error type
         elif r_EM.errTp == err_tp:
-                r_EM.errTp = Esmacat_Com.ErrorType.ERROR_NONE  
+                r_EM.errTp = Esmacat_Com.ErrorType.ERR_NULL  
                 r_EM.isErr = False
 
     def _printEcatReg(self, level, d_type, reg_u):
@@ -716,13 +735,16 @@ class Esmacat_Com:
         if self.rcvEM.msgID == self.rcvEM.msgID_last:
             return False
 
-        # Get message type and check if valid
+        # Get message type and flag if not valid
         self._uGetMsgType(self.rcvEM)
+
+        # Get error type and flag if not valid
+        self._uGetErrType(self.rcvEM)
 
         # Get argument length and arguments
         self._uGetArgData8(self.rcvEM) 
 
-        # Get and check for footer
+        # Get footer and flag if not found
         self._uGetFooter(self.rcvEM)
 
         # @todo: figure out what to do if message corrupted
@@ -736,14 +758,13 @@ class Esmacat_Com:
 
         return True
 
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data_arr=None, msg_arg_len=0):
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data=None):
         """
         Used to send outgoing ROS ethercat msg data.
 
         Args:
             msg_type_enum (Esmacat_Com.MessageType): Message type enum.
-            msg_arg_data_arr (list): Message argument data array.
-            msg_arg_len (int): Message argument length (bytes).
+            msg_arg_data_arr (list or scalar): Message argument data array.
 
         Returns:
             int: Success/error codes [0:no message, 1:new message, 2:error]
@@ -763,9 +784,13 @@ class Esmacat_Com:
 
         # 	------------- Store arguments -------------
 
-        if msg_arg_data_arr is not None:  # store message arguments if provided
-            for i in range(msg_arg_len):
-                self._uSetArgData8(self.sndEM, msg_arg_data_arr[i])
+        # Convert scalar value to list if it's not already a list
+        if msg_arg_data is not None and not isinstance(msg_arg_data, list):
+            msg_arg_data = [msg_arg_data]
+
+        if msg_arg_data is not None:  # store message arguments if provided
+            for i in range(len(msg_arg_data)):
+                self._uSetArgData8(self.sndEM, msg_arg_data[i])
         else:
             self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
 
@@ -968,42 +993,34 @@ class Interface(Plugin):
             int: Success/error codes [0:no message, 1:new message, 2:error]
         """
 
-        # Get message type of message being confirmed
-        msg_typ_ack = Esmacat_Com.MessageType(self.EsmaCom_A0.rcvEM.ArgU.ui8[0])
-
         # Print confirmation message
-        rospyLogCol('INFO', "(%d)PROCESSING ECAT ACK: %s FOR %s", 
-                    self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name, msg_typ_ack.name)
+        rospyLogCol('INFO', "(%d)PROCESSING ECAT ACK: %s", 
+                    self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
+        
+        #................ Process Ack Error ................ 
+
+        if self.EsmaCom_A0.rcvEM.errTp != Esmacat_Com.ErrorType.ERR_NULL:
+
+            rospyLogCol(
+                'ERROR', "!!ERROR: ECAT ERROR: %s!!", self.EsmaCom_A0.rcvEM.errTp.name)
         
         #................ Process Ack Success ................ 
 
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_SUCCESS:
+        # HANDSHAKE
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.HANDSHAKE:
 
-            # HANDSHAKE
-            if msg_typ_ack == Esmacat_Com.MessageType.HANDSHAKE:
+            # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            rospyLogCol('INFO', "=== ECAT COMMS CONNECTED ===");
 
-                # Set the handshake flag
-                self.EsmaCom_A0.isEcatConnected = True
-                rospyLogCol('INFO', "=== ECAT COMMS CONNECTED ===");
+            # Send INITIALIZE_SYSTEM message and specify number of chambers
+            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.INITIALIZE_SYSTEM, N_CHAMBERS)
 
-                # Send INITIALIZE_SYSTEM message
-                self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.INITIALIZE_SYSTEM)
-
-            # REINITIALIZE_SYSTEM
-            if msg_typ_ack == Esmacat_Com.MessageType.REINITIALIZE_SYSTEM:
-                # Set the handshake flag
-                self.EsmaCom_A0.isEcatConnected = False
-                rospyLogCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
-
-        #................ Process Ack Error ................ 
-
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.ACK_WITH_ERROR:
-
-            # Get error type 
-            err_typ = Esmacat_Com.ErrorType(self.EsmaCom_A0.rcvEM.ArgU.ui8[1])
-
-            rospyLogCol(
-                'ERROR', "!!ERROR: ECAT ERROR: %s!!", err_typ.name)
+        # REINITIALIZE_SYSTEM
+        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.REINITIALIZE_SYSTEM:
+            # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = False
+            rospyLogCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1211,7 +1228,7 @@ class Interface(Plugin):
         Wall_Config.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, Wall_Config.getWallByteOnlyList(), N_CHAMBERS)
+        self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, Wall_Config.getWallByteOnlyList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""

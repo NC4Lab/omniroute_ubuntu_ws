@@ -71,9 +71,6 @@ void loop()
 	// Process and exicute ethercat arguments
 	WallOper.procEcatMessage();
 
-	// Check for reset 
-	WallOper.resetSoftwareCheck();
-
 	// // TEMP
 	// int dt = 1000;
 	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);

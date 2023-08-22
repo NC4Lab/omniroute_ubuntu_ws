@@ -4,9 +4,7 @@
 
 // ######################################
 
-/// <file>
-/// Used for the Cypress_Com class
-/// <file>
+/// @brief Used for the Cypress_Com class
 
 #ifndef _CYPRESS_COMM_h
 #define _CYPRESS_COMM_h
@@ -17,31 +15,44 @@
 #include "Cypress_Com_Base.h"
 #include "Maze_Debug.h"
 
-/// <summary>
-/// This class handles all of the Cypress chip I2C comms.
-/// </summary>
-/// <remarks>
-/// This class uses an instance of the Maze_Debug class.
-/// </remarks>
+
+/// @brief This class handles all of the Cypress chip I2C comms.
+///
+/// @remarks This class uses an instance of the Maze_Debug class.
+///
+/// @remarks Status codes from @ref Wire::beginTransmission()
+/// 	0: Success. Indicates that the transmission was successful.
+/// 	1: Data too long to fit in transmit buffer. This error indicates that the data you tried 
+///			to send is larger than the library's buffer.
+/// 	2: Received NACK on transmit of address. This means the slave device did not acknowledge its address. 
+/// 		This can happen if the device is not connected or if there is an issue with the I2C address.
+/// 	3: Received NACK on transmit of data. This means the slave device acknowledged its address but 
+///			did not acknowledge the receipt of data.
+/// 	4: Other error. A miscellaneous error occurred.
+///
 class Cypress_Com
 {
 
 	// ---------VARIABLES-----------------
 public:
 	// // 1x3 testing addresses
-	uint8_t ADDR_LIST[2]{0x12, 0x10};
+	uint8_t ADDR_LIST[9]
+	{
+		0x12, 0x10, 0x6, 0x8, 0xA,
+	 0xC, 0xE, 0x10, 0x12
+	};
 
 	// // 3x3 testing addresses
 	// uint8_t ADDR_LIST[1]{0x2};
 	
-	// // 3x3 experiment addresses
+	// // 3x3 maze addresses
 	// uint8_t ADDR_LIST[9]
 	// {
 	// 	0x2, 0x4, 0x6, 0x8, 0xA,
-	// 		0xC, 0xE, 0x10, 0x12
+	//  0xC, 0xE, 0x10, 0x12
 	// };
 
-	// // All Addresses
+	// // 7x7 maze addresses
 	//  uint8_t ADDR_LIST[49]{ ///<list of all possible I2C addresses
 	//  0x2, 0x4, 0x6, 0x8, 0xA,
 	//  0xC, 0xE, 0x10, 0x12, 0x14,
@@ -104,10 +115,10 @@ public:
 	uint8_t setupCypress(uint8_t);
 
 public:
-	uint8_t setupSourcePWM(uint8_t, uint8_t, uint8_t);
+	uint8_t _setupSourcePWM(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t setSourceDutyPWM(uint8_t, uint8_t, uint8_t);
+	uint8_t _setSourceDutyPWM(uint8_t, uint8_t, uint8_t);
 
 public:
 	uint8_t setPortRegister(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);

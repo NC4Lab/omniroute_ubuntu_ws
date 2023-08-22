@@ -25,9 +25,8 @@ class Wall_Operation
 	// ---------VARIABLES-----------------
 public:
 	// -----------GENERAL-----------------
-	uint8_t nCham;				  // number of chambers [1-9]
-	uint8_t pwmDuty;			  // pwm duty cycle [0-255]
-	bool doSoftwareReset = false; // flag to reset software
+	uint8_t nCham;	 // number of chambers [1-9]
+	uint8_t pwmDuty; // pwm duty cycle [0-255]
 
 	// -----------CYPRESS-----------------
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
@@ -75,9 +74,10 @@ public:
 	{
 		uint8_t num = 0;			   // chamber number
 		uint8_t addr = 0;			   // chamber I2C address
+		uint8_t i2cStatus = 0;		   // track I2C status errors
+		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
 		uint8_t bitWallMoveFlag = 0;   // bitwise variable, current wall active flag [0:inactive, 1:active]
 		uint8_t bitWallPosition = 0;   // bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
 		uint8_t bitWallUpdateFlag = 0; // bitwise variable, flag that wall position should be update
 		PinMapStruct pmsDynPWM;		   // reusable dynamic instance for active PWM
 		PinMapStruct pmsDynIO;		   // reusable dynamic instance for active IO
@@ -118,19 +118,16 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	void resetSoftwareCheck();
+	void initSoftware(uint8_t);
 
 public:
-	uint8_t resetHardware(bool);
+	uint8_t initHardware(uint8_t);
 
 private:
-	uint8_t _setupCypressIO();
+	uint8_t _setupCypressIO(uint8_t);
 
 private:
 	uint8_t _setupCypressPWM(uint8_t);
-
-private:
-	uint8_t _resetWalls(bool);
 
 public:
 	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);

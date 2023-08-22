@@ -333,12 +333,12 @@ uint8_t Cypress_Com::i2cScan()
 	return list_addr[cnt_addr];
 }
 
-/// <summary>
-/// Checks the I2C status and sets up the Cypress chip for a new session
+/// @brief Checks the I2C status and sets up the Cypress chip for a new session
 /// by reinitializing the settings.
-/// </summary>
-/// <param name="address">I2C address for a given Cypress chip.</param>
-/// <returns>Wire::method output.</returns>
+///
+/// @param address: I2C address for a given Cypress chip.
+///
+/// @return Status codes from @ref Wire::beginTransmission()
 uint8_t Cypress_Com::setupCypress(uint8_t address)
 {
 	uint8_t resp;
@@ -369,7 +369,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = wireEndTransmissionWrapper();
 	if (resp != 0)
 	{
-		_Dbg.printMsg("!!ERROR: i2c failed!!");
+		// TEMP_Dbg.printMsg("!!ERROR: i2c failed!!");
 		return resp;
 	}
 
@@ -377,7 +377,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
 	if (resp != 0)
 	{
-		_Dbg.printMsg("!!ERROR: chip restore failed!!");
+		_Dbg.printMsg("!!ERROR: Cypress Chip Restore!!");
 		return resp;
 	}
 
@@ -385,7 +385,7 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
 	if (resp != 0)
 	{
-		_Dbg.printMsg("!!ERROR: chip reconfigure failed!!");
+		_Dbg.printMsg("!!ERROR: Cypress Chip Reconfigure!!");
 		return resp;
 	}
 
@@ -483,10 +483,10 @@ uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port,
 /// <param name="send_stop">Parameter indicating whether or not a STOP should be performed on the bus [default=true].</param>
 /// /// <param name="print_err">Parameter indicating whether or not to print error if recieved [default=true].</param>
 /// <returns>Output from Wire::method call.</returns>
-uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool print_err)
+uint8_t Cypress_Com::wireEndTransmissionWrapper(bool send_stop, bool do_print_err)
 {
 	uint8_t resp = Wire.endTransmission(send_stop);
-	if (resp != 0 && print_err)
+	if (resp != 0 && do_print_err)
 		_Dbg.printMsgTime("!!ERROR: I2C Error: %d!!", resp);
 	return resp;
 }

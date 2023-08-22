@@ -21,8 +21,8 @@ extern bool DO_ECAT_SPI; // set this variable in your INO file to control block 
 /// into 2 8-bit entries using the Union data type (@see: RegUnion).
 ///
 /// @details: Message Structure Overview:
+/// Incoming/outgoing Ethercat register message entries overview:
 ///
-///     Incoming/outgoing Ethercat register message entries overview:
 ///	    INT 0:
 ///         i16[0]: Message ID [0-65535] (unique message id)
 ///	    INT 1:
@@ -35,31 +35,25 @@ extern bool DO_ECAT_SPI; // set this variable in your INO file to control block 
 ///		    i8[0]: Footer [254]
 ///		    i8[1]: Footer [254]
 ///
-///     Incoming/outgoing RegUnion message structure:
-///		ui16[0], ui8[0][1]		// ui16 [snd/rcv id]
-///		ui16[1], ui8[2][3]		// ui8  [type]   [arg length]
-///		ui16[2], ui8[4][5]		// ui8  [arg 1]  [arg 2]
-///		ui16[3], ui8[6][7]		// ui8  [arg 3]  [arg 4]
-///     ui16[4], ui8[8][9]     	// ui8  [arg 5]  [arg 6]
-///     ui16[5], ui8[10][11]   	// ui8  [arg 7]  [arg 8]
-///     ui16[6], ui8[12][13]  	// ui8  [arg 9]  [arg 10]
-///     ui16[7], ui8[14][15]  	// ui8  [footer] [footer]
+/// @details: Incoming/Outgoing RegUnion message structure:
 ///
-/// @details: Outgoing message Type Overview:
+///		ui16[0], ui8[0][1]		// ui16 [msg id]
+///		ui16[1], ui8[2][3]		// ui8  [msg type]      [err type]
+///		ui16[2], ui8[4][5]		// ui8  [arg length]    [arg 0]
+///		ui16[3], ui8[6][7]		// ui8  [arg 1]         [arg 2]
+///     ui16[4], ui8[8][9]     	// ui8  [arg 3]         [arg 4]
+///     ui16[5], ui8[10][11]   	// ui8  [arg 5]         [arg 6]
+///     ui16[6], ui8[12][13]  	// ui8  [arg 7]         [arg 8]
+///     ui16[7], ui8[14][15]  	// ui8  [footer]        [footer]
 ///
-///     MessageType.ACK_WITH_SUCCESS message structure:
-///		ui16[2], ui8[4] 		// ui8  [rcv type]
-///
-///     MessageType.ACK_WITH_ERROR message structure:
-///		ui16[2], ui8[4][5] 		// ui8  [rcv type]      [error type]
-///		ui16[3], ui8[6][7] 		// ui8  [arg 2+1]       [arg ...]
+/// @details: Incoming/Outgoing RegUnion argument data structure:
 ///
 ///     MessageType.MOVE_WALLS argument structure:
-///		ui16[2], ui8[4][5]		// ui8[cham 1 wall byte]  [cham 2 wall byte]
-///	    ui16[3], ui8[6][7]		// ui8[cham 3 wall byte]  [cham 4 wall byte]
-///     ui16[4], ui8[8][9]     	// ui8[cham 5 wall byte]  [cham 6 wall byte]
-///     ui16[5], ui8[10][11]   	// ui8[cham 7 wall byte]  [cham 8 wall byte]
-///     ui16[6], ui8[12]  	    // ui8[cham 9 wall byte]
+///		ui16[2], ui8[4][5]		// ui8  [arg length]        [cham 0 wall byte]
+///	    ui16[3], ui8[6][7]		// ui8  [cham 1 wall byte]  [cham 2 wall byte]
+///     ui16[4], ui8[8][9]     	// ui8  [cham 3 wall byte]  [cham 4 wall byte]
+///     ui16[5], ui8[10][11]   	// ui8  [cham 5 wall byte]  [cham 6 wall byte]
+///     ui16[6], ui8[12]  	    // ui8  [cham 7 wall byte]  [cham 8 wall byte]
 ///
 class Esmacat_Com
 {
@@ -69,42 +63,40 @@ public:
     bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 500; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[8][30] = {
-        "MSG_NONE",
+    const char message_type_str[5][30] = {
+        "MSG_NULL",
         "HANDSHAKE",
-        "ACK_WITH_SUCCESS",
-        "ACK_WITH_ERROR",
         "INITIALIZE_SYSTEM",
         "REINITIALIZE_SYSTEM",
         "MOVE_WALLS",
     };
     enum MessageType
     {
-        MSG_NONE = 0,
+        MSG_NULL = 0,
         HANDSHAKE = 1, // handshake must equal 1
-        ACK_WITH_SUCCESS = 2,
-        ACK_WITH_ERROR = 3,
-        INITIALIZE_SYSTEM = 4,
-        REINITIALIZE_SYSTEM = 5,
-        MOVE_WALLS = 6,
+        INITIALIZE_SYSTEM = 2,
+        REINITIALIZE_SYSTEM = 3,
+        MOVE_WALLS = 4,
         nMsgTypEnum
     };
-    const char error_type_str[6][30] = {
-        "ERROR_NONE",
+    const char error_type_str[7][30] = {
+        "ERR_NULL",
         "ECAT_ID_DISORDERED",
-        "ECAT_NO_TYPE_MATCH",
+        "ECAT_NO_MSG_TYPE_MATCH",
+        "ECAT_NO_ERR_TYPE_MATCH",
         "ECAT_MISSING_FOOTER",
         "I2C_FAILED",
         "WALL_MOVE_FAILED"};
     enum ErrorType
     {
-        ERROR_NONE = 0,
+        ERR_NULL = 0,
         ECAT_ID_DISORDERED = 1,
-        ECAT_NO_TYPE_MATCH = 2,
-        ECAT_MISSING_FOOTER = 3,
-        I2C_FAILED = 4,
-        WALL_MOVE_FAILED = 5,
-        N_RunError
+        ECAT_NO_MSG_TYPE_MATCH = 2,
+        ECAT_NO_ERR_TYPE_MATCH = 3,
+        ECAT_MISSING_FOOTER = 4,
+        I2C_FAILED = 5,
+        WALL_MOVE_FAILED = 6,
+        nErrTypeEnum
     };
 
     union RegUnion
@@ -134,20 +126,21 @@ public:
 
         uint16_t msgID = 0;                        // Ethercat message ID
         uint16_t msgID_last = 0;                   // Last Ethercat message ID
-        MessageType msgTp = MessageType::MSG_NONE; // Ethercat message error
+        MessageType msgTp = MessageType::MSG_NULL; // Ethercat message type enum
+        uint8_t msgTp_val = 0;                     // Ethercat message type val
+        ErrorType errTp = ErrorType::ERR_NULL;     // Ethercat message error enum
+        uint8_t errTp_val = 0;                     // Ethercat message error val
         uint8_t msgFoot[2] = {0};                  // Ethercat message footer [254,254]
 
         uint8_t argLen = 0;   // Ethercat number of 8 bit message arguments
         RegUnion ArgU;        // Union for storing message arguments
         UnionIndStruct argUI; // Union index handler for argument union data
 
-        bool isNew = false;                    // Ethercat message new flag
-        bool isErr = false;                    // Ethercat message error flag
-        ErrorType errTp = ErrorType::ERROR_NONE; // Ethercat message error
+        bool isNew = false; // Ethercat message new flag
+        bool isErr = false; // Ethercat message error flag
 
         char msg_tp_str[50] = {0}; // Ethercat message type string
         char err_tp_str[50] = {0}; // Ethercat error type string
-        uint8_t msg_tp_val = 0;    // Ethercat message type value
     };
     EcatMessageStruct sndEM; //  initialize message handler instance for sending messages
     EcatMessageStruct rcvEM; //  initialize message handler instance for receiving messages
@@ -173,6 +166,10 @@ private:
     void _uGetMsgType(EcatMessageStruct &);
 
 private:
+    void _uSetErrType(EcatMessageStruct &, ErrorType);
+    void _uGetErrType(EcatMessageStruct &);
+
+private:
     void _uSetArgLength(EcatMessageStruct &, uint8_t);
     void _uGetArgLength(EcatMessageStruct &);
 
@@ -192,17 +189,17 @@ private:
     void _resetReg();
 
 private:
-    void _trackEcatErr(EcatMessageStruct &, ErrorType, bool = false);
+    void _trackErrType(EcatMessageStruct &, ErrorType, bool = false);
 
 public:
-    void resetEcat(bool = true);
+    void initEcat();
 
 public:
     void readEcatMessage();
-    
+
 public:
-    void writeEcatMessage(MessageType, uint8_t[] = nullptr, uint8_t = 0);
-    void writeEcatMessage(MessageType, ErrorType, uint8_t[] = nullptr, uint8_t = 0);
+    void writeEcatAck(uint8_t[] = nullptr, uint8_t = 0);
+    void writeEcatAck(ErrorType, uint8_t[] = nullptr, uint8_t = 0);
 
 private:
     void _printEcatReg(uint8_t, int[] = nullptr);
