@@ -139,9 +139,10 @@ void Wall_Operation::procEcatMessage()
 		{
 			if (C[cham_i].i2cStatus != 0) // check for any chamber/chip I2C errors
 			{
-				msg_arg_arr[arg_len] = C[cham_i].i2cStatus; // store chamber index
-				arg_len++;									// increment argument length
+				//msg_arg_arr[cham_i] = C[cham_i].i2cStatus; // store chamber index
+				msg_arg_arr[arg_len] = C[cham_i].addr; // store address of chamber
 			}
+			arg_len++;									// increment argument length
 		}
 	}
 
@@ -153,9 +154,9 @@ void Wall_Operation::procEcatMessage()
 		{
 			if (C[cham_i].bitWallErrorFlag != 0) // check for any flagged walls in wall byte
 			{
-				msg_arg_arr[arg_len] = C[cham_i].bitWallErrorFlag; // store wall byte mask
-				arg_len++;										   // increment argument length
+				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag; // store wall byte mask
 			}
+			arg_len++;									// increment argument length
 		}
 	}
 
@@ -418,16 +419,17 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 	uint8_t ruturn_code = 0;
 	uint8_t run_status = 0; // track run status
 
-	_Dbg.printMsgTime("RUNNING: HARDWARE INITIALIZATION");
+	_Dbg.printMsgTime("RUNNING: HARDWARE INITIALIZATION_________________________");
 
 	// Loop through all chambers
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
 	{
 
 		//........................ Initialize Cypress Chip ........................
 
 		// Get current cypress address
-		uint8_t address = C[cham_i].addr;
+		uint8_t address = C[cham_i].addr;;
+		_Dbg.printMsgTime("INITIALIZATING: Chamber[%d] Cypress Chip[%s]", cham_i, _Dbg.hexStr(address));
 
 		//........................ Initialize Cypress Chip ........................
 
@@ -481,7 +483,7 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 		ruturn_code = C[cham_i].i2cStatus != 0 ? 1 : run_status; // update run status
 	}
 
-	_Dbg.printMsgTime("FINISHED: HARDWARE INITIALIZATION: run_status=%d", ruturn_code);
+	_Dbg.printMsgTime("FINISHED: HARDWARE INITIALIZATION_________________________");
 	return ruturn_code;
 }
 

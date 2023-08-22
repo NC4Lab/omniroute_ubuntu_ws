@@ -54,36 +54,40 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 }
 N_CHAMBERS = 9  # number of chambers in maze
 
-#======================== GLOBAL FUNCTIONS ========================
+#======================== GLOBAL CLASSES ========================
 
-def rospyLogCol(level, msg, *args):
-    """ Log to ROS in color """
+class MazeDB(QGraphicsView):
+    """ MazeDebug class to plot the maze """
 
-    def frmt_msg(color, msg, *args):
+    @classmethod
+    def logCol(cls, level, msg, *args):
+        """ Log to ROS in color """
+
+        # Exit if DB_VERBOSE is false
+        if not DB_VERBOSE:
+            return
+
+        # Log message by type and color to ROS
+        if level == 'ERROR':
+            rospy.logerr(cls.frmt_msg(Fore.RED, msg, *args))
+        elif level == 'WARNING':
+            rospy.logwarn(cls.frmt_msg(Fore.YELLOW, msg, *args))
+        elif level == 'INFO':
+            rospy.loginfo(cls.frmt_msg(Fore.BLUE, msg, *args))
+        elif level == 'DEBUG':
+            rospy.loginfo(cls.frmt_msg(Fore.GREEN, msg, *args))
+        else:
+            rospy.loginfo(cls.frmt_msg(Fore.BLACK, msg, *args))
+
+    @classmethod
+    def frmt_msg(cls, color, msg, *args):
         """ Format message with color """
+        
         colored_message = f"{color}{msg}{Style.RESET_ALL}"
         return colored_message % args
 
-    # Exit if DB_VERBOSE is false
-    if not DB_VERBOSE:
-        return
-    
-    # Log message by type and color to ROS
-    if level == 'ERROR':
-        rospy.logerr(frmt_msg(Fore.RED, msg, *args))
-    elif level == 'WARNING':
-        rospy.logwarn(frmt_msg(Fore.YELLOW, msg, *args))
-    elif level == 'INFO':
-        rospy.loginfo(frmt_msg(Fore.BLUE, msg, *args))
-    elif level == 'DEBUG':
-        rospy.loginfo(frmt_msg(Fore.GREEN, msg, *args))
-    else:
-        rospy.loginfo(frmt_msg(Fore.BLACK, msg, *args))
-
-#======================== GLOBAL CLASSES ========================
-
-class Maze_Plot(QGraphicsView):
-    """ Maze_Plot class to plot the maze """
+class MazePlot(QGraphicsView):
+    """ MazePlot class to plot the maze """
 
     #------------------------ NESTED CLASSES ------------------------
 
@@ -97,10 +101,12 @@ class Maze_Plot(QGraphicsView):
             self.state = state
 
             self.line = QGraphicsLineItem(QLineF(p0[0], p0[1], p1[0], p1[1]))
-            self.upPen = QPen(Qt.red)
+            self.upPen = QPen(Qt.green)
             self.upPen.setWidth(wall_width)
             self.downPen = QPen(Qt.gray)
             self.downPen.setWidth(wall_width)
+            self.errorPen = QPen(Qt.gray)
+            self.errorPen.setWidth(wall_width)
 
             self.setState(state)
 
@@ -116,7 +122,7 @@ class Maze_Plot(QGraphicsView):
             self.label.setPos(label_pos[0], label_pos[1])
             self.addToGroup(self.label)
 
-            Maze_Plot.centerText(self.label, label_pos[0], label_pos[1])
+            MazePlot.centerText(self.label, label_pos[0], label_pos[1])
 
         def mousePressEvent(self, event):
             if event.button() == Qt.LeftButton:
@@ -124,9 +130,9 @@ class Maze_Plot(QGraphicsView):
                 self.setState(not self.state)
                 # wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
                 if self.state:  # add list entry
-                    Wall_Config.addWall(self.chamber_num, self.wall_num)
+                    WallConfig.addWall(self.chamber_num, self.wall_num)
                 else:  # remove list entry
-                    Wall_Config.removeWall(self.chamber_num, self.wall_num)
+                    WallConfig.removeWall(self.chamber_num, self.wall_num)
 
         def setState(self, state: bool):
             if state:
@@ -154,14 +160,14 @@ class Maze_Plot(QGraphicsView):
             self.addToGroup(self.octagon)
 
             # Plot cahamber numbers
-            self.label = QGraphicsTextItem(str(chamber_num))
-            font_size = wall_width*2
-            self.label.setFont(QFont("Arial", font_size, QFont.Bold))
-            self.addToGroup(self.label)
-
+            self.label_num = QGraphicsTextItem(str(chamber_num))
+            font_size = wall_width*1.75
+            self.label_num.setFont(QFont("Arial", font_size, QFont.Bold))
+            self.addToGroup(self.label_num)
             # Center the text over the chamber's center
-            Maze_Plot.centerText(self.label, center_x, center_y)
+            MazePlot.centerText(self.label_num, center_x, center_y)
 
+            # Plot chamber octogon vertices
             wall_angular_offset = 2*math.pi/32  # This decides the angular width of the wall
             wall_vertices_0 = self.getOctagonVertices(
                 center_x, center_y, chamber_width/2, -math.pi/8+wall_angular_offset)
@@ -170,7 +176,7 @@ class Maze_Plot(QGraphicsView):
             wall_label_pos = self.getOctagonVertices(
                 center_x, center_y, chamber_width/3, 0)
 
-            self.walls = [Maze_Plot.Wall(p0=wall_vertices_0[k],
+            self.Walls = [MazePlot.Wall(p0=wall_vertices_0[k],
                                          p1=wall_vertices_1[k+1],
                                          chamber_num=chamber_num,
                                          wall_num=k,
@@ -187,6 +193,12 @@ class Maze_Plot(QGraphicsView):
             if event.button() == Qt.LeftButton:
                 pass
                 # rospy_log_col('INFO', "\t chamber %d clicked in UI" % self.chamber_num)
+
+        def updateChambers(self, is_error):
+            if is_error:    
+                self.label_num.setDefaultTextColor(Qt.red)
+            else:
+                self.label_num.setDefaultTextColor(Qt.black)
 
     # CLASS: Maze
     class Maze:
@@ -205,20 +217,21 @@ class Maze_Plot(QGraphicsView):
             y_pos = np.linspace(half_width, int(
                 maze_height - half_width),  num_rows)
 
-            self.chambers = []
+            # Create a list of chamber instances
+            self.Chambers = []
             k = 0
             for y in y_pos:
                 for x in x_pos:
-                    self.chambers.append(
-                        Maze_Plot.Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
+                    self.Chambers.append(
+                        MazePlot.Chamber(center_x=x, center_y=y, chamber_width=chamber_width, wall_width=wall_width, chamber_num=k))
                     k = k+1
 
         def updateWalls(self):
-            cw_list = Wall_Config.wallConfigList
+            cw_list = WallConfig.wallConfigList
 
-            for chamber in self.chambers:
-                for wall in chamber.walls:
-                    # Check if there is an entry for the current chamber and wall in Wall_Config
+            for chamber in self.Chambers:
+                for wall in chamber.Walls:
+                    # Check if there is an entry for the current chamber and wall in WallConfig
                     chamber_num = chamber.chamber_num
                     wall_num = wall.wall_num
                     entry_found = any(
@@ -246,7 +259,7 @@ class Maze_Plot(QGraphicsView):
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
 
-class Wall_Config:
+class WallConfig:
     """ Stores the wall configuration for the maze """
 
     #------------------------ CLASS VARIABLES ------------------------
@@ -371,7 +384,7 @@ class Wall_Config:
         """Returns the wall configuration list as a string"""
         return str(cls.wallConfigList)
 
-class Esmacat_Com:
+class EsmacatCom:
     """ 
     This class is used to communicate with the arduino via ethercat.
     It is used to send and receive messages from the arduino.
@@ -437,22 +450,22 @@ class Esmacat_Com:
     class EcatMessageStruct:
         """ Struct for storing ethercat messages """
         def __init__(self):
-            self.RegU = Esmacat_Com.RegUnion()    # Union for storing ethercat 8 16-bit reg entries
-            self.getUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
-            self.setUI = Esmacat_Com.UnionIndStruct() # Union index handler for getting union data
+            self.RegU = EsmacatCom.RegUnion()    # Union for storing ethercat 8 16-bit reg entries
+            self.getUI = EsmacatCom.UnionIndStruct() # Union index handler for getting union data
+            self.setUI = EsmacatCom.UnionIndStruct() # Union index handler for getting union data
 
             self.msgID = 0
             self.msgID_last = 0                     # Last message ID   
-            self.msgTp = Esmacat_Com.MessageType.MSG_NULL # Message type
+            self.msgTp = EsmacatCom.MessageType.MSG_NULL # Message type
             self.msgFoot = [0, 0]                  # Message footer
 
             self.argLen = 0                       # Message argument length
-            self.ArgU = Esmacat_Com.RegUnion()    # Union for storing message arguments
-            self.argUI = Esmacat_Com.UnionIndStruct() # Union index handler for argument union data
+            self.ArgU = EsmacatCom.RegUnion()    # Union for storing message arguments
+            self.argUI = EsmacatCom.UnionIndStruct() # Union index handler for argument union data
 
             self.isNew = False                         # New message flag
             self.isErr = False                         # Message error flag
-            self.errTp = Esmacat_Com.ErrorType.ERR_NULL # Message error type
+            self.errTp = EsmacatCom.ErrorType.ERR_NULL # Message error type
     
     def __init__(self):
 
@@ -499,7 +512,7 @@ class Esmacat_Com:
         # Check/log error skipped or out of sequence messages
         if r_EM.msgID - r_EM.msgID_last != 1 and \
             r_EM.msgID != r_EM.msgID_last: # don't log errors for repeat message reads
-            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_ID_DISORDERED)
+            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
         """Set message type entry in union and update associated variable"""
@@ -514,16 +527,16 @@ class Esmacat_Com:
         # Get message type value
         msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
 
-        # Check if 'msg_type_val' corresponds to any value in the 'Esmacat_Com.MessageType' Enum.
-        is_found = msg_type_val in [e.value for e in Esmacat_Com.MessageType]
+        # Check if 'msg_type_val' corresponds to any value in the 'EsmacatCom.MessageType' Enum.
+        is_found = msg_type_val in [e.value for e in EsmacatCom.MessageType]
         r_EM.isErr = not is_found # Update struct error flag
 
         # Log error and set message type to none if not found
         if r_EM.isErr:
-            msg_type_val = Esmacat_Com.MessageType.MSG_NULL
-            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_NO_MSG_TYPE_MATCH) 
+            msg_type_val = EsmacatCom.MessageType.MSG_NULL
+            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_NO_MSG_TYPE_MATCH) 
         else:
-            r_EM.msgTp = Esmacat_Com.MessageType(msg_type_val)
+            r_EM.msgTp = EsmacatCom.MessageType(msg_type_val)
 
     def _uSetErrType(self, r_EM, err_type_enum):
         """Set message type entry in union and update associated variable"""
@@ -538,16 +551,16 @@ class Esmacat_Com:
         # Get message type value
         err_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
 
-        # Check if 'err_type_val' corresponds to any value in the 'Esmacat_Com.ErrorType' Enum.
-        is_found = err_type_val in [e.value for e in Esmacat_Com.ErrorType]
+        # Check if 'err_type_val' corresponds to any value in the 'EsmacatCom.ErrorType' Enum.
+        is_found = err_type_val in [e.value for e in EsmacatCom.ErrorType]
         r_EM.isErr = not is_found # Update struct error flag
 
         # Log error and set error type to none if not found
         if r_EM.isErr:
-            err_type_val = Esmacat_Com.ErrorType.ERR_NULL
-            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_NO_ERR_TYPE_MATCH) 
+            err_type_val = EsmacatCom.ErrorType.ERR_NULL
+            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_NO_ERR_TYPE_MATCH) 
         else:
-            r_EM.errTp = Esmacat_Com.ErrorType(err_type_val)
+            r_EM.errTp = EsmacatCom.ErrorType(err_type_val)
 
     def _uSetArgLength(self, r_EM, msg_arg_len):
         """Set message argument length entry in union and update associated variable"""
@@ -620,7 +633,7 @@ class Esmacat_Com:
 
         # Log missing footer error
         if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254: # check if footer is valid
-            self._trackErrType(r_EM, Esmacat_Com.ErrorType.ECAT_MISSING_FOOTER) 
+            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER) 
 
     def _uReset(self, r_EM):
         """Reset union data and indices"""
@@ -659,29 +672,29 @@ class Esmacat_Com:
                 r_EM.isErr = True
 
                 # Print error message
-                rospyLogCol(
+                MazeDB.logCol(
                     'ERROR', "!!ERROR: Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
                 self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
         elif r_EM.errTp == err_tp:
-                r_EM.errTp = Esmacat_Com.ErrorType.ERR_NULL  
+                r_EM.errTp = EsmacatCom.ErrorType.ERR_NULL  
                 r_EM.isErr = False
 
     def _printEcatReg(self, level, d_type, reg_u):
         """Print EtherCAT register data"""
 
         # Print heading with type
-        rospyLogCol(level, "\t Ecat Register")
+        MazeDB.logCol(level, "\t Ecat Register")
 
         # Print message data
         for i in range(8):
             if d_type == 2:
-                rospyLogCol(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
+                MazeDB.logCol(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
             if d_type == 1:
-                rospyLogCol(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
+                MazeDB.logCol(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                rospyLogCol(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                MazeDB.logCol(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
@@ -753,7 +766,7 @@ class Esmacat_Com:
         self.rcvEM.isNew = True
 
         # Print message
-        rospyLogCol('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        MazeDB.logCol('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
 
         return True
@@ -763,7 +776,7 @@ class Esmacat_Com:
         Used to send outgoing ROS ethercat msg data.
 
         Args:
-            msg_type_enum (Esmacat_Com.MessageType): Message type enum.
+            msg_type_enum (EsmacatCom.MessageType): Message type enum.
             msg_arg_data_arr (list or scalar): Message argument data array.
 
         Returns:
@@ -803,7 +816,7 @@ class Esmacat_Com:
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)  
 
         # Print message
-        rospyLogCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
+        MazeDB.logCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
 
 #======================== MAIN UI CLASS ========================
@@ -823,7 +836,7 @@ class Interface(Plugin):
 
         # Give QObjects reasonable names
         self.setObjectName('Interface')
-        rospyLogCol('INFO', "Running Interface setup")
+        MazeDB.logCol('INFO', "Running Interface setup")
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -879,8 +892,8 @@ class Interface(Plugin):
             self.getPathConfigDir())  # set to default path
 
         # Initialize ardListWidget with arduino names.
-        # Add 8 arduinos to the list labeled Arduino 0-9
-        for i in range(8):
+        # Add 5 arduinos to the list labeled Arduino 0-4
+        for i in range(5):
             self._widget.ardListWidget.addItem("Arduino " + str(i))
         # Hide the blue selection bar
         self._widget.ardListWidget.setStyleSheet(
@@ -896,29 +909,29 @@ class Interface(Plugin):
         chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
         wall_width = chamber_width*0.1
 
-        # Create Maze_Plot.Maze and populate walls according to WALL_MAP
-        self.MazePlot = Maze_Plot.Maze(num_rows=NUM_ROWS_COLS,
+        # Create MazePlot.Maze and populate walls according to WALL_MAP
+        self.MP = MazePlot.Maze(num_rows=NUM_ROWS_COLS,
                                   num_cols=NUM_ROWS_COLS,
                                   chamber_width=chamber_width,
                                   wall_width=wall_width)
 
         # Add chambers and disable walls not connected
-        for k, c in enumerate(self.MazePlot.chambers):
+        for k, c in enumerate(self.MP.Chambers):
             self.scene.addItem(c)
-            for j, w in enumerate(c.walls):
+            for j, w in enumerate(c.Walls):
                 if j not in WALL_MAP[k]:
                     w.setEnabled(False)
                     w.setVisible(False)
 
         # Add walls - this is a new loop so that they are drawn above the chambers
-        for c in self.MazePlot.chambers:
-            for w in c.walls:
+        for c in self.MP.Chambers:
+            for w in c.Walls:
                 self.scene.addItem(w)
 
         #................ Ecat Setup ................
 
-        # Create Esmacat_Com object
-        self.EsmaCom_A0 = Esmacat_Com()
+        # Create EsmacatCom object
+        self.EsmaCom_A0 = EsmacatCom()
 
         # Store the time the interface was initialized
         self.ts_interface_init = rospy.get_time() # (sec)
@@ -929,7 +942,7 @@ class Interface(Plugin):
 
         # Couter to incrementally shut down opperations
         self.cnt_shutdown_step = 0
-        self.dt_shutdown_step = 0.5 # (sec)
+        self.dt_shutdown_step = 0.25 # (sec)
 
         #................ QT Callback Setup ................
 
@@ -994,33 +1007,44 @@ class Interface(Plugin):
         """
 
         # Print confirmation message
-        rospyLogCol('INFO', "(%d)PROCESSING ECAT ACK: %s", 
+        MazeDB.logCol('INFO', "(%d)PROCESSING ECAT ACK: %s", 
                     self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
         
         #................ Process Ack Error ................ 
 
-        if self.EsmaCom_A0.rcvEM.errTp != Esmacat_Com.ErrorType.ERR_NULL:
+        if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NULL:
 
-            rospyLogCol(
+            MazeDB.logCol(
                 'ERROR', "!!ERROR: ECAT ERROR: %s!!", self.EsmaCom_A0.rcvEM.errTp.name)
+            
+            # I2C_FAILED
+            if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
+
+                # Loop through arguments
+                for i in range(self.EsmaCom_A0.rcvEM.argLen):
+                    
+                    # Set corresponding chamber to error
+                    self.MP.Chambers[i].updateChambers(self.EsmaCom_A0.rcvEM.ArgU.ui8[i] != 0) # Check if value not equal to 0
+
         
         #................ Process Ack Success ................ 
 
         # HANDSHAKE
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.HANDSHAKE:
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
 
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            rospyLogCol('INFO', "=== ECAT COMMS CONNECTED ===");
+            MazeDB.logCol('INFO', "=== ECAT COMMS CONNECTED ===");
 
             # Send INITIALIZE_SYSTEM message and specify number of chambers
-            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.INITIALIZE_SYSTEM, N_CHAMBERS)
+            # TEMP self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_SYSTEM, N_CHAMBERS)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_SYSTEM, 3)
 
         # REINITIALIZE_SYSTEM
-        if self.EsmaCom_A0.rcvEM.msgTp == Esmacat_Com.MessageType.REINITIALIZE_SYSTEM:
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = False
-            rospyLogCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
+            MazeDB.logCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1074,15 +1098,15 @@ class Interface(Plugin):
 
             # Give up is more that 3 messages have been sent
             if self.EsmaCom_A0.sndEM.msgID > 3:
-                rospyLogCol(
+                MazeDB.logCol(
                     'ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
                 return
             elif self.EsmaCom_A0.sndEM.msgID > 1:
-                rospyLogCol(
+                MazeDB.logCol(
                     'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino 
-            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.HANDSHAKE)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE)
 
             # Restart check timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1092,7 +1116,7 @@ class Interface(Plugin):
         
         if self.cnt_shutdown_step == 0:
             # Send REINITIALIZE_SYSTEM message to arduino
-            self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.REINITIALIZE_SYSTEM)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.REINITIALIZE_SYSTEM)
 
         elif self.EsmaCom_A0.isEcatConnected == True:
             # Wait for REINITIALIZE_SYSTEM message confirmation and restart timer
@@ -1102,38 +1126,38 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 1:
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
             self.signal_Esmacat_read_maze_ard0_ease.disconnect()
-            rospyLogCol('INFO', "Disconnected from Esmacat read timer thread");
+            MazeDB.logCol('INFO', "Disconnected from Esmacat read timer thread");
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/interface_test_node")
-            rospyLogCol('INFO', "Killed specific nodes");
+            MazeDB.logCol('INFO', "Killed specific nodes");
 
         elif self.cnt_shutdown_step == 3:
             # Kill all nodes (This will also kill this script's node)
             os.system("rosnode kill -a")
-            rospyLogCol('INFO', "Killed all nodes");
+            MazeDB.logCol('INFO', "Killed all nodes");
 
         elif self.cnt_shutdown_step == 4:
             # Process any pending events in the event loop
             QCoreApplication.processEvents()
-            rospyLogCol('INFO', "Processed all events");
+            MazeDB.logCol('INFO', "Processed all events");
 
         elif self.cnt_shutdown_step == 5:
             # Close the UI window
             self._widget.close()
-            rospyLogCol('INFO', "Closed UI window");
+            MazeDB.logCol('INFO', "Closed UI window");
 
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            rospyLogCol('INFO', "Sent shutdown request to ROS master");
+            MazeDB.logCol('INFO', "Sent shutdown request to ROS master");
 
         elif self.cnt_shutdown_step == 7:
             # End the application
             QApplication.quit()
-            rospyLogCol('INFO', "Ended application");
+            MazeDB.logCol('INFO', "Ended application");
             return  # Return here to prevent the timer from being restarted after the application is closed
         
         # Increment the shutdown step after ecat disconnected
@@ -1197,8 +1221,8 @@ class Interface(Plugin):
     def qt_callback_plotClearBtn_clicked(self):
         """ Callback function for the "Clear" button."""
 
-        Wall_Config.Reset()  # reset all values in list
-        self.MazePlot.updateWalls()  # update walls
+        WallConfig.Reset()  # reset all values in list
+        self.MP.updateWalls()  # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
         """ Callback function for the "Save" button."""
@@ -1216,19 +1240,19 @@ class Interface(Plugin):
                 file_name += ".csv"
 
             # The user has specified a file name, you can perform additional actions here
-            rospyLogCol('INFO', "Selected file:", file_name)
+            MazeDB.logCol('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(file_name, Wall_Config.makeWall2ByteList())
+            self.saveToCSV(file_name, WallConfig.makeWall2ByteList())
 
     def qt_callback_plotSendBtn_clicked(self):
         """ Callback function for the "Send" button."""
 
         # Sort entries
-        Wall_Config.sortEntries()
+        WallConfig.sortEntries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.writeEcatMessage(Esmacat_Com.MessageType.MOVE_WALLS, Wall_Config.getWallByteOnlyList())
+        self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.MOVE_WALLS, WallConfig.getWallByteOnlyList())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
@@ -1260,9 +1284,9 @@ class Interface(Plugin):
                 csv_writer = csv.writer(csvfile)
                 for row in wall_config_list:
                     csv_writer.writerow(row)
-            rospyLogCol('INFO', "Data saved to:", file_name)
+            MazeDB.logCol('INFO', "Data saved to:", file_name)
         except Exception as e:
-            rospyLogCol('ERROR', "Error saving data to CSV:", str(e))
+            MazeDB.logCol('ERROR', "Error saving data to CSV:", str(e))
 
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
@@ -1290,13 +1314,13 @@ class Interface(Plugin):
                 csv_reader = csv.reader(csv_file)
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
-                Wall_Config.makeByte2WallList(wall_byte_config_list)
-                rospyLogCol('INFO', "Data loaded successfully.")
+                WallConfig.makeByte2WallList(wall_byte_config_list)
+                MazeDB.logCol('INFO', "Data loaded successfully.")
         except Exception as e:
-            rospyLogCol('ERROR', "Error loading data from CSV:", str(e))
+            MazeDB.logCol('ERROR', "Error loading data from CSV:", str(e))
 
         # Update plot walls
-        self.MazePlot.updateWalls()
+        self.MP.updateWalls()
 
     #------------------------ FUNCTIONS: System Operations ------------------------
 
@@ -1316,7 +1340,7 @@ class Interface(Plugin):
     def closeEvent(self, event):
         """ Function to handle the window close event """
         
-        rospyLogCol('INFO', "Closing window...")
+        MazeDB.logCol('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.end_ros_session()
         event.accept()  # let the window close

@@ -72,6 +72,10 @@ void loop()
 	WallOper.procEcatMessage();
 
 	// // TEMP
+	// WallOper.initHardware(2);
+	// while(true);
+
+	// // TEMP
 	// int dt = 1000;
 	// WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::CONFIRM_DONE);
 	// delay(dt);

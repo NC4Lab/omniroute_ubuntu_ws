@@ -4,9 +4,7 @@
 
 // ######################################
 
-/// <file>
-/// Used for the Maze_Debug class
-/// <file>
+/// @file Used for the Maze_Debug class
 
 //============= INCLUDE ================
 #include "Arduino.h"
@@ -17,12 +15,9 @@
 
 extern bool DB_VERBOSE; ///< set this variable in your INO file to control debugging [0:silent, 1:verbose]
 
-/// <summary>
-/// Used for printing different types of information to the Serial Output Window.
-/// </summary>
-/// <remarks>
-/// This class is used in both the Cypress_Comm and Wall_Operation classes.
-/// </remarks>
+/// @brief Used for printing different types of information to the Serial Output Window.
+/// 
+/// @remarks This class is used in both the Cypress_Comm and Wall_Operation classes.
 class Maze_Debug
 {
 	// -----------METHODS-----------------

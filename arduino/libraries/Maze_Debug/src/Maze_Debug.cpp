@@ -13,16 +13,13 @@
 
 //===========CLASS: Maze_Debug============
 
-/// <summary>
-/// Constructor
-/// </summary>
+/// @brief Constructor
 Maze_Debug::Maze_Debug() {}
 
-/// <summary>
-/// Print message using printf formatting without ellapsed time.
-/// </summary>
-/// <param name="p_fmt">Formating string comperable to sprintf().</param>
-/// <param name="">a list of variables related to the formatting string.</param>
+/// @brief Print a message using printf formatting without elapsed time.
+///
+/// @param p_fmt Formatting string comparable to sprintf().
+/// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsg(const char *p_fmt, ...)
 {
 	if (DB_VERBOSE == 0)
@@ -34,11 +31,10 @@ void Maze_Debug::printMsg(const char *p_fmt, ...)
 	va_end(args);			// End retrieval
 }
 
-/// <summary>
-/// Print message using printf formatting with ellapsed time.
-/// </summary>
-/// <param name="p_fmt">Formating string comperable to sprintf().</param>
-/// <param name="">a list of variables related to the formatting string.</param>
+/// @brief Print a message using printf formatting with elapsed time.
+///
+/// @param p_fmt Formatting string comparable to sprintf().
+/// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsgTime(const char *p_fmt, ...)
 {
 	if (DB_VERBOSE == 0)
@@ -55,11 +51,10 @@ void Maze_Debug::printMsgTime(const char *p_fmt, ...)
 	va_end(args);			// End retrieval
 }
 
-/// <summary>
-/// Print message from @ref Maze_Debug::printMsg() with ellapsed time.
-/// </summary>
-/// <param name="p_fmt">auto passed from @ref Maze_Debug::printMsg().</param>
-/// <param name="args">auto passed from @ref Maze_Debug::printMsg().</param>
+/// @brief Print a message with elapsed time.
+///
+/// @param p_fmt Auto-passed from Maze_Debug::printMsg().
+/// @param args Variable arguments list.
 void Maze_Debug::_printMsg(const char *p_fmt, va_list args)
 {
 	static const uint16_t buff_s = 250;
@@ -70,12 +65,10 @@ void Maze_Debug::_printMsg(const char *p_fmt, va_list args)
 	Serial.println(buff);				  // print message
 }
 
-/// <summary>
-/// Print message from printMsgTime() with ellapsed time.
-/// </summary>
-/// <param name="ts_ms">Current time (ms).</param>
-/// <param name="t0_ms">Zero time if computing dt (ms).</param>
-/// <returns>String in the form [MM:SS:MS]</returns>
+/// @brief Generate a time string.
+///
+/// @param ts_0 Reference time (ms).
+/// @return Formatted time string in the form [MM:SS:MS].
 const char *Maze_Debug::_timeStr(uint32_t ts_0)
 {
 	static char buff[3][25]; // track up to 3 instances
@@ -95,10 +88,10 @@ const char *Maze_Debug::_timeStr(uint32_t ts_0)
 	return buff[ii];
 }
 
-/// <summary>
-/// Store or retrieve a string for later use. Call without argument to retrieve string.
-/// </summary>
-/// <param name="p_str">OPTIONAL: string to store</param>
+/// @brief Store or retrieve a string for later use.
+///
+/// @param p_str (OPTIONAL) String to store.
+/// @return Previously stored string or the newly stored string.
 const char *Maze_Debug::setGetStr(const char *p_str)
 {
 	static char buff[100];
@@ -113,12 +106,12 @@ const char *Maze_Debug::setGetStr(const char *p_str)
 	return buff;
 }
 
-/// <summary>
-/// Print array of values.
-/// </summary>
-/// <param name="p_arr">Array to print (max 10 elements).</param>
-/// <param name="s">Size of array.</param>
-/// <returns>Formatted array string. E.g., "[0,1,2]"</returns>
+/// @brief Convert an array of values to a string representation.
+///
+/// @param p_arr Array to convert.
+/// @param s Size of the array.
+///
+/// @return Formatted string representing the array.
 const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 {
 	if (DB_VERBOSE == 0)
@@ -141,11 +134,11 @@ const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 	return buff1;
 }
 
-/// <summary>
-/// Prints byte in binary.
-/// </summary>
-/// <param name="b">Byte to print.</param>
-/// <returns>Formatted byte string [B00000000].</returns>
+/// @brief Generate a binary representation of a byte.
+///
+/// @param b Byte to be converted to its binary representation.
+///
+/// @return Formatted byte string in the form [B00000000].
 const char *Maze_Debug::binStr(uint8_t b)
 {
 	if (DB_VERBOSE == 0)
@@ -159,11 +152,11 @@ const char *Maze_Debug::binStr(uint8_t b)
 	return buff[ii];
 }
 
-/// <summary>
-/// Prints value in hex.
-/// </summary>
-/// <param name="h">Hex value to print</param>
-/// <returns>formatted hex string [e.g., 0xFF]</returns>
+/// @brief Generate a hexadecimal representation of a value.
+///
+/// @param h Value to be converted to its hexadecimal representation.
+///
+/// @return Formatted hex string, e.g., [0xFF].
 const char *Maze_Debug::hexStr(uint8_t h)
 {
 	static char buff[20];
@@ -172,13 +165,12 @@ const char *Maze_Debug::hexStr(uint8_t h)
 	return buff;
 }
 
-/// <summary>
-/// Track elapsed time between calls. Call firts with
-/// an input arg of 1 to set the clock. Subsiquent calls
-/// will provide ellapsed time.
-/// </summary>
-/// <param name="do_reset">Reset clock [1].</param>
-/// <returns>Formatted string [s:ms:us].</returns>
+/// @brief Track and return the elapsed time between calls.
+/// Initially call with an input argument of 1 to set the clock. Subsequent calls provide elapsed time.
+///
+/// @param do_reset If set to 1, resets the clock.
+///
+/// @return Formatted time string in the form [s:ms:us].
 const char *Maze_Debug::dtTrack(uint8_t do_reset)
 {
 	static unsigned long ts_0 = 0;
@@ -193,11 +185,11 @@ const char *Maze_Debug::dtTrack(uint8_t do_reset)
 	}
 }
 
-/// <summary>
-/// Print indeces of ones in byte.
-/// </summary>
-/// <param name="byte_mask_in">Byte value used as a mask with Cypress methods.</param>
-/// <returns>Formatted array string. E.g., "[0,1,2]"</returns>
+/// @brief Generate a string that lists the indices of bits set to one in a byte.
+///
+/// @param byte_mask_in Byte value used as a mask.
+///
+/// @return Formatted array string, e.g., "[0,1,2]".
 const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 {
 	if (DB_VERBOSE == 0)
@@ -235,10 +227,9 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 	return buff1;
 }
 
-/// <summary>
-/// Print single registry byte in binary.
-/// </summary>
-/// <param name="byte_mask_in">Byte value used as a mask with Cypress methods.</param>
+/// @brief Print a single registry byte in binary format.
+///
+/// @param byte_mask_in Byte value used as a mask with Cypress methods.
 void Maze_Debug::printRegByte(uint8_t byte_mask_in)
 {
 	if (DB_VERBOSE == 0)
@@ -246,9 +237,10 @@ void Maze_Debug::printRegByte(uint8_t byte_mask_in)
 	uint8_t p_byte_mask_in[1] = {byte_mask_in};
 	printRegByte(p_byte_mask_in, 1);
 }
-/// <summary>
-/// Overloads to pass a byte arrays.
-/// </summary>
+/// @brief OVERLOAD: Overloaded method to print an array of registry bytes in binary format.
+///
+/// @param p_byte_mask_in Pointer to an array of byte values used as masks.
+/// @param s Size of the byte array.
 void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 {
 	if (DB_VERBOSE == 0)
@@ -261,9 +253,11 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 		Serial.println(buff);
 	}
 }
-/// <summary>
-/// Overloads to pass a second byte array for comparisons.
-/// </summary>
+/// @brief OVERLOAD: Overloaded method to print and compare two arrays of registry bytes in binary format.
+///
+/// @param p_byte_mask_in_1 Pointer to the first array of byte values used as masks.
+/// @param p_byte_mask_in_2 Pointer to the second array of byte values used as masks.
+/// @param s Size of the byte arrays.
 void Maze_Debug::printRegByte(uint8_t p_byte_mask_in_1[], uint8_t p_byte_mask_in_2[], uint8_t s)
 {
 	if (DB_VERBOSE == 0)

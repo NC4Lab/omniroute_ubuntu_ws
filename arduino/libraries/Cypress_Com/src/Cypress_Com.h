@@ -4,7 +4,7 @@
 
 // ######################################
 
-/// @brief Used for the Cypress_Com class
+/// @file Used for the Cypress_Com class
 
 #ifndef _CYPRESS_COMM_h
 #define _CYPRESS_COMM_h
@@ -28,7 +28,6 @@
 /// 	3: Received NACK on transmit of data. This means the slave device acknowledged its address but
 ///			did not acknowledge the receipt of data.
 /// 	4: Other error. A miscellaneous error occurred.
-///
 class Cypress_Com
 {
 
@@ -37,7 +36,7 @@ public:
 	// // 1x3 testing addresses
 	uint8_t ADDR_LIST[9]{
 		0x12, 0x10, 0x6, 0x8, 0xA,
-		0xC, 0xE, 0x10, 0x12};
+		0xC, 0xE, 0x14, 0x16};
 
 	// // 3x3 testing addresses
 	// uint8_t ADDR_LIST[1]{0x2};
