@@ -146,8 +146,8 @@ void Wall_Operation::procEcatMessage()
 		{
 			if (C[cham_i].i2cStatus != 0) // check for any chamber/chip I2C errors
 			{
-				// msg_arg_arr[cham_i] = C[cham_i].i2cStatus; // store chamber index
-				msg_arg_arr[arg_len] = C[cham_i].addr; // store address of chamber
+				msg_arg_arr[cham_i] = C[cham_i].i2cStatus; // store chamber index
+				// TEMP msg_arg_arr[cham_i] = C[cham_i].addr; // store address of chamber
 			}
 			arg_len++; // increment argument length
 		}
@@ -156,12 +156,12 @@ void Wall_Operation::procEcatMessage()
 	// WALL_MOVE_FAILED
 	if (run_status == 2)
 	{
-		// Check for any I2C errors
+		// Check for any run errors
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 		{
 			if (C[cham_i].bitWallErrorFlag != 0) // check for any flagged walls in wall byte
 			{
-				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag; // store wall byte mask
+				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag; // store wall byte mask at chamber index
 			}
 			arg_len++; // increment argument length
 		}
@@ -446,11 +446,11 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
 		if (resp != 0)
 		{ 
-			_Dbg.printMsgTime("______!!ERROR: I2C[%d] Cypress Chip Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______!!ERROR: Cypress Chip Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsgTime("______FINISHED: I2C[%d] Cypress Chip Setup: chamber=%d address=%s", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______FINISHED: Cypress Chip Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 
 		//........................ Initialize Cypress IO ........................
 
@@ -459,11 +459,11 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
 		if (resp != 0)																 // print error if failed
 		{
-			_Dbg.printMsgTime("______!!ERROR: I2C[%d] Cypress IO Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______!!ERROR: Cypress IO Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsgTime("______FINISHED: I2C[%d] Cypress IO Setup: chamber=%d address=%s", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______FINISHED: Cypress IO Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 
 		//........................ Initialize Cypress PWM ........................
 
@@ -472,11 +472,11 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
 		if (resp != 0)
 		{ 
-			_Dbg.printMsgTime("______!!ERROR: I2C[%d] Cypress IO Setup: chamber=%d address=%s!!", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______!!ERROR: Cypress IO Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsgTime("______FINISHED: I2C[%d] Cypress IO Setup: chamber=%d address=%s", resp, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______FINISHED: Cypress IO Setup: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), resp);
 
 		//........................ Initialize Walls ........................
 
@@ -498,11 +498,11 @@ uint8_t Wall_Operation::initHardware(uint8_t init_walls)
 
 		if (C[cham_i].runStatus != 0)
 		{ 
-			_Dbg.printMsgTime("______!!ERROR: Move Up: chamber=%d address=%s!!", C[cham_i].i2cStatus, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______!!ERROR: Move Up: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), C[cham_i].i2cStatus);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsgTime("______FINISHED: Move Up: chamber=%d address=%s", C[cham_i].i2cStatus, cham_i, _Dbg.hexStr(address));
+			_Dbg.printMsgTime("______FINISHED: Move Up: chamber=[%d|%s] status=%d!!", cham_i, _Dbg.hexStr(address), C[cham_i].i2cStatus);
 
 	}
 
@@ -800,6 +800,9 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 		// Update error flag bitwise, set bit in bitWallErrorFlag to 1 if it or the corresponding bit in bitWallMoveFlag is equal to 1
 		C[cham_i].bitWallErrorFlag = C[cham_i].bitWallErrorFlag | C[cham_i].bitWallMoveFlag;
 
+		// Stop all PWM output for active walls in chamber
+		resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
+
 		// Identify walls that were not moved
 		for (size_t prt_i = 0; prt_i < C[cham_i].pmsDynIO.nPorts; prt_i++)
 		{ // loop ports
@@ -826,10 +829,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 	// Force stop all walls if error encountered
 	if (run_status != 0)
-	{
-		resp = _forceStopWalls();
 		_Dbg.printMsgTime("\t !!ERROR: Wall Movement!!");
-	}
 	else
 		_Dbg.printMsgTime("\t FINISHED: Wall Movement");
 
@@ -842,17 +842,13 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 uint8_t Wall_Operation::_forceStopWalls()
 {
 	uint8_t resp = 0;
-	// TEMP _Dbg.printMsgTime("\t !!RUNNING: forse stop!!");
-	_Dbg.printMsgTime("========== 1 ============================================");
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{																			// loop chambers
-	_Dbg.printMsgTime("\t\t TEST1 %d|%s: chamber=%d|%d", C[cham_i].addr,  _Dbg.hexStr(C[cham_i].addr), cham_i, nCham);
+	_Dbg.printMsgTime("!!WARNING: Running forse stop: i2c=%s chamber=%d", _Dbg.hexStr(C[cham_i].addr), cham_i);
 		resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.bitMaskLong, 6, 0); // stop all pwm output
-		_Dbg.printMsgTime("========== 2 ============================================");
 		if (resp != 0)
 			return resp;
 	}
-	_Dbg.printMsgTime("========== 3 ============================================");
 	return resp;
 }
 

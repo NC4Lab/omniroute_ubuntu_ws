@@ -1022,10 +1022,13 @@ class Interface(Plugin):
 
                 # Loop through arguments
                 for i in range(self.EsmaCom_A0.rcvEM.argLen):
-                    
-                    # Set corresponding chamber to error
-                    self.MP.Chambers[i].updateChambers(self.EsmaCom_A0.rcvEM.ArgU.ui8[i] != 0) # Check if value not equal to 0
+                    status = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
 
+                    # Check if status not equal to 0
+                    if status != 0: 
+                        # Set corresponding chamber to error
+                        self.MP.Chambers[i].updateChambers(True)
+                        MazeDB.logCol('ERROR', "\t\tChamber %d status=%d", i, status)
         
         #................ Process Ack Success ................ 
 
