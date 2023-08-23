@@ -1007,7 +1007,7 @@ class Interface(Plugin):
         """
 
         # Print confirmation message
-        MazeDB.logCol('INFO', "(%d)PROCESSING ECAT ACK: %s", 
+        MazeDB.logCol('INFO', "(%d)ECAT PROCESSING ACK: %s", 
                     self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
         
         #................ Process Ack Error ................ 
@@ -1015,7 +1015,7 @@ class Interface(Plugin):
         if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NULL:
 
             MazeDB.logCol(
-                'ERROR', "!!ERROR: ECAT ERROR: %s!!", self.EsmaCom_A0.rcvEM.errTp.name)
+                'ERROR', "!!ERROR: %s!!", self.EsmaCom_A0.rcvEM.errTp.name)
             
             # I2C_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:

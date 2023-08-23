@@ -33,6 +33,9 @@ class Cypress_Com
 
 	// ---------VARIABLES-----------------
 public:
+	// Global address variable
+	uint8_t ADDR = 0; /// tracks current I2C address for debugging
+
 	// // 1x3 testing addresses
 	uint8_t ADDR_LIST[9]{
 		0x12, 0x10, 0x6, 0x8, 0xA,
@@ -49,7 +52,7 @@ public:
 	// };
 
 	// // 7x7 maze addresses
-	//  uint8_t ADDR_LIST[49]{ ///list of all possible I2C addresses
+	//  uint8_t ADDR_LIST[49]{ /// list of all possible I2C addresses
 	//  0x2, 0x4, 0x6, 0x8, 0xA,
 	//  0xC, 0xE, 0x10, 0x12, 0x14,
 	//  0x16, 0x18, 0x1A, 0x1C, 0x1E,
@@ -72,9 +75,6 @@ private:
 	// -----------METHODS-----------------
 public:
 	Cypress_Com();
-
-public:
-	uint8_t wireEndTransmissionWrapper(bool = true, bool = true);
 
 public:
 	uint8_t i2cRead(uint8_t, uint8_t, uint8_t[], uint8_t = 1);
@@ -118,6 +118,12 @@ public:
 
 public:
 	uint8_t i2cScan();
+
+private:
+	void _beginTransmissionWrapper(uint8_t);
+
+private:
+	uint8_t _endTransmissionWrapper(bool = true, bool = true);
 };
 
 #endif

@@ -74,7 +74,8 @@ public:
 	{
 		uint8_t num = 0;			   // chamber number
 		uint8_t addr = 0;			   // chamber I2C address
-		uint8_t i2cStatus = 0;		   // track I2C status errors
+		uint8_t i2cStatus = 0;		   // track I2C status errors for chamber
+		uint8_t runStatus = 0;		   // track run status for chamber
 		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
 		uint8_t bitWallMoveFlag = 0;   // bitwise variable, current wall active flag [0:inactive, 1:active]
 		uint8_t bitWallPosition = 0;   // bitwise variable, current wall position [0:down, 1:up]
@@ -130,7 +131,7 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 public:
-	uint8_t setWallCmdManual(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
+	uint8_t setWallMove(uint8_t, uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
 public:
 	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
@@ -138,8 +139,8 @@ public:
 public:
 	uint8_t moveWalls(uint32_t = 1000);
 
-public:
-	uint8_t forceStopWalls();
+private:
+	uint8_t _forceStopWalls();
 
 public:
 	uint8_t testWallIO(uint8_t, uint8_t[] = nullptr, uint8_t = 8);

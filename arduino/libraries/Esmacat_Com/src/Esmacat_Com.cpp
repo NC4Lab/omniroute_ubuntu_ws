@@ -406,9 +406,6 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
     // Store reused recieve message id in union
     _uSetMsgID(sndEM, rcvEM.msgID);
 
-    // TEMP
-    _Dbg.printMsgTime("rcvEM.msgID: %d, sndEM.msgID: %d", rcvEM.msgID, sndEM.msgID);
-
     // Store recived message type in union
     _uSetMsgType(sndEM, rcvEM.msgTp);
 
