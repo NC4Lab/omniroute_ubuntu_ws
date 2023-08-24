@@ -400,9 +400,10 @@ class EsmacatCom:
         """ Enum for ethercat python to arduino message type ID """
         MSG_NULL = 0
         HANDSHAKE = 1 # handshake must equal 1
-        INITIALIZE_SYSTEM = 2
-        REINITIALIZE_SYSTEM = 3
-        MOVE_WALLS = 4
+        INITIALIZE_CYPRESS = 2
+        INITIALIZE_WALLS = 3
+        REINITIALIZE_ALL = 4
+        MOVE_WALLS = 5
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
@@ -614,7 +615,7 @@ class EsmacatCom:
     def _uGetArgData8(self, r_EM):
         """Get reg union 8-bit message argument data and copy to arg union"""
 
-        self._uGetArgLength(r_EM); # get argument length from union
+        self._uGetArgLength(r_EM) # get argument length from union
         for i in range(r_EM.argLen):
             r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()] # copy to 8-bit argument Union
 
@@ -1030,24 +1031,32 @@ class Interface(Plugin):
                         self.MP.Chambers[i].updateChambers(True)
                         MazeDB.logCol('ERROR', "\t\tChamber %d status=%d", i, status)
         
-        #................ Process Ack Success ................ 
+        #................ Process Ack Message ................ 
 
         # HANDSHAKE
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
 
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logCol('INFO', "=== ECAT COMMS CONNECTED ===");
+            MazeDB.logCol('INFO', "=== ECAT COMMS CONNECTED ===")
 
-            # Send INITIALIZE_SYSTEM message and specify number of chambers
-            # TEMP self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_SYSTEM, N_CHAMBERS)
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_SYSTEM, 3)
+            # Send INITIALIZE_CYPRESS message
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_CYPRESS)
 
-        # REINITIALIZE_SYSTEM
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
+        # INITIALIZE_CYPRESS
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+             # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            MazeDB.logCol('INFO', "=== I2C INITIALIZED ===")
+
+            # Send INITIALIZE_WALLS message
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
+
+        # REINITIALIZE_ALL
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = False
-            MazeDB.logCol('INFO', "=== ECAT COMMS DISCONNECTED ===");
+            MazeDB.logCol('INFO', "=== ECAT COMMS DISCONNECTED ===")
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1108,8 +1117,9 @@ class Interface(Plugin):
                 MazeDB.logCol(
                     'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
 
-            # Send HANDSHAKE message to arduino 
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE)
+            # Send HANDSHAKE message to arduino with number of chambers to initialize
+            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 3)
 
             # Restart check timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1118,49 +1128,49 @@ class Interface(Plugin):
         """ Timer callback to incrementally shutdown session. """
         
         if self.cnt_shutdown_step == 0:
-            # Send REINITIALIZE_SYSTEM message to arduino
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.REINITIALIZE_SYSTEM)
+            # Send REINITIALIZE_ALL message to arduino
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.REINITIALIZE_ALL)
 
         elif self.EsmaCom_A0.isEcatConnected == True:
-            # Wait for REINITIALIZE_SYSTEM message confirmation and restart timer
+            # Wait for REINITIALIZE_ALL message confirmation and restart timer
             self.timer_endSession.start(self.dt_shutdown_step*1000)
             return
             
         elif self.cnt_shutdown_step == 1:
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
             self.signal_Esmacat_read_maze_ard0_ease.disconnect()
-            MazeDB.logCol('INFO', "Disconnected from Esmacat read timer thread");
+            MazeDB.logCol('INFO', "Disconnected from Esmacat read timer thread")
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/interface_test_node")
-            MazeDB.logCol('INFO', "Killed specific nodes");
+            MazeDB.logCol('INFO', "Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:
             # Kill all nodes (This will also kill this script's node)
             os.system("rosnode kill -a")
-            MazeDB.logCol('INFO', "Killed all nodes");
+            MazeDB.logCol('INFO', "Killed all nodes")
 
         elif self.cnt_shutdown_step == 4:
             # Process any pending events in the event loop
             QCoreApplication.processEvents()
-            MazeDB.logCol('INFO', "Processed all events");
+            MazeDB.logCol('INFO', "Processed all events")
 
         elif self.cnt_shutdown_step == 5:
             # Close the UI window
             self._widget.close()
-            MazeDB.logCol('INFO', "Closed UI window");
+            MazeDB.logCol('INFO', "Closed UI window")
 
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            MazeDB.logCol('INFO', "Sent shutdown request to ROS master");
+            MazeDB.logCol('INFO', "Sent shutdown request to ROS master")
 
         elif self.cnt_shutdown_step == 7:
             # End the application
             QApplication.quit()
-            MazeDB.logCol('INFO', "Ended application");
+            MazeDB.logCol('INFO', "Ended application")
             return  # Return here to prevent the timer from being restarted after the application is closed
         
         # Increment the shutdown step after ecat disconnected

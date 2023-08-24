@@ -63,20 +63,22 @@ public:
     bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 500; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[5][30] = {
+    const char message_type_str[6][30] = {
         "MSG_NULL",
         "HANDSHAKE",
-        "INITIALIZE_SYSTEM",
-        "REINITIALIZE_SYSTEM",
+        "INITIALIZE_CYPRESS",
+        "INITIALIZE_WALLS",
+        "REINITIALIZE_ALL",
         "MOVE_WALLS",
     };
     enum MessageType
     {
         MSG_NULL = 0,
         HANDSHAKE = 1, // handshake must equal 1
-        INITIALIZE_SYSTEM = 2,
-        REINITIALIZE_SYSTEM = 3,
-        MOVE_WALLS = 4,
+        INITIALIZE_CYPRESS = 2,
+        INITIALIZE_WALLS = 3,
+        REINITIALIZE_ALL = 4,
+        MOVE_WALLS = 5,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
