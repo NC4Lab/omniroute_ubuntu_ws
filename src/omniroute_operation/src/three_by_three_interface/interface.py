@@ -203,19 +203,18 @@ class MazePlot(QGraphicsView):
     # CLASS: Maze
     class Maze:
 
-        def __init__(self, num_rows, num_cols, chamber_width, wall_width):
+        def __init__(self, num_rows_cols, chamber_width, wall_width):
 
-            self.num_rows = num_rows
-            self.num_cols = num_cols
+            self.num_rows_cols = num_rows_cols
             self.chamber_width = chamber_width
 
-            maze_width = self.chamber_width * self.num_cols
-            maze_height = self.chamber_width * self.num_rows
+            maze_width = self.chamber_width * self.num_rows_cols
+            maze_height = self.chamber_width * self.num_rows_cols
             half_width = chamber_width/2
             x_pos = np.linspace(half_width, int(
-                maze_width - half_width),  num_cols)
+                maze_width - half_width),  self.num_rows_cols)
             y_pos = np.linspace(half_width, int(
-                maze_height - half_width),  num_rows)
+                maze_height - half_width),  self.num_rows_cols)
 
             # Create a list of chamber instances
             self.Chambers = []
@@ -260,11 +259,16 @@ class MazePlot(QGraphicsView):
         text_item.setPos(x_pos, y_pos)
 
 class WallConfig:
-    """ Stores the wall configuration for the maze """
+    """ 
+    Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
+    """
 
     #------------------------ CLASS VARIABLES ------------------------
+
     # Stores the wall configuration list
     wallConfigList = []
+
+    #------------------------ CLASS METHODS ------------------------
 
     @classmethod
     def Reset(cls):
@@ -349,6 +353,7 @@ class WallConfig:
     def getWallByteOnlyList(cls):
         """
         Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
+        For use with the EsmacatCom class
         
         Returns: 
             1D list with byte values for all chambers"""
@@ -364,7 +369,7 @@ class WallConfig:
         return wall_byte_arr
 
     @classmethod
-    def sortEntries(cls):
+    def _sortEntries(cls):
         """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
 
         # Sort the rows by the entries in the based on the first chamber number
@@ -911,8 +916,7 @@ class Interface(Plugin):
         wall_width = chamber_width*0.1
 
         # Create MazePlot.Maze and populate walls according to WALL_MAP
-        self.MP = MazePlot.Maze(num_rows=NUM_ROWS_COLS,
-                                  num_cols=NUM_ROWS_COLS,
+        self.MP = MazePlot.Maze(num_rows_cols=NUM_ROWS_COLS,
                                   chamber_width=chamber_width,
                                   wall_width=wall_width)
 
@@ -1262,7 +1266,7 @@ class Interface(Plugin):
         """ Callback function for the "Send" button."""
 
         # Sort entries
-        WallConfig.sortEntries()
+        WallConfig._sortEntries()
 
         # Send the wall byte array to the arduino
         self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.MOVE_WALLS, WallConfig.getWallByteOnlyList())

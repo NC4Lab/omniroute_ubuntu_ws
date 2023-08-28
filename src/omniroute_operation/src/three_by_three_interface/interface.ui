@@ -283,14 +283,14 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#babdb6;&quot;&gt;Disconnected&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#888a85;&quot;&gt;Disabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="ardLabel_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>190</y>
+      <y>185</y>
       <width>101</width>
       <height>21</height>
      </rect>
@@ -301,14 +301,14 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#73d216;&quot;&gt;Connected&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#73d216;&quot;&gt;Enabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="ardLabel_3">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>210</y>
+      <y>200</y>
       <width>101</width>
       <height>21</height>
      </rect>
@@ -319,7 +319,7 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cc0000;&quot;&gt;Error Thrown&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#f57900;&quot;&gt;Warning&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QPushButton" name="sysQuiteBtn">
@@ -338,6 +338,24 @@
     </property>
     <property name="text">
      <string>QUIT</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ardLabel_4">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>215</y>
+      <width>101</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#a40000;&quot;&gt;Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>
