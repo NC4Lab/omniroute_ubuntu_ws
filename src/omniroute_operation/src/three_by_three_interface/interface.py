@@ -130,9 +130,9 @@ class MazePlot(QGraphicsView):
                 self.setState(not self.state)
                 # wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.state)
                 if self.state:  # add list entry
-                    WallConfig.addWall(self.chamber_num, self.wall_num)
+                    WallConfig.add_wall(self.chamber_num, self.wall_num)
                 else:  # remove list entry
-                    WallConfig.removeWall(self.chamber_num, self.wall_num)
+                    WallConfig.remove_wall(self.chamber_num, self.wall_num)
 
         def setState(self, state: bool):
             if state:
@@ -270,37 +270,32 @@ class WallConfig:
 
     #------------------------ CLASS METHODS ------------------------
 
-    @classmethod
-    def Reset(cls):
+    def reset(self):
         """Resets the wall configuration list"""
-        cls.wallConfigList = []
+        self.wallConfigList = []
 
-    @classmethod
-    def getLen(cls):
+    def get_len(self):
         """Returns the number of entries in the wall configuration list"""
-        return len(cls.wallConfigList)
+        return len(self.wallConfigList)
 
-    @classmethod
-    def addWall(cls, chamber_num, wall_num):
+    def add_wall(self, chamber_num, wall_num):
         """Adds a wall to the wall configuration list"""
-        for item in cls.wallConfigList:
+        for item in self.wallConfigList:
             if item[0] == chamber_num:
                 item[1].append(wall_num)
                 return
-        cls.wallConfigList.append([chamber_num, [wall_num]])
+        self.wallConfigList.append([chamber_num, [wall_num]])
 
-    @classmethod
-    def removeWall(cls, chamber_num, wall_num):
+    def remove_wall(self, chamber_num, wall_num):
         """Removes a wall from the wall configuration list"""
-        for item in cls.wallConfigList:
+        for item in self.wallConfigList:
             if item[0] == chamber_num:
                 item[1].remove(wall_num)
                 if not item[1]:  # If the second column is empty, remove the entire row
-                    cls.wallConfigList.remove(item)
+                    self.wallConfigList.remove(item)
                 return
 
-    @classmethod
-    def makeByte2WallList(cls, wall_byte_config_list):
+    def make_byte_2_wall_list(self, wall_byte_config_list):
         """
         Used to convert imported CSV with wall byte mask values to a list with wall numbers
 
@@ -311,8 +306,8 @@ class WallConfig:
             2D list: col1 = chamber number, col2 = nested wall numbers
         """
 
-        # Clear the existing wall_config_list
-        cls.wallConfigList = []
+        # Clear/reset the existing wall_config_list
+        self.reset()
 
         # Convert the byte values to arrays and update the wall_config_list
         for row in wall_byte_config_list:
@@ -322,20 +317,19 @@ class WallConfig:
             # Convert the byte_value back to an array of wall numbers
             wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
 
-            cls.wallConfigList.append([chamber_num, wall_numbers])
+            self.wallConfigList.append([chamber_num, wall_numbers])
 
-            return cls.wallConfigList
+            return self.wallConfigList
 
-    @classmethod
-    def makeWall2ByteList(cls):
+    def make_wall_2_byte_list(self):
         """
         Used to covert wall number arrays to byte values for saving to CSV
         
         Returns:
             2D list: col1 = chamber number, col2 = wall byte mask"""  
 
-        wall_byte_config_list = []
-        for row in cls.wallConfigList:  # row = [chamber_num, wall_numbers]
+        _wall_byte_config_list = []
+        for row in self.wallConfigList:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
             wall_arr = row[1]
             # Initialize the byte value
@@ -345,12 +339,11 @@ class WallConfig:
                 if 0 <= wall_i <= 7:
                     # Set the corresponding bit to 1 using bitwise OR
                     byte_value |= (1 << wall_i)
-            wall_byte_config_list.append([chamber_num, byte_value])
+            _wall_byte_config_list.append([chamber_num, byte_value])
 
-        return wall_byte_config_list
+        return _wall_byte_config_list
 
-    @classmethod
-    def getWallByteOnlyList(cls):
+    def get_wall_byte_list(self):
         """
         Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
         For use with the EsmacatCom class
@@ -358,36 +351,33 @@ class WallConfig:
         Returns: 
             1D list with byte values for all chambers"""
 
-        wall_byte_config_list = cls.makeWall2ByteList()
+        wall_byte_config_list = self.make_wall_2_byte_list()
 
         # Update U_arr with corresponding chamber and wall byte
-        wall_byte_arr = [0] * N_CHAMBERS
-        #wall_arr = [0] * len(cls.wallConfigList)
+        _wall_byte_arr = [0] * N_CHAMBERS
+        #wall_arr = [0] * len(self.wallConfigList)
         for cw in wall_byte_config_list:
-            wall_byte_arr[cw[0]] = cw[1]
+            _wall_byte_arr[cw[0]] = cw[1]
 
-        return wall_byte_arr
+        return _wall_byte_arr
 
-    @classmethod
-    def _sortEntries(cls):
+    def _sort_entries(self):
         """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
 
         # Sort the rows by the entries in the based on the first chamber number
-        cls.wallConfigList.sort(key=lambda row: row[0])
+        self.wallConfigList.sort(key=lambda row: row[0])
 
         # Sort the arrays in the second column
-        for row in cls.wallConfigList:
+        for row in self.wallConfigList:
             row[1].sort()
 
-    @classmethod
-    def __iter__(cls):
+    def __iter__(self):
         """Returns an iterator for the wall configuration list"""
-        return iter(cls.wallConfigList)
+        return iter(self.wallConfigList)
 
-    @classmethod
-    def __str__(cls):
+    def __str__(self):
         """Returns the wall configuration list as a string"""
-        return str(cls.wallConfigList)
+        return str(self.wallConfigList)
 
 class EsmacatCom:
     """ 
@@ -1034,6 +1024,19 @@ class Interface(Plugin):
                         # Set corresponding chamber to error
                         self.MP.Chambers[i].updateChambers(True)
                         MazeDB.logCol('ERROR', "\t\tChamber %d status=%d", i, status)
+
+            # WALL_MOVE_FAILED
+            if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
+
+                # Loop through arguments
+                for i in range(self.EsmaCom_A0.rcvEM.argLen):
+                    status = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+
+                    # Check if status not equal to 0
+                    if status != 0: 
+                        # Set corresponding chamber to error
+                        self.MP.Chambers[i].updateChambers(True)
+                        MazeDB.logCol('ERROR', "\t\tChamber %d status=%d", i, status)
         
         #................ Process Ack Message ................ 
 
@@ -1238,7 +1241,7 @@ class Interface(Plugin):
     def qt_callback_plotClearBtn_clicked(self):
         """ Callback function for the "Clear" button."""
 
-        WallConfig.Reset()  # reset all values in list
+        WallConfig.reset()  # reset all values in list
         self.MP.updateWalls()  # update walls
 
     def qt_callback_plotSaveBtn_clicked(self):
@@ -1260,16 +1263,16 @@ class Interface(Plugin):
             MazeDB.logCol('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(file_name, WallConfig.makeWall2ByteList())
+            self.saveToCSV(file_name, WallConfig.make_wall_2_byte_list())
 
     def qt_callback_plotSendBtn_clicked(self):
         """ Callback function for the "Send" button."""
 
         # Sort entries
-        WallConfig._sortEntries()
+        WallConfig._sort_entries()
 
         # Send the wall byte array to the arduino
-        self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.MOVE_WALLS, WallConfig.getWallByteOnlyList())
+        self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
@@ -1331,7 +1334,7 @@ class Interface(Plugin):
                 csv_reader = csv.reader(csv_file)
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
-                WallConfig.makeByte2WallList(wall_byte_config_list)
+                WallConfig.make_byte_2_wall_list(wall_byte_config_list)
                 MazeDB.logCol('INFO', "Data loaded successfully.")
         except Exception as e:
             MazeDB.logCol('ERROR', "Error loading data from CSV:", str(e))
