@@ -102,6 +102,8 @@ void setup()
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
+	W_OPR.initializeWalls();
+
 	// TEMP Move chambers
 	// bool do_cham_arr[3] = {true, true, true};
 	// uint32_t dt_timout = 1500;
@@ -132,14 +134,14 @@ void setup()
 void loop()
 {
 
-	// Check ethercat coms
-	resp = W_OPR.getWallCmdEthercat();
+	// // Check ethercat coms
+	// resp = W_OPR.getWallCmdEthercat();
 
-	// Wait for initialization
-	if (!W_OPR.isEthercatInitialized)
-		return;
+	// // Wait for initialization
+	// if (!W_OPR.isEthercatInitialized)
+	// 	return;
 
-	// Check for new wall move command
-	if (resp == 1)
-		W_OPR.runWalls(); // move walls
+	// // Check for new wall move command
+	// if (resp == 1)
+	// 	W_OPR.runWalls(); // move walls
 }
