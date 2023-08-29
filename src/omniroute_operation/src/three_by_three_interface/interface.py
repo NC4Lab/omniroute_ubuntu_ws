@@ -86,6 +86,132 @@ class MazeDB(QGraphicsView):
         colored_message = f"{color}{msg}{Style.RESET_ALL}"
         return colored_message % args
 
+class WallConfig:
+    """ 
+    Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
+    """
+
+    #------------------------ CLASS VARIABLES ------------------------
+
+    # Stores the wall configuration list
+    cw_wall_num_list = [] # cham_num x [wall_num]
+    cw_wall_byte_list = [] # cham_num x wall_byte
+
+    #------------------------ CLASS METHODS ------------------------
+
+    def reset(self):
+        """Resets the wall configuration list"""
+        self.cw_wall_num_list = []
+        self.cw_wall_byte_list = []
+
+    def get_len(self):
+        """Returns the number of entries in the wall configuration list"""
+        return len(self.cw_wall_num_list)
+
+    def add_wall(self, chamber_num, wall_num):
+        """Adds a wall to the wall configuration list"""
+        for item in self.cw_wall_num_list:
+            if item[0] == chamber_num:
+                item[1].append(wall_num)
+                return
+        self.cw_wall_num_list.append([chamber_num, [wall_num]])
+
+    def remove_wall(self, chamber_num, wall_num):
+        """Removes a wall from the wall configuration list"""
+        for item in self.cw_wall_num_list:
+            if item[0] == chamber_num:
+                item[1].remove(wall_num)
+                if not item[1]:  # If the second column is empty, remove the entire row
+                    self.cw_wall_num_list.remove(item)
+                return
+
+    def make_byte2num_cw_list(self, _cw_wall_byte_list):
+        """
+        Used to convert imported CSV with wall byte mask values to a list with wall numbers
+
+        Args:
+            _cw_wall_byte_list (list): 2D list: col_1 = chamber number, col_2 = wall byte mask
+        
+        Returns:
+            2D list: col_1 = chamber number, col_2 = nested wall numbers
+        """
+
+        # Clear/reset the existing wall_config_list
+        self.reset()
+
+        # Convert the byte values to arrays and update the wall_config_list
+        for row in _cw_wall_byte_list:
+            chamber_num = row[0]
+            byte_value = row[1]
+
+            # Convert the byte_value back to an array of wall numbers
+            wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
+
+            self.cw_wall_num_list.append([chamber_num, wall_numbers])
+
+            return self.cw_wall_num_list
+
+    def make_num2byte_cw_list(self):
+        """
+        Used to covert wall number arrays to byte values for saving to CSV
+        
+        Returns:
+            2D list: col_1 = chamber number, col_2 = wall byte mask
+        """  
+
+        self.cw_wall_byte_list = []
+
+        for row in self.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
+            chamber_num = row[0]
+            wall_arr = row[1]
+            # Initialize the byte value
+            byte_value = 0
+            # Iterate over the array of values
+            for wall_i in wall_arr:
+                if 0 <= wall_i <= 7:
+                    # Set the corresponding bit to 1 using bitwise OR
+                    byte_value |= (1 << wall_i)
+            self.cw_wall_byte_list.append([chamber_num, byte_value])
+
+        return self.cw_wall_byte_list
+
+    def get_wall_byte_list(self):
+        """
+        Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
+        For use with the EsmacatCom class
+        
+        Returns: 
+            1D list with byte values for all chambers
+        """
+
+        self.cw_wall_byte_list = self.make_num2byte_cw_list()
+
+        # Update U_arr with corresponding chamber and wall byte
+        _wall_byte_list = [0] * N_CHAMBERS
+        #wall_arr = [0] * len(self.wallConfigList)
+        for cw in self.cw_wall_byte_list:
+            _wall_byte_list[cw[0]] = cw[1]
+
+        return _wall_byte_list
+
+    def _sort_entries(self):
+        """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
+
+        # Sort the rows by the entries in the based on the first chamber number
+        self.cw_wall_num_list.sort(key=lambda row: row[0])
+
+        # Sort the arrays in the second column
+        for row in self.cw_wall_num_list:
+            row[1].sort()
+
+    def __iter__(self):
+        """Returns an iterator for the wall configuration list"""
+        return iter(self.cw_wall_num_list)
+
+    def __str__(self):
+        """Returns the wall configuration list as a string"""
+        return str(self.cw_wall_num_list)
+
 class MazePlot(QGraphicsView):
     """ MazePlot class to plot the maze """
 
@@ -226,7 +352,7 @@ class MazePlot(QGraphicsView):
                     k = k+1
 
         def updateWalls(self):
-            cw_list = WallConfig.wallConfigList
+            cw_list = WallConfig.cw_wall_num_list
 
             for chamber in self.Chambers:
                 for wall in chamber.Walls:
@@ -257,127 +383,6 @@ class MazePlot(QGraphicsView):
         x_pos = center_x - text_rect.width() / 2
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
-
-class WallConfig:
-    """ 
-    Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
-    """
-
-    #------------------------ CLASS VARIABLES ------------------------
-
-    # Stores the wall configuration list
-    wallConfigList = []
-
-    #------------------------ CLASS METHODS ------------------------
-
-    def reset(self):
-        """Resets the wall configuration list"""
-        self.wallConfigList = []
-
-    def get_len(self):
-        """Returns the number of entries in the wall configuration list"""
-        return len(self.wallConfigList)
-
-    def add_wall(self, chamber_num, wall_num):
-        """Adds a wall to the wall configuration list"""
-        for item in self.wallConfigList:
-            if item[0] == chamber_num:
-                item[1].append(wall_num)
-                return
-        self.wallConfigList.append([chamber_num, [wall_num]])
-
-    def remove_wall(self, chamber_num, wall_num):
-        """Removes a wall from the wall configuration list"""
-        for item in self.wallConfigList:
-            if item[0] == chamber_num:
-                item[1].remove(wall_num)
-                if not item[1]:  # If the second column is empty, remove the entire row
-                    self.wallConfigList.remove(item)
-                return
-
-    def make_byte_2_wall_list(self, wall_byte_config_list):
-        """
-        Used to convert imported CSV with wall byte mask values to a list with wall numbers
-
-        Args:
-            wall_byte_config_list (list): 2D list: col1 = chamber number, col2 = wall byte mask
-        
-        Returns:
-            2D list: col1 = chamber number, col2 = nested wall numbers
-        """
-
-        # Clear/reset the existing wall_config_list
-        self.reset()
-
-        # Convert the byte values to arrays and update the wall_config_list
-        for row in wall_byte_config_list:
-            chamber_num = row[0]
-            byte_value = row[1]
-
-            # Convert the byte_value back to an array of wall numbers
-            wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
-
-            self.wallConfigList.append([chamber_num, wall_numbers])
-
-            return self.wallConfigList
-
-    def make_wall_2_byte_list(self):
-        """
-        Used to covert wall number arrays to byte values for saving to CSV
-        
-        Returns:
-            2D list: col1 = chamber number, col2 = wall byte mask"""  
-
-        _wall_byte_config_list = []
-        for row in self.wallConfigList:  # row = [chamber_num, wall_numbers]
-            chamber_num = row[0]
-            wall_arr = row[1]
-            # Initialize the byte value
-            byte_value = 0
-            # Iterate over the array of values
-            for wall_i in wall_arr:
-                if 0 <= wall_i <= 7:
-                    # Set the corresponding bit to 1 using bitwise OR
-                    byte_value |= (1 << wall_i)
-            _wall_byte_config_list.append([chamber_num, byte_value])
-
-        return _wall_byte_config_list
-
-    def get_wall_byte_list(self):
-        """
-        Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
-        For use with the EsmacatCom class
-        
-        Returns: 
-            1D list with byte values for all chambers"""
-
-        wall_byte_config_list = self.make_wall_2_byte_list()
-
-        # Update U_arr with corresponding chamber and wall byte
-        _wall_byte_arr = [0] * N_CHAMBERS
-        #wall_arr = [0] * len(self.wallConfigList)
-        for cw in wall_byte_config_list:
-            _wall_byte_arr[cw[0]] = cw[1]
-
-        return _wall_byte_arr
-
-    def _sort_entries(self):
-        """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
-
-        # Sort the rows by the entries in the based on the first chamber number
-        self.wallConfigList.sort(key=lambda row: row[0])
-
-        # Sort the arrays in the second column
-        for row in self.wallConfigList:
-            row[1].sort()
-
-    def __iter__(self):
-        """Returns an iterator for the wall configuration list"""
-        return iter(self.wallConfigList)
-
-    def __str__(self):
-        """Returns the wall configuration list as a string"""
-        return str(self.wallConfigList)
 
 class EsmacatCom:
     """ 
@@ -1263,7 +1268,7 @@ class Interface(Plugin):
             MazeDB.logCol('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(file_name, WallConfig.make_wall_2_byte_list())
+            self.saveToCSV(file_name, WallConfig.make_num2byte_cw_list())
 
     def qt_callback_plotSendBtn_clicked(self):
         """ Callback function for the "Send" button."""
@@ -1334,7 +1339,7 @@ class Interface(Plugin):
                 csv_reader = csv.reader(csv_file)
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
-                WallConfig.make_byte_2_wall_list(wall_byte_config_list)
+                WallConfig.make_byte2num_cw_list(wall_byte_config_list)
                 MazeDB.logCol('INFO', "Data loaded successfully.")
         except Exception as e:
             MazeDB.logCol('ERROR', "Error loading data from CSV:", str(e))
