@@ -38,7 +38,7 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>671</width>
+      <width>561</width>
       <height>31</height>
      </rect>
     </property>
@@ -69,7 +69,7 @@
    <widget class="QPushButton" name="fileBrowseBtn">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>570</x>
       <y>60</y>
       <width>80</width>
       <height>31</height>
@@ -89,7 +89,7 @@
      <rect>
       <x>10</x>
       <y>630</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -107,7 +107,7 @@
      <rect>
       <x>170</x>
       <y>630</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -140,7 +140,7 @@
      <rect>
       <x>280</x>
       <y>630</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -158,7 +158,7 @@
      <rect>
       <x>670</x>
       <y>630</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -176,7 +176,7 @@
      <rect>
       <x>570</x>
       <y>630</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -268,66 +268,12 @@
      <string>Arduino Status</string>
     </property>
    </widget>
-   <widget class="QLabel" name="ardLabel_1">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>170</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#888a85;&quot;&gt;Disabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="ardLabel_2">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>185</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#73d216;&quot;&gt;Enabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="ardLabel_3">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>200</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#f57900;&quot;&gt;Warning&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="sysQuiteBtn">
     <property name="geometry">
      <rect>
       <x>670</x>
       <y>190</y>
-      <width>89</width>
+      <width>90</width>
       <height>25</height>
      </rect>
     </property>
@@ -340,23 +286,95 @@
      <string>QUIT</string>
     </property>
    </widget>
-   <widget class="QLabel" name="ardLabel_4">
+   <widget class="QGroupBox" name="keyGroupBox">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>215</y>
-      <width>101</width>
-      <height>21</height>
+      <x>670</x>
+      <y>40</y>
+      <width>90</width>
+      <height>101</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
+    <property name="styleSheet">
+     <string notr="true">QGroupBox {
+    background-color: white;
+}</string>
     </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cc0000;&quot;&gt;Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <property name="title">
+     <string>Key</string>
     </property>
+    <widget class="QLabel" name="ardLabel_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>75</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cc0000;&quot;&gt;Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ardLabel_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>45</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#babdb6;&quot;&gt;DIsabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ardLabel_1">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Enabled&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ardLabel_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#f57900;&quot;&gt;Warning&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
    </widget>
   </widget>
  </widget>
