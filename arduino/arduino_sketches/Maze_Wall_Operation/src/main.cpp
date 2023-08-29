@@ -102,8 +102,6 @@ void setup()
 	// Print done
 	DB.printMsgTime("SETUP DONE");
 
-	W_OPR.initializeWalls();
-
 	// TEMP Move chambers
 	// bool do_cham_arr[3] = {true, true, true};
 	// uint32_t dt_timout = 1500;

@@ -35,7 +35,7 @@ public:
 	//	};
 	// uint8_t ADDR_LIST[3]{ 0xE, 0x10, 0x12};
 
-	uint8_t ADDR_LIST[1]{0x02};
+	uint8_t ADDR_LIST[1]{0x04};
 
 	// uint8_t ADDR_LIST[6]{ 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C};
 	//  uint8_t ADDR_LIST[49]{ ///<list of all possible I2C addresses
