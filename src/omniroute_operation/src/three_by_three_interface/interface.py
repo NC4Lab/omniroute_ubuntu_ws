@@ -346,8 +346,8 @@ class EsmacatCom:
                 r_EM.isErr = True
 
                 # Print error message
-                MazeDB.logCol(
-                    'ERROR', "!!ERROR: Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]!!", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
+                MazeDB.logMsg(
+                    'ERROR', "Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
                 self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
@@ -359,16 +359,16 @@ class EsmacatCom:
         """Print EtherCAT register data"""
 
         # Print heading with type
-        MazeDB.logCol(level, "\t Ecat Register")
+        MazeDB.logMsg(level, "\t Ecat Register")
 
         # Print message data
         for i in range(8):
             if d_type == 2:
-                MazeDB.logCol(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
+                MazeDB.logMsg(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
             if d_type == 1:
-                MazeDB.logCol(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
+                MazeDB.logMsg(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
             if d_type == 0:
-                MazeDB.logCol(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                MazeDB.logMsg(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
@@ -440,7 +440,7 @@ class EsmacatCom:
         self.rcvEM.isNew = True
 
         # Print message
-        MazeDB.logCol('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        MazeDB.logMsg('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
 
         return True
@@ -490,14 +490,14 @@ class EsmacatCom:
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)  
 
         # Print message
-        MazeDB.logCol('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
+        MazeDB.logMsg('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
         self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
 
 class MazeDB(QGraphicsView):
     """ MazeDebug class to plot the maze """
 
     @classmethod
-    def logCol(cls, level, msg, *args):
+    def logMsg(cls, level, msg, *args):
         """ Log to ROS in color """
 
         # Exit if DB_VERBOSE is false
@@ -931,7 +931,7 @@ class Interface(Plugin):
 
         # Give QObjects reasonable names
         self.setObjectName('Interface')
-        MazeDB.logCol('INFO', "Running Interface setup")
+        MazeDB.logMsg('INFO', "Running Interface setup")
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -1100,7 +1100,7 @@ class Interface(Plugin):
         """
 
         # Print confirmation message
-        MazeDB.logCol('INFO', "(%d)ECAT PROCESSING ACK: %s", 
+        MazeDB.logMsg('INFO', "(%d)ECAT PROCESSING ACK: %s", 
                     self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
                         
         
@@ -1111,7 +1111,7 @@ class Interface(Plugin):
 
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logCol('INFO', "=== ECAT COMMS CONNECTED ===")
+            MazeDB.logMsg('INFO', "========== ECAT COMMS CONNECTED ==========")
 
             # Set arduino list widget to enabled color
             self._widget.ardListWidget.item(0).setForeground(StateQColors.enabled)
@@ -1121,22 +1121,28 @@ class Interface(Plugin):
 
             # TEMP
             wall_numbers = [0,1,3];
-            MazeDB.logCol('ERROR', "\t\twalls=%s", MazeDB.arrStr(wall_numbers))
+            MazeDB.logMsg('ERROR', "\t\twalls=%s", MazeDB.arrStr(wall_numbers))
 
         # INITIALIZE_CYPRESS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
              # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logCol('INFO', "=== I2C INITIALIZED ===")
+            MazeDB.logMsg('INFO', "========== I2C INITIALIZED ==========")
 
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
+
+        # INITIALIZE_CYPRESS
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+             # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            MazeDB.logMsg('INFO', "========== WALLS INITIALIZED ==========")
 
         # REINITIALIZE_ALL
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = False
-            MazeDB.logCol('INFO', "=== ECAT COMMS DISCONNECTED ===")
+            MazeDB.logMsg('INFO', "========== ECAT COMMS DISCONNECTED ==========")
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1145,8 +1151,8 @@ class Interface(Plugin):
 
         if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NULL:
 
-            MazeDB.logCol(
-                'ERROR', "!!ERROR: %s!!", self.EsmaCom_A0.rcvEM.errTp.name)
+            MazeDB.logMsg(
+                'ERROR', "%s", self.EsmaCom_A0.rcvEM.errTp.name)
             
             # I2C_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
@@ -1159,7 +1165,7 @@ class Interface(Plugin):
                     if i2c_status != 0: 
                         # Set corresponding chamber to error
                         self.MP.Chambers[i].setState('ERROR')
-                        MazeDB.logCol('ERROR', "\t\tChamber %d status=%d", i, i2c_status)
+                        MazeDB.logMsg('ERROR', "\t\tChamber %d status=%d", i, i2c_status)
                     else:
                         # Set corresponding chamber to enabled
                         self.MP.Chambers[i].setState('ENABLED')
@@ -1176,10 +1182,10 @@ class Interface(Plugin):
 
                         # Loop through wall numbers
                         wall_numbers = [i for i in range(8) if err_byte & (1 << i)]
+                        MazeDB.logMsg('ERROR', "\t\tChamber %d walls=%s", i, MazeDB.arrStr(wall_numbers))
                         for wall_num in wall_numbers:
                             # Set corresponding wall to error
                             self.MP.Chambers[i].Walls[wall_num].setState('ERROR')
-                            MazeDB.logCol('ERROR', "\t\tChamber %d walls=%s", i, MazeDB.arrStr(wall_numbers))
     
     #------------------------ CALLBACKS: ROS ------------------------
 
@@ -1230,16 +1236,16 @@ class Interface(Plugin):
 
             # Give up is more that 3 messages have been sent
             if self.EsmaCom_A0.sndEM.msgID > 3:
-                MazeDB.logCol(
-                    'ERROR', "!!ERROR: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
+                MazeDB.logMsg(
+                    'ERROR', "Handshake failed: msg_id=%d", self.EsmaCom_A0.sndEM.msgID)
                 # Set arduino list widget to error color
                 self._widget.ardListWidget.item(0).setForeground(StateQColors.error)
                 return
             
             # Print warning if more than 1 message has been sent
             elif self.EsmaCom_A0.sndEM.msgID > 1:
-                MazeDB.logCol(
-                    'WARNING', "!!WARNING: Handshake failed: msg_id=%d!!", self.EsmaCom_A0.sndEM.msgID)
+                MazeDB.logMsg(
+                    'WARNING', "Handshake failed: msg_id=%d", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
             #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
@@ -1263,38 +1269,38 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 1:
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
             self.signal_Esmacat_read_maze_ard0_ease.disconnect()
-            MazeDB.logCol('INFO', "Disconnected from Esmacat read timer thread")
+            MazeDB.logMsg('INFO', "Disconnected from Esmacat read timer thread")
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/interface_test_node")
-            MazeDB.logCol('INFO', "Killed specific nodes")
+            MazeDB.logMsg('INFO', "Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:
             # Kill all nodes (This will also kill this script's node)
             os.system("rosnode kill -a")
-            MazeDB.logCol('INFO', "Killed all nodes")
+            MazeDB.logMsg('INFO', "Killed all nodes")
 
         elif self.cnt_shutdown_step == 4:
             # Process any pending events in the event loop
             QCoreApplication.processEvents()
-            MazeDB.logCol('INFO', "Processed all events")
+            MazeDB.logMsg('INFO', "Processed all events")
 
         elif self.cnt_shutdown_step == 5:
             # Close the UI window
             self._widget.close()
-            MazeDB.logCol('INFO', "Closed UI window")
+            MazeDB.logMsg('INFO', "Closed UI window")
 
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            MazeDB.logCol('INFO', "Sent shutdown request to ROS master")
+            MazeDB.logMsg('INFO', "Sent shutdown request to ROS master")
 
         elif self.cnt_shutdown_step == 7:
             # End the application
             QApplication.quit()
-            MazeDB.logCol('INFO', "Ended application")
+            MazeDB.logMsg('INFO', "Ended application")
             return  # Return here to prevent the timer from being restarted after the application is closed
         
         # Increment the shutdown step after ecat disconnected
@@ -1377,7 +1383,7 @@ class Interface(Plugin):
                 file_name += ".csv"
 
             # The user has specified a file name, you can perform additional actions here
-            MazeDB.logCol('INFO', "Selected file:", file_name)
+            MazeDB.logMsg('INFO', "Selected file:", file_name)
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
             self.saveToCSV(file_name, WallConfig.make_num2byte_cw_list())
@@ -1421,9 +1427,9 @@ class Interface(Plugin):
                 csv_writer = csv.writer(csvfile)
                 for row in wall_config_list:
                     csv_writer.writerow(row)
-            MazeDB.logCol('INFO', "Data saved to:", file_name)
+            MazeDB.logMsg('INFO', "Data saved to:", file_name)
         except Exception as e:
-            MazeDB.logCol('ERROR', "Error saving data to CSV:", str(e))
+            MazeDB.logMsg('ERROR', "Error saving data to CSV:", str(e))
 
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
@@ -1452,9 +1458,9 @@ class Interface(Plugin):
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
                 WallConfig.make_byte2num_cw_list(wall_byte_config_list)
-                MazeDB.logCol('INFO', "Data loaded successfully.")
+                MazeDB.logMsg('INFO', "Data loaded successfully.")
         except Exception as e:
-            MazeDB.logCol('ERROR', "Error loading data from CSV:", str(e))
+            MazeDB.logMsg('ERROR', "Error loading data from CSV:", str(e))
 
         # Update plot walls
         self.MP.updatePlotFromWallConfig()
@@ -1477,7 +1483,7 @@ class Interface(Plugin):
     def closeEvent(self, event):
         """ Function to handle the window close event """
         
-        MazeDB.logCol('INFO', "Closing window...")
+        MazeDB.logMsg('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.end_ros_session()
         event.accept()  # let the window close

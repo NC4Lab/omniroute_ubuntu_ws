@@ -45,20 +45,30 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	// Print which microcontroller is active
+	// TEMP
+	Dbg.printMsg("INFO", "INFO TEST");
+	Dbg.printMsg("START", "START TEST");
+	Dbg.printMsg("INFO", "INFO TEST");
+	Dbg.printMsg("ERROR", "ERROR TEST");
+	Dbg.printMsg("WARNING", "WARNING TEST");
+	Dbg.printMsg("DEBUG", "DEBUG TEST");
+	Dbg.printMsg("END", "END TEST");
+	Dbg.printMsg("INFO", "INFO TEST");
+		Dbg.printMsg("START", "                    ");
+	Dbg.printMsg("END", "             ");
+	while (true)
+		;
+
+		// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-	Dbg.printMsg("Finished uploading to Arduno Uno");
+	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO UNO");
 #endif
 #ifdef __AVR_ATmega2560__
-	Dbg.printMsg("Finished uploading to Arduno Mega");
+	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO MEGA");
 #endif
 #ifdef ARDUINO_SAM_DUE
-	Dbg.printMsg("Finished uploading to Arduno Due");
+	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
-
-	// // Run initial maze setup
-	// WallOper.resetMaze(false);
-	// while(true);
 }
 
 //=============== LOOP ==================
@@ -93,7 +103,6 @@ void loop()
 	// 	WallOper.EsmaCom.sendEcatMessage(WallOper.EsmaCom.MessageType::HANDSHAKE);
 	// 	delay(dt);
 	// }
-
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

@@ -16,7 +16,7 @@
 extern bool DB_VERBOSE; ///< set this variable in your INO file to control debugging [0:silent, 1:verbose]
 
 /// @brief Used for printing different types of information to the Serial Output Window.
-/// 
+///
 /// @remarks This class is used in both the Cypress_Comm and Wall_Operation classes.
 class Maze_Debug
 {
@@ -26,18 +26,22 @@ public:
 
 public:
 	void printMsg(const char *, ...);
-
-public:
-	void printMsgTime(const char *, ...);
+	void printMsg(const char *, const char *, ...);
 
 private:
-	void _printMsg(const char *, va_list);
+	void _printMsg(const char *, const char *, va_list);
+
+private:
+	const char *_headStr(const char *, const char *);
+
+private:
+	const char *_footStr(const char *, const char *);
 
 private:
 	const char *_timeStr(uint32_t);
 
 public:
-	const char *setGetStr(const char* = nullptr);
+	const char *setGetStr(const char * = nullptr);
 
 public:
 	const char *arrayStr(uint8_t[], size_t);
@@ -62,7 +66,6 @@ public:
 
 public:
 	void printRegByte(uint8_t[], uint8_t[], uint8_t);
-
 };
 
 #endif

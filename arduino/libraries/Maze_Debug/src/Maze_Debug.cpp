@@ -16,56 +16,143 @@
 /// @brief Constructor
 Maze_Debug::Maze_Debug() {}
 
-/// @brief Print a message using printf formatting without elapsed time.
+/// @brief Print a message using printf formatting with elapsed time.
 ///
-/// @param p_fmt Formatting string comparable to sprintf().
+/// @param p_fmt Message string with formatting comparable to sprintf().
 /// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsg(const char *p_fmt, ...)
 {
 	if (DB_VERBOSE == 0)
 		return;
+
 	// Handle input args
 	va_list args;
-	va_start(args, p_fmt);	// Start retrieving additional arguments
-	_printMsg(p_fmt, args); // Pass arguments to _printMsg
-	va_end(args);			// End retrieval
-}
+	va_start(args, p_fmt);			// Start retrieving additional arguments
+	_printMsg("INFO", p_fmt, args); // Pass arguments to _printMsg with default message type
+	va_end(args);
 
-/// @brief Print a message using printf formatting with elapsed time.
+	// Use default message type
+}
+/// OVERLOAD: option for including message type
 ///
-/// @param p_fmt Formatting string comparable to sprintf().
-/// @param ... Variable arguments related to the formatting string.
-void Maze_Debug::printMsgTime(const char *p_fmt, ...)
+/// @param p_type_str String specifying message type.
+/// 	["START", "END", "INFO", "ERROR", "WARNING", "DEBUG"]
+void Maze_Debug::printMsg(const char *p_type_str, const char *p_fmt, ...)
 {
 	if (DB_VERBOSE == 0)
 		return;
 
-	// Print ellapsed time
-	Serial.print(_timeStr(0)); // print time string
-	Serial.print(": ");		   // print time string
-
 	// Handle input args
 	va_list args;
-	va_start(args, p_fmt);	// Start retrieving additional arguments
-	_printMsg(p_fmt, args); // Pass arguments to _printMsg
-	va_end(args);			// End retrieval
+	va_start(args, p_fmt);				// Start retrieving additional arguments
+	_printMsg(p_type_str, p_fmt, args); // Pass arguments to _printMsg
+	va_end(args);
 }
 
 /// @brief Print a message with elapsed time.
 ///
-/// @param p_fmt Auto-passed from Maze_Debug::printMsg().
+/// @param p_fmt Message string with formatting passed from Maze_Debug::printMsg().
+/// @param p_head Message header passed from Maze_Debug::printMsg().
+/// @param p_foot Message header passed from Maze_Debug::printMsg().
 /// @param args Variable arguments list.
-void Maze_Debug::_printMsg(const char *p_fmt, va_list args)
+void Maze_Debug::_printMsg(const char *p_type_str, const char *p_fmt, va_list args)
 {
-	static const uint16_t buff_s = 250;
+	static const uint16_t buff_s = 300;
 	static char buff[buff_s];
 	buff[0] = '\0';
 
+	// Format message
 	vsnprintf(buff, buff_s, p_fmt, args); // format string from argument list
-	Serial.println(buff);				  // print message
+
+	// Print message header
+	Serial.print(_headStr(p_type_str, buff)); // print message header
+
+	// Print message
+	Serial.print(buff); // print message
+
+	// Print message footer
+	Serial.println(_footStr(p_type_str, buff)); // print message footer
 }
 
-/// @brief Generate a time string.
+/// @brief Generate a message header string based on message type argument.
+///
+/// @param p_type_str String specifying message type.
+/// @param p_msg_str Formatted message string.
+/// @return Formatted header string.
+const char *Maze_Debug::_headStr(const char *p_type_str, const char *p_msg_str)
+{
+	static char buff1[100];
+	buff1[0] = '\0';
+	static char buff2[100];
+	buff2[0] = '\0';
+
+	// Add time string
+	if (strcmp(p_type_str, "START") == 0)
+		sprintf(buff1, "\n[INFO] [%s]: ", _timeStr(0)); // add new line before message block
+	else if (strcmp(p_type_str, "END") == 0)
+		sprintf(buff1, "[INFO] [%s]: ", _timeStr(0)); // add new line before message
+	else
+		sprintf(buff1, "[%s] [%s]: ", p_type_str, _timeStr(0));
+
+	// Add attention grabbing string for start or finish of opperation
+	if (strcmp(p_type_str, "START") == 0 ||
+		strcmp(p_type_str, "END") == 0)
+	{
+		// Make header of '=' characters based on p_msg_str length
+		int n = 30 - strlen(p_msg_str)/2;
+		n = n <= 0 ? 3 : n;
+		memset(buff2, '=', n);
+		buff2[n] = '\0'; // Null-terminate the string
+
+		// Add symbol and a space before message
+		strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
+		buff1[sizeof(buff1) - 1] = '\0';
+		strncat(buff1, " ", sizeof(buff1) - strlen(buff1) - 1);
+		buff1[sizeof(buff1) - 1] = '\0';
+	}
+
+	return buff1;
+}
+
+/// @brief Generate a message footer string based on message type argument.
+///
+/// @param p_type_str String specifying message type.
+/// @param p_msg_str Formatted message string.
+/// @return Formatted footer string.
+const char *Maze_Debug::_footStr(const char *p_type_str, const char *p_msg_str)
+{
+	static char buff1[100];
+	buff1[0] = '\0';
+	static char buff2[100];
+	buff2[0] = '\0';
+
+	// Add attention grabbing string for start or finish of opperation
+	if (strcmp(p_type_str, "START") == 0 ||
+		strcmp(p_type_str, "END") == 0)
+	{
+		// Add a space before message
+		sprintf(buff1, " ");
+		buff1[sizeof(buff1) - 1] = '\0';
+
+		// Make footer of '=' characters based on p_msg_str length
+		int n = 30 - strlen(p_msg_str)/2;
+		n = n <= 0 ? 3 : n;
+		memset(buff2, '=', n);
+		buff2[n] = '\0'; // Null-terminate the string
+
+		// Add a space before message
+		if (strcmp(p_type_str, "END") == 0)
+			sprintf(buff1, " %s\n", buff2); // add new line after message block
+		else
+			sprintf(buff1, " %s", buff2); 
+	}
+
+	buff1[sizeof(buff1) - 1] = '\0';
+
+	return buff1;
+}
+
+/// @brief Generate a time string based on current run time.
 ///
 /// @param ts_0 Reference time (ms).
 /// @return Formatted time string in the form [MM:SS:MS].
