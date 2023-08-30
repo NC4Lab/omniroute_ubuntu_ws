@@ -42,8 +42,6 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty)
 //------------------------ ETHERCAT COMMS METHODS ------------------------
 
 /// @brief Used to process new ROS ethercat msg argument data.
-///
-/// @return Success/error codes [0:no message, 1:new message, 2:error]
 void Wall_Operation::procEcatMessage()
 {
 	uint8_t msg_arg_arr[9]; // store message arguments
@@ -182,7 +180,7 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 	_addPinPMS(r_pms, p_port_1, p_pin_1);
 }
 
-/// OVERLOAD: option for additional @ref Wall_Operation::WallMapStruct entries used
+/// @overload: option for additional @ref Wall_Operation::WallMapStruct entries used
 /// for creating PMS structs that include pins both up and down (e.g., all IO or all PWM pins)
 ///
 /// @param p_port_2: Array of port values from an @ref Wall_Operation::WallMapStruct
@@ -196,7 +194,7 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 	_addPinPMS(r_pms, p_port_2, p_pin_2);
 }
 
-/// Used within @ref Wall_Operation::_makePMS to do the actual work of adding the pin entries to the PMS structs.
+/// @brief Used within @ref Wall_Operation::_makePMS to do the actual work of adding the pin entries to the PMS structs.
 ///
 /// @param r_pms: Reference to PMS to be updated
 /// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct
@@ -219,7 +217,7 @@ void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t 
 	_sortArr(r_pms.port, 6);
 }
 
-/// Used within @ref Wall_Operation::_makePMS to do the actual work of adding the port entries to the PMS structs.
+/// @brief Used within @ref Wall_Operation::_makePMS to do the actual work of adding the port entries to the PMS structs.
 ///
 /// @param r_pms: Reference to PMS to be updated.
 /// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct.
@@ -256,7 +254,7 @@ void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p
 	}
 }
 
-/// Sorts array values in assending order
+/// @brief Sorts array values in assending order
 /// Note, this is used exclusively by the above methods when creating the PMS structs.
 ///
 /// @param p_arr: Array to be sorted
@@ -291,7 +289,7 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 	}
 }
 
-/// Resets most entries in a dynamic PMS struct to there default values.
+/// @brief Resets most entries in a dynamic PMS struct to there default values.
 ///
 /// @param r_pms: Reference to PMS struct to be reset
 void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
@@ -311,7 +309,7 @@ void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
 	}
 }
 
-/// Updates dynamic PMS structs based on new wall configuration input.
+/// @brief Updates dynamic PMS structs based on new wall configuration input.
 ///
 /// @param r_pms1: PMS struct to use as the basis for entries in "r_pms2"
 /// @param r_pms2: Reference to a PMS struct to update
@@ -619,7 +617,7 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t bit_val_set)
 	// Run main method
 	return setWallMove(cham_i, bit_val_set, byte_wall_inc);
 }
-/// OVERLOAD: option for including byte mask for walls to move
+/// @overload: option for including byte mask for walls to move
 ///
 /// @param byte_wall_inc Byte mask with bits set to one specifying which walls to move up
 ///
@@ -647,7 +645,7 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t bit_val_set, uint8_t
 
 	return 0;
 }
-/// OVERLOAD: option for including an array of wall numbers to move
+/// @overload: option for including an array of wall numbers to move
 ///
 /// @param p_wall_inc OPTIONAL: Pointer array specifying wall numbers for walls to move [0-7] max 8 entries. .
 /// @param s OPTIONAL: Length of "p_wall_inc".

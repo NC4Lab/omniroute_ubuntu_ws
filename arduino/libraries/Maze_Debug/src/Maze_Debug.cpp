@@ -30,10 +30,8 @@ void Maze_Debug::printMsg(const char *p_fmt, ...)
 	va_start(args, p_fmt);			  // Start retrieving additional arguments
 	_printMsg(MT::INFO, p_fmt, args); // Pass arguments to _printMsg with default message type
 	va_end(args);
-
-	// Use default message type
 }
-/// OVERLOAD: option for including message type
+/// @overload: Option for including message type
 ///
 /// @param msg_type_enum Enum specifying message type.
 void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
@@ -56,110 +54,52 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 /// @param args Variable arguments list.
 void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 {
-	static const uint16_t buff_s = 300;
+	static const uint16_t buff_s = 200;
 	static char buff[buff_s];
 	buff[0] = '\0';
 
 	// Format message
-	vsnprintf(buff, buff_s, p_fmt, args); // format string from argument list
+	if (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_START || msg_type_enum == MT::ATTN_END)
+	{
+		char buff_msg[buff_s];
+		char buff_sym[50];
 
-	// Print message header
-	Serial.print(_headStr(msg_type_enum, buff)); // print message header
+		// Format temp message
+		vsnprintf(buff_msg, buff_s, p_fmt, args); // format string from argument list
+
+		// Make header of '=' characters based on message length
+        int n = 30 - strlen(buff_msg) / 2;
+        n = n <= 0 ? 3 : n;
+
+        // Fill buffer with '=' characters
+        memset(buff_sym, '=', n);
+        buff_sym[n] = '\0';
+
+		// Format complete message
+		sprintf(buff, "%s %s %s", buff_sym, buff_msg, buff_sym);
+	}
+	else
+		vsnprintf(buff, buff_s, p_fmt, args); 
+
+	// Add additional new line for attention messages
+	if (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_START)
+		Serial.print("\n");
+
+	// Print message type
+	Serial.print(_message_type_str[msg_type_enum]);
+
+	// Print time string
+	Serial.print(_timeStr(0));
 
 	// Print message
-	Serial.print(buff); // print message
+	Serial.print(buff);
 
-	// Print message footer
-	Serial.println(_footStr(msg_type_enum, buff)); // print message footer
-}
+	// Add new line
+	Serial.print("\n");
 
-/// @brief Generate a message header string based on message type argument.
-///
-/// @param msg_type_enum Enum specifying message type.
-/// @param p_msg_str Formatted message string.
-/// @return Formatted header string.
-const char *Maze_Debug::_headStr(MT msg_type_enum, const char *p_msg_str)
-{
-	static char buff1[100];
-	buff1[0] = '\0';
-	static char buff2[100];
-	buff2[0] = '\0';
-
-	// Copy enum
-	MT print_msg_type_enum = msg_type_enum;
-
-	// Print INFO for ATTN types
-	if (msg_type_enum == MT::ATTN_START ||
-		msg_type_enum == MT::ATTN_END ||
-		msg_type_enum == MT::ATTN)
-		print_msg_type_enum = MT::INFO;
-
-	// Add message type string and time string
-	if (msg_type_enum == MT::ATTN_START || // add new line before message block
-		msg_type_enum == MT::ATTN)
-		sprintf(buff1, "\n[%s] [%s]: ", _message_type_str[print_msg_type_enum], _timeStr(0));
-	else
-		sprintf(buff1, "[%s] [%s]: ", _message_type_str[print_msg_type_enum], _timeStr(0));
-
-	// Add attention grabbing string for start or finish of opperation
-	if (msg_type_enum == MT::ATTN_START ||
-		msg_type_enum == MT::ATTN_END ||
-		msg_type_enum == MT::ATTN)
-	{
-		// Make header of '=' characters based on p_msg_str length
-		int n = 30 - strlen(p_msg_str) / 2;
-		n = n <= 0 ? 3 : n;
-		for (int i = 0; i < n; i++)
-			strncat(buff2, "=", sizeof(buff2) - strlen(buff2) - 1);
-		buff2[n] = '\0'; // null-terminate the string
-
-		// Add symbol and a space before message
-		strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
-		buff1[sizeof(buff1) - 1] = '\0';
-		strncat(buff1, " ", sizeof(buff1) - strlen(buff1) - 1);
-		buff1[sizeof(buff1) - 1] = '\0';
-	}
-
-	return buff1;
-}
-
-/// @brief Generate a message footer string based on message type argument.
-///
-/// @param msg_type_enum Enum specifying message type.
-/// @param p_msg_str Formatted message string.
-/// @return Formatted footer string.
-const char *Maze_Debug::_footStr(MT msg_type_enum, const char *p_msg_str)
-{
-	static char buff1[100];
-	buff1[0] = '\0';
-	static char buff2[100];
-	buff2[0] = '\0';
-
-	// Add attention grabbing string for ATTN message types
-	if (msg_type_enum == MT::ATTN_START ||
-		msg_type_enum == MT::ATTN_END ||
-		msg_type_enum == MT::ATTN)
-	{
-		// // Add a space before message
-		// sprintf(buff1, " ");
-		// buff1[sizeof(buff1) - 1] = '\0';
-
-		// // Make footer of '=' characters based on p_msg_str length
-		// int n = 30 - strlen(p_msg_str) / 2;
-		// n = n <= 0 ? 3 : n;
-		// for (int i = 0; i < n; i++)
-		// 	strncat(buff2, "=", sizeof(buff2) - strlen(buff2) - 1);
-		// buff2[n] = '\0'; // null-terminate the string
-
-		// // Add a space before message
-		// if (msg_type_enum == MT::ATTN_END ||
-		// 	msg_type_enum == MT::ATTN)
-		// 	sprintf(buff1, " %s\n", buff2); // add new line after message block
-		// else
-		// 	sprintf(buff1, " %s", buff2);
-	}
-
-	return buff1;
+	// Add additional new line for attention messages
+	if (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_END)
+		Serial.print("\n");
 }
 
 /// @brief Generate a time string based on current run time.
@@ -334,7 +274,7 @@ void Maze_Debug::printRegByte(uint8_t byte_mask_in)
 	uint8_t p_byte_mask_in[1] = {byte_mask_in};
 	printRegByte(p_byte_mask_in, 1);
 }
-/// @brief OVERLOAD: Overloaded method to print an array of registry bytes in binary format.
+/// @overload: Option to print an array of registry bytes in binary format.
 ///
 /// @param p_byte_mask_in Pointer to an array of byte values used as masks.
 /// @param s Size of the byte array.
@@ -350,7 +290,7 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 		Serial.println(buff);
 	}
 }
-/// @brief OVERLOAD: Overloaded method to print and compare two arrays of registry bytes in binary format.
+/// @overload: Option to print and compare two arrays of registry bytes in binary format.
 ///
 /// @param p_byte_mask_in_1 Pointer to the first array of byte values used as masks.
 /// @param p_byte_mask_in_2 Pointer to the second array of byte values used as masks.

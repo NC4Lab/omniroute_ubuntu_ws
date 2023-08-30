@@ -24,13 +24,13 @@ class Maze_Debug
 	// ---------VARIABLES-----------------
 public:
 	const char _message_type_str[7][30] = {
-		"ATTN",
-		"ATTN_START",
-		"ATTN_END",
-		"INFO",
-		"!ERROR!",
-		"WARNING",
-		"DEBUG"};
+		"[INFO]: ",
+		"[INFO]: ",
+		"[INFO]: ",
+		"[INFO]: ",
+		"[!ERROR!]: ",
+		"[WARNING]: ",
+		"[DEBUG]: "};
 
 	enum MT
 	{
@@ -53,12 +53,6 @@ public:
 
 private:
 	void _printMsg(MT, const char *, va_list);
-
-private:
-	const char *_headStr(MT, const char *);
-
-private:
-	const char *_footStr(MT, const char *);
 
 private:
 	const char *_timeStr(uint32_t);

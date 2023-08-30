@@ -45,16 +45,19 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	// TEMP
-	Dbg.printMsg(Dbg.MT::ERROR, "ERROR");
-	Dbg.printMsg(Dbg.MT::ATTN_START, "ATTN_START");
-	Dbg.printMsg(Dbg.MT::INFO, "INFO");
-	Dbg.printMsg(Dbg.MT::ATTN_END, "ATTN_END");
-	Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
-	Dbg.printMsg(Dbg.MT::ATTN, "ATTN");
-	Dbg.printMsg(Dbg.MT::WARNING, "WARNING");
-	while (true)
-		;
+	// // TEMP
+	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
+	// Dbg.printMsg(Dbg.MT::ERROR, "ERROR");
+	// Dbg.printMsg(Dbg.MT::ATTN_START, "ATTN_START");
+	// Dbg.printMsg(Dbg.MT::INFO, "INFO");
+	// Dbg.printMsg(Dbg.MT::ATTN_END, "ATTN_END");
+	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
+	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
+	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
+	// Dbg.printMsg(Dbg.MT::ATTN, "ATTN");
+	// Dbg.printMsg(Dbg.MT::WARNING, "WARNING");
+	// while (true)
+	// 	;
 
 // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
@@ -72,8 +75,8 @@ void setup()
 void loop()
 {
 
-	// // Check ethercat coms
-	// WallOper.EsmaCom.readEcatMessage();
+	// Check ethercat coms
+	WallOper.EsmaCom.readEcatMessage();
 
 	// Process and exicute ethercat arguments
 	WallOper.procEcatMessage();

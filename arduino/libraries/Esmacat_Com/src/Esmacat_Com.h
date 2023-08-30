@@ -161,11 +161,11 @@ private:
 
 private:
     void _uSetMsgID(EcatMessageStruct &, uint16_t = 255);
-    void _uGetMsgID(EcatMessageStruct &);
+    bool _uGetMsgID(EcatMessageStruct &);
 
 private:
     void _uSetMsgType(EcatMessageStruct &, MessageType);
-    void _uGetMsgType(EcatMessageStruct &);
+    bool _uGetMsgType(EcatMessageStruct &);
 
 private:
     void _uSetErrType(EcatMessageStruct &, ErrorType);
@@ -182,7 +182,7 @@ private:
 
 private:
     void _uSetFooter(EcatMessageStruct &);
-    void _uGetFooter(EcatMessageStruct &);
+    bool _uGetFooter(EcatMessageStruct &);
 
 private:
     void _uReset(EcatMessageStruct &);
