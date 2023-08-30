@@ -347,7 +347,7 @@ class EsmacatCom:
 
                 # Print error message
                 MazeDB.logMsg(
-                    'ERROR', "Ecat: %s: id[new,last]=[%d,%d] type=%s[%d]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
+                    'ERROR', "Ecat: %s: id new[%d] id last[%d] type[%s|%d]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.name, r_EM.msgTp.value)
                 self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
         
         # Unset error type
@@ -505,12 +505,18 @@ class MazeDB(QGraphicsView):
             return
 
         # Log message by type and color to ROS
-        if level == 'ERROR':
+        if level == 'ATTN':
+            # Add '=' header and footer for ATTN condition
+            f_msg = cls._frmt_msg(Fore.BLUE, msg, *args)
+            n = max(0, 30 - len(f_msg) // 2)
+            f_msg = '=' * n + " " + f_msg + " " + '=' * n
+            rospy.loginfo(f_msg)
+        elif level == 'INFO':
+            rospy.loginfo(cls._frmt_msg(Fore.BLUE, msg, *args))
+        elif level == 'ERROR':
             rospy.logerr(cls._frmt_msg(Fore.RED, msg, *args))
         elif level == 'WARNING':
             rospy.logwarn(cls._frmt_msg(Fore.ORANGE, msg, *args))
-        elif level == 'INFO':
-            rospy.loginfo(cls._frmt_msg(Fore.BLUE, msg, *args))
         elif level == 'DEBUG':
             rospy.loginfo(cls._frmt_msg(Fore.GREEN, msg, *args))
         else:
@@ -523,7 +529,6 @@ class MazeDB(QGraphicsView):
         colored_message = f"{color}{msg}{Style.RESET_ALL}"
         return colored_message % args
     
-    @classmethod
     def arrStr(input_list):
         """Converts a list/array to a string"""
 
@@ -931,7 +936,6 @@ class Interface(Plugin):
 
         # Give QObjects reasonable names
         self.setObjectName('Interface')
-        MazeDB.logMsg('INFO', "Running Interface setup")
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -1087,6 +1091,8 @@ class Interface(Plugin):
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(
             self.sig_callback_Esmacat_read_maze_ard0_ease)
+        
+        MazeDB.logMsg('ATTN', "FINISHED INTERFACE SETUP")
 
 
     #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
@@ -1111,7 +1117,7 @@ class Interface(Plugin):
 
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('INFO', "========== ECAT COMMS CONNECTED ==========")
+            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
 
             # Set arduino list widget to enabled color
             self._widget.ardListWidget.item(0).setForeground(StateQColors.enabled)
@@ -1119,15 +1125,11 @@ class Interface(Plugin):
             # Send INITIALIZE_CYPRESS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_CYPRESS)
 
-            # TEMP
-            wall_numbers = [0,1,3];
-            MazeDB.logMsg('ERROR', "\t\twalls=%s", MazeDB.arrStr(wall_numbers))
-
         # INITIALIZE_CYPRESS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
              # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('INFO', "========== I2C INITIALIZED ==========")
+            MazeDB.logMsg('ATTN', "I2C INITIALIZED")
 
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
@@ -1136,13 +1138,13 @@ class Interface(Plugin):
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
              # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('INFO', "========== WALLS INITIALIZED ==========")
+            MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
 
         # REINITIALIZE_ALL
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = False
-            MazeDB.logMsg('INFO', "========== ECAT COMMS DISCONNECTED ==========")
+            MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1165,7 +1167,7 @@ class Interface(Plugin):
                     if i2c_status != 0: 
                         # Set corresponding chamber to error
                         self.MP.Chambers[i].setState('ERROR')
-                        MazeDB.logMsg('ERROR', "\t\tChamber %d status=%d", i, i2c_status)
+                        MazeDB.logMsg('ERROR', "\t\t chamber[%d] status[%d]", i, i2c_status)
                     else:
                         # Set corresponding chamber to enabled
                         self.MP.Chambers[i].setState('ENABLED')
@@ -1182,7 +1184,7 @@ class Interface(Plugin):
 
                         # Loop through wall numbers
                         wall_numbers = [i for i in range(8) if err_byte & (1 << i)]
-                        MazeDB.logMsg('ERROR', "\t\tChamber %d walls=%s", i, MazeDB.arrStr(wall_numbers))
+                        MazeDB.logMsg('ERROR', "\t\t chamber[%d] walls[%s]", i, MazeDB.arrStr(wall_numbers))
                         for wall_num in wall_numbers:
                             # Set corresponding wall to error
                             self.MP.Chambers[i].Walls[wall_num].setState('ERROR')
@@ -1237,7 +1239,7 @@ class Interface(Plugin):
             # Give up is more that 3 messages have been sent
             if self.EsmaCom_A0.sndEM.msgID > 3:
                 MazeDB.logMsg(
-                    'ERROR', "Handshake failed: msg_id=%d", self.EsmaCom_A0.sndEM.msgID)
+                    'ERROR', "Handshake failed: msg_id[%d]", self.EsmaCom_A0.sndEM.msgID)
                 # Set arduino list widget to error color
                 self._widget.ardListWidget.item(0).setForeground(StateQColors.error)
                 return
@@ -1245,7 +1247,7 @@ class Interface(Plugin):
             # Print warning if more than 1 message has been sent
             elif self.EsmaCom_A0.sndEM.msgID > 1:
                 MazeDB.logMsg(
-                    'WARNING', "Handshake failed: msg_id=%d", self.EsmaCom_A0.sndEM.msgID)
+                    'WARNING', "Handshake failed: msg_id[%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
             #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
