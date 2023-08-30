@@ -28,7 +28,7 @@ Esmacat_Com::Esmacat_Com()
 /// @return Last updated 8 bit index
 uint8_t Esmacat_Com::UnionIndStruct::upd8(uint8_t b_i)
 {
-    // TEMP _Dbg.printMsg("\t\t\t upd8: i8[%d], i16[%d] b_i[%d]", i8, i16, b_i); // TEMP
+    // TEMP _Dbg.printMsg("\t\t upd8: i8[%d], i16[%d] b_i[%d]", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? ii8 : b_i; // if b_i is 255, use current union index
     ii8 = b_i + 1;
     ii16 = ii8 / 2;
@@ -39,7 +39,7 @@ uint8_t Esmacat_Com::UnionIndStruct::upd8(uint8_t b_i)
 /// @return Last updated 16 bit index
 uint8_t Esmacat_Com::UnionIndStruct::upd16(uint8_t b_i)
 {
-    // TEMP _Dbg.printMsg("\t\t\t upd16: i8[%d], i16[%d] b_i[%d]", i8, i16, b_i); // TEMP
+    // TEMP _Dbg.printMsg("\t\t upd16: i8[%d], i16[%d] b_i[%d]", i8, i16, b_i); // TEMP
     b_i = b_i == 255 ? ii16 : b_i; // if b_i is 255, use current union index
     ii16 = b_i + 1;
     ii8 = ii16 * 2;
@@ -283,7 +283,7 @@ void Esmacat_Com::_trackErrType(EcatMessageStruct &r_EM, ErrorType err_tp, bool 
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
-            _Dbg.printMsg("ERROR", "Ecat: %s: id new[%d] id last[%d] type[%s|%d]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msg_tp_str, r_EM.msgTp_val);
+            _Dbg.printMsg(_Dbg.MT::ERROR, "Ecat: %s: id new[%d] id last[%d] type[%s|%d]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msg_tp_str, r_EM.msgTp_val);
             _printEcatReg(0, r_EM.RegU); // TEMP
         }
     }
@@ -317,7 +317,7 @@ void Esmacat_Com::initEcat()
 
     // Check if this is a reinitialization
     if (isEcatConnected)
-        _Dbg.printMsg("END", "ECAT COMMS DISCONNECTED");
+        _Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS DISCONNECTED");
 
     // Reset Ethercat handshake flag
     isEcatConnected = false;
@@ -452,11 +452,11 @@ void Esmacat_Com::_printEcatReg(uint8_t d_type, RegUnion u_reg)
     for (size_t i = 0; i < 8; i++)
     {
         if (d_type == 1)
-            _Dbg.printMsg("\t\t ui16[%d] %d", i, u_reg.si16[i]);
+            _Dbg.printMsg("\t ui16[%d] [%d]", i, u_reg.si16[i]);
         if (d_type == 1)
-            _Dbg.printMsg("\t\t ui16[%d] %d", i, u_reg.ui16[i]);
+            _Dbg.printMsg("\t ui16[%d] [%d]", i, u_reg.ui16[i]);
         if (d_type == 0)
-            _Dbg.printMsg("\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
+            _Dbg.printMsg("\t ui8[%d][%d]  [%d][%d]", 2 * i, 2 * i + 1, u_reg.ui8[2 * i], u_reg.ui8[2 * i + 1]);
     }
     _Dbg.printMsg(" ");
 }

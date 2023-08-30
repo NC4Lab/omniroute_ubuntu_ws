@@ -45,15 +45,26 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	// Print which microcontroller is active
+	// TEMP
+	Dbg.printMsg(Dbg.MT::ERROR, "ERROR");
+	Dbg.printMsg(Dbg.MT::ATTN_START, "ATTN_START");
+	Dbg.printMsg(Dbg.MT::INFO, "INFO");
+	Dbg.printMsg(Dbg.MT::ATTN_END, "ATTN_END");
+	Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
+	Dbg.printMsg(Dbg.MT::ATTN, "ATTN");
+	Dbg.printMsg(Dbg.MT::WARNING, "WARNING");
+	while (true)
+		;
+
+// Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO UNO");
+	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO UNO");
 #endif
 #ifdef __AVR_ATmega2560__
-	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO MEGA");
+	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO MEGA");
 #endif
 #ifdef ARDUINO_SAM_DUE
-	Dbg.printMsg("END", "FINISHED UPLOADING TO ARDUNO DUE");
+	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 }
 
@@ -61,8 +72,8 @@ void setup()
 void loop()
 {
 
-	// Check ethercat coms
-	WallOper.EsmaCom.readEcatMessage();
+	// // Check ethercat coms
+	// WallOper.EsmaCom.readEcatMessage();
 
 	// Process and exicute ethercat arguments
 	WallOper.procEcatMessage();

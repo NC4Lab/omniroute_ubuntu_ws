@@ -20,22 +20,45 @@ extern bool DB_VERBOSE; ///< set this variable in your INO file to control debug
 /// @remarks This class is used in both the Cypress_Comm and Wall_Operation classes.
 class Maze_Debug
 {
+
+	// ---------VARIABLES-----------------
+public:
+	const char _message_type_str[7][30] = {
+		"ATTN",
+		"ATTN_START",
+		"ATTN_END",
+		"INFO",
+		"!ERROR!",
+		"WARNING",
+		"DEBUG"};
+
+	enum MT
+	{
+		ATTN = 0,
+		ATTN_START = 1,
+		ATTN_END = 2,
+		INFO = 3,
+		ERROR = 4,
+		WARNING = 5,
+		DEBUG = 6
+	};
+
 	// -----------METHODS-----------------
 public:
 	Maze_Debug();
 
 public:
 	void printMsg(const char *, ...);
-	void printMsg(const char *, const char *, ...);
+	void printMsg(MT, const char *, ...);
 
 private:
-	void _printMsg(const char *, const char *, va_list);
+	void _printMsg(MT, const char *, va_list);
 
 private:
-	const char *_headStr(const char *, const char *);
+	const char *_headStr(MT, const char *);
 
 private:
-	const char *_footStr(const char *, const char *);
+	const char *_footStr(MT, const char *);
 
 private:
 	const char *_timeStr(uint32_t);

@@ -273,19 +273,19 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 #ifdef ARDUINO_SAM_DUE
 	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
 	{
-		_Dbg.printMsg("ERROR", "i2c lines LOW");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
 	}
 #endif
 #ifdef __AVR_ATmega2560__
 	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
 	{
-		_Dbg.printMsg("ERROR", "i2c lines LOW");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
 	}
 #endif
 #ifdef ARDUINO_AVR_UNO
 	if ((digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW))
 	{
-		_Dbg.printMsg("ERROR", "i2c lines LOW");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
 	}
 #endif
 
@@ -300,12 +300,12 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 		// Restore chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
 		if (resp)
-			_Dbg.printMsg("ERROR", "Cypress Chip Restore");
+			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress Chip Restore");
 
 		// Reset chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
 		if (resp)
-			_Dbg.printMsg("ERROR", "Cypress Chip Reconfigure");
+			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress Chip Reconfigure");
 	}
 
 	return resp;
@@ -422,7 +422,7 @@ uint8_t Cypress_Com::i2cScan()
 	// Print results
 	if (cnt_addr > 0)
 	{
-		_Dbg.printMsg("I2C devices found");
+		_Dbg.printMsg("I2C Devices Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print devices
 			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_addr[i]));
@@ -430,11 +430,11 @@ uint8_t Cypress_Com::i2cScan()
 	}
 	else
 	{
-		_Dbg.printMsg("No I2C devices found");
+		_Dbg.printMsg(_Dbg.WARNING, "No I2C Devices Found");
 	}
 	if (cnt_err > 0)
 	{
-		_Dbg.printMsg("ERROR", "I2C errors found");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Errors Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
 			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_err[i]));
@@ -464,6 +464,6 @@ uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 {
 	uint8_t resp = Wire.endTransmission(send_stop);
 	if (resp != 0 && do_print_err)
-		_Dbg.printMsg("ERROR", "I2C Error[%d] Adr=%s", resp, _Dbg.hexStr(ADDR));
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Error[%d] Address[%s]", resp, _Dbg.hexStr(ADDR));
 	return resp;
 }

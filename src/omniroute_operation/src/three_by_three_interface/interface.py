@@ -364,11 +364,11 @@ class EsmacatCom:
         # Print message data
         for i in range(8):
             if d_type == 2:
-                MazeDB.logMsg(level, "\t\t si16[%d] %d", i, reg_u.si16[i]) 
+                MazeDB.logMsg(level, "\t si16[%d] [%d]", i, reg_u.si16[i]) 
             if d_type == 1:
-                MazeDB.logMsg(level, "\t\t ui16[%d] %d", i, reg_u.ui16[i])
+                MazeDB.logMsg(level, "\t ui16[%d] [%d]", i, reg_u.ui16[i])
             if d_type == 0:
-                MazeDB.logMsg(level, "\t\t\t ui8[%d][%d]  %d %d", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
+                MazeDB.logMsg(level, "\t ui8[%d][%d]  [%d][%d]", 2 * i, 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     #------------------------ PUBLIC METHODS ------------------------
 
@@ -1134,8 +1134,8 @@ class Interface(Plugin):
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
 
-        # INITIALIZE_CYPRESS
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+        # INITIALIZE_WALLS
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
              # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
             MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
@@ -1167,7 +1167,7 @@ class Interface(Plugin):
                     if i2c_status != 0: 
                         # Set corresponding chamber to error
                         self.MP.Chambers[i].setState('ERROR')
-                        MazeDB.logMsg('ERROR', "\t\t chamber[%d] status[%d]", i, i2c_status)
+                        MazeDB.logMsg('ERROR', "\t chamber[%d] status[%d]", i, i2c_status)
                     else:
                         # Set corresponding chamber to enabled
                         self.MP.Chambers[i].setState('ENABLED')
@@ -1184,7 +1184,7 @@ class Interface(Plugin):
 
                         # Loop through wall numbers
                         wall_numbers = [i for i in range(8) if err_byte & (1 << i)]
-                        MazeDB.logMsg('ERROR', "\t\t chamber[%d] walls[%s]", i, MazeDB.arrStr(wall_numbers))
+                        MazeDB.logMsg('ERROR', "\t chamber[%d] walls[%s]", i, MazeDB.arrStr(wall_numbers))
                         for wall_num in wall_numbers:
                             # Set corresponding wall to error
                             self.MP.Chambers[i].Walls[wall_num].setState('ERROR')
