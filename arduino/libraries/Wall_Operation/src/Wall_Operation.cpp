@@ -392,7 +392,7 @@ uint8_t Wall_Operation::initCypress()
 	{
 		// Get current cypress/chamber address
 		uint8_t address = C[cham_i].addr;
-		_Dbg.printMsg("___INITIALIZATING: Chamber[%d] Cypress Chip[%s]", cham_i, _Dbg.hexStr(address));
+		_Dbg.printMsg("INITIALIZATING: Chamber[%d] Cypress Chip[%s]", cham_i, _Dbg.hexStr(address));
 
 		//........................ Initialize Cypress Chip ........................
 
@@ -401,11 +401,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].statusI2C = C[cham_i].statusI2C == 0 ? resp : C[cham_i].statusI2C; // update i2c status
 		if (C[cham_i].statusI2C != 0)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "______Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("______FINISHED: Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg("\t FINISHED: Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 
 		//........................ Initialize Cypress IO ........................
 
@@ -414,11 +414,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].statusI2C = C[cham_i].statusI2C == 0 ? resp : C[cham_i].statusI2C; // update i2c status
 		if (C[cham_i].statusI2C != 0)												 // print error if failed
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "______Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("______FINISHED: Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg("\t FINISHED: Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 
 		//........................ Initialize Cypress PWM ........................
 
@@ -427,11 +427,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].statusI2C = C[cham_i].statusI2C == 0 ? resp : C[cham_i].statusI2C; // update i2c status
 		if (C[cham_i].statusI2C != 0)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "______Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("______FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
+			_Dbg.printMsg("\t FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), resp);
 	}
 
 	// Set return flag to value of any non zero chamber flag
@@ -479,11 +479,11 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 
 		if (C[cham_i].statusRun == 1)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "______Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("______FINISHED: Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
+			_Dbg.printMsg("\t FINISHED: Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
 	}
 
 	// Set return flag to value of any non zero chamber flag

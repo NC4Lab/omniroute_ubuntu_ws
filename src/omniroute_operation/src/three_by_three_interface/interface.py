@@ -547,8 +547,6 @@ class EsmacatCom:
         if not self._uGetFooter(self.rcvEM):
             return False
 
-        # @todo: figure out what to do if message corrupted
-
         # Set new message flag
         self.rcvEM.isNew = True
 
@@ -660,38 +658,43 @@ class WallConfig:
     cw_wall_byte_list = [] # cham_num x wall_byte
 
     #------------------------ CLASS METHODS ------------------------
-
-    def reset(self):
+    
+    @classmethod
+    def reset(cls):
         """Resets the wall configuration list"""
 
-        self.cw_wall_num_list = []
-        self.cw_wall_byte_list = []
+        cls.cw_wall_num_list = []
+        cls.cw_wall_byte_list = []
 
-    def get_len(self):
+    @classmethod
+    def get_len(cls):
         """Returns the number of entries in the wall configuration list"""
 
-        return len(self.cw_wall_num_list)
+        return len(cls.cw_wall_num_list)
 
-    def add_wall(self, chamber_num, wall_num):
+    @classmethod
+    def add_wall(cls, chamber_num, wall_num):
         """Adds a wall to the wall configuration list"""
-        for item in self.cw_wall_num_list:
+        for item in cls.cw_wall_num_list:
             if item[0] == chamber_num:
                 if wall_num not in item[1]:
                     item[1].append(wall_num)
                     return
-        self.cw_wall_num_list.append([chamber_num, [wall_num]])
+        cls.cw_wall_num_list.append([chamber_num, [wall_num]])
 
-    def remove_wall(self, chamber_num, wall_num):
+    @classmethod
+    def remove_wall(cls, chamber_num, wall_num):
         """Removes a wall from the wall configuration list"""
-        for item in self.cw_wall_num_list[:]:  # Iterate over a copy of the list
+        for item in cls.cw_wall_num_list[:]:  # Iterate over a copy of the list
             if item[0] == chamber_num:
                 if wall_num in item[1]:
                     item[1].remove(wall_num)
                     if not item[1]:  # If the second column is empty, remove the entire row
-                        self.cw_wall_num_list.remove(item)
+                        cls.cw_wall_num_list.remove(item)
                     return
 
-    def make_byte2num_cw_list(self, _cw_wall_byte_list):
+    @classmethod
+    def make_byte2num_cw_list(cls, _cw_wall_byte_list):
         """
         Used to convert imported CSV with wall byte mask values to a list with wall numbers
 
@@ -703,7 +706,7 @@ class WallConfig:
         """
 
         # Clear/reset the existing wall_config_list
-        self.reset()
+        cls.reset()
 
         # Convert the byte values to arrays and update the wall_config_list
         for row in _cw_wall_byte_list:
@@ -713,11 +716,12 @@ class WallConfig:
             # Convert the byte_value back to an array of wall numbers
             wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
 
-            self.cw_wall_num_list.append([chamber_num, wall_numbers])
+            cls.cw_wall_num_list.append([chamber_num, wall_numbers])
 
-            return self.cw_wall_num_list
+            return cls.cw_wall_num_list
 
-    def make_num2byte_cw_list(self):
+    @classmethod
+    def make_num2byte_cw_list(cls):
         """
         Used to covert wall number arrays to byte values for saving to CSV
         
@@ -725,9 +729,9 @@ class WallConfig:
             2D list: col_1 = chamber number, col_2 = wall byte mask
         """  
 
-        self.cw_wall_byte_list = []
+        cls.cw_wall_byte_list = []
 
-        for row in self.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
+        for row in cls.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
             wall_arr = row[1]
             # Initialize the byte value
@@ -737,11 +741,12 @@ class WallConfig:
                 if 0 <= wall_i <= 7:
                     # Set the corresponding bit to 1 using bitwise OR
                     byte_value |= (1 << wall_i)
-            self.cw_wall_byte_list.append([chamber_num, byte_value])
+            cls.cw_wall_byte_list.append([chamber_num, byte_value])
 
-        return self.cw_wall_byte_list
+        return cls.cw_wall_byte_list
 
-    def get_wall_byte_list(self):
+    @classmethod
+    def get_wall_byte_list(cls):
         """
         Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
         For use with the EsmacatCom class
@@ -750,57 +755,73 @@ class WallConfig:
             1D list with byte values for all chambers
         """
 
-        self.cw_wall_byte_list = self.make_num2byte_cw_list()
+        cls.cw_wall_byte_list = cls.make_num2byte_cw_list()
 
         # Update U_arr with corresponding chamber and wall byte
         _wall_byte_list = [0] * N_CHAMBERS
-        #wall_arr = [0] * len(self.wallConfigList)
-        for cw in self.cw_wall_byte_list:
+        #wall_arr = [0] * len(cls.wallConfigList)
+        for cw in cls.cw_wall_byte_list:
             _wall_byte_list[cw[0]] = cw[1]
 
         return _wall_byte_list
 
-    def _sort_entries(self):
+    @classmethod
+    def _sort_entries(cls):
         """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
 
         # Sort the rows by the entries in the based on the first chamber number
-        self.cw_wall_num_list.sort(key=lambda row: row[0])
+        cls.cw_wall_num_list.sort(key=lambda row: row[0])
 
         # Sort the arrays in the second column
-        for row in self.cw_wall_num_list:
+        for row in cls.cw_wall_num_list:
             row[1].sort()
 
-    def __iter__(self):
+    @classmethod
+    def __iter__(cls):
         """Returns an iterator for the wall configuration list"""
-        return iter(self.cw_wall_num_list)
+        return iter(cls.cw_wall_num_list)
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         """Returns the wall configuration list as a string"""
-        return str(self.cw_wall_num_list)
-    
-class StateQColors:
-    """ Class for defining state colors """
-
-    up = QColor(0, 255, 0)
-    down = QColor(0, 0, 0)
-    enabled = QColor(0, 0, 0)
-    disabled = QColor(200, 200, 200)
-    warning = QColor(255, 165, 0)
-    error = QColor(255, 0, 0)
+        return str(cls.cw_wall_num_list)
 
 class MazePlot(QGraphicsView):
     """ MazePlot class to plot the maze """
 
     #------------------------ NESTED CLASSES ------------------------
 
+    class Status(Enum):
+        """ 
+        Enum for tracking status of the maze hardware 
+        This is a special type of enum where each enum has an associated color
+        
+        """
+
+        EXCLUDED = (0, QColor(255, 255, 255))  # White
+        DISABLED = (1, QColor(200, 200, 200))  # Gray
+        ENABLED = (2, QColor(0, 0, 0))         # Black
+        WARNING = (3, QColor(255, 165, 0))     # Orange
+        ERROR = (4, QColor(255, 0, 0))         # Red
+        DOWN = (5, QColor(0, 0, 0))            # Black
+        UP = (6, QColor(0, 255, 0))            # Green
+
+        def __new__(cls, value, color):
+            obj = object.__new__(cls)
+            obj._value_ = value
+            obj.color = color
+            return obj
+
+        def __int__(self):
+            return self.value
+
     # CLASS: Wall
     class Wall(QGraphicsItemGroup):
         def __init__(self, _chamber_num, _wall_num, _p0, _p1, _wall_width, _label_pos=None, parent=None):
             super().__init__(parent)
 
-            # Flags for wall state
-            self.is_up = False
-            self.is_enabled = False
+            # Track wall hardware status
+            self.status = MazePlot.Status.DISABLED
 
             # Store arguments parameters
             self.chamber_num = _chamber_num
@@ -822,49 +843,43 @@ class MazePlot(QGraphicsView):
             # Center text
             MazePlot._centerText(self.label, _label_pos[0], _label_pos[1])
 
-            # Set wall state
-            self.setState('DISABLED')
+            # Initialize wall status status
+            self.setStatus(MazePlot.Status.DISABLED)
 
-        def setState(self, state_str):
-            """Sets the wall state and color"""
 
-            # Get state color
-            state_col = MazePlot._getStateColor(state_str)
+        def setStatus(self, status_enum):
+            """Sets the wall status and color"""
+
+             # Check and set the new status
+            if not MazePlot.checkStatus(self.status, status_enum):
+                return
+            self.status = status_enum
 
             # Set text color
-            self.label.setDefaultTextColor(state_col)
+            self.label.setDefaultTextColor(self.status.color)
 
             # Set wall color
             current_pen = self.line.pen()
-            current_pen.setColor(state_col)
+            current_pen.setColor(self.status.color)
             self.line.setPen(current_pen)
 
-            # Set enabled flag 
-            self.is_enabled = state_str != 'DISABLED' and state_str != 'WARNING' and state_str != 'ERROR'
-
-            # Set wall up flag to true if if the state string is 'UP'
-            if state_str == 'UP':
-                self.is_up = True
-            else:
-                self.is_up = False
-
         def mousePressEvent(self, event):
-            """Handles mouse press events and sets the wall state"""
+            """Handles mouse press events and sets the wall status"""
 
-            # Bail if wall is disabled
-            if not self.is_enabled:
+            # Bail if wall is not enabled
+            if not MazePlot.isEnabled(self.status):
                 return
 
             if event.button() == Qt.LeftButton:
                 
-                # Toggle wall state
-                if self.is_up:
-                    self.setState('DOWN')
-                    
-                # TEMP wall_clicked_pub.publish(self.chamber_num, self.wall_num, self.pos_state)
+                # Toggle wall status
+                if self.status == MazePlot.Status.DOWN:
+                    self.setStatus('UP')
+                elif self.status == MazePlot.Status.UP:
+                    self.setStatus('DOWN')
                 
                 # Update configuration list
-                if self.is_up:  # add list entry
+                if self.status == MazePlot.Status.UP:  # add list entry
                     WallConfig.add_wall(self.chamber_num, self.wall_num)
                 else:  # remove list entry
                     WallConfig.remove_wall(self.chamber_num, self.wall_num)
@@ -874,10 +889,8 @@ class MazePlot(QGraphicsView):
         def __init__(self, _chamber_num, _center_x, _center_y, _chamber_width, _wall_width, parent=None):
             super().__init__(parent)
 
-            # Flags for chamber state
-            self.is_up = False
-            self.is_enabled = False
-            self.is_err_i2c = False
+            # Track wall hardware status
+            self.status = MazePlot.Status.DISABLED
             
             # Store arguments parameters
             self.chamber_num = _chamber_num
@@ -900,12 +913,12 @@ class MazePlot(QGraphicsView):
 
             # Initialize wall instances
             self.Walls = [MazePlot.Wall(_chamber_num=_chamber_num,
-                                        _wall_num=k,
-                                        _p0=wall_vertices_0[k],
-                                        _p1=wall_vertices_1[k+1],
+                                        _wall_num=i,
+                                        _p0=wall_vertices_0[i],
+                                        _p1=wall_vertices_1[i+1],
                                         _wall_width=_wall_width,
-                                        _label_pos=wall_label_pos[k])
-                          for k in range(8)]
+                                        _label_pos=wall_label_pos[i])
+                          for i in range(8)]
 
             # Plot backround chamber octogons
             self.octagon = QGraphicsPolygonItem(QPolygonF(octagon_points))
@@ -920,31 +933,33 @@ class MazePlot(QGraphicsView):
             # Center the text over the chamber's center
             MazePlot._centerText(self.label, _center_x, _center_y)
 
+            # Initialize chamber status status
+            self.setStatus(MazePlot.Status.DISABLED)
+
         def getOctagonVertices(self, x, y, w, offset):
-            vertices_list = [(round(x + w*math.cos(k)), round(y+w*math.sin(k)))
-                             for k in np.linspace(math.pi, 3*math.pi, 9) + offset]
+            vertices_list = [(round(x + w*math.cos(i)), round(y+w*math.sin(i)))
+                             for i in np.linspace(math.pi, 3*math.pi, 9) + offset]
             return vertices_list
+        
+        def setStatus(self, status_enum):
+            """Sets the chamber status and color"""
 
-        def setState(self, state_str):
-            """Sets the chamber state flags and color"""
-
-            # Set enabled flag 
-            self.is_enabled = state_str != 'DISABLED' and state_str != 'WARNING' and state_str != 'ERROR'
-
-            # Get state color
-            state_col = MazePlot._getStateColor(state_str)
+            # Check and set the new status
+            if not MazePlot.checkStatus(self.status, status_enum):
+                return
+            self.status = status_enum
 
             # Set text color
-            self.label.setDefaultTextColor(state_col)
+            self.label.setDefaultTextColor(self.status.color)
             
             # Set chamber color
-            #self.octagon.setBrush(QBrush(state_col))
+            #self.octagon.setBrush(QBrush(self.status.color))
             
         def mousePressEvent(self, event):
-            """Handles mouse press events and sets the chamber state"""
+            """Handles mouse press events and sets the chamber status"""
 
             # Bail if chamber is not enabled
-            if not self.is_enabled:
+            if not MazePlot.isEnabled(self.status):
                 return
             
             if event.button() == Qt.LeftButton:
@@ -954,9 +969,14 @@ class MazePlot(QGraphicsView):
 
     def __init__(self, _num_rows_cols, _chamber_width, _wall_width):
 
+        # Store arguments
         self.num_rows_cols = _num_rows_cols
         self.chamber_width = _chamber_width
 
+        # Initialize sate
+        self.status = MazePlot.Status.DISABLED
+
+        # Store and compute graphical parameters
         maze_width = self.chamber_width * self.num_rows_cols
         maze_height = self.chamber_width * self.num_rows_cols
         half_width = _chamber_width/2
@@ -974,6 +994,9 @@ class MazePlot(QGraphicsView):
                     MazePlot.Chamber(_chamber_num=k, _center_x=x, _center_y=y, _chamber_width=_chamber_width, _wall_width=_wall_width))
                 k = k+1
 
+        # Initialize maze status status
+        self.setStatus(MazePlot.Status.DISABLED)
+
 
     def updatePlotFromWallConfig(self):
         """Updates the plot based on the wall configuration list"""
@@ -986,11 +1009,11 @@ class MazePlot(QGraphicsView):
                 entry_found = any(
                     chamber_num == entry[0] and wall_num in entry[1] for entry in WallConfig.cw_wall_num_list)
 
-                # Set the wall state based on whether the entry is found or not
+                # Set the wall status based on whether the entry is found or not
                 if entry_found:
-                    wall.setState('UP')
+                    wall.setStatus('UP')
                 else:
-                    wall.setState('DOWN') 
+                    wall.setStatus('DOWN') 
 
     def _centerText(text_item, center_x, center_y):
         """Centers the text item over the given coordinates"""
@@ -1009,26 +1032,36 @@ class MazePlot(QGraphicsView):
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
 
-    def _getStateColor(state_str):
-            """Get plot color for a given state"""
+    def setStatus(self, status_enum):
+            """Get plot color for a given status"""
 
-            # Get plot color associated with each state
-            if state_str == 'UP':
-                state_col = StateQColors.up
-            elif state_str == 'DOWN':
-                state_col = StateQColors.down
-            elif state_str == 'ENABLED':
-                state_col = StateQColors.enabled
-            elif state_str == 'DISABLED':
-                state_col = StateQColors.disabled
-            elif state_str == 'WARNING':
-                state_col = StateQColors.warning
-            elif state_str == 'ERROR':
-                state_col = StateQColors.error
-            else:
-                state_col = StateQColors.down
+             # Check and set the new status
+            if not MazePlot.checkStatus(self.status, status_enum):
+                return
+            self.status = status_enum
+            
+            
+    def checkStatus(current_status_enum, new_status_enum):
+        """ Checks if the new status is valid and updates the status if it is """
 
-            return state_col
+        if current_status_enum == MazePlot.Status.EXCLUDED:
+            return False
+        elif current_status_enum == MazePlot.Status.ERROR:
+            return False
+        elif current_status_enum == MazePlot.Status.DISABLED:
+            if new_status_enum != MazePlot.Status.DISABLED and \
+                new_status_enum != MazePlot.Status.ENABLED and \
+                new_status_enum != MazePlot.Status.ERROR and \
+                new_status_enum != MazePlot.Status.WARNING:
+                return False
+        return True
+    
+    def isEnabled(current_status_enum):
+        """ Checks if instance is enabled """
+
+        return current_status_enum == MazePlot.Status.ENABLED or \
+            current_status_enum == MazePlot.Status.DOWN or \
+            current_status_enum == MazePlot.Status.UP
 
 #======================== MAIN UI CLASS ========================
 class Interface(Plugin):
@@ -1105,12 +1138,16 @@ class Interface(Plugin):
             self.getPathConfigDir())  # set to default path
 
         # Initialize ardListWidget with arduino names labeled Arduino 0-4
-        for i in range(5):
-            item = QListWidgetItem("Arduino " + str(i))
+        # @todo support for multiple arduinos throughout code
+        for ard_i in range(5):
+            item = QListWidgetItem("Arduino " + str(ard_i))
+
             # Set to disabled color
-            item.setForeground(QColor(StateQColors.disabled))
+            item.setForeground(MazePlot.Status.DISABLED.color)
+
             # Add item to list
             self._widget.ardListWidget.addItem(item)
+            
         # Hide the blue selection bar
         #self._widget.ardListWidget.setStyleSheet("QListWidget::item { border-bottom: 1px solid black; }")
 
@@ -1126,18 +1163,19 @@ class Interface(Plugin):
                                   _chamber_width=chamber_width,
                                   _wall_width=wall_width)
 
-        # Add chambers and disable walls not connected
-        for k, c in enumerate(self.MP.Chambers):
-            self.scene.addItem(c)
-            for j, w in enumerate(c.Walls):
-                if j not in WALL_MAP[k]:
-                    w.setEnabled(False)
-                    w.setVisible(False)
+        # Add chambers and disable walls entries that do not exist in that chamber
+        for cham_i, chamber in enumerate(self.MP.Chambers):
+            self.scene.addItem(chamber)
+            for wall_i, wall in enumerate(chamber.Walls):
+                if wall_i not in WALL_MAP[cham_i]:
+                    wall.setStatus(MazePlot.Status.EXCLUDED) # set status to excluded
+                    wall.setEnabled(False) # disable wall graphics object
+                    wall.setVisible(False) # hide wall graphics object
 
         # Add walls - this is a new loop so that they are drawn above the chambers
-        for c in self.MP.Chambers:
-            for w in c.Walls:
-                self.scene.addItem(w)
+        for chamber in self.MP.Chambers:
+            for wall in chamber.Walls:
+                self.scene.addItem(wall)
 
         #................ Ecat Setup ................
 
@@ -1222,50 +1260,8 @@ class Interface(Plugin):
         # Print confirmation message
         MazeDB.logMsg('INFO', "(%d)ECAT PROCESSING ACK: %s", 
                     self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
-                        
-        
-        #................ Process Ack Message ................ 
 
-        # HANDSHAKE
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
-
-            # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
-
-            # Set arduino list widget to enabled color
-            self._widget.ardListWidget.item(0).setForeground(StateQColors.enabled)
-
-            # Send INITIALIZE_CYPRESS message
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_CYPRESS)
-
-        # INITIALIZE_CYPRESS
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
-            # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('ATTN', "I2C INITIALIZED")
-
-            # Loop through chambers and 
-
-            # Send INITIALIZE_WALLS message
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
-
-        # INITIALIZE_WALLS
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
-             # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
-
-        # REINITIALIZE_ALL
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
-            # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = False
-            MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
-
-        # Reset new message flag
-        self.EsmaCom_A0.rcvEM.isNew = False
-
-        #................ Process Ack Error ................ 
+        #................ Process Ack Error First ................ 
 
         if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NULL:
 
@@ -1282,11 +1278,8 @@ class Interface(Plugin):
                     # Check if status not equal to 0
                     if i2c_status != 0: 
                         # Set corresponding chamber to error
-                        self.MP.Chambers[i].setState('ERROR')
+                        self.MP.Chambers[i].setStatus(MazePlot.Status.ERROR)
                         MazeDB.logMsg('ERROR', "\t chamber[%d] i2c status[%d]", i, i2c_status)
-                    else:
-                        # Set corresponding chamber to enabled
-                        self.MP.Chambers[i].setState('ENABLED')
 
             # WALL_MOVE_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
@@ -1298,12 +1291,86 @@ class Interface(Plugin):
                     # Check if status not equal to 0
                     if err_byte != 0: 
 
-                        # Loop through wall numbers
+                        # Get wall numbers
                         wall_numbers = [i for i in range(8) if err_byte & (1 << i)]
                         MazeDB.logMsg('ERROR', "\t chamber[%d] walls[%s]", i, MazeDB.arrStr(wall_numbers))
+
+                        # Loop through wall numbers and set to error
                         for wall_num in wall_numbers:
-                            # Set corresponding wall to error
-                            self.MP.Chambers[i].Walls[wall_num].setState('ERROR')
+                            self.MP.Chambers[i].Walls[wall_num].setStatus(MazePlot.Status.ERROR)
+
+        #................ Process Ack Message ................ 
+
+        # HANDSHAKE
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
+
+            # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
+
+            # Set maze hardware status to enabled
+            self.MP.setStatus(MazePlot.Status.ENABLED)
+
+            # Set arduino list widget to error color
+            self._widget.ardListWidget.item(0).setForeground(MazePlot.Status.ENABLED.color)
+
+            # Send INITIALIZE_CYPRESS message
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_CYPRESS)
+
+        # INITIALIZE_CYPRESS
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+            # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            MazeDB.logMsg('ATTN', "I2C INITIALIZED")
+
+            # Loop through chambers and set enable flag for chamber and wall
+            for _, chamber in enumerate(self.MP.Chambers):
+
+                # Skip if chamber not set to Disabled (e.g., Error)
+                if chamber.status != MazePlot.Status.DISABLED:
+                    continue
+                
+                # Set corresponding chamber to enabled
+                chamber.setStatus(MazePlot.Status.ENABLED)
+
+                # Loop through walls and set to enabled
+                for _, wall in enumerate(chamber.Walls):
+                    wall.setStatus(MazePlot.Status.ENABLED)
+
+            # Send INITIALIZE_WALLS message
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
+
+        # INITIALIZE_WALLS
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
+             # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = True
+            MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
+
+            # Loop through chambers and set enable flag for walls
+            for _, chamber in enumerate(self.MP.Chambers):
+
+                # Skip if chamber not set to Enabled
+                if chamber.status != MazePlot.Status.ENABLED:
+                    continue
+
+                # Loop through walls
+                for _, wall in enumerate(chamber.Walls):
+
+                    # Skip if wall not set to Disabled (e.g., Error)
+                    if wall.status != MazePlot.Status.DISABLED:
+                        continue
+
+                    # Set walls to down
+                    wall.setStatus(MazePlot.Status.DOWN)
+
+        # REINITIALIZE_ALL
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
+            # Set the handshake flag
+            self.EsmaCom_A0.isEcatConnected = False
+            MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
+
+        # Reset new message flag
+        self.EsmaCom_A0.rcvEM.isNew = False
     
     #------------------------ CALLBACKS: ROS ------------------------
 
@@ -1355,16 +1422,20 @@ class Interface(Plugin):
             # Give up after 3 attempts based on message ID
             if self.EsmaCom_A0.sndEM.msgID > 2:
                 MazeDB.logMsg(
-                    'ERROR', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
+                    'ERROR', "Handshake Failure Final [%d]", self.EsmaCom_A0.sndEM.msgID)
+                
+                # Set maze hardware status to error
+                self.MP.setStatus(MazePlot.Status.ERROR)
+
                 # Set arduino list widget to error color
-                self._widget.ardListWidget.item(0).setForeground(StateQColors.error)
+                self._widget.ardListWidget.item(0).setForeground(MazePlot.Status.ERROR.color)
+
                 return
             
             # Print warning if more than 1 message has been sent
             elif self.EsmaCom_A0.sndEM.msgID > 0:
                 MazeDB.logMsg(
-                    'WARNING', "Handshake Failure Final [%d]", self.EsmaCom_A0.sndEM.msgID)
-                return
+                    'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
             #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
