@@ -1441,8 +1441,8 @@ class Interface(Plugin):
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
-            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
+            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2) # TEMP
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)

@@ -422,10 +422,10 @@ uint8_t Cypress_Com::i2cScan()
 	// Print results
 	if (cnt_addr > 0)
 	{
-		_Dbg.printMsg("I2C Devices Found");
+		_Dbg.printMsg("I2C Devices Found:");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print devices
-			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_addr[i]));
+			_Dbg.printMsg("\t%d)\t%s", i, _Dbg.hexStr(list_addr[i]));
 		}
 	}
 	else
@@ -437,7 +437,7 @@ uint8_t Cypress_Com::i2cScan()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Errors Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
-			_Dbg.printMsg("%d)\t%s", i + 1, _Dbg.hexStr(list_err[i]));
+			_Dbg.printMsg("%d)\t%s", i, _Dbg.hexStr(list_err[i]));
 		}
 	}
 

@@ -25,8 +25,8 @@ bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
-uint8_t nCham = 2;	   ///< number of chambers being used [1-49]
-uint8_t pwmDuty = 200; ///< PWM duty for all walls [0-255]
+uint8_t nCham = 9;	   ///< number of chambers being used [1-49]
+uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
@@ -69,6 +69,12 @@ void setup()
 #ifdef ARDUINO_SAM_DUE
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
+
+	// Scan connected I2C devices
+	Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
+	CypCom.i2cScan();
+	Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: I2C SCAN");
+
 }
 
 //=============== LOOP ==================

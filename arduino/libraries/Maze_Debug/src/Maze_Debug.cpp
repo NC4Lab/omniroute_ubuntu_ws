@@ -85,10 +85,12 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 		Serial.print("\n");
 
 	// Print message type
-	Serial.print(_message_type_str[msg_type_enum]);
+	//Serial.print(_message_type_str[2]);
 
 	// Print time string
+	Serial.print(" [");
 	Serial.print(_timeStr(0));
+	Serial.print("]: ");
 
 	// Print message
 	Serial.print(buff);
