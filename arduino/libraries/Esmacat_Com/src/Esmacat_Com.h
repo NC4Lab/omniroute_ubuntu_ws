@@ -191,7 +191,7 @@ private:
     void _resetReg();
 
 private:
-    void _trackErrType(EcatMessageStruct &, ErrorType, bool = false);
+    void _trackErrors(EcatMessageStruct &, ErrorType, bool = false);
 
 public:
     void initEcat();
@@ -204,8 +204,9 @@ public:
     void writeEcatAck(ErrorType, uint8_t[] = nullptr, uint8_t = 0);
 
 private:
-    void _printEcatReg(uint8_t, int[] = nullptr);
-    void _printEcatReg(uint8_t, RegUnion);
+    void _printEcatReg(Maze_Debug::MT, uint8_t);    
+    void _printEcatReg(Maze_Debug::MT, uint8_t, int[]);
+    void _printEcatReg(Maze_Debug::MT, uint8_t, RegUnion);
 };
 
 #endif

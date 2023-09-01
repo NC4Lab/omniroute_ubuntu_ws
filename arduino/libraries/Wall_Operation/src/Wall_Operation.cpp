@@ -119,39 +119,49 @@ void Wall_Operation::procEcatMessage()
 		run_status = moveWalls();
 	}
 
-	//........................ Format Ecat Ack Data and Send........................
+	//........................ Format Ecat Ack Data ........................
+
+	// Check for errors and store error type
+
+	// INITIALIZE_CYPRESS
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_CYPRESS)
+	{
+		// Set arg length to number of chambers
+		arg_len = nCham;
+
+		// Send i2c status
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+			msg_arg_arr[cham_i] = C[cham_i].statusI2C;
+	}
+
+	// INITIALIZE_WALLS OR MOVE_WALLS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS ||
+			 EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
+	{
+		// Set arg length to number of chambers
+		arg_len = nCham;
+
+		// Get wall data for each chamber
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+			if (run_status == 0) // send wall position byte mask
+				msg_arg_arr[cham_i] = C[cham_i].bitWallPosition;
+			else // send wall error byte mask
+				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag;
+	}
+
+	//........................ Send Ecat Ack ........................
 
 	// I2C_FAILED
 	if (i2c_status != 0)
-	{
-		// Set arg length to number of chambers
-		arg_len = nCham;
-
-		// Store i2c status in chamber data entry
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			msg_arg_arr[cham_i] = C[cham_i].statusI2C;
-
-		// Send I2C error
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
-	}
 
 	// WALL_MOVE_FAILED
 	else if (run_status != 0)
-	{
-		// Set arg length to number of chambers
-		arg_len = nCham;
-
-		// Check for any run errors
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag; // store wall error byte mask in chamber data entry
-
-		// Send wall move error
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
-	}
 
 	// NO ERROR
 	else
-		EsmaCom.writeEcatAck();
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NULL, msg_arg_arr, arg_len);
 
 	//........................ Reinitialize Ecat ........................
 
@@ -477,13 +487,13 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 			C[cham_i].statusRun = C[cham_i].statusRun == 0 ? resp : C[cham_i].statusRun; // update run status
 		}
 
-		if (C[cham_i].statusRun == 1)
+		if (C[cham_i].statusRun != 0)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Wall Initialization failed: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("\t FINISHED: Move Up: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
+			_Dbg.printMsg("\t FINISHED: Wall Initialization: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(address), C[cham_i].statusRun);
 	}
 
 	// Set return flag to value of any non zero chamber flag
@@ -683,6 +693,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
 	// Local vars
 	uint8_t resp = 0;
+	bool do_run = false;						// flag to run
 	uint8_t run_status = 0;						// track run status
 	uint8_t i2c_status = 0;						// track i2c status
 	bool is_timedout = 0;						// flag timeout
@@ -714,6 +725,12 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 		resp = _CypCom.ioWriteReg(C[cham_i].addr, C[cham_i].pmsDynPWM.bitMaskLong, 6, 1);
 		i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
 
+		// Check if anything to move
+		if (wall_up_byte_mask > 0 || wall_down_byte_mask > 0)
+			do_run = true; // update flag
+		else
+			continue;
+
 		// Print walls being moved
 		if (wall_up_byte_mask > 0 || wall_down_byte_mask > 0)
 			_Dbg.printMsg("\t RUNNING: Moving Walls: chamber[%d]", cham_i);
@@ -722,6 +739,10 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 		if (wall_down_byte_mask > 0)
 			_Dbg.printMsg("\t\t Down%s", _Dbg.bitIndStr(wall_down_byte_mask));
 	}
+
+	// Bail if no wall set to move
+	if (!do_run)
+		return 0;
 
 	// Check IO pins
 	while (!is_timedout && do_move_check != 0)

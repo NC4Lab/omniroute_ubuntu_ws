@@ -48,9 +48,8 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 
 /// @brief Print a message with elapsed time.
 ///
+/// @param msg_type_enum Enum specifying message type.
 /// @param p_fmt Message string with formatting passed from Maze_Debug::printMsg().
-/// @param p_head Message header passed from Maze_Debug::printMsg().
-/// @param p_foot Message header passed from Maze_Debug::printMsg().
 /// @param args Variable arguments list.
 void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 {

@@ -204,7 +204,7 @@ class EsmacatCom:
         # Check/log error skipped or out of sequence messages
         if r_EM.msgID - r_EM.msgID_last != 1 and \
             r_EM.msgID != r_EM.msgID_last: # don't log errors for repeat message reads
-            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
+            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
             return False
         return True
 
@@ -243,7 +243,7 @@ class EsmacatCom:
         # Log error and set message type to none if not found
         if r_EM.isErr:
             msg_type_val = EsmacatCom.MessageType.MSG_NULL
-            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_NO_MSG_TYPE_MATCH) 
+            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_NO_MSG_TYPE_MATCH) 
         else:
             r_EM.msgTp = EsmacatCom.MessageType(msg_type_val)
 
@@ -283,7 +283,7 @@ class EsmacatCom:
         # Log error and set error type to none if not found
         if r_EM.isErr:
             err_type_val = EsmacatCom.ErrorType.ERR_NULL
-            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_NO_ERR_TYPE_MATCH) 
+            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_NO_ERR_TYPE_MATCH) 
         else:
             r_EM.errTp = EsmacatCom.ErrorType(err_type_val)
 
@@ -401,7 +401,7 @@ class EsmacatCom:
 
         # Log missing footer error
         if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254: # check if footer is valid
-            self._trackErrType(r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER) 
+            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER) 
             return False
         return True
 
@@ -428,7 +428,7 @@ class EsmacatCom:
         reg_arr = [-1] * 8
         self.maze_ard0_pub.publish(*reg_arr) 
 
-    def _trackErrType(self, r_EM, err_tp, do_reset=False):
+    def _trackErrors(self, r_EM, err_tp, do_reset=False):
         """
         Check for and log any Ecat or runtime errors
         
@@ -451,7 +451,7 @@ class EsmacatCom:
                 # Print error message
                 MazeDB.logMsg(
                     'ERROR', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
-                self._printEcatReg('ERROR', 0, r_EM.RegU)  # TEMP
+                self._printEcatReg('ERROR', 0, r_EM.RegU)
         
         # Unset error type
         elif r_EM.errTp == err_tp:
@@ -552,7 +552,7 @@ class EsmacatCom:
 
         # Print message
         MazeDB.logMsg('INFO', "(%d)ECAT ACK RECEIVED: %s", self.rcvEM.msgID, self.rcvEM.msgTp.name)
-        self._printEcatReg('INFO', 0, self.rcvEM.RegU)  # TEMP
+        self._printEcatReg('DEBUG', 0, self.rcvEM.RegU)  # TEMP
 
         return True
 
@@ -602,7 +602,7 @@ class EsmacatCom:
 
         # Print message
         MazeDB.logMsg('INFO', "(%d)ECAT SENT: %s", self.sndEM.msgID, self.sndEM.msgTp.name)
-        self._printEcatReg('INFO', 0, self.sndEM.RegU)  # TEMP
+        self._printEcatReg('DEBUG', 0, self.sndEM.RegU)  # TEMP
 
 class MazeDB(QGraphicsView):
     """ MazeDebug class to plot the maze """
@@ -718,7 +718,11 @@ class WallConfig:
 
             cls.cw_wall_num_list.append([chamber_num, wall_numbers])
 
-            return cls.cw_wall_num_list
+        # # loop thorugh wall_byte_config_list and print each element
+        # for row in cls.cw_wall_num_list:
+        #     MazeDB.logMsg('DEBUG', "[%d][%d]", row[0], row[1])  # TEMP
+
+        return cls.cw_wall_num_list
 
     @classmethod
     def make_num2byte_cw_list(cls):
@@ -794,17 +798,17 @@ class MazePlot(QGraphicsView):
     class Status(Enum):
         """ 
         Enum for tracking status of the maze hardware 
-        This is a special type of enum where each enum has an associated color
+        This is a special type of enum where each enum has an associated QColor
         
         """
 
         EXCLUDED = (0, QColor(255, 255, 255))  # White
-        DISABLED = (1, QColor(200, 200, 200))  # Gray
-        ENABLED = (2, QColor(0, 0, 0))         # Black
-        WARNING = (3, QColor(255, 165, 0))     # Orange
-        ERROR = (4, QColor(255, 0, 0))         # Red
-        DOWN = (5, QColor(0, 0, 0))            # Black
-        UP = (6, QColor(0, 255, 0))            # Green
+        UNINITIALIZED = (1, QColor(200, 200, 200))  # Gray
+        INITIALIZED = (2, QColor(0, 0, 0))         # Black
+        WARNING = (3, QColor(191, 124, 0))         # 25% Darker Orange
+        ERROR = (4, QColor(191, 0, 0))             # 25% Darker Red
+        DOWN = (5, QColor(0, 0, 0))                # Black
+        UP = (6, QColor(0, 191, 0))                # 25% Darker Green
 
         def __new__(cls, value, color):
             obj = object.__new__(cls)
@@ -819,9 +823,6 @@ class MazePlot(QGraphicsView):
     class Wall(QGraphicsItemGroup):
         def __init__(self, _chamber_num, _wall_num, _p0, _p1, _wall_width, _label_pos=None, parent=None):
             super().__init__(parent)
-
-            # Track wall hardware status
-            self.status = MazePlot.Status.DISABLED
 
             # Store arguments parameters
             self.chamber_num = _chamber_num
@@ -843,9 +844,9 @@ class MazePlot(QGraphicsView):
             # Center text
             MazePlot._centerText(self.label, _label_pos[0], _label_pos[1])
 
-            # Initialize wall status status
-            self.setStatus(MazePlot.Status.DISABLED)
-
+            # Create wall status var and set status
+            self.status = MazePlot.Status.UNINITIALIZED
+            self.setStatus(MazePlot.Status.UNINITIALIZED)
 
         def setStatus(self, status_enum):
             """Sets the wall status and color"""
@@ -873,10 +874,11 @@ class MazePlot(QGraphicsView):
             if event.button() == Qt.LeftButton:
                 
                 # Toggle wall status
-                if self.status == MazePlot.Status.DOWN:
-                    self.setStatus('UP')
+                if self.status == MazePlot.Status.DOWN or \
+                    self.status == MazePlot.Status.INITIALIZED:
+                    self.setStatus(MazePlot.Status.UP)
                 elif self.status == MazePlot.Status.UP:
-                    self.setStatus('DOWN')
+                    self.setStatus(MazePlot.Status.DOWN)
                 
                 # Update configuration list
                 if self.status == MazePlot.Status.UP:  # add list entry
@@ -888,9 +890,6 @@ class MazePlot(QGraphicsView):
     class Chamber(QGraphicsItemGroup):
         def __init__(self, _chamber_num, _center_x, _center_y, _chamber_width, _wall_width, parent=None):
             super().__init__(parent)
-
-            # Track wall hardware status
-            self.status = MazePlot.Status.DISABLED
             
             # Store arguments parameters
             self.chamber_num = _chamber_num
@@ -898,7 +897,6 @@ class MazePlot(QGraphicsView):
             self.center_y = _center_y
             self.chamber_width = _chamber_width
 
-            
             # Compute chamber octogon parameters
             octagon_vertices = self.getOctagonVertices(
                 _center_x, _center_y, _chamber_width/2, math.radians(22.5))
@@ -933,8 +931,9 @@ class MazePlot(QGraphicsView):
             # Center the text over the chamber's center
             MazePlot._centerText(self.label, _center_x, _center_y)
 
-            # Initialize chamber status status
-            self.setStatus(MazePlot.Status.DISABLED)
+            # Create chamber status status var and set status
+            self.status = MazePlot.Status.UNINITIALIZED
+            self.setStatus(MazePlot.Status.UNINITIALIZED)
 
         def getOctagonVertices(self, x, y, w, offset):
             vertices_list = [(round(x + w*math.cos(i)), round(y+w*math.sin(i)))
@@ -967,53 +966,73 @@ class MazePlot(QGraphicsView):
 
     #------------------------ METHODS ------------------------
 
-    def __init__(self, _num_rows_cols, _chamber_width, _wall_width):
+    # CLASS: Maze
+    class Maze(QGraphicsItemGroup):
+        def __init__(self, _num_rows_cols, _chamber_width, _wall_width, parent=None):
+            super().__init__(parent)
 
-        # Store arguments
-        self.num_rows_cols = _num_rows_cols
-        self.chamber_width = _chamber_width
+            # Store arguments
+            self.num_rows_cols = _num_rows_cols
+            self.chamber_width = _chamber_width
 
-        # Initialize sate
-        self.status = MazePlot.Status.DISABLED
+            # Store and compute graphical parameters
+            maze_width = self.chamber_width * self.num_rows_cols
+            maze_height = self.chamber_width * self.num_rows_cols
+            half_width = _chamber_width/2
+            x_pos = np.linspace(half_width, int(
+                maze_width - half_width),  self.num_rows_cols)
+            y_pos = np.linspace(half_width, int(
+            maze_height - half_width),  self.num_rows_cols)
 
-        # Store and compute graphical parameters
-        maze_width = self.chamber_width * self.num_rows_cols
-        maze_height = self.chamber_width * self.num_rows_cols
-        half_width = _chamber_width/2
-        x_pos = np.linspace(half_width, int(
-            maze_width - half_width),  self.num_rows_cols)
-        y_pos = np.linspace(half_width, int(
-        maze_height - half_width),  self.num_rows_cols)
+            # Create a list of chamber instances
+            self.Chambers = []
+            k = 0
+            for y in y_pos:
+                for x in x_pos:
+                    self.Chambers.append(
+                        MazePlot.Chamber(_chamber_num=k, _center_x=x, _center_y=y, _chamber_width=_chamber_width, _wall_width=_wall_width))
+                    k = k+1
 
-        # Create a list of chamber instances
-        self.Chambers = []
-        k = 0
-        for y in y_pos:
-            for x in x_pos:
-                self.Chambers.append(
-                    MazePlot.Chamber(_chamber_num=k, _center_x=x, _center_y=y, _chamber_width=_chamber_width, _wall_width=_wall_width))
-                k = k+1
+            # # Create status text label
+            # self.label = QGraphicsTextItem("TESTING")
+            # font_size = _wall_width*1.75
+            # self.label.setFont(QFont("Arial", font_size, QFont.Bold))
+            # self.addToGroup(self.label)
+            # MazePlot._centerText(self.label, 10, 10)
 
-        # Initialize maze status status
-        self.setStatus(MazePlot.Status.DISABLED)
+            # Create maze status var and set status
+            self.status = MazePlot.Status.UNINITIALIZED
+            self.setStatus(MazePlot.Status.UNINITIALIZED)
 
+        def setStatus(self, status_enum):
+            """Get plot color for a given status"""
 
-    def updatePlotFromWallConfig(self):
-        """Updates the plot based on the wall configuration list"""
+            # Check and set the new status
+            if not MazePlot.checkStatus(self.status, status_enum):
+                return
+            self.status = status_enum
 
-        for chamber in self.Chambers:
-            for wall in chamber.Walls:
-                # Check if there is an entry for the current chamber and wall in WallConfig
-                chamber_num = chamber.chamber_num
-                wall_num = wall.wall_num
-                entry_found = any(
-                    chamber_num == entry[0] and wall_num in entry[1] for entry in WallConfig.cw_wall_num_list)
+            # # Set status text and color color
+            # self.label.setDefaultTextColor(self.status.color)
+            # self.label.setPlainText(self.status.name)
 
-                # Set the wall status based on whether the entry is found or not
-                if entry_found:
-                    wall.setStatus('UP')
-                else:
-                    wall.setStatus('DOWN') 
+        def updatePlotFromWallConfig(self):
+            """Updates the plot based on the wall configuration list"""
+
+            for chamber in self.Chambers:
+                for wall in chamber.Walls:
+
+                    # Check if there is an entry for the current chamber and wall in WallConfig
+                    chamber_num = chamber.chamber_num
+                    wall_num = wall.wall_num
+                    entry_found = any(
+                        chamber_num == entry[0] and wall_num in entry[1] for entry in WallConfig.cw_wall_num_list)
+
+                    # Set the wall status to up if entry found
+                    if entry_found:
+                        wall.setStatus(MazePlot.Status.UP)
+                    else:
+                        wall.setStatus(MazePlot.Status.DOWN)
 
     def _centerText(text_item, center_x, center_y):
         """Centers the text item over the given coordinates"""
@@ -1031,15 +1050,6 @@ class MazePlot(QGraphicsView):
         x_pos = center_x - text_rect.width() / 2
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
-
-    def setStatus(self, status_enum):
-            """Get plot color for a given status"""
-
-             # Check and set the new status
-            if not MazePlot.checkStatus(self.status, status_enum):
-                return
-            self.status = status_enum
-            
             
     def checkStatus(current_status_enum, new_status_enum):
         """ Checks if the new status is valid and updates the status if it is """
@@ -1048,9 +1058,9 @@ class MazePlot(QGraphicsView):
             return False
         elif current_status_enum == MazePlot.Status.ERROR:
             return False
-        elif current_status_enum == MazePlot.Status.DISABLED:
-            if new_status_enum != MazePlot.Status.DISABLED and \
-                new_status_enum != MazePlot.Status.ENABLED and \
+        elif current_status_enum == MazePlot.Status.UNINITIALIZED:
+            if new_status_enum != MazePlot.Status.UNINITIALIZED and \
+                new_status_enum != MazePlot.Status.INITIALIZED and \
                 new_status_enum != MazePlot.Status.ERROR and \
                 new_status_enum != MazePlot.Status.WARNING:
                 return False
@@ -1059,7 +1069,7 @@ class MazePlot(QGraphicsView):
     def isEnabled(current_status_enum):
         """ Checks if instance is enabled """
 
-        return current_status_enum == MazePlot.Status.ENABLED or \
+        return current_status_enum == MazePlot.Status.INITIALIZED or \
             current_status_enum == MazePlot.Status.DOWN or \
             current_status_enum == MazePlot.Status.UP
 
@@ -1111,7 +1121,7 @@ class Interface(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
-
+            
         # Add widget to the user interface
         context.add_widget(self._widget)
         self._widget.plotMazeView.setViewportUpdateMode(
@@ -1137,20 +1147,6 @@ class Interface(Plugin):
         self._widget.fileDirEdit.setText(
             self.getPathConfigDir())  # set to default path
 
-        # Initialize ardListWidget with arduino names labeled Arduino 0-4
-        # @todo support for multiple arduinos throughout code
-        for ard_i in range(5):
-            item = QListWidgetItem("Arduino " + str(ard_i))
-
-            # Set to disabled color
-            item.setForeground(MazePlot.Status.DISABLED.color)
-
-            # Add item to list
-            self._widget.ardListWidget.addItem(item)
-            
-        # Hide the blue selection bar
-        #self._widget.ardListWidget.setStyleSheet("QListWidget::item { border-bottom: 1px solid black; }")
-
         #................ Maze Setup ................
 
         # Calculate chamber width and wall line width and offset
@@ -1159,7 +1155,7 @@ class Interface(Plugin):
         wall_width = chamber_width*0.1
 
         # Create MazePlot and populate walls according to WALL_MAP
-        self.MP = MazePlot(_num_rows_cols=NUM_ROWS_COLS,
+        self.MP = MazePlot.Maze(_num_rows_cols=NUM_ROWS_COLS,
                                   _chamber_width=chamber_width,
                                   _wall_width=wall_width)
 
@@ -1250,12 +1246,7 @@ class Interface(Plugin):
     #------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
     def procEcatMessage(self):
-        """
-        Used to parse new incoming ROS ethercat msg data.
-        
-        Returns:
-            int: Success/error codes [0:no message, 1:new message, 2:error]
-        """
+        """ Used to parse new incoming ROS ethercat msg data. """
 
         # Print confirmation message
         MazeDB.logMsg('INFO', "(%d)ECAT PROCESSING ACK: %s", 
@@ -1266,108 +1257,120 @@ class Interface(Plugin):
         if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NULL:
 
             MazeDB.logMsg(
-                'ERROR', "%s", self.EsmaCom_A0.rcvEM.errTp.name)
+                'ERROR', "(%d)ECAT ERROR: %s", self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.errTp.name)
             
             # I2C_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
 
-                # Loop through arguments
-                for i in range(self.EsmaCom_A0.rcvEM.argLen):
-                    i2c_status = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+                # Loop through chambers and set enable flag for chamber and wall
+                for cham_i, chamber in enumerate(self.MP.Chambers):
 
-                    # Check if status not equal to 0
+                    # Skip chambers not acknowldged
+                    if cham_i >= self.EsmaCom_A0.rcvEM.argLen:
+                        continue
+
+                    # Store i2c status from arguments
+                    i2c_status = self.EsmaCom_A0.rcvEM.ArgU.ui8[cham_i]
+
+                    # Check if status not equal to 0 and set corresponding chamber to error
                     if i2c_status != 0: 
+
                         # Set corresponding chamber to error
-                        self.MP.Chambers[i].setStatus(MazePlot.Status.ERROR)
-                        MazeDB.logMsg('ERROR', "\t chamber[%d] i2c status[%d]", i, i2c_status)
+                        chamber.setStatus(MazePlot.Status.ERROR)
+
+                        # Log i2c error for this chamber
+                        MazeDB.logMsg('ERROR', "\t chamber[%d] i2c_status[%d]", cham_i, i2c_status)
 
             # WALL_MOVE_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
 
                 # Loop through arguments
-                for i in range(self.EsmaCom_A0.rcvEM.argLen):
-                    err_byte = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+                for cham_i, chamber in enumerate(self.MP.Chambers):
+
+                    # Skip chambers not acknowldged
+                    if cham_i >= self.EsmaCom_A0.rcvEM.argLen:
+                        continue
+
+                    # Store wall error byte from arguments
+                    wall_err_byte = self.EsmaCom_A0.rcvEM.ArgU.ui8[cham_i]
 
                     # Check if status not equal to 0
-                    if err_byte != 0: 
+                    if wall_err_byte != 0: 
 
-                        # Get wall numbers
-                        wall_numbers = [i for i in range(8) if err_byte & (1 << i)]
-                        MazeDB.logMsg('ERROR', "\t chamber[%d] walls[%s]", i, MazeDB.arrStr(wall_numbers))
+                        # Get wall numbers from byte
+                        wall_numbers = [i for i in range(8) if wall_err_byte & (1 << i)]
 
                         # Loop through wall numbers and set to error
-                        for wall_num in wall_numbers:
-                            self.MP.Chambers[i].Walls[wall_num].setStatus(MazePlot.Status.ERROR)
+                        for wall_i in wall_numbers:
+                            chamber.Walls[wall_i].setStatus(MazePlot.Status.ERROR)
+
+                        # Log walls with errors for this chamber
+                        MazeDB.logMsg('ERROR', "\t chamber[%d] walls[%s]", cham_i, MazeDB.arrStr(wall_numbers))
 
         #................ Process Ack Message ................ 
 
         # HANDSHAKE
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
+            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
 
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
-            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
 
-            # Set maze hardware status to enabled
-            self.MP.setStatus(MazePlot.Status.ENABLED)
-
-            # Set arduino list widget to error color
-            self._widget.ardListWidget.item(0).setForeground(MazePlot.Status.ENABLED.color)
+            # Set maze hardware status to initialized
+            self.MP.setStatus(MazePlot.Status.INITIALIZED)
 
             # Send INITIALIZE_CYPRESS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_CYPRESS)
 
         # INITIALIZE_CYPRESS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
-            # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = True
             MazeDB.logMsg('ATTN', "I2C INITIALIZED")
 
             # Loop through chambers and set enable flag for chamber and wall
-            for _, chamber in enumerate(self.MP.Chambers):
+            for cham_i, chamber in enumerate(self.MP.Chambers):
 
-                # Skip if chamber not set to Disabled (e.g., Error)
-                if chamber.status != MazePlot.Status.DISABLED:
+                # Set chambers not acknowldged to excluded and skip
+                if cham_i >= self.EsmaCom_A0.rcvEM.argLen:
+                    chamber.setStatus(MazePlot.Status.EXCLUDED)
+                    continue
+
+                # Skip if chamber is not in the uninitialized state (e.g., Excluded, Error or Warning)
+                if chamber.status != MazePlot.Status.UNINITIALIZED:
                     continue
                 
-                # Set corresponding chamber to enabled
-                chamber.setStatus(MazePlot.Status.ENABLED)
-
-                # Loop through walls and set to enabled
-                for _, wall in enumerate(chamber.Walls):
-                    wall.setStatus(MazePlot.Status.ENABLED)
+                # Set corresponding chamber to initialized
+                chamber.setStatus(MazePlot.Status.INITIALIZED)
 
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # INITIALIZE_WALLS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
-             # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = True
             MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
 
             # Loop through chambers and set enable flag for walls
-            for _, chamber in enumerate(self.MP.Chambers):
+            for cham_i, chamber in enumerate(self.MP.Chambers):
 
-                # Skip if chamber not set to Enabled
-                if chamber.status != MazePlot.Status.ENABLED:
+                # Skip if chamber is not in the itialized state (e.g., Excluded, Error or Warning)
+                if chamber.status != MazePlot.Status.INITIALIZED:
                     continue
 
                 # Loop through walls
                 for _, wall in enumerate(chamber.Walls):
 
-                    # Skip if wall not set to Disabled (e.g., Error)
-                    if wall.status != MazePlot.Status.DISABLED:
+                    # Skip if wall not set to uninitialized (e.g., Error)
+                    if wall.status != MazePlot.Status.UNINITIALIZED:
                         continue
 
-                    # Set walls to down
-                    wall.setStatus(MazePlot.Status.DOWN)
+                    # Set walls to initialized
+                    wall.setStatus(MazePlot.Status.INITIALIZED)
 
         # REINITIALIZE_ALL
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_ALL:
-            # Set the handshake flag
-            self.EsmaCom_A0.isEcatConnected = False
             MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
+
+            # Reset the handshake flag
+            self.EsmaCom_A0.isEcatConnected = False
 
         # Reset new message flag
         self.EsmaCom_A0.rcvEM.isNew = False
@@ -1428,7 +1431,7 @@ class Interface(Plugin):
                 self.MP.setStatus(MazePlot.Status.ERROR)
 
                 # Set arduino list widget to error color
-                self._widget.ardListWidget.item(0).setForeground(MazePlot.Status.ERROR.color)
+                self.MP.setStatus(MazePlot.Status.ERROR)
 
                 return
             
@@ -1439,7 +1442,7 @@ class Interface(Plugin):
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
             #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 3)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2)
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1572,9 +1575,6 @@ class Interface(Plugin):
             if not file_name.endswith(".csv"):
                 file_name += ".csv"
 
-            # The user has specified a file name, you can perform additional actions here
-            MazeDB.logMsg('INFO', "Selected file:", file_name)
-
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
             self.saveToCSV(file_name, WallConfig.make_num2byte_cw_list())
 
@@ -1617,9 +1617,9 @@ class Interface(Plugin):
                 csv_writer = csv.writer(csvfile)
                 for row in wall_config_list:
                     csv_writer.writerow(row)
-            MazeDB.logMsg('INFO', "Data saved to:", file_name)
+            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s", file_name)
         except Exception as e:
-            MazeDB.logMsg('ERROR', "Error saving data to CSV:", str(e))
+            MazeDB.logMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
@@ -1648,9 +1648,9 @@ class Interface(Plugin):
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
                 WallConfig.make_byte2num_cw_list(wall_byte_config_list)
-                MazeDB.logMsg('INFO', "Data loaded successfully.")
+                MazeDB.logMsg('INFO', "CSV: Data Loaded from File: %s", file_name)
         except Exception as e:
-            MazeDB.logMsg('ERROR', "Error loading data from CSV:", str(e))
+            MazeDB.logMsg('ERROR', "CSV: Loading Data Error: %s", str(e))
 
         # Update plot walls
         self.MP.updatePlotFromWallConfig()
