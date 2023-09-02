@@ -28,7 +28,7 @@ void Maze_Debug::printMsg(const char *p_fmt, ...)
 	// Handle input args
 	va_list args;
 	va_start(args, p_fmt);			   // Start retrieving additional arguments
-	_printMsg(MT::DEBUG, p_fmt, args); // Pass arguments to _printMsg with default message type
+	_printMsg(MT::INFO, p_fmt, args); // Pass arguments to _printMsg with default message type
 	va_end(args);
 }
 /// @overload: Option for including message type

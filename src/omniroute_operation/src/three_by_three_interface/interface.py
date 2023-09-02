@@ -56,7 +56,6 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # Setup variables
 N_CHAMBERS_INIT = 9  # number of chambers to initialize in maze
-N_CHAMBERS_RUN = 9  # number of chambers to run at a time
 N_WALL_ATTEMPTS = 3  # number of attempts to move a wall
 
 #======================== GLOBAL CLASSES ========================
@@ -1446,8 +1445,7 @@ class Interface(Plugin):
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
-            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS_INIT)
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2) # TEMP
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, [N_CHAMBERS_INIT, N_WALL_ATTEMPTS])
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)

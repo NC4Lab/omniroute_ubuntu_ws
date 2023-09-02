@@ -44,11 +44,12 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty)
 /// @brief Used to process new ROS ethercat msg argument data.
 void Wall_Operation::procEcatMessage()
 {
-	uint8_t msg_arg_arr[9]; // store message arguments
-	uint8_t arg_len = 0;	// store argument length
-	uint8_t n_chambers = 0; // store number of chambers
-	uint8_t i2c_status = 0; // track i2c status
-	uint8_t run_status = 0; // track run status
+	uint8_t msg_arg_arr[9];		// store message arguments
+	uint8_t arg_len = 0;		// store argument length
+	uint8_t n_chambers = 0;		// store number of chambers
+	uint8_t n_wall_attempt = 0; // number of attempts to move walls
+	uint8_t i2c_status = 0;		// track i2c status
+	uint8_t run_status = 0;		// track run status
 
 	// Check for new message
 	if (!EsmaCom.rcvEM.isNew)
@@ -63,6 +64,9 @@ void Wall_Operation::procEcatMessage()
 	{
 		// Get number of chambers
 		n_chambers = EsmaCom.rcvEM.ArgU.ui8[0];
+
+		// Get number of wall attempts
+		n_wall_attempt = EsmaCom.rcvEM.ArgU.ui8[1];
 	}
 
 	// MOVE_WALLS
@@ -685,20 +689,30 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t bit_val_set, uint8_t
 
 /// @brief The main workhorse of the class, which mannages initiating and compleating
 /// the wall movement for all active chambers based on either
-/// @ref Wall_Operation::getWallCmdSerial or @ref Wall_Operation::getWallCmdSerial.
 ///
 /// @param dt_timout: Time to attemp movement (ms) DEFAULT: 1000
 /// @return Success/error codes [0:success, 1:i2c error, 2:timeout, 3:unspecified]
 uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
+	uint32_t run_status = 0;					// track run status
+
+	// Pring success/warning message
+	if (run_status > 1)
+		_Dbg.printMsg(_Dbg.MT::WARNING, "\t Wall Movement Failed");
+	else
+		_Dbg.printMsg("\t FINISHED: All Wall Movement");
+}
+
+/// @brief Used to start wall movement
+///
+/// @return Success/error codes [0:no move, 1:success, 2:i2c error]
+uint8_t Wall_Operation::_moveStart()
+{
 	// Local vars
 	uint8_t resp = 0;
-	bool do_run = false;						// flag to run
-	uint8_t run_status = 0;						// track run status
-	uint8_t i2c_status = 0;						// track i2c status
-	bool is_timedout = 0;						// flag timeout
-	uint8_t do_move_check = 1;					// will track if all chamber movement done
-	uint32_t ts_timeout = millis() + dt_timout; // set timout
+	bool do_run = false;	// flag to run
+	uint8_t run_status = 0; // track run status
+	uint8_t i2c_status = 0; // track i2c status
 
 	// Update dynamic port/pin structs
 	_Dbg.dtTrack(1); // start timer
@@ -727,7 +741,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 		// Check if anything to move
 		if (wall_up_byte_mask > 0 || wall_down_byte_mask > 0)
-			do_run = true; // update flag
+			run_status = 1; // update flag
 		else
 			continue;
 
@@ -740,9 +754,25 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 			_Dbg.printMsg("\t\t Down%s", _Dbg.bitIndStr(wall_down_byte_mask));
 	}
 
-	// Bail if no wall set to move
-	if (!do_run)
-		return 0;
+	// Update run status
+	run_status = i2c_status == 0 ? run_status : i2c_status; // update flag
+
+	return run_status;
+}
+
+/// @brief Used to track the wall movement
+///
+/// @param dt_timout: Time to attemp movement (ms)
+/// @return Success/error codes [0:no move, 1:success, 2:i2c error, 3:timeout, 4:unspecified]
+uint8_t Wall_Operation::_moveTrack(uint32_t dt_timout)
+{
+	// Local vars
+	uint8_t resp = 0;
+	uint8_t run_status = 1;	   // track run status
+	uint8_t i2c_status = 0;	   // track i2c status
+	bool is_timedout = 0;	   // flag timeout
+	uint8_t do_move_check = 1; // will track if all chamber movement done
+	uint32_t ts_timeout = millis() + dt_timout; // set timout
 
 	// Check IO pins
 	while (!is_timedout && do_move_check != 0)
@@ -836,22 +866,16 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 				// Flag error for debugging and to stop all wall movement
 				uint8_t wall_n = C[cham_i].pmsDynIO.wall[prt_i][pin_i]; // get wall number
-				run_status = i2c_status != 0 ? 1 : is_timedout ? 2
-															   : 3; // set error flag
+				run_status = i2c_status != 0 ? 2 : is_timedout ? 3
+															   : 4; // set error flag
 				_Dbg.printMsg(_Dbg.MT::WARNING, "\t\t Movement failed: chamber[%d] wall{%d} cause[%s] dt[%s]", cham_i, wall_n,
-							  run_status == 1	? "i2c"
-							  : run_status == 2 ? "timedout"
+							  run_status == 2	? "i2c"
+							  : run_status == 3 ? "timedout"
 												: "unknown",
 							  _Dbg.dtTrack());
 			}
 		}
 	}
-
-	// Force stop all walls if error encountered
-	if (run_status != 0)
-		_Dbg.printMsg(_Dbg.MT::WARNING, "\t Wall Movement Failed");
-	else
-		_Dbg.printMsg("\t FINISHED: All Wall Movement");
 
 	return run_status; // return error
 }

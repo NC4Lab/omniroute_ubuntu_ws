@@ -144,6 +144,12 @@ public:
 	uint8_t moveWalls(uint32_t = 1000);
 
 private:
+	uint8_t _moveStart();
+
+private:
+	uint8_t _moveTrack(uint32_t);
+
+private:
 	uint8_t _forceStopWalls();
 
 public:
