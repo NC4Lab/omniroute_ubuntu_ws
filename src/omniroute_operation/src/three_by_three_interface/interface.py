@@ -39,6 +39,7 @@ from qt_gui.plugin import Plugin
 
 #======================== GLOBAL VARS ========================
 
+# Maze configuration variables
 DB_VERBOSE = True  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
@@ -52,7 +53,11 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     7: [1, 3, 5, 7, 6],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
-N_CHAMBERS = 9  # number of chambers in maze
+
+# Setup variables
+N_CHAMBERS_INIT = 9  # number of chambers to initialize in maze
+N_CHAMBERS_RUN = 9  # number of chambers to run at a time
+N_WALL_ATTEMPTS = 3  # number of attempts to move a wall
 
 #======================== GLOBAL CLASSES ========================
 
@@ -762,7 +767,7 @@ class WallConfig:
         cls.cw_wall_byte_list = cls.make_num2byte_cw_list()
 
         # Update U_arr with corresponding chamber and wall byte
-        _wall_byte_list = [0] * N_CHAMBERS
+        _wall_byte_list = [0] * len(WALL_MAP)
         #wall_arr = [0] * len(cls.wallConfigList)
         for cw in cls.cw_wall_byte_list:
             _wall_byte_list[cw[0]] = cw[1]
@@ -1441,8 +1446,8 @@ class Interface(Plugin):
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS)
-            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2) # TEMP
+            #self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, N_CHAMBERS_INIT)
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, 2) # TEMP
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)

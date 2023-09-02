@@ -25,7 +25,7 @@ bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Local
-uint8_t nCham = 9;	   ///< number of chambers being used [1-49]
+uint8_t nCham = 9;	   ///< number of chambers being used [1-9] Note: This will be overwritten by the Ethercat message
 uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries

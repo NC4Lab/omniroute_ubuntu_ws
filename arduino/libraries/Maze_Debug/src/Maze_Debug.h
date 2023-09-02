@@ -58,9 +58,6 @@ private:
 	const char *_timeStr(uint32_t);
 
 public:
-	const char *setGetStr(const char * = nullptr);
-
-public:
 	const char *arrayStr(uint8_t[], size_t);
 
 public:
@@ -77,12 +74,7 @@ public:
 
 public:
 	void printRegByte(uint8_t);
-
-public:
 	void printRegByte(uint8_t[], uint8_t);
-
-public:
-	void printRegByte(uint8_t[], uint8_t[], uint8_t);
 };
 
 #endif
