@@ -127,7 +127,7 @@ uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8
 	{
 		uint8_t byte_val_out_arr[1];
 		uint8_t resp = i2cRead(address, REG_GI0 + port, byte_val_out_arr, 1);
-		delay(1); // TEMP hack to deal with strange resp variable behavior
+		delay(1); // hack to deal with strange resp variable behavior
 		if (!resp)
 			r_bit_val_out = bitRead(byte_val_out_arr[0], pin);
 		return resp;

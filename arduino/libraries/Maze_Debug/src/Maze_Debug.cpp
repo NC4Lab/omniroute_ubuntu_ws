@@ -53,7 +53,7 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 /// @param args Variable arguments list.
 void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 {
-	const uint16_t buff_s = 200;
+	const uint16_t buff_s = 150;
 	static char buff[buff_s];
 	buff[0] = '\0';
 	static char buff_sym[50];
@@ -67,7 +67,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 
 	// Make header of '=' characters based on message length
 	int n = 30 - strlen(buff) / 2;
-	n = (n <= 0 ? 3 : n) < sizeof(buff_sym) ? n : sizeof(buff_sym) - 1; // Ensure n doesn't exceed buff_sym size
+	n = n < sizeof(buff_sym) ? n : sizeof(buff_sym) - 1; // Ensure n doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
 	memset(buff_sym, '=', n);
@@ -79,6 +79,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 
 	// Print message type
 	Serial.print(_message_type_str[msg_type_enum]);
+	// Serial.print("[INFO]"); // TEMP
 
 	// Print time string
 	Serial.print(" [");

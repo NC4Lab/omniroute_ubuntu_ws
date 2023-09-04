@@ -55,8 +55,9 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 }
 
 # Setup variables
-N_CHAMBERS_INIT = 9  # number of chambers to initialize in maze
-N_WALL_ATTEMPTS = 3  # number of attempts to move a wall
+N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze
+N_WALL_ATTEMPTS = 3  # number of attempts to move a walls
+PWM_DUTY_CYCLE = 254  # PWM duty cycle for wall motors
 
 #======================== GLOBAL CLASSES ========================
 
@@ -166,8 +167,8 @@ class EsmacatCom:
             reg_arr_si16 (list): Register array (signed int16).
         """
 
-        # Bail if any register values are equal to -1
-        if -1 in reg_arr_si16:
+        # Bail if any register values are all equal to 0 or -1
+        if all((x == 0 or x == -1) for x in reg_arr_si16):
             return False
 
         # Set register values in union uint16 type
@@ -521,13 +522,15 @@ class EsmacatCom:
         # Check register for garbage or incomplete data and copy register data into union
         if not self._uSetCheckReg(self.rcvEM, reg_arr_si16):
             return False
-
-        # # Skip leftover register entries and ethercat setup junk (e.g., ui16[0] == 65535)
-        # # Check if still waiting for handshake
-        # # Directly check union id entry for first message
-        # if self.isEcatConnected != 1 and \
-        #     self.rcvEM.RegU.ui16[0] != 1:
-        #     return False
+        
+        # Another check for garbage registry stuff
+        # Check if still waiting for handshake
+        # Directly check union id entry for first message
+        # Directly check union type entry for handshake (e.g., 1)
+        if self.isEcatConnected != 1 and \
+            (self.rcvEM.RegU.ui16[0] != 1 or \
+            self.rcvEM.RegU.ui8[2] != 1):
+            return False
 
         # Get message id and check for out of sequence messages
         if not self._uGetMsgID(self.rcvEM):
@@ -1445,7 +1448,7 @@ class Interface(Plugin):
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, [N_CHAMBERS_INIT, N_WALL_ATTEMPTS])
+            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, [N_CHAMBERS_INIT, N_WALL_ATTEMPTS, PWM_DUTY_CYCLE])
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)

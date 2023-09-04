@@ -26,6 +26,7 @@ class Wall_Operation
 public:
 	// -----------GENERAL-----------------
 	uint8_t nCham;	 // number of chambers [1-9]
+	uint8_t nWallAttempt; // number of attempts to move a walls
 	uint8_t pwmDuty; // pwm duty cycle [0-255]
 
 	// -----------CYPRESS-----------------
@@ -74,7 +75,7 @@ public:
 	{
 		uint8_t addr = 0;			   // chamber I2C address
 		uint8_t statusI2C = 0;		   // track I2C status errors for chamber
-		uint8_t statusRun = 0;		   // track run status for chamber
+		uint8_t statusRun = 0;		   // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]
 		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
 		uint8_t bitWallMoveFlag = 0;   // bitwise variable, current wall active flag [0:inactive, 1:active]
 		uint8_t bitWallPosition = 0;   // bitwise variable, current wall position [0:down, 1:up]
@@ -93,7 +94,7 @@ private:
 	// -----------METHODS-----------------
 
 public:
-	Wall_Operation(uint8_t, uint8_t);
+	Wall_Operation(uint8_t, uint8_t, uint8_t);
 
 public:
 	void procEcatMessage();
@@ -118,7 +119,7 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	void initSoftware(uint8_t = 255);
+	void initSoftware(uint8_t = 255, uint8_t = 255, uint8_t = 255);
 
 public:
 	uint8_t initCypress();
@@ -144,10 +145,10 @@ public:
 	uint8_t moveWalls(uint32_t = 1000);
 
 private:
-	uint8_t _moveStart();
+	uint8_t _moveRunPWM(uint8_t);
 
 private:
-	uint8_t _moveTrack(uint32_t);
+	uint8_t _moveCheckIO(uint8_t);
 
 private:
 	uint8_t _forceStopWalls();

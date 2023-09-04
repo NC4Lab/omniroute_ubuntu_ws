@@ -24,14 +24,15 @@
 bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
-// Local
-uint8_t nCham = 9;	   ///< number of chambers being used [1-9] Note: This will be overwritten by the Ethercat message
-uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
+// Wall opperation setup (these will be overwritten by the Ethercat message)
+uint8_t nCham = 9;	   ///< number of chambers being used [1-9] 
+uint8_t nWallAttempt; // number of attempts to move a walls [1-255] 
+uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255] 
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
 Cypress_Com CypCom;
-Wall_Operation WallOper(nCham, pwmDuty);
+Wall_Operation WallOper(nCham, nWallAttempt, pwmDuty);
 
 //=============== SETUP =================
 void setup()
@@ -70,10 +71,10 @@ void setup()
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 
-	// Scan connected I2C devices
-	Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
-	CypCom.i2cScan();
-	Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: I2C SCAN");
+	// // Scan connected I2C devices
+	// Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
+	// CypCom.i2cScan();
+	// Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: I2C SCAN");
 
 }
 
