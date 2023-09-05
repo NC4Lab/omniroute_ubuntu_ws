@@ -66,15 +66,16 @@ void Wall_Operation::procEcatMessage()
 	{
 		// Get software setup variables
 		uint8_t n_chambers = EsmaCom.rcvEM.ArgU.ui8[0];
-		uint8_t n_wall_attempt = EsmaCom.rcvEM.ArgU.ui8[1];
-		uint8_t pwm_duty = EsmaCom.rcvEM.ArgU.ui8[2];
+		uint8_t n_chamb_move_max = EsmaCom.rcvEM.ArgU.ui8[1];
+		uint8_t n_wall_attempt = EsmaCom.rcvEM.ArgU.ui8[2];
+		uint8_t pwm_duty = EsmaCom.rcvEM.ArgU.ui8[3];
 
 		// Set ethercat flag
 		_Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS CONNECTED");
 		EsmaCom.isEcatConnected = true;
 
 		// Initialize software
-		initSoftware(n_chambers, n_wall_attempt, pwm_duty);
+		initSoftware(n_chambers, n_chamb_move_max, n_wall_attempt, pwm_duty);
 	}
 
 	// INITIALIZE_CYPRESS
@@ -86,9 +87,8 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		run_status = initWalls(1); // run wall up
-		if (run_status <= 1)
-			run_status = initWalls(0); // run wall down
+		run_status = initWalls(1);								 // run wall up
+		run_status = run_status < 1 ? initWalls(0) : run_status; // run wall down
 	}
 
 	// REINITIALIZE_ALL
@@ -158,7 +158,7 @@ void Wall_Operation::procEcatMessage()
 
 	// NO ERROR
 	else
-		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NULL, msg_arg_arr, arg_len);
+		EsmaCom.writeEcatAck();
 
 	//............... Reinitialize Ecat ...............
 
@@ -389,8 +389,9 @@ void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_chamb_move_max, 
 		C[cham_i].bitWallUpdateFlag = 0;
 	}
 
-	if (n_chambers != 255 && n_chambers != 255 && n_chambers != 255)
-		_Dbg.printMsg(_Dbg.MT::ATTN, "SOFTWARE INITIALIZED FOR %d CHAMBERS", nCham);
+	if (is_full_init)
+		_Dbg.printMsg(_Dbg.MT::ATTN, "SOFTWARE INITIALIZED: N_CHAM[%d] CHAM_MOVE_MAX[%d] WALL_ATTEMPTS[%d] PWM_DUTY[%d] ",
+					  nCham, nChambMoveMax, nWallAttempt, pwmDuty);
 	else
 		_Dbg.printMsg(_Dbg.MT::ATTN, "SOFTWARE REINITIALIZED");
 }
