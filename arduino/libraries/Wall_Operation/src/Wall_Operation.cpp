@@ -13,12 +13,13 @@
 ///
 /// @param _nCham: Spcify number of chambers to track [1-49]
 /// @param _pwmDuty: Defualt duty cycle for all the pwm [0-255]
-Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nWallAttempt, uint8_t _pwmDuty)
+Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMoveMax, uint8_t _nWallAttempt, uint8_t _pwmDuty)
 {
 	// Store input variables
-	nCham = _nCham;				  // store number of chambers
-	nWallAttempt = _nWallAttempt; // store number of wall attempts
-	pwmDuty = _pwmDuty;			  // store pwm duty cycle
+	nCham = _nCham;
+	nChambMoveMax = _nChambMoveMax;
+	nWallAttempt = _nWallAttempt;
+	pwmDuty = _pwmDuty;
 
 	// Update chamber addressess
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
@@ -85,7 +86,9 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		run_status = initWalls(2); // move walls up and down
+		run_status = initWalls(1); // run wall up
+		if (run_status <= 1)
+			run_status = initWalls(0); // run wall down
 	}
 
 	// REINITIALIZE_ALL
@@ -357,15 +360,16 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// @brief Initialize/reset all relivant runtime variables to prepare for new session
 ///
 /// @param n_chambers: Specify number of chambers. DEFAULT: 255[ignore]
-void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_wall_attempt, uint8_t pwm_duty)
+void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_chamb_move_max, uint8_t n_wall_attempt, uint8_t pwm_duty)
 {
 	// flag if this is a full initilization
-	bool is_full_init = n_chambers != 255 && n_wall_attempt != 255 && pwm_duty != 255;
+	bool is_full_init = n_chambers != 255 && n_chamb_move_max != 255 && n_wall_attempt != 255 && pwm_duty != 255;
 
 	// Update wall opperation variables
 	if (is_full_init)
 	{
 		nCham = n_chambers;
+		nChambMoveMax = n_chamb_move_max;
 		nWallAttempt = n_wall_attempt;
 		pwmDuty = pwm_duty;
 	}
@@ -397,6 +401,9 @@ void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_wall_attempt, ui
 uint8_t Wall_Operation::initCypress()
 {
 	_Dbg.printMsg(_Dbg.MT::ATTN_START, "RUNNING: CYPRESS INITIALIZATION");
+
+	// Scan connected I2C devices
+	_CypCom.i2cScan();
 
 	// Loop through all chambers
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
@@ -455,80 +462,46 @@ uint8_t Wall_Operation::initCypress()
 
 /// @brief Initialize/reset Wall states
 ///
-/// @param init_walls: Specify wall iniialization [0=down, 1=up, 2=up/down].
-/// @note Running walls in both directions (init_walls=1) will allow the system to
+/// @param init_pos: Specify wall iniialization [0=down, 1=up].
+/// @note Running walls in both directions will allow the system to
 /// identify and flag any walls that are not moving properly.
 ///
 /// @return Success/error codes from @ref Wall_Operation::moveWalls())
-uint8_t Wall_Operation::initWalls(uint8_t init_walls)
+uint8_t Wall_Operation::initWalls(uint8_t init_pos)
 {
-	uint8_t run_status = 0;
+	uint8_t cham_run_cnt = 0; // track number of chambers that have run
 
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "RUNNING: WALL INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::ATTN_START, "RUNNING: WALL %s INITIALIZATION", init_pos == 0 ? "DOWN" : "UP");
+
+	//............... Set and Run Walls ...............
 
 	// Loop through all chambers
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{
+		// Set wall move
+		setWallMove(cham_i, init_pos);
+		cham_run_cnt++;
 
-		//............... Get/Set Wall State ...............
-		uint8_t byte_state;
-
-		// Get walls in down position
-		getWallState(cham_i, 0, C[cham_i].bitWallPosition);
-		_Dbg.printMsg("\t Down Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
-
-		// Get walls in up position
-		getWallState(cham_i, 1, C[cham_i].bitWallPosition);
-		_Dbg.printMsg("\t Up Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
-
-		// Store starting state/pos
-		C[cham_i].bitWallPosition = byte_state;
-
-		//............... Run Walls Up ...............
-		if (init_walls == 1 || init_walls == 2)
+		// Run walls once max reached
+		if (cham_run_cnt == nChambMoveMax || cham_run_cnt == nCham)
 		{
-			// Set walls to move up
-			if (setWallMove(cham_i, 1) == 1)
-			{
-				// Run move walls operation
-				moveWalls();
-				run_status = C[cham_i].statusRun > 1 ? C[cham_i].statusRun : run_status; // update run status
-			}
+			moveWalls();
+			cham_run_cnt = 0;
 		}
-
-		//............... Run Walls Down ...............
-		if (init_walls == 0 || init_walls == 2)
-		{
-			// Set walls to move down
-			if (setWallMove(cham_i, 0) == 1)
-			{
-				// Run move walls operation
-				moveWalls();
-				run_status = C[cham_i].statusRun > 1 ? C[cham_i].statusRun : run_status; // update run status
-			}
-		}
-
-		//............... Print Status ...............
-		if (C[cham_i].statusRun > 1)
-		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t FAILED: WALL INITIALIZATION: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
-			continue; // skip chamber if failed
-		}
-		else
-			_Dbg.printMsg("\t FINISHED: WALL INITIALIZATION: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
-
-		// // TEMP
-
-		// // Get walls in down position
-		// getWallState(cham_i, 0, C[cham_i].bitWallPosition);
-		// _Dbg.printMsg("\t Down Walls at End: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
-
-		// // Get walls in up position
-		// getWallState(cham_i, 1, C[cham_i].bitWallPosition);
-		// _Dbg.printMsg("\t Up Walls at End: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
 	}
 
-	_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: WALL INITIALIZATION");
+	//............... Check Status ...............
+
+	// Update overal run status and print
+	uint32_t run_status = 0;
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		run_status = C[cham_i].statusRun > 1 ? C[cham_i].statusRun : run_status;
+
+	// Print status
+	if (run_status > 1)
+		_Dbg.printMsg(_Dbg.MT::WARNING, "INCOMPLETE: WALL %s INITIALIZATION", init_pos == 0 ? "DOWN" : "UP");
+
+	_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: WALL %s INITIALIZATION", init_pos == 0 ? "DOWN" : "UP");
 	return run_status;
 }
 
@@ -764,7 +737,8 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 		size_t cham_i = cham_inc_arr[i]; // get chamber index
 
 		// Start move
-		C[cham_i].statusRun = _moveStart(cham_i);
+		uint8_t run_status = _moveStart(cham_i);
+		C[cham_i].statusRun = C[cham_i].statusRun <= 1 ? run_status : C[cham_i].statusRun; // update run status
 	}
 
 	//............... Check/Track Wall Move ...............
@@ -791,7 +765,8 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 				continue;
 
 			// Check wall movement status based on IO readings
-			C[cham_i].statusRun = _moveCheck(cham_i);
+			uint8_t run_status = _moveCheck(cham_i);
+			C[cham_i].statusRun = C[cham_i].statusRun <= 1 ? run_status : C[cham_i].statusRun; // update run status
 
 			// Update check flag and and timeout flag
 			do_move_check += C[cham_i].bitWallMoveFlag;

@@ -26,13 +26,14 @@ bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
 uint8_t nCham = 2;		  ///< number of chambers being used [1-9]
+uint8_t nChambMoveMax;	  // max number of chambers to move at once [1-nCham]
 uint8_t nWallAttempt = 3; // number of attempts to move a walls [1-255]
 uint8_t pwmDuty = 255;	  ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
 Cypress_Com CypCom;
-Wall_Operation WallOper(nCham, nWallAttempt, pwmDuty);
+Wall_Operation WallOper(nCham, nChambMoveMax, nWallAttempt, pwmDuty);
 
 //=============== SETUP =================
 void setup()
@@ -57,13 +58,9 @@ void setup()
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 
-	// Initalize Cypress Chips
-	WallOper.initCypress();
-
 	// // Scan connected I2C devices
-	// Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
 	// CypCom.i2cScan();
-	// Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: I2C SCAN");
+	// while(true);
 }
 
 //=============== LOOP ==================
@@ -72,26 +69,30 @@ void loop()
 
 	//............... ROS Controlled ...............
 
-	// // Check ethercat coms
-	// WallOper.EsmaCom.readEcatMessage();
+	// Check ethercat coms
+	WallOper.EsmaCom.readEcatMessage();
 
-	// // Process and exicute ethercat arguments
-	// WallOper.procEcatMessage();
+	// Process and exicute ethercat arguments
+	WallOper.procEcatMessage();
 
-	//............... Standalone Setup ...............
-	static bool init = 0;
-	if (!init)
-	{
-		init = 1;
-		Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
+	// //............... Standalone Setup ...............
+	// static bool init = 0;
+	// if (!init)
+	// {
+	// 	init = 1;
+	// 	Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
 
-		// Initalize Walls
-		WallOper.initWalls(2);
+	// 	// Initalize Cypress Chips
+	// 	WallOper.initCypress();
 
-		Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: STANDALONE SETUP");
-	}
+	// 	// Initalize Walls
+	// 	WallOper.initWalls(1); // Run wall up
+	// 	WallOper.initWalls(0); // Run wall down
 
-	//............... Cypress Testing ...............
+	// 	Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: STANDALONE SETUP");
+	// }
+
+	// //............... Cypress Testing ...............
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };
