@@ -774,6 +774,8 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 		// Track wall movement
 		while (!is_timedout && do_move_check != 0) // loop till finished or timed out
 		{
+			do_move_check = 0; // reset check flag
+
 			for (size_t i = 0; i < n_cham_inc; i++)
 			{
 				size_t cham_i = cham_inc_arr[i];
@@ -791,6 +793,10 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 				// Check for timeout
 				C[cham_i].statusRun = is_timedout ? 3 : C[cham_i].statusRun;
+
+				// // TEMP
+				// _Dbg.printMsg(_Dbg.MT::DEBUG, "\t\t TEST_______________Chamber[%d] Status[%d] do_move_check[%d] is_timedout[%d]",
+				// 			  cham_i, C[cham_i].statusRun, do_move_check, is_timedout);
 			}
 		}
 	}

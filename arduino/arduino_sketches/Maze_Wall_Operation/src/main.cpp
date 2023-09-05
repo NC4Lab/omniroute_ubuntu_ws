@@ -26,7 +26,7 @@ bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
 uint8_t nCham = 2;	   ///< number of chambers being used [1-9]
-uint8_t nWallAttempt;  // number of attempts to move a walls [1-255]
+uint8_t nWallAttempt = 3;  // number of attempts to move a walls [1-255]
 uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
@@ -84,6 +84,11 @@ void loop()
 
 		// Initalize Cypress Chips
 		WallOper.initCypress();
+
+		WallOper.setWallMove(0, 1);
+		WallOper.moveWalls();
+		while (true)
+			;
 
 		// WallOper.setWallMove(0, 1);
 		// WallOper.moveWalls();
