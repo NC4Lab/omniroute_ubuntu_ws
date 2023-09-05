@@ -25,9 +25,9 @@ bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
-uint8_t nCham = 2;	   ///< number of chambers being used [1-9]
-uint8_t nWallAttempt = 3;  // number of attempts to move a walls [1-255]
-uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
+uint8_t nCham = 2;		  ///< number of chambers being used [1-9]
+uint8_t nWallAttempt = 3; // number of attempts to move a walls [1-255]
+uint8_t pwmDuty = 255;	  ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
@@ -57,6 +57,9 @@ void setup()
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 
+	// Initalize Cypress Chips
+	WallOper.initCypress();
+
 	// // Scan connected I2C devices
 	// Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
 	// CypCom.i2cScan();
@@ -81,10 +84,6 @@ void loop()
 	{
 		init = 1;
 		Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
-
-		// Initalize Cypress Chips
-		WallOper.initCypress();
-
 
 		// Initalize Walls
 		WallOper.initWalls(2);

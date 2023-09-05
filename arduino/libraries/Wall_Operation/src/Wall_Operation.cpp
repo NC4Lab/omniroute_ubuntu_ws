@@ -470,19 +470,19 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{
 
-		// //............... Get/Set Wall State ...............
-		// uint8_t byte_state;
+		//............... Get/Set Wall State ...............
+		uint8_t byte_state;
 
-		// // Get walls in down position
-		// getWallState(cham_i, 0, C[cham_i].bitWallPosition);
-		// _Dbg.printMsg("\t Down Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
+		// Get walls in down position
+		getWallState(cham_i, 0, C[cham_i].bitWallPosition);
+		_Dbg.printMsg("\t Down Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
 
-		// // Get walls in up position
-		// getWallState(cham_i, 1, C[cham_i].bitWallPosition);
-		// _Dbg.printMsg("\t Up Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
+		// Get walls in up position
+		getWallState(cham_i, 1, C[cham_i].bitWallPosition);
+		_Dbg.printMsg("\t Up Walls at Start: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(byte_state));
 
-		// // Store starting state/pos
-		// C[cham_i].bitWallPosition = byte_state;
+		// Store starting state/pos
+		C[cham_i].bitWallPosition = byte_state;
 
 		//............... Run Walls Up ...............
 		if (init_walls == 1 || init_walls == 2)
@@ -698,7 +698,10 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t pos_state_set, uint8
 
 	// Bail if chamber is flagged with I2C error
 	if (C[cham_i].statusI2C != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::WARNING, "\t SKIPPED: SET WALL MOVE: I2C Error: chamber[%d] i2c_status[%d]", cham_i, C[cham_i].statusI2C);
 		return 0;
+	}
 
 	// Update chamber/wall info
 	uint8_t wall_up_byte_mask = ~C[cham_i].bitWallPosition & byte_wall_inc;	  // get walls to move up
@@ -707,15 +710,20 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t pos_state_set, uint8
 
 	// Bail if nothing to move
 	if (C[cham_i].bitWallMoveFlag == 0)
+	{
+		_Dbg.printMsg("\t SKIPPED: SET WALL MOVE: No Walls to Move: chamber[%d]", cham_i);
 		return 0;
+	}
+	else
+	{
+		_Dbg.printMsg("\t FINISHED: SET WALL MOVE: chamber[%d]", cham_i);
+		if (wall_up_byte_mask > 0)
+			_Dbg.printMsg("\t\t Up%s", _Dbg.bitIndStr(wall_up_byte_mask));
+		if (wall_down_byte_mask > 0)
+			_Dbg.printMsg("\t\t Down%s", _Dbg.bitIndStr(wall_down_byte_mask));
 
-	_Dbg.printMsg("\t FINISHED: Move Wall Setup: chamber[%d]", cham_i);
-	if (wall_up_byte_mask > 0)
-		_Dbg.printMsg("\t\t Up%s", _Dbg.bitIndStr(wall_up_byte_mask));
-	if (wall_down_byte_mask > 0)
-		_Dbg.printMsg("\t\t Down%s", _Dbg.bitIndStr(wall_down_byte_mask));
-
-	return 1;
+		return 1;
+	}
 }
 
 /// @brief The main workhorse of the class, which mannages initiating and compleating
@@ -729,11 +737,11 @@ uint8_t Wall_Operation::setWallMove(uint8_t cham_i, uint8_t pos_state_set, uint8
 /// @return Status/error codes [0:no move, 1:success, 2:error]
 uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 {
-	bool is_err = false; // track if any errors
 	uint8_t cham_inc_arr[nCham];
 	uint8_t n_cham_inc = 0;
 
-	// Check for chambers that need to be moved
+	//............... Store Chambers to Be Changed ...............
+
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 		if (C[cham_i].bitWallMoveFlag == 0) // check if any walls flagged for updating
 			continue;
@@ -749,59 +757,56 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	else
 		_Dbg.printMsg("\t RUNNING: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_inc_arr, n_cham_inc));
 
-	// Begin wall move
+	//............... Start Wall Move ...............
+
 	for (size_t i = 0; i < n_cham_inc; i++)
 	{
 		size_t cham_i = cham_inc_arr[i]; // get chamber index
 
 		// Start move
 		C[cham_i].statusRun = _moveStart(cham_i);
-
-		// Flag errors
-		is_err = is_err || C[cham_i].statusRun > 1;
 	}
 
-	// Skip move if error
-	if (!is_err)
+	//............... Check/Track Wall Move ...............
+
+	// Update timer
+	uint32_t ts_timeout = millis() + dt_timout; // set timout
+	_Dbg.dtTrack(1);
+
+	// Initialize flags
+	bool is_timedout = false;  // flag timeout
+	uint8_t do_move_check = 1; // will track if all chamber movement done
+
+	// Track wall movement
+	while (!is_timedout && do_move_check != 0) // loop till finished or timed out
 	{
+		do_move_check = 0; // reset check flag
 
-		// Update timer
-		uint32_t ts_timeout = millis() + dt_timout; // set timout
-		_Dbg.dtTrack(1);
-
-		// Initialize flags
-		bool is_timedout = false;  // flag timeout
-		uint8_t do_move_check = 1; // will track if all chamber movement done
-
-		// Track wall movement
-		while (!is_timedout && do_move_check != 0) // loop till finished or timed out
+		for (size_t i = 0; i < n_cham_inc; i++)
 		{
-			do_move_check = 0; // reset check flag
+			size_t cham_i = cham_inc_arr[i];
 
-			for (size_t i = 0; i < n_cham_inc; i++)
-			{
-				size_t cham_i = cham_inc_arr[i];
+			// Skip if no walls still flagged to move
+			if (C[cham_i].bitWallMoveFlag == 0)
+				continue;
 
-				// Skip if no walls still flagged to move
-				if (C[cham_i].bitWallMoveFlag == 0)
-					continue;
+			// Check wall movement status based on IO readings
+			C[cham_i].statusRun = _moveCheck(cham_i);
 
-				// Check wall movement status based on IO readings
-				C[cham_i].statusRun = _moveCheck(cham_i);
+			// Update check flag and and timeout flag
+			do_move_check += C[cham_i].bitWallMoveFlag;
+			is_timedout = millis() >= ts_timeout; // check for timeout
 
-				// Update check flag and and timeout flag
-				do_move_check += C[cham_i].bitWallMoveFlag;
-				is_timedout = millis() >= ts_timeout; // check for timeout
+			// Check for timeout
+			C[cham_i].statusRun = is_timedout ? 3 : C[cham_i].statusRun;
 
-				// Check for timeout
-				C[cham_i].statusRun = is_timedout ? 3 : C[cham_i].statusRun;
-
-				// // TEMP
-				// _Dbg.printMsg(_Dbg.MT::DEBUG, "\t\t TEST_______________chamber[%d] status[%d] do_move_check[%d] is_timedout[%d]",
-				// 			  cham_i, C[cham_i].statusRun, do_move_check, is_timedout);
-			}
+			// // TEMP
+			// _Dbg.printMsg(_Dbg.MT::DEBUG, "\t\t TEST_______________chamber[%d] status[%d] do_move_check[%d] is_timedout[%d]",
+			// 			  cham_i, C[cham_i].statusRun, do_move_check, is_timedout);
 		}
 	}
+
+	//............... Catch Any Errors ...............
 
 	// Check for any unifinished moves
 	for (size_t i = 0; i < n_cham_inc; i++)
