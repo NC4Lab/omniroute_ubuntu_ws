@@ -85,20 +85,9 @@ void loop()
 		// Initalize Cypress Chips
 		WallOper.initCypress();
 
-		WallOper.setWallMove(0, 1);
-		WallOper.moveWalls();
-		while (true)
-			;
-
-		// WallOper.setWallMove(0, 1);
-		// WallOper.moveWalls();
-		// WallOper.setWallMove(0, 0);
-		// WallOper.moveWalls();
-		// while (true)
-		// 	;
 
 		// Initalize Walls
-		WallOper.initWalls(1);
+		WallOper.initWalls(2);
 
 		Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: STANDALONE SETUP");
 	}

@@ -13,7 +13,7 @@
 ///
 /// @param _nCham: Spcify number of chambers to track [1-49]
 /// @param _pwmDuty: Defualt duty cycle for all the pwm [0-255]
-Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _pwmDuty, uint8_t _nWallAttempt)
+Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nWallAttempt, uint8_t _pwmDuty)
 {
 	// Store input variables
 	nCham = _nCham;				  // store number of chambers
@@ -85,7 +85,7 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		run_status = initWalls(1); // move walls up and down
+		run_status = initWalls(2); // move walls up and down
 	}
 
 	// REINITIALIZE_ALL
@@ -455,7 +455,7 @@ uint8_t Wall_Operation::initCypress()
 
 /// @brief Initialize/reset Wall states
 ///
-/// @param init_walls: Specify wall iniialization [0=down, 1=up/down].
+/// @param init_walls: Specify wall iniialization [0=down, 1=up, 2=up/down].
 /// @note Running walls in both directions (init_walls=1) will allow the system to
 /// identify and flag any walls that are not moving properly.
 ///
@@ -485,7 +485,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 		// C[cham_i].bitWallPosition = byte_state;
 
 		//............... Run Walls Up ...............
-		if (init_walls == 1)
+		if (init_walls == 1 || init_walls == 2)
 		{
 			// Set walls to move up
 			if (setWallMove(cham_i, 1) == 1)
@@ -497,7 +497,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 		}
 
 		//............... Run Walls Down ...............
-		if (init_walls == 0 || init_walls == 1)
+		if (init_walls == 0 || init_walls == 2)
 		{
 			// Set walls to move down
 			if (setWallMove(cham_i, 0) == 1)
