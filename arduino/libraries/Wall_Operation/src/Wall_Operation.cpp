@@ -511,11 +511,11 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 		//............... Print Status ...............
 		if (C[cham_i].statusRun > 1)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Wall Initialization failed: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "\t FAILED: WALL INITIALIZATION: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg("\t FINISHED: Wall Initialization: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
+			_Dbg.printMsg("\t FINISHED: WALL INITIALIZATION: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), C[cham_i].statusRun);
 
 		// // TEMP
 
@@ -743,9 +743,11 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 	// Check if anything to move
 	if (n_cham_inc == 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ATTN, "WALL MOVE: No Walls to Move");
+		_Dbg.printMsg("\t SKIPPED: MOVE WALL: No Walls to Move");
 		return 0;
 	}
+	else
+		_Dbg.printMsg("\t RUNNING: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_inc_arr, n_cham_inc));
 
 	// Begin wall move
 	for (size_t i = 0; i < n_cham_inc; i++)
@@ -795,7 +797,7 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 				C[cham_i].statusRun = is_timedout ? 3 : C[cham_i].statusRun;
 
 				// // TEMP
-				// _Dbg.printMsg(_Dbg.MT::DEBUG, "\t\t TEST_______________Chamber[%d] Status[%d] do_move_check[%d] is_timedout[%d]",
+				// _Dbg.printMsg(_Dbg.MT::DEBUG, "\t\t TEST_______________chamber[%d] status[%d] do_move_check[%d] is_timedout[%d]",
 				// 			  cham_i, C[cham_i].statusRun, do_move_check, is_timedout);
 			}
 		}
@@ -849,9 +851,9 @@ uint8_t Wall_Operation::moveWalls(uint32_t dt_timout)
 
 	// Pring success/warning message
 	if (run_status > 1)
-		_Dbg.printMsg(_Dbg.MT::WARNING, "\t Wall Movement Failed");
+		_Dbg.printMsg(_Dbg.MT::WARNING, "\t FAILED: MOVE WALL");
 	else
-		_Dbg.printMsg("\t FINISHED: All Wall Movement");
+		_Dbg.printMsg("\t FINISHED: MOVE WALL");
 
 	return run_status;
 }
