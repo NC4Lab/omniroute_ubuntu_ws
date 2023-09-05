@@ -51,29 +51,18 @@ void Esmacat_Com::UnionIndStruct::reset()
     ii16 = 0;
 }
 
-bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[])
+bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do_print_reg)
 {
-    // // Print register values TEMP
-    // static int id_last = 0;
-    // if (p_reg_arr[0] != id_last)
-    // {
-    //     _printEcatReg(_Dbg.MT::DEBUG, 0, p_reg_arr);
-    //     id_last = p_reg_arr[0];
-    // }
-
-    // // TEMP
-    // delay(1000);
-    // r_EM.RegU.ui16[0] = 1;
-    // r_EM.RegU.ui8[2] = 1;
-    // r_EM.RegU.ui8[3] = 0;
-    // r_EM.RegU.ui8[4] = 3;
-    // r_EM.RegU.ui8[3] = 1;
-    // r_EM.RegU.ui8[5] = 9;
-    // r_EM.RegU.ui8[6] = 3;
-    // r_EM.RegU.ui8[7] = 255;
-    // r_EM.RegU.ui8[8] = 254;
-    // r_EM.RegU.ui8[9] = 254;
-    // return true;
+    // Print changing register values
+    if (do_print_reg)
+    {
+        static int id_last = 0;
+        if (p_reg_arr[0] != id_last)
+        {
+            _printEcatReg(_Dbg.MT::DEBUG, 0, p_reg_arr);
+            id_last = p_reg_arr[0];
+        }
+    }
 
     // Check if all reg_arr values equal to 0 or -1
     bool is_garbage = true;

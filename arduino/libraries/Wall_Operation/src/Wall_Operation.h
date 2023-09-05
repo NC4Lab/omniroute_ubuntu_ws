@@ -22,14 +22,14 @@
 class Wall_Operation
 {
 
-	// ---------VARIABLES-----------------
+	// --------------VARIABLES--------------
 public:
-	// -----------GENERAL-----------------
-	uint8_t nCham;	 // number of chambers [1-9]
+	// ---------------GENERAL---------------
+	uint8_t nCham;		  // number of chambers [1-9]
 	uint8_t nWallAttempt; // number of attempts to move a walls
-	uint8_t pwmDuty; // pwm duty cycle [0-255]
+	uint8_t pwmDuty;	  // pwm duty cycle [0-255]
 
-	// -----------CYPRESS-----------------
+	// ---------------CYPRESS---------------
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -91,7 +91,7 @@ private:
 	Maze_Debug _Dbg;	 // local instance of Maze_Debug class
 	Cypress_Com _CypCom; // local instance of Cypress_Com class
 
-	// -----------METHODS-----------------
+	// ---------------METHODS---------------
 
 public:
 	Wall_Operation(uint8_t, uint8_t, uint8_t);
@@ -138,20 +138,20 @@ public:
 
 public:
 	uint8_t setWallMove(uint8_t, uint8_t);
-	uint8_t setWallMove(uint8_t, uint8_t, uint8_t);
 	uint8_t setWallMove(uint8_t, uint8_t, uint8_t[], uint8_t);
+	uint8_t setWallMove(uint8_t, uint8_t, uint8_t);
 
 public:
 	uint8_t moveWalls(uint32_t = 1000);
 
 private:
-	uint8_t _moveRunPWM(uint8_t);
+	uint8_t _moveStart(uint8_t);
 
 private:
-	uint8_t _moveCheckIO(uint8_t);
+	uint8_t _moveCheck(uint8_t);
 
-private:
-	uint8_t _forceStopWalls();
+public:
+	uint8_t getWallState(uint8_t, uint8_t, uint8_t &, bool = false);
 
 public:
 	uint8_t testWallIO(uint8_t, uint8_t[] = nullptr, uint8_t = 8);

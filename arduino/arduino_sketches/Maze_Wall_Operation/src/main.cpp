@@ -20,14 +20,14 @@
 
 //============ VARIABLES ===============
 
-// Global
+// Global variables
 bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
-uint8_t nCham = 9;	   ///< number of chambers being used [1-9] 
-uint8_t nWallAttempt; // number of attempts to move a walls [1-255] 
-uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255] 
+uint8_t nCham = 2;	   ///< number of chambers being used [1-9]
+uint8_t nWallAttempt;  // number of attempts to move a walls [1-255]
+uint8_t pwmDuty = 255; ///< PWM duty for all walls [0-255]
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
@@ -46,20 +46,6 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	// // TEMP
-	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
-	// Dbg.printMsg(Dbg.MT::ERROR, "ERROR");
-	// Dbg.printMsg(Dbg.MT::ATTN_START, "ATTN_START");
-	// Dbg.printMsg(Dbg.MT::INFO, "INFO");
-	// Dbg.printMsg(Dbg.MT::ATTN_END, "ATTN_END");
-	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
-	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
-	// Dbg.printMsg(Dbg.MT::DEBUG, "DEBUG");
-	// Dbg.printMsg(Dbg.MT::ATTN, "ATTN");
-	// Dbg.printMsg(Dbg.MT::WARNING, "WARNING");
-	// while (true)
-	// 	;
-
 // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO UNO");
@@ -75,18 +61,44 @@ void setup()
 	// Dbg.printMsg(Dbg.MT::ATTN_START, "RUNNNING: I2C SCAN");
 	// CypCom.i2cScan();
 	// Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: I2C SCAN");
-
 }
 
 //=============== LOOP ==================
 void loop()
 {
 
-	// Check ethercat coms
-	WallOper.EsmaCom.readEcatMessage();
+	//............... ROS Controlled ...............
 
-	// Process and exicute ethercat arguments
-	WallOper.procEcatMessage();
+	// // Check ethercat coms
+	// WallOper.EsmaCom.readEcatMessage();
+
+	// // Process and exicute ethercat arguments
+	// WallOper.procEcatMessage();
+
+	//............... Standalone Setup ...............
+	static bool init = 0;
+	if (!init)
+	{
+		init = 1;
+		Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
+
+		// Initalize Cypress Chips
+		WallOper.initCypress();
+
+		// WallOper.setWallMove(0, 1);
+		// WallOper.moveWalls();
+		// WallOper.setWallMove(0, 0);
+		// WallOper.moveWalls();
+		// while (true)
+		// 	;
+
+		// Initalize Walls
+		WallOper.initWalls(1);
+
+		Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: STANDALONE SETUP");
+	}
+
+	//............... Cypress Testing ...............
 
 	// // Test input pins
 	// uint8_t a_wall[1] = { 2 };

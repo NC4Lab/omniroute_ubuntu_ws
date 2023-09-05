@@ -21,7 +21,7 @@ extern bool DB_VERBOSE; ///< set this variable in your INO file to control debug
 class Maze_Debug
 {
 
-	// ---------VARIABLES-----------------
+	// ---------------VARIABLES---------------
 public:
 	const char _message_type_str[7][30] = {
 		"[INFO]",
@@ -43,7 +43,7 @@ public:
 		DEBUG = 6
 	};
 
-	// -----------METHODS-----------------
+	// ---------------METHODS---------------
 public:
 	Maze_Debug();
 
@@ -75,6 +75,9 @@ public:
 public:
 	void printRegByte(uint8_t);
 	void printRegByte(uint8_t[], uint8_t);
+
+public:
+	void printTest();
 };
 
 #endif

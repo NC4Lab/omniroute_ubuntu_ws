@@ -27,7 +27,7 @@ void Maze_Debug::printMsg(const char *p_fmt, ...)
 
 	// Handle input args
 	va_list args;
-	va_start(args, p_fmt);			   // Start retrieving additional arguments
+	va_start(args, p_fmt);			  // Start retrieving additional arguments
 	_printMsg(MT::INFO, p_fmt, args); // Pass arguments to _printMsg with default message type
 	va_end(args);
 }
@@ -66,7 +66,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	vsnprintf(buff, buff_s, p_fmt, args);
 
 	// Make header of '=' characters based on message length
-	int n = 30 - strlen(buff) / 2;
+	size_t n = 30 - strlen(buff) / 2;
 	n = n < sizeof(buff_sym) ? n : sizeof(buff_sym) - 1; // Ensure n doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
@@ -79,7 +79,6 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 
 	// Print message type
 	Serial.print(_message_type_str[msg_type_enum]);
-	// Serial.print("[INFO]"); // TEMP
 
 	// Print time string
 	Serial.print(" [");
@@ -144,7 +143,7 @@ const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 	static char buff1[50];
 	buff1[0] = '\0';
 	char buff2[10];
-	
+
 	strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
 	for (size_t i = 0; i < s; i++)
 	{
@@ -284,4 +283,20 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 		snprintf(buff, sizeof(buff), "\tport[%d]\n\t\t 76543210\n\t\t%s", i, binStr(p_byte_mask_in[i]));
 		Serial.println(buff);
 	}
+}
+
+/// @brief do print test
+void Maze_Debug::printTest()
+{
+	// Print each message type
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ERROR, "ERROR");
+	printMsg(MT::ATTN_START, "ATTN_START");
+	printMsg(MT::INFO, "INFO");
+	printMsg(MT::ATTN_END, "ATTN_END");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ATTN, "ATTN");
+	printMsg(MT::WARNING, "WARNING");
 }

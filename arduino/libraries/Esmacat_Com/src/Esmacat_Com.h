@@ -58,7 +58,7 @@ extern bool DO_ECAT_SPI; // set this variable in your INO file to control block 
 class Esmacat_Com
 {
 
-    // ---------VARIABLES-----------------
+    // --------------VARIABLES--------------
 public:
     bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 500; // time in ms to wait before final ecat register clear
@@ -151,13 +151,13 @@ private:
     static Maze_Debug _Dbg; // local instance of Maze_Debug class
     Esmacatshield _ESMA;    //< instance of Esmacatshield class
 
-    // -----------METHODS-----------------
+    // ---------------METHODS---------------
 
 public:
     Esmacat_Com();
 
 private:
-    bool _uSetCheckReg(EcatMessageStruct &, int[]);
+    bool _uSetCheckReg(EcatMessageStruct &, int[], bool = false);
 
 private:
     void _uSetMsgID(EcatMessageStruct &, uint16_t = 255);
