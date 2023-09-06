@@ -23,13 +23,12 @@ class Wall_Operation
 
 	// --------------VARIABLES--------------
 public:
-	// ---------------GENERAL---------------
-	uint8_t nCham;		   // number of chambers [1-9]
-	uint8_t nChambMoveMax; // max number of chambers to move at once [1-nCham]
-	uint8_t nAttemptMove;  // number of attempts to move a walls
-	uint8_t pwmDuty;	   // pwm duty cycle [0-255]
+	uint8_t nCham;			// number of chambers [1-9]
+	uint8_t nChambMoveMax;	// max number of chambers to move at once [1-nCham]
+	uint8_t nAttemptMove;	// number of attempts to move a walls
+	uint8_t pwmDuty;		// pwm duty cycle [0-255]
+	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
 
-	// ---------------CYPRESS---------------
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -56,13 +55,13 @@ public:
 
 	struct PinMapStruct // pin mapping orgnanized by port / pin number
 	{
-		uint8_t port[6];		// stores port numbers
-		uint8_t pin[6][8];		// stores pin numbers
-		uint8_t wall[6][8];		// stores wall numbers
-		uint8_t bitMask[6];		// stores registry mask byte for each used port
-		uint8_t bitMaskLong[6]; // stores registry mask byte for all ports in registry
-		uint8_t nPorts;			// stores number of ports in list
-		uint8_t nPins[6];		// stores number of pins in list
+		uint8_t nPortsInc;		// stores number of included ports in the arrays
+		uint8_t nPinsInc[6];	// stores number of included pins in the arrays for each included port
+		uint8_t portInc[6];		// stores included port numbers
+		uint8_t pinInc[6][8];	// stores included pin numbers for each included port
+		uint8_t wallInc[6][8];	// stores included wall numbers
+		uint8_t byteMaskInc[6]; // stores registry mask byte for each included port
+		uint8_t byteMaskAll[6]; // stores registry mask byte for all ports in registry
 	};
 	PinMapStruct pmsAllIO;	 // all io pins
 	PinMapStruct pmsAllPWM;	 // all pwm pins
@@ -73,15 +72,14 @@ public:
 
 	struct ChamberStruct // struct for tracking each chamber
 	{
-		uint8_t addr = 0;			   // chamber I2C address
-		uint8_t statusI2C = 0;		   // track I2C status errors for chamber
-		uint8_t statusRun = 0;		   // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]
-		uint8_t bitWallErrorFlag = 0;  // bitwise variable, flag move errors for a given wall
-		uint8_t bitWallMoveFlag = 0;   // bitwise variable, current wall active flag [0:inactive, 1:active]
-		uint8_t bitWallPosition = 0;   // bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallUpdateFlag = 0; // bitwise variable, flag that wall position should be update
-		PinMapStruct pmsDynPWM;		   // reusable dynamic instance for active PWM
-		PinMapStruct pmsDynIO;		   // reusable dynamic instance for active IO
+		uint8_t addr = 0;			  // chamber I2C address
+		uint8_t i2cStatus = 0;		  // track I2C status errors for chamber
+		uint8_t runStatus = 0;		  // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]
+		uint8_t bitWallPosition = 0;  // bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallRaiseFlag = 0; // bitwise variable, flag current walls that should be raised/active [0:inactive, 1:active]
+		uint8_t bitWallErrorFlag = 0; // bitwise variable, flag wall move errors [0:no error, 1:error]
+		PinMapStruct pmsActvPWM;	  // reusable dynamic instance for active PWM
+		PinMapStruct pmsActvIO;		  // reusable dynamic instance for active IO
 	};
 	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
 
@@ -94,7 +92,7 @@ private:
 	// ---------------METHODS---------------
 
 public:
-	Wall_Operation(uint8_t, uint8_t, uint8_t, uint8_t);
+	Wall_Operation(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
 
 public:
 	void procEcatMessage();
@@ -142,14 +140,17 @@ private:
 	uint8_t _setWallMove(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t moveWallsStaged(uint32_t = 1000);
+	uint8_t moveWallsStaged();
 
 public:
-	uint8_t moveWalls(uint32_t = 1000);
-	uint8_t moveWalls(uint8_t[], uint8_t, uint32_t = 1000);
+	uint8_t moveWalls();
+	uint8_t moveWalls(uint8_t[], uint8_t);
 
 private:
-	uint8_t _moveWalls(uint8_t[], uint8_t, uint32_t = 1000);
+	uint8_t _moveWalls(uint8_t[], uint8_t);
+
+private:
+	uint8_t _moveConductor(uint8_t[], uint8_t, uint8_t);
 
 private:
 	uint8_t _moveStart(uint8_t);
@@ -161,13 +162,13 @@ public:
 	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t getWallState(uint8_t, uint8_t, uint8_t &, bool = false);
+	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);
 
 public:
 	uint8_t testWallIO(uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
 public:
-	uint8_t testWallPWM(uint8_t, uint8_t[] = nullptr, uint8_t = 8, uint32_t = 500);
+	uint8_t testWallPWM(uint8_t, uint8_t[] = nullptr, uint8_t = 8, uint16_t = 500);
 
 public:
 	uint8_t testWallOperation(uint8_t, uint8_t[] = nullptr, uint8_t = 8);

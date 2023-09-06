@@ -87,8 +87,9 @@ public:
         HANDSHAKE = 1, // handshake must equal 1
         INITIALIZE_CYPRESS = 2,
         INITIALIZE_WALLS = 3,
-        SESTEM_RESET = 4,
-        MOVE_WALLS = 5,
+        REINITIALIZE_WALLS = 4,
+        SESTEM_RESET = 5,
+        MOVE_WALLS = 6,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {

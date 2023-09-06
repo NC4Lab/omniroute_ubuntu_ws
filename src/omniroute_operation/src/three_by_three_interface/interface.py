@@ -56,9 +56,10 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # Setup variables
 N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze
-N_CHAMBERS_MOVE_MAX = 3  # number of chambers to move at once
+N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
 N_ATTEMPT_MOVE = 3  # number of attempts to move a walls
-PWM_DUTY_CYCLE = 254  # PWM duty cycle for wall motors
+PWM_DUTY_CYCLE = 255  # PWM duty cycle for wall motors
+DT_MOVE_TIMEOUT = 100  # timeout for wall movement (centiseconds)
 
 # ======================== GLOBAL CLASSES ========================
 
@@ -82,8 +83,9 @@ class EsmacatCom:
         HANDSHAKE = 1  # handshake must equal 1
         INITIALIZE_CYPRESS = 2
         INITIALIZE_WALLS = 3
-        SESTEM_RESET = 4
-        MOVE_WALLS = 5
+        REINITIALIZE_WALLS = 4
+        SESTEM_RESET = 5
+        MOVE_WALLS = 6
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
@@ -1261,6 +1263,8 @@ class Interface(Plugin):
             self.qt_callback_plotSaveBtn_clicked)
         self._widget.plotSendBtn.clicked.connect(
             self.qt_callback_plotSendBtn_clicked)
+        self._widget.sysReinitBtn.clicked.connect(
+            self.qt_callback_sysReinitBtn_clicked)
         self._widget.sysQuiteBtn.clicked.connect(
             self.qt_callback_sysQuiteBtn_clicked)
 
@@ -1502,7 +1506,7 @@ class Interface(Plugin):
 
             # Send HANDSHAKE message to arduino with number of chambers to initialize
             self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, [
-                                             N_CHAMBERS_INIT, N_CHAMBERS_MOVE_MAX, N_ATTEMPT_MOVE, PWM_DUTY_CYCLE])
+                                             N_CHAMBERS_INIT, N_CHAMBERS_MOVE_MAX, N_ATTEMPT_MOVE, PWM_DUTY_CYCLE, DT_MOVE_TIMEOUT])
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1645,6 +1649,13 @@ class Interface(Plugin):
 
         # Sort entries
         WallConfig._sort_entries()
+
+        # Send the wall byte array to the arduino
+        self.EsmaCom_A0.writeEcatMessage(
+            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+        
+    def qt_callback_sysReinitBtn_clicked(self):
+        """ Callback function for the "Reinitialize" button."""
 
         # Send the wall byte array to the arduino
         self.EsmaCom_A0.writeEcatMessage(

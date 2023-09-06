@@ -141,7 +141,7 @@ const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 	if (s > 10)
 		return "";
 
-	static char buff1[50];
+	static char buff1[20];
 	buff1[0] = '\0';
 	char buff2[10];
 
@@ -168,7 +168,7 @@ const char *Maze_Debug::binStr(uint8_t b)
 	if (DB_VERBOSE == 0)
 		return "";
 
-	static char buff[10]; 
+	static char buff[12]; 
 	buff[0] = '\0';
 
 	snprintf(buff, sizeof(buff), "B%d%d%d%d%d%d%d%d", bitRead(b, 7), bitRead(b, 6), bitRead(b, 5), bitRead(b, 4), bitRead(b, 3), bitRead(b, 2), bitRead(b, 1), bitRead(b, 0));

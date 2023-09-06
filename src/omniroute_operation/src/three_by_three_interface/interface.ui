@@ -372,7 +372,7 @@ QGroupBox::title {
     </font>
    </property>
    <property name="title">
-    <string>System Information</string>
+    <string>System Options</string>
    </property>
    <widget class="QPushButton" name="sysQuiteBtn">
     <property name="geometry">
@@ -390,6 +390,24 @@ QGroupBox::title {
     </property>
     <property name="text">
      <string>QUIT</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sysReinitBtn">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>90</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Reinitialize</string>
     </property>
    </widget>
   </widget>
