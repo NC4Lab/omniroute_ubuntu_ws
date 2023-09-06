@@ -84,7 +84,7 @@ class EsmacatCom:
         INITIALIZE_CYPRESS = 2
         INITIALIZE_WALLS = 3
         REINITIALIZE_WALLS = 4
-        SESTEM_RESET = 5
+        RESET_SYSTEM = 5
         MOVE_WALLS = 6
 
     class ErrorType(Enum):
@@ -1429,8 +1429,8 @@ class Interface(Plugin):
                     # Set walls to initialized
                     wall.setStatus(MazePlot.Status.INITIALIZED)
 
-        # SESTEM_RESET
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.SESTEM_RESET:
+        # RESET_SYSTEM
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
             MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
 
             # Reset the handshake flag
@@ -1515,12 +1515,12 @@ class Interface(Plugin):
         """ Timer callback to incrementally shutdown session. """
 
         if self.cnt_shutdown_step == 0:
-            # Send SESTEM_RESET message to arduino
+            # Send RESET_SYSTEM message to arduino
             self.EsmaCom_A0.writeEcatMessage(
-                EsmacatCom.MessageType.SESTEM_RESET)
+                EsmacatCom.MessageType.RESET_SYSTEM)
 
         elif self.EsmaCom_A0.isEcatConnected == True:
-            # Wait for SESTEM_RESET message confirmation and restart timer
+            # Wait for RESET_SYSTEM message confirmation and restart timer
             self.timer_endSession.start(self.dt_shutdown_step*1000)
             return
 
@@ -1657,9 +1657,9 @@ class Interface(Plugin):
     def qt_callback_sysReinitBtn_clicked(self):
         """ Callback function for the "Reinitialize" button."""
 
-        # Send the wall byte array to the arduino
+        # Send reinitialize walls message
         self.EsmaCom_A0.writeEcatMessage(
-            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+            EsmacatCom.MessageType.REINITIALIZE_WALLS)
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""

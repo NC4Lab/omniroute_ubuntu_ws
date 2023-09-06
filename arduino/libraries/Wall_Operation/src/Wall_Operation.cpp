@@ -94,8 +94,15 @@ void Wall_Operation::procEcatMessage()
 		run_status = initWalls(2); // move walls up and down
 	}
 
-	// SESTEM_RESET
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SESTEM_RESET)
+	// REINITIALIZE_WALLS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_WALLS)
+	{
+		initSoftware(1);  // reinitialize software
+		run_status = initWalls(2); // move walls up and down
+	}
+
+	// RESET_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
 	{
 		run_status = initWalls(0);	// move walls down
 		i2c_status = initCypress(); // reinitialize cypress
@@ -164,7 +171,7 @@ void Wall_Operation::procEcatMessage()
 
 	//............... Reset Ecat ...............
 
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SESTEM_RESET)
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
 	{
 		// Reset software including Ecat message variables after final ack is sent
 		initSoftware(2);
