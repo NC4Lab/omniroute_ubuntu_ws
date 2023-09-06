@@ -3,7 +3,7 @@
 # ======================== PACKAGES ========================
 # Standard Library Imports
 import os
-import signal
+import glob
 import subprocess
 import time
 import math
@@ -57,7 +57,7 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 # Setup variables to be sent to the arduino
 N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze used for testing
 N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
-N_ATTEMPT_MOVE = 3  # number of attempts to move a walls
+N_ATTEMPT_MOVE = 1  # number of attempts to move a walls
 PWM_DUTY_CYCLE = 255  # PWM duty cycle for wall motors
 DT_MOVE_TIMEOUT = 100  # timeout for wall movement (centiseconds)
 
@@ -1199,14 +1199,21 @@ class Interface(Plugin):
         self.move_ui_window(
             self._widget, horizontal_alignment='left', vertical_alignment='top')
 
-        # Initialize file list text and index
+        # Get the absolute path of the current script file
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Specify the defualt directory
+        config_dir_default = os.path.abspath(os.path.join(
+            script_dir, '..', '..', '..', '..', 'config', 'paths'))
+        # Set to default config file path
+        self._widget.fileDirEdit.setText(config_dir_default)
+
+        # Initialize file list and index
         self.current_file_index = 0  # set to zero
-        self._widget.fileDirEdit.setText(self.getPathConfigDir())
+        self.csv_files = []
 
         # ................ Maze Setup ................
 
         # Calculate chamber width and wall line width and offset
-        maze_view_size = self._widget.plotMazeView.width()
         chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
         wall_width = chamber_width*0.1
 
@@ -1253,14 +1260,14 @@ class Interface(Plugin):
             self.qt_callback_fileListWidget_clicked)
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
+        self._widget.plotSaveBtn.clicked.connect(
+            self.qt_callback_plotSaveBtn_clicked)
         self._widget.filePreviousBtn.clicked.connect(
             self.qt_callback_filePreviousBtn_clicked)
         self._widget.fileNextBtn.clicked.connect(
             self.qt_callback_fileNextBtn_clicked)
         self._widget.plotClearBtn.clicked.connect(
             self.qt_callback_plotClearBtn_clicked)
-        self._widget.plotSaveBtn.clicked.connect(
-            self.qt_callback_plotSaveBtn_clicked)
         self._widget.plotSendBtn.clicked.connect(
             self.qt_callback_plotSendBtn_clicked)
         self._widget.sysReinitBtn.clicked.connect(
@@ -1573,30 +1580,63 @@ class Interface(Plugin):
     def qt_callback_fileBrowseBtn_clicked(self):
         """ Callback for the "Browse" button. """
 
+        # Get stored config file path
+        stored_dir_path = self._widget.fileDirEdit.text()
+
+        MazeDB.logMsg(
+            'DEBUG', "____________ stored_dir_path: %s", stored_dir_path)
+
         # Filter only CSV files
         filter = "CSV Files (*.csv)"
-        files, _ = QFileDialog.getOpenFileNames(
-            None, "Select files to add", self.getPathConfigDir(), filter)
+        csv_file_paths, _ = QFileDialog.getOpenFileNames(
+            None, "Select files to add", stored_dir_path, filter)
 
-        if files:
-            # Clear the list widget to remove any previous selections
-            self._widget.fileListWidget.clear()
+        if csv_file_paths:
 
-            # Extract the file names from the full paths and store them in self.files
-            self.files = [os.path.basename(file) for file in files]
+            # Update file list widget
+            self.updateListCSV(csv_file_paths)
 
-            # Add the selected file names to the list widget
-            self._widget.fileListWidget.addItems(self.files)
+            # Load CSV data from active file
+            self.loadFromCSV(0)
 
             # Enable the "Next" and "Previous" buttons if there is more than one file
-            if len(self.files) > 1:
+            if len(self.csv_files) > 1:
                 self._widget.fileNextBtn.setEnabled(True)
                 self._widget.filePreviousBtn.setEnabled(True)
             else:
                 self._widget.fileNextBtn.setEnabled(False)
                 self._widget.filePreviousBtn.setEnabled(False)
 
-            # Update file index and load csv
+    def qt_callback_plotSaveBtn_clicked(self):
+        """ Callback function for the "Save" button."""
+
+         # Get stored config file path
+        stored_dir_path = self._widget.fileDirEdit.text()
+
+        # Open the folder specified by in an explorer window
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        save_file_path, _ = QFileDialog.getSaveFileName(
+            None, "Save CSV File", stored_dir_path, "CSV Files (*.csv);;All Files (*)", options=options)
+
+        if save_file_path:
+            # Ensure the file name ends with ".csv"
+            if not save_file_path.endswith(".csv"):
+                save_file_path += ".csv"
+
+            # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
+            self.saveToCSV(save_file_path, WallConfig.make_num2byte_cw_list())
+
+            # Use glob to get a list of CSV file paths
+            save_dir_path = os.path.dirname(save_file_path)
+            search_pattern = os.path.join(save_dir_path, "*.csv")
+            csv_file_paths = glob.glob(search_pattern)
+
+            # Update file list widget
+            save_file_name = os.path.basename(save_file_path)
+            self.updateListCSV(csv_file_paths, save_file_name)
+
+            # Load CSV data from active filev
             self.loadFromCSV(0)
 
     def qt_callback_fileListWidget_clicked(self, item):
@@ -1626,24 +1666,6 @@ class Interface(Plugin):
         WallConfig.reset()  # reset all values in list
         self.MP.updatePlotFromWallConfig()  # update walls
 
-    def qt_callback_plotSaveBtn_clicked(self):
-        """ Callback function for the "Save" button."""
-
-        # Open the folder specified by self.getPathConfigDir() in an explorer window
-        folder_path = self.getPathConfigDir()
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        file_name, _ = QFileDialog.getSaveFileName(
-            None, "Save CSV File", folder_path, "CSV Files (*.csv);;All Files (*)", options=options)
-
-        if file_name:
-            # Ensure the file name ends with ".csv"
-            if not file_name.endswith(".csv"):
-                file_name += ".csv"
-
-            # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(file_name, WallConfig.make_num2byte_cw_list())
-
     def qt_callback_plotSendBtn_clicked(self):
         """ Callback function for the "Send" button."""
 
@@ -1671,32 +1693,34 @@ class Interface(Plugin):
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
-    def getPathConfigDir(self, file_name=None):
-        """ Function to get the path to the "config" directory four levels up from the current script file. """
+    def updateListCSV(self, csv_file_paths, selected_file_name=None):
+        """ 
+        Update the file list widget with the CSV files from csv_file_paths list.
+        If selected_file_name is provided, set the currentRow to that file.
+        """
 
-        # Get the absolute path of the current script file
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Create the path to the "config" directory four levels up
-        dir_abs_path = os.path.abspath(os.path.join(
-            script_dir, '..', '..', '..', '..', 'config', 'paths'))
-        
-        # Return file or dir path
-        if file_name is not None:
-            return os.path.join(dir_abs_path, file_name)
-        else:
-            return dir_abs_path
+        if csv_file_paths:
 
-    def saveToCSV(self, file_name, wall_config_list):
-        """ Function to save the wall config data to a CSV file """
+            # Extract the file names from the full paths and store them in self.files
+            self.csv_files = [os.path.basename(file) for file in csv_file_paths]
 
-        try:
-            with open(file_name, 'w', newline='') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                for row in wall_config_list:
-                    csv_writer.writerow(row)
-            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s", file_name)
-        except Exception as e:
-            MazeDB.logMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
+            # Get the directory of the first selected file
+            new_dir_path = os.path.dirname(csv_file_paths[0])
+
+            # Set the directory in the file path text box
+            self._widget.fileDirEdit.setText(new_dir_path)
+
+            # Update the file list widget
+            self._widget.fileListWidget.clear()
+            self._widget.fileListWidget.addItems(self.csv_files)
+
+            # If a selected file name is provided, set the currentRow to that file
+            if selected_file_name:
+                items = self._widget.fileListWidget.findItems(
+                    selected_file_name, Qt.MatchExactly)
+                if items:
+                    self.current_file_index = self._widget.fileListWidget.row(items[0])
+                    self._widget.fileListWidget.setCurrentRow(self.current_file_index)
 
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
@@ -1706,23 +1730,17 @@ class Interface(Plugin):
 
         # Loop back to the end or start if start or end reached, respectively
         if list_increment < 0 and self.current_file_index < 0:
-            self.current_file_index = len(self.files) - 1  # set to end
-        elif list_increment > 0 and self.current_file_index >= len(self.files):
+            self.current_file_index = len(self.csv_files) - 1  # set to end
+        elif list_increment > 0 and self.current_file_index >= len(self.csv_files):
             self.current_file_index = 0  # set to start
 
         # Set the current file in the list widget
         self._widget.fileListWidget.setCurrentRow(self.current_file_index)
 
         # Get the currently selected file path
-        file_name = self.files[self.current_file_index]
-        folder_path = self.getPathConfigDir(file_name)
-        file_path = os.path.join(folder_path, file_name)
-
-        # Update the file path in the file path text box
-        self._widget.fileDirEdit.setText(folder_path)
-
-        #TEMP
-        MazeDB.logMsg('DEBUG', "%s", file_path)
+        dir_path = self._widget.fileDirEdit.text()
+        file_name = self.csv_files[self.current_file_index]
+        file_path = os.path.join(dir_path, file_name)
 
         # Load and store CSV data
         try:
@@ -1738,6 +1756,19 @@ class Interface(Plugin):
 
         # Update plot walls
         self.MP.updatePlotFromWallConfig()
+
+    def saveToCSV(self, save_file_path, wall_config_list):
+        """ Function to save the wall config data to a CSV file """
+
+        try:
+            with open(save_file_path, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                for row in wall_config_list:
+                    csv_writer.writerow(row)
+            save_file_name = os.path.basename(save_file_path)
+            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s", save_file_name)
+        except Exception as e:
+            MazeDB.logMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 
