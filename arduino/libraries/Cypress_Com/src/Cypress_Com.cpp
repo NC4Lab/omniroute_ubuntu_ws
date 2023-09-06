@@ -385,6 +385,29 @@ uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port,
 	return resp;
 }
 
+/// @brief Wrapper for Wire::beginTransmission() to catch address value for debugging.
+///
+/// @param address I2C address for a given Cypress chip.
+void Cypress_Com::_beginTransmissionWrapper(uint8_t address)
+{
+	ADDR = address;
+	Wire.beginTransmission(address);
+}
+
+/// @brief Wrapper for Wire::endTransmission() to catch and print errors debugging.
+///
+/// @param send_stop Indicates whether or not a STOP should be performed on the bus [default=true].
+/// @param print_err Indicates whether or not to print error if received [default=true].
+///
+/// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
+uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
+{
+	uint8_t resp = Wire.endTransmission(send_stop);
+	if (resp != 0 && do_print_err)
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Error[%d] Address[%s]", resp, _Dbg.hexStr(ADDR));
+	return resp;
+}
+
 //------------------------ TESTING AND DEBUGGING METHODS ------------------------
 
 /// @brief Scans for I2C addresses and prints to Serial Output Window along with expected address.
@@ -445,25 +468,29 @@ uint8_t Cypress_Com::i2cScan()
 	return list_addr[cnt_addr];
 }
 
-/// @brief Wrapper for Wire::beginTransmission() to catch address value for debugging.
+/// @brief Print a single registry byte in binary format.
 ///
-/// @param address I2C address for a given Cypress chip.
-void Cypress_Com::_beginTransmissionWrapper(uint8_t address)
+/// @param byte_mask_in Byte value used as a mask with Cypress methods.
+void Cypress_Com::printRegByte(uint8_t byte_mask_in)
 {
-	ADDR = address;
-	Wire.beginTransmission(address);
-}
+	if (DB_VERBOSE == 0)
+		return;
 
-/// @brief Wrapper for Wire::endTransmission() to catch and print errors debugging.
+	uint8_t p_byte_mask_in[1] = {byte_mask_in};
+	printRegByte(p_byte_mask_in, 1);
+}
+/// @overload: Option to print an array of registry bytes in binary format.
 ///
-/// @param send_stop Indicates whether or not a STOP should be performed on the bus [default=true].
-/// @param print_err Indicates whether or not to print error if received [default=true].
-///
-/// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
+/// @param p_byte_mask_in Pointer to an array of byte values used as masks.
+/// @param s Size of the byte array.
+void Cypress_Com::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 {
-	uint8_t resp = Wire.endTransmission(send_stop);
-	if (resp != 0 && do_print_err)
-		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Error[%d] Address[%s]", resp, _Dbg.hexStr(ADDR));
-	return resp;
+	if (DB_VERBOSE == 0)
+		return;
+
+	_Dbg.printMsg("\tRegistry Bytes: ");
+	for (size_t i = 0; i < s; i++)
+	{
+		_Dbg.printMsg("\tport[%d]\n\t\t 76543210\n\t\t%s", i, _Dbg.binStr(p_byte_mask_in[i]));
+	}
 }

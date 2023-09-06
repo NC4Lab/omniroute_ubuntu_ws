@@ -24,10 +24,10 @@ class Wall_Operation
 	// --------------VARIABLES--------------
 public:
 	// ---------------GENERAL---------------
-	uint8_t nCham;		  // number of chambers [1-9]
+	uint8_t nCham;		   // number of chambers [1-9]
 	uint8_t nChambMoveMax; // max number of chambers to move at once [1-nCham]
-	uint8_t nAttemptMove; // number of attempts to move a walls
-	uint8_t pwmDuty;	  // pwm duty cycle [0-255]
+	uint8_t nAttemptMove;  // number of attempts to move a walls
+	uint8_t pwmDuty;	   // pwm duty cycle [0-255]
 
 	// ---------------CYPRESS---------------
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
@@ -134,21 +134,31 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 public:
-	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
-
-public:
 	uint8_t setWallMove(uint8_t, uint8_t);
 	uint8_t setWallMove(uint8_t, uint8_t, uint8_t[], uint8_t);
 	uint8_t setWallMove(uint8_t, uint8_t, uint8_t);
 
+private:
+	uint8_t _setWallMove(uint8_t, uint8_t, uint8_t);
+
+public:
+	uint8_t moveWallsStaged(uint32_t = 1000);
+
 public:
 	uint8_t moveWalls(uint32_t = 1000);
+	uint8_t moveWalls(uint8_t[], uint8_t, uint32_t = 1000);
+
+private:
+	uint8_t _moveWalls(uint8_t[], uint8_t, uint32_t = 1000);
 
 private:
 	uint8_t _moveStart(uint8_t);
 
 private:
 	uint8_t _moveCheck(uint8_t);
+
+public:
+	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
 
 public:
 	uint8_t getWallState(uint8_t, uint8_t, uint8_t &, bool = false);

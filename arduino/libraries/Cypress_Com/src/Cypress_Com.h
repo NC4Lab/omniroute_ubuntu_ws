@@ -111,14 +111,18 @@ public:
 public:
 	uint8_t setPortRegister(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 
-public:
-	uint8_t i2cScan();
-
 private:
 	void _beginTransmissionWrapper(uint8_t);
 
 private:
 	uint8_t _endTransmissionWrapper(bool = true, bool = true);
+
+public:
+	uint8_t i2cScan();
+
+public:
+	void printRegByte(uint8_t);
+	void printRegByte(uint8_t[], uint8_t);
 };
 
 #endif

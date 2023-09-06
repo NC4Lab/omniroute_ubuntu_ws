@@ -53,10 +53,11 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 /// @param args Variable arguments list.
 void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 {
-	const uint16_t buff_s = 150;
+	const uint8_t buff_s = 100;
 	static char buff[buff_s];
 	buff[0] = '\0';
-	static char buff_sym[50];
+	const uint8_t buff_sym_s = 31;
+	static char buff_sym[buff_sym_s];
 	buff_sym[0] = '\0';
 
 	// Check if message type is an attention message
@@ -66,8 +67,8 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	vsnprintf(buff, buff_s, p_fmt, args);
 
 	// Make header of '=' characters based on message length
-	size_t n = 30 - strlen(buff) / 2;
-	n = n < sizeof(buff_sym) && n < 30 ? n : 3; // Ensure n is not negative and doesn't exceed buff_sym size
+	size_t n = buff_sym_s - 1 - strlen(buff) / 2;
+	n = n < sizeof(buff_sym) && n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
 	memset(buff_sym, '=', n);
@@ -167,14 +168,12 @@ const char *Maze_Debug::binStr(uint8_t b)
 	if (DB_VERBOSE == 0)
 		return "";
 
-	static char buff[3][10]; // track up to 3 instances
-	static uint8_t i;
-	buff[i][0] = '\0';
+	static char buff[10]; 
+	buff[0] = '\0';
 
-	snprintf(buff[i], sizeof(buff[i]), "B%d%d%d%d%d%d%d%d", bitRead(b, 7), bitRead(b, 6), bitRead(b, 5), bitRead(b, 4), bitRead(b, 3), bitRead(b, 2), bitRead(b, 1), bitRead(b, 0));
-	uint8_t ii = i;
-	i = i == 2 ? 0 : i + 1;
-	return buff[ii];
+	snprintf(buff, sizeof(buff), "B%d%d%d%d%d%d%d%d", bitRead(b, 7), bitRead(b, 6), bitRead(b, 5), bitRead(b, 4), bitRead(b, 3), bitRead(b, 2), bitRead(b, 1), bitRead(b, 0));
+
+	return buff;
 }
 
 /// @brief Generate a hexadecimal representation of a value.
@@ -184,7 +183,7 @@ const char *Maze_Debug::binStr(uint8_t b)
 /// @return Formatted hex string, e.g., [0xFF].
 const char *Maze_Debug::hexStr(uint8_t h)
 {
-	static char buff[20];
+	static char buff[10];
 	buff[0] = '\0';
 
 	snprintf(buff, sizeof(buff), "0x%02X", h);
@@ -221,7 +220,7 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 	if (DB_VERBOSE == 0)
 		return "";
 
-	static char buff[20];
+	static char buff[15];
 	buff[0] = '\0';
 
 	if (byte_mask_in == 0)
@@ -253,36 +252,6 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 		}
 	}
 	return buff;
-}
-
-/// @brief Print a single registry byte in binary format.
-///
-/// @param byte_mask_in Byte value used as a mask with Cypress methods.
-void Maze_Debug::printRegByte(uint8_t byte_mask_in)
-{
-	if (DB_VERBOSE == 0)
-		return;
-
-	uint8_t p_byte_mask_in[1] = {byte_mask_in};
-	printRegByte(p_byte_mask_in, 1);
-}
-/// @overload: Option to print an array of registry bytes in binary format.
-///
-/// @param p_byte_mask_in Pointer to an array of byte values used as masks.
-/// @param s Size of the byte array.
-void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
-{
-	if (DB_VERBOSE == 0)
-		return;
-
-	static char buff[100];
-	buff[0] = '\0';
-	Serial.println("\tRegistry Bytes: ");
-	for (size_t i = 0; i < s; i++)
-	{
-		snprintf(buff, sizeof(buff), "\tport[%d]\n\t\t 76543210\n\t\t%s", i, binStr(p_byte_mask_in[i]));
-		Serial.println(buff);
-	}
 }
 
 /// @brief do print test
