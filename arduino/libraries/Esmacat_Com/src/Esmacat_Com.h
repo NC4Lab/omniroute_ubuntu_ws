@@ -11,10 +11,21 @@
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
 #include "Esmacatshield.h"
+#include "SPI.h"
+
+//============= GLOBALS ================
+#define READ_REG 0B00000000
+#define WRITE_REG 0B10000000
+#define SINGLE_SHOT 0B10111111
+#define LED_ON 0B00000100
+#define LED_OFF 0B11111011
 
 extern bool DO_ECAT_SPI; // set this variable in your INO file to control block SPI [0:dont start, 1:start]
 
 /// @brief This class deals with Ethercat communication between a Python master and the Arduino slave.
+///
+/// @remarks: Several methods were addapted from the Esmacatshield library to save space.
+/// @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
 ///
 /// @details: The Ethercat register a total of 8 16-bit entries to work with for each message.
 /// Some components of the message use the for 16-bit registry entry and some seperate it
@@ -122,7 +133,7 @@ public:
 
     struct EcatMessageStruct // class for handeling ethercat messages
     {
-        RegUnion RegU = {};        // Union for storing ethercat 8 16-bit reg entries
+        RegUnion RegU = {};   // Union for storing ethercat 8 16-bit reg entries
         UnionIndStruct getUI; // Union index handler for getting union data
         UnionIndStruct setUI; // Union index handler for getting union data
 
@@ -135,7 +146,7 @@ public:
         uint8_t msgFoot[2] = {0};                  // Ethercat message footer [254,254]
 
         uint8_t argLen = 0;   // Ethercat number of 8 bit message arguments
-        RegUnion ArgU = {};        // Union for storing message arguments
+        RegUnion ArgU = {};   // Union for storing message arguments
         UnionIndStruct argUI; // Union index handler for argument union data
 
         bool isNew = false; // Ethercat message new flag
@@ -150,11 +161,22 @@ public:
 private:
     static Maze_Debug _Dbg; // local instance of Maze_Debug class
     Esmacatshield _ESMA;    //< instance of Esmacatshield class
+    int ecatPinCS;           // chip select pin for ethercat shield
+    SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 
     // ---------------METHODS---------------
 
 public:
-    Esmacat_Com();
+    Esmacat_Com(int = 10);
+
+public:
+    void ecatWriteRegValue(int, int);
+
+public:
+    void ecatReadRegAll(int[8]);
+
+private:
+    int _ecatReadRegValue(int);
 
 private:
     bool _uSetCheckReg(EcatMessageStruct &, int[], bool = false);
@@ -204,7 +226,7 @@ public:
     void writeEcatAck(ErrorType, uint8_t[] = nullptr, uint8_t = 0);
 
 private:
-    void _printEcatReg(Maze_Debug::MT);    
+    void _printEcatReg(Maze_Debug::MT);
     void _printEcatReg(Maze_Debug::MT, int[]);
     void _printEcatReg(Maze_Debug::MT, RegUnion);
 };

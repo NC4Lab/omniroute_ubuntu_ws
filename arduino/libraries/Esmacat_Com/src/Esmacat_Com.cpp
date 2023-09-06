@@ -14,14 +14,88 @@ Maze_Debug Esmacat_Com::_Dbg; ///< static local instance of Maze_Debug class
 //========CLASS: Esmacat_Com==========
 
 /// @brief CONSTUCTOR: Create Esmacat_Com class instance
-Esmacat_Com::Esmacat_Com()
+Esmacat_Com::Esmacat_Com(int _ecat_cs)
 {
+    // Set Ecat chip select pin
+    ecatPinCS = _ecat_cs;
+    pinMode(_ecat_cs, OUTPUT);
+
+    // Set Ecat SPI settings
+    ecatSettingsSPI = SPISettings(3000000, MSBFIRST, SPI_MODE1);
+
     // Start SPI for Ethercat
     if (DO_ECAT_SPI)
-        _ESMA.start_spi();
+        SPI.begin();
 
     // Reset Ecat register data
     _resetReg();
+}
+
+/// @brief Write Ethercat ack message to Esmacat registers
+///
+/// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
+///
+/// @param write_addr: Address to write to.
+/// @param value: Value to write.
+void Esmacat_Com::ecatWriteRegValue(int write_addr, int value)
+{
+    static bool led_on = false;
+    uint8_t v1, v2;
+    SPI.beginTransaction(ecatSettingsSPI);
+    digitalWrite(ecatPinCS, LOW);
+    delayMicroseconds(500);
+    write_addr = write_addr << 3;
+    if (led_on)
+        SPI.transfer(((WRITE_REG | write_addr) | LED_ON) & SINGLE_SHOT);
+    else
+        SPI.transfer((WRITE_REG | write_addr) & LED_OFF & SINGLE_SHOT);
+    v1 = (value & 0xFF00) >> 8;
+    v2 = (value & 0x00FF);
+    SPI.transfer(v1);
+    SPI.transfer(v2);
+    digitalWrite(ecatPinCS, HIGH);
+    SPI.endTransaction();
+
+    delayMicroseconds(500);
+}
+
+/// @brief Write Ethercat ack message to Esmacat registers
+////
+/// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
+///
+/// @param p_out_reg: Pointer to array of 8 register values.
+void Esmacat_Com::ecatReadRegAll(int p_out_reg[8])
+{
+    p_out_reg[0] = _ecatReadRegValue(1);
+    p_out_reg[1] = _ecatReadRegValue(2);
+    p_out_reg[2] = _ecatReadRegValue(3);
+    p_out_reg[3] = _ecatReadRegValue(4);
+    p_out_reg[4] = _ecatReadRegValue(5);
+    p_out_reg[5] = _ecatReadRegValue(6);
+    p_out_reg[6] = _ecatReadRegValue(7);
+    p_out_reg[7] = _ecatReadRegValue(0);
+}
+
+/// @brief Read Ethercat register value
+////
+/// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
+///
+/// @param read_addr: Esmacat address to read from [0-7]. 
+int Esmacat_Com::_ecatReadRegValue(int read_addr)
+{
+    uint16_t v2, v3;
+    SPI.beginTransaction(ecatSettingsSPI);
+    digitalWrite(ecatPinCS, LOW);
+    delayMicroseconds(500);
+    read_addr = read_addr << 3;
+    SPI.transfer(READ_REG | read_addr);
+    v2 = SPI.transfer(0x00);
+    v3 = SPI.transfer(0x00);
+    digitalWrite(ecatPinCS, HIGH);
+    SPI.endTransaction();
+
+    delayMicroseconds(500);
+    return (v2 << 8) + v3;
 }
 
 /// @brief Update union 8 bit and 16 bit index
@@ -317,7 +391,7 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 void Esmacat_Com::_resetReg()
 {
     for (size_t i = 0; i < 8; i++)
-        _ESMA.write_reg_value(i, -1);
+        ecatWriteRegValue(i, -1);
 }
 
 /// @brief Check for, log and send any Ecat or runtime errors
@@ -396,7 +470,7 @@ void Esmacat_Com::readEcatMessage()
 
     // Read esmacat buffer to get register data
     int reg_arr[8];
-    _ESMA.get_ecat_registers(reg_arr);
+    ecatReadRegAll(reg_arr);
 
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))
@@ -484,7 +558,7 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
 
     // Write message
     for (size_t i = 0; i < 8; i++)
-        _ESMA.write_reg_value(i, sndEM.RegU.si16[i]);
+        ecatWriteRegValue(i, sndEM.RegU.si16[i]);
 
     // Reset new rcv message flag
     rcvEM.isNew = false;
@@ -502,7 +576,7 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum)
     RegUnion U;
 
     // Get register values directly from Ethercat
-    _ESMA.get_ecat_registers(U.si16);
+    ecatReadRegAll(U.si16);
 
     // Pass to other _printEcatU() method
     _printEcatReg(msg_type_enum, U);
