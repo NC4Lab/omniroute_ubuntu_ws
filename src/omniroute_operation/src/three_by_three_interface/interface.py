@@ -494,7 +494,7 @@ class EsmacatCom:
                 r_EM.isErr = True
 
                 # Print message as warning
-                MazeDB.logMsg(
+                MazeDB.printMsg(
                     'WARNING', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
                 self._printEcatReg('WARNING', r_EM.RegU)
 
@@ -513,16 +513,16 @@ class EsmacatCom:
         """
 
         # Print message data
-        MazeDB.logMsg(level, "\t Ecat 16-Bit Register:")
+        MazeDB.printMsg(level, "\t Ecat 16-Bit Register:")
         for i in range(8):
-            MazeDB.logMsg(level, "\t\t ui16[%d] [%d]", i, reg_u.ui16[i])
-        MazeDB.logMsg(level, "\t Ecat 8-Bit Register:")
+            MazeDB.printMsg(level, "\t\t ui16[%d] [%d]", i, reg_u.ui16[i])
+        MazeDB.printMsg(level, "\t Ecat 8-Bit Register:")
         for i in range(8):
             if i < 5:
-                MazeDB.logMsg(level, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i,
+                MazeDB.printMsg(level, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i,
                               2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
             else:
-                MazeDB.logMsg(level, "\t\t ui8[%d][%d] [%d][%d]", 2 * i,
+                MazeDB.printMsg(level, "\t\t ui8[%d][%d] [%d][%d]", 2 * i,
                               2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
     # ------------------------ PUBLIC METHODS ------------------------
@@ -589,7 +589,7 @@ class EsmacatCom:
         self.rcvEM.isNew = True
 
         # Print message
-        MazeDB.logMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
+        MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
                       self.rcvEM.msgID, self.rcvEM.msgTp.name)
         self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
 
@@ -640,16 +640,16 @@ class EsmacatCom:
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)
 
         # Print message
-        MazeDB.logMsg('INFO', "(%d)ECAT SENT: %s",
+        MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
                       self.sndEM.msgID, self.sndEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.sndEM.RegU)  # TEMP
+        self._printEcatReg('DEBUG', self.sndEM.RegU)  
 
 
 class MazeDB(QGraphicsView):
     """ MazeDebug class to plot the maze """
 
     @classmethod
-    def logMsg(cls, level, msg, *args):
+    def printMsg(cls, level, msg, *args):
         """ Log to ROS in color """
 
         # Exit if DB_VERBOSE is false
@@ -736,7 +736,7 @@ class WallConfig:
                     return
 
     @classmethod
-    def make_byte2num_cw_list(cls, _cw_wall_byte_list):
+    def make_byte2num_cw_list(cls, _cw_wall_byte_list, do_print = False):
         """
         Used to convert imported CSV with wall byte mask values to a list with wall numbers
 
@@ -760,9 +760,10 @@ class WallConfig:
 
             cls.cw_wall_num_list.append([chamber_num, wall_numbers])
 
-        # # loop thorugh wall_byte_config_list and print each element
-        # for row in cls.cw_wall_num_list:
-        #     MazeDB.logMsg('DEBUG', "[%d][%d]", row[0], row[1])  # TEMP
+        # loop thorugh wall_byte_config_list and print each element
+        if do_print:
+            for row in cls.cw_wall_num_list:
+                MazeDB.logMsg('DEBUG', "[%d][%d]", row[0], row[1])
 
         return cls.cw_wall_num_list
 
@@ -1128,15 +1129,6 @@ class Interface(Plugin):
     # Define signals
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
-    # Default system settings
-    systemDefaults = [
-        3,  # Number of chambers to initialize in maze used for testing
-        1,  # Number of chambers to move at once
-        2,  # Number of attempts to move a walls
-        255,  # PWM duty cycle for wall motors
-        1000  # Timeout for wall movement (ms)
-    ]
-
     # ------------------------ NESTED CLASSES ------------------------
 
     def __init__(self, context):
@@ -1209,15 +1201,34 @@ class Interface(Plugin):
         # Set to default config file path
         self._widget.fileDirEdit.setText(config_dir_default)
 
-        # Setup system settings edit boxes
-        self.getMazeSettings()
-
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
         self.csv_files = []
 
+        # Create an array of system setting edit boxes
+        self.settings_widgets = [
+            self._widget.sysSettingEdit_1, # Number of chambers to initialize in maze 
+            self._widget.sysSettingEdit_2, # Max number of chambers to move at once
+            self._widget.sysSettingEdit_3, # Max number of attempts to move a walls
+            self._widget.sysSettingEdit_4, # PWM duty cycle for wall motors
+            self._widget.sysSettingEdit_5, # Timeout for wall movement (ms)
+        ]
+
         # ................ Maze Setup ................
 
+        # Default system settings [default][min][max]
+        self.systemDefaults = [
+            [3, 1, 9],         # Number of chambers to initialize in maze used for testing
+            [1, 1, 0],         # Number of chambers to move at once
+            [2, 1, 3],         # Number of attempts to move a walls
+            [255, 0, 255],      # PWM duty cycle for wall motors
+            [1000, 1, 2000]    # Timeout for wall movement (ms)
+        ]
+        # Set max chmbers to move max to max number of chambers
+        self.systemDefaults[1][2] = self.systemDefaults[0][0]
+
+        # Setup/initialize system settings edit boxes
+        self.getMazeSettings()
 
         # Calculate chamber width and wall line width and offset
         chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
@@ -1263,7 +1274,7 @@ class Interface(Plugin):
 
         # QT UI object callback setup
         self._widget.fileListWidget.itemClicked.connect(
-            self.qt_callback_fileListWidget_clicked)
+            self.qt_callback_fileListWidget_item_clicked)
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
         self._widget.plotSaveBtn.clicked.connect(
@@ -1282,7 +1293,7 @@ class Interface(Plugin):
             self.qt_callback_sysReinitBtn_clicked)
         self._widget.sysQuiteBtn.clicked.connect(
             self.qt_callback_sysQuiteBtn_clicked)
-
+        
         # Disable reinit button
         self._widget.sysReinitBtn.setEnabled(False)
 
@@ -1316,7 +1327,7 @@ class Interface(Plugin):
         self.signal_Esmacat_read_maze_ard0_ease.connect(
             self.sig_callback_Esmacat_read_maze_ard0_ease)
 
-        MazeDB.logMsg('ATTN', "FINISHED INTERFACE SETUP")
+        MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
 
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
@@ -1324,22 +1335,22 @@ class Interface(Plugin):
         """ Used to parse new incoming ROS ethercat msg data. """
 
         # Print confirmation message
-        MazeDB.logMsg('INFO', "(%d)ECAT PROCESSING ACK: %s",
+        MazeDB.printMsg('INFO', "(%d)ECAT PROCESSING ACK: %s",
                       self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.msgTp.name)
 
         # ................ Process Ack Error First ................
 
         if self.EsmaCom_A0.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
 
-            MazeDB.logMsg(
+            MazeDB.printMsg(
                 'ERROR', "(%d)ECAT ERROR: %s", self.EsmaCom_A0.rcvEM.msgID, self.EsmaCom_A0.rcvEM.errTp.name)
 
             # I2C_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
 
-                # Update number of chambers setting
-                self.systemDefaults[0] = self.EsmaCom_A0.rcvEM.argLen
-                self.updateMazeSettings()
+                # Update number of chambers setting based on i2c errors
+                # self.systemDefaults[0][0] = self.EsmaCom_A0.rcvEM.argLen
+                # self.updateMazeSettings()
 
                 # Loop through chambers and set enable flag for chamber and wall
                 for cham_i, chamber in enumerate(self.MP.Chambers):
@@ -1358,7 +1369,7 @@ class Interface(Plugin):
                         chamber.setStatus(MazePlot.Status.ERROR)
 
                         # Log i2c error for this chamber
-                        MazeDB.logMsg(
+                        MazeDB.printMsg(
                             'ERROR', "\t chamber[%d] i2c_status[%d]", cham_i, i2c_status)
 
             # WALL_MOVE_FAILED
@@ -1387,19 +1398,19 @@ class Interface(Plugin):
                                 MazePlot.Status.ERROR)
 
                         # Log walls with errors for this chamber
-                        MazeDB.logMsg(
+                        MazeDB.printMsg(
                             'ERROR', "\t chamber[%d] walls[%s]", cham_i, MazeDB.arrStr(wall_numbers))
 
         # ................ Process Ack Message ................
 
         # HANDSHAKE
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
-            MazeDB.logMsg('ATTN', "SYSTEM INITIALIZED")
+            MazeDB.printMsg('ATTN', "SYSTEM INITIALIZED")
 
             # Update maze settings
-            for i in range(self.EsmaCom_A0.rcvEM.argLen):
-                self.systemDefaults[i] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
-            self.updateMazeSettings()
+            # for i in range(self.EsmaCom_A0.rcvEM.argLen):
+            #     self.systemDefaults[i][0] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+            # self.updateMazeSettings()
        
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
@@ -1413,7 +1424,7 @@ class Interface(Plugin):
 
         # INITIALIZE_CYPRESS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
-            MazeDB.logMsg('ATTN', "CYPRESS I2C INITIALIZED")
+            MazeDB.printMsg('ATTN', "CYPRESS I2C INITIALIZED")
 
             # Loop through chambers and set enable flag for chamber and wall
             for cham_i, chamber in enumerate(self.MP.Chambers):
@@ -1439,7 +1450,7 @@ class Interface(Plugin):
 
         # INITIALIZE_WALLS
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
-            MazeDB.logMsg('ATTN', "WALLS INITIALIZED")
+            MazeDB.printMsg('ATTN', "WALLS INITIALIZED")
 
             # Loop through chambers and set enable flag for walls
             for cham_i, chamber in enumerate(self.MP.Chambers):
@@ -1459,13 +1470,13 @@ class Interface(Plugin):
                     wall.setStatus(MazePlot.Status.INITIALIZED)
 
         # REINITIALIZE_SYSTEM
-        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
-            MazeDB.logMsg('ATTN', "SYSTEM REINITIALIZED")
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
+            MazeDB.printMsg('ATTN', "SYSTEM REINITIALIZED")
 
             # Update maze settings
-            for i in range(self.EsmaCom_A0.rcvEM.argLen):
-                self.systemDefaults[i] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
-            self.updateMazeSettings()
+            # for i in range(self.EsmaCom_A0.rcvEM.argLen):
+            #     self.systemDefaults[i][0] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+            # self.updateMazeSettings()
 
             # Send INITIALIZE_WALLS message again
             self.EsmaCom_A0.writeEcatMessage(
@@ -1473,7 +1484,7 @@ class Interface(Plugin):
 
         # RESET_SYSTEM
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
-            MazeDB.logMsg('ATTN', "ECAT COMMS DISCONNECTED")
+            MazeDB.printMsg('ATTN', "ECAT COMMS DISCONNECTED")
 
             # Reset the handshake flag
             self.EsmaCom_A0.isEcatConnected = False
@@ -1530,7 +1541,7 @@ class Interface(Plugin):
 
             # Give up after 3 attempts based on message ID
             if self.EsmaCom_A0.sndEM.msgID > 2:
-                MazeDB.logMsg(
+                MazeDB.printMsg(
                     'ERROR', "Handshake Failure Final [%d]", self.EsmaCom_A0.sndEM.msgID)
 
                 # Set maze hardware status to error
@@ -1543,7 +1554,7 @@ class Interface(Plugin):
 
             # Print warning if more than 1 message has been sent
             elif self.EsmaCom_A0.sndEM.msgID > 0:
-                MazeDB.logMsg(
+                MazeDB.printMsg(
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
             # Send HANDSHAKE message to arduino with current system settings
@@ -1569,39 +1580,39 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 1:
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
             self.signal_Esmacat_read_maze_ard0_ease.disconnect()
-            MazeDB.logMsg(
+            MazeDB.printMsg(
                 'INFO', "Disconnected from Esmacat read timer thread")
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/interface_test_node")
-            MazeDB.logMsg('INFO', "Killed specific nodes")
+            MazeDB.printMsg('INFO', "Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:
             # Kill all nodes (This will also kill this script's node)
             os.system("rosnode kill -a")
-            MazeDB.logMsg('INFO', "Killed all nodes")
+            MazeDB.printMsg('INFO', "Killed all nodes")
 
         elif self.cnt_shutdown_step == 4:
             # Process any pending events in the event loop
             QCoreApplication.processEvents()
-            MazeDB.logMsg('INFO', "Processed all events")
+            MazeDB.printMsg('INFO', "Processed all events")
 
         elif self.cnt_shutdown_step == 5:
             # Close the UI window
             self._widget.close()
-            MazeDB.logMsg('INFO', "Closed UI window")
+            MazeDB.printMsg('INFO', "Closed UI window")
 
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            MazeDB.logMsg('INFO', "Sent shutdown request to ROS master")
+            MazeDB.printMsg('INFO', "Sent shutdown request to ROS master")
 
         elif self.cnt_shutdown_step == 7:
             # End the application
             QApplication.quit()
-            MazeDB.logMsg('INFO', "Ended application")
+            MazeDB.printMsg('INFO', "Ended application")
             return  # Return here to prevent the timer from being restarted after the application is closed
 
         # Increment the shutdown step after ecat disconnected
@@ -1618,7 +1629,7 @@ class Interface(Plugin):
         # Get stored config file path
         stored_dir_path = self._widget.fileDirEdit.text()
 
-        MazeDB.logMsg(
+        MazeDB.printMsg(
             'DEBUG', "____________ stored_dir_path: %s", stored_dir_path)
 
         # Filter only CSV files
@@ -1674,7 +1685,7 @@ class Interface(Plugin):
             # Load CSV data from active filev
             self.loadFromCSV(0)
 
-    def qt_callback_fileListWidget_clicked(self, item):
+    def qt_callback_fileListWidget_item_clicked(self, item):
         """ Callback function for the file list widget."""
 
         # Get the index of the clicked item and set it as the current file index
@@ -1799,10 +1810,10 @@ class Interface(Plugin):
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
                 WallConfig.make_byte2num_cw_list(wall_byte_config_list)
-                MazeDB.logMsg(
+                MazeDB.printMsg(
                     'INFO', "CSV: Data Loaded from File: %s", file_name)
         except Exception as e:
-            MazeDB.logMsg('ERROR', "CSV: Loading Data Error: %s", str(e))
+            MazeDB.printMsg('ERROR', "CSV: Loading Data Error: %s", str(e))
 
         # Update plot walls
         self.MP.updatePlotFromWallConfig()
@@ -1816,10 +1827,10 @@ class Interface(Plugin):
                 for row in wall_config_list:
                     csv_writer.writerow(row)
             save_file_name = os.path.basename(save_file_path)
-            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s",
+            MazeDB.printMsg('INFO', "CSV: Data Saved to File: %s",
                           save_file_name)
         except Exception as e:
-            MazeDB.logMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
+            MazeDB.printMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 
@@ -1831,7 +1842,7 @@ class Interface(Plugin):
             unsigned 8-bit ctypes: List of maze settings
         """
 
-        def check_field(field, min, max, default):
+        def check_field(field, default, min, max):
             """ Function to check the value of a field """
 
             # Check for empty fields
@@ -1846,37 +1857,20 @@ class Interface(Plugin):
                 field.setText(str(default))
                 val = int(field.text())
             return val
+        
+        # Check the fieilds for each entry in settings_widgets
+        read_settings = [0] * len(self.systemDefaults)
+        for i, (field, defaults) in enumerate(zip(self.settings_widgets, self.systemDefaults)):
+            read_settings[i] = check_field(field, defaults[0], defaults[1], defaults[2])
 
-        # Check number of chambers to initialize in maze used for testing
-        n_cham_init = check_field(
-            self._widget.sysSettingEdit_1, min=1, max=9, default=self.systemDefaults[0])
-
-        # Check number of chambers to move at once
-        n_cham_move_max = check_field(
-            self._widget.sysSettingEdit_2, min=1, max=self.systemDefaults[0], default=self.systemDefaults[1])
-
-        # Check number of attempts to move a walls
-        n_attempt_move = check_field(
-            self._widget.sysSettingEdit_3, min=1, max=3, default=self.systemDefaults[2])
-
-        # Check PWM duty cycle for wall motors
-        pwm_duty = check_field(
-            self._widget.sysSettingEdit_4, min=0, max=255, default=self.systemDefaults[3])
-
-        # Check timeout for wall movement (ms)
-        dt_timeout = check_field(
-            self._widget.sysSettingEdit_5, min=1, max=2000, default=self.systemDefaults[4])
+        # Convert timeout to centiseconds so it can be sent as an unsigned 8-bit value
+        read_settings[i] = int(read_settings[i]/10)
 
         # Cast values to unsigned 8-bit ctypes
-        n_cham_init = ctypes.c_uint8(n_cham_init).value
-        n_cham_move_max = ctypes.c_uint8(n_cham_move_max).value
-        n_attempt_move = ctypes.c_uint8(n_attempt_move).value
-        pwm_duty = ctypes.c_uint8(pwm_duty).value
-        # Convert to centiseconds
-        dt_timeout = ctypes.c_uint8(int(dt_timeout/10)).value
+        read_settings = [ctypes.c_uint8(val).value for val in read_settings]
 
         # Return settings as a list
-        return [n_cham_init, n_cham_move_max, n_attempt_move, pwm_duty, dt_timeout]
+        return read_settings
     
     def updateMazeSettings(self):
         """ 
@@ -1885,19 +1879,21 @@ class Interface(Plugin):
         def set_field(field, val):
             """ Function to check the value of a field """
 
+            # Reeenable the field if it was disabled
             is_enabled = field.isEnabled()
             field.setEnabled(True)
+
+            # Set the field value and revert to existing state
             field.setText(str(val))
             field.setEnabled(is_enabled)
 
-        set_field(self._widget.sysSettingEdit_1, self.systemDefaults[0])
-        set_field(self._widget.sysSettingEdit_2, self.systemDefaults[1])
-        set_field(self._widget.sysSettingEdit_3, self.systemDefaults[2])
-        set_field(self._widget.sysSettingEdit_4, self.systemDefaults[3])
-        set_field(self._widget.sysSettingEdit_5, self.systemDefaults[4])
+        # Set the fieilds for each entry in settings_widgets
+        for i, (field, defaults) in enumerate(zip(self.settings_widgets, self.systemDefaults)):
+            set_field(field, defaults[0])
 
-        MazeDB.logMsg('INFO', "CHAMBERS[%d] MOVE_MAX[%d] ATTEMPTS[%d] PWM[%d] TIMEOUT[%d]",
-                    self.systemDefaults[0], self.systemDefaults[1], self.systemDefaults[2], self.systemDefaults[3], self.systemDefaults[4])
+        # Print current status
+        MazeDB.printMsg('INFO', "CHAMBERS[%d] MOVE_MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+                * [self.systemDefaults[i][0] for i in range(len(self.systemDefaults))])
 
     def move_ui_window(self, widget, horizontal_alignment, vertical_alignment):
         """
@@ -1951,7 +1947,7 @@ class Interface(Plugin):
     def closeEvent(self, event):
         """ Function to handle the window close event """
 
-        MazeDB.logMsg('INFO', "Closing window...")
+        MazeDB.printMsg('INFO', "Closing window...")
         # Call function to shut down the ROS session
         self.end_ros_session()
         event.accept()  # let the window close

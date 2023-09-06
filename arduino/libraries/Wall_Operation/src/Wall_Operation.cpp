@@ -404,7 +404,7 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 			C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
 
 		// Print software setup variables
-		_Dbg.printMsg("CHAMBERS[%d] MOVE_MAX[%d] ATTEMPTS[%d] PWM[%d] TIMEOUT[%d]",
+		_Dbg.printMsg("CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
 					  nCham, nChambMoveMax, nAttemptMove, pwmDuty, dtMoveTimeout);
 	}
 
