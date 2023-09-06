@@ -56,7 +56,7 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # Setup variables
 N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze
-N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
+N_CHAMBERS_MOVE_MAX = 3  # number of chambers to move at once
 N_ATTEMPT_MOVE = 3  # number of attempts to move a walls
 PWM_DUTY_CYCLE = 254  # PWM duty cycle for wall motors
 

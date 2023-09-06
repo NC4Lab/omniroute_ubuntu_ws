@@ -14,9 +14,6 @@
 		},
 		{
 			"path": "../../libraries/Esmacat_Com"
-		},
-		{
-			"path": "../../libraries/Esmacatshield"
 		}
 	],
 	"settings": {

@@ -10,7 +10,6 @@
 #include "Arduino.h"
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
-#include "Esmacatshield.h"
 #include "SPI.h"
 
 //============= GLOBALS ================
@@ -160,7 +159,6 @@ public:
 
 private:
     static Maze_Debug _Dbg; // local instance of Maze_Debug class
-    Esmacatshield _ESMA;    //< instance of Esmacatshield class
     int ecatPinCS;           // chip select pin for ethercat shield
     SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 

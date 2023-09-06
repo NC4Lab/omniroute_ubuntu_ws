@@ -11,7 +11,6 @@
 #include "Maze_Debug.h"
 #include "Cypress_Com.h"
 #include "Esmacat_Com.h"
-#include "Esmacatshield.h"
 
 /// @brief This class handles the actual opperation of the maze walls and Ethercat coms.
 ///

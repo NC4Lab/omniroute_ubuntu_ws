@@ -12,9 +12,6 @@
       "name": "Adam Lester"
     }
   ],
-  "dependencies": {
-    "Esmacatshield": ">=0.3.0 ../Esmacatshield"
-  },
   "frameworks": "*",
   "platforms": "*"
 }
