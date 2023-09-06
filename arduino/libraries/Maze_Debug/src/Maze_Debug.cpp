@@ -143,7 +143,8 @@ const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 
 	static char buff1[20];
 	buff1[0] = '\0';
-	char buff2[10];
+	static char buff2[5];
+	buff2[0] = '\0';
 
 	strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
 	for (size_t i = 0; i < s; i++)
@@ -220,38 +221,39 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 	if (DB_VERBOSE == 0)
 		return "";
 
-	static char buff[15];
-	buff[0] = '\0';
+	static char buff1[20];
+	buff1[0] = '\0';
+	static char buff2[5];
+	buff2[0] = '\0';
 
 	if (byte_mask_in == 0)
 	{
-		snprintf(buff, sizeof(buff), "[]"); // no ones in byte
+		snprintf(buff1, sizeof(buff1), "[]"); // no ones in byte
 	}
 	else
 	{
-		strncat(buff, "[", sizeof(buff) - strlen(buff) - 1);
+		strncat(buff1, "[", sizeof(buff1) - strlen(buff1) - 1);
 		for (size_t i = 0; i < 8; i++)
 		{
 			if (bitRead(byte_mask_in, i) == 1)
 			{
-				char buff_temp[10];
-				snprintf(buff_temp, sizeof(buff_temp), "%d,", i); // add comma right here
-				strncat(buff, buff_temp, sizeof(buff) - strlen(buff) - 1);
+				snprintf(buff2, sizeof(buff2), "%d,", i); // add comma right here
+				strncat(buff1, buff2, sizeof(buff1) - strlen(buff1) - 1);
 			}
 		}
 		// Remove the last comma and append closing bracket
-		size_t len = strlen(buff);
-		if (len > 1 && buff[len - 1] == ',')
+		size_t len = strlen(buff1);
+		if (len > 1 && buff1[len - 1] == ',')
 		{
-			buff[len - 1] = ']';
-			buff[len] = '\0';
+			buff1[len - 1] = ']';
+			buff1[len] = '\0';
 		}
 		else
 		{
-			strncat(buff, "]", sizeof(buff) - strlen(buff) - 1);
+			strncat(buff1, "]", sizeof(buff1) - strlen(buff1) - 1);
 		}
 	}
-	return buff;
+	return buff1;
 }
 
 /// @brief do print test

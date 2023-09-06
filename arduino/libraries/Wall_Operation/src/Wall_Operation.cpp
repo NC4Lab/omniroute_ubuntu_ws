@@ -70,7 +70,7 @@ void Wall_Operation::procEcatMessage()
 	// HANDSHAKE
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
 	{
-		// Get software setup variables to pass to initSoftware()
+		// Get system variables to pass to initSoftware()
 		uint8_t setup_arr[5] = {
 			EsmaCom.rcvEM.ArgU.ui8[0],
 			EsmaCom.rcvEM.ArgU.ui8[1],
@@ -94,10 +94,18 @@ void Wall_Operation::procEcatMessage()
 		run_status = initWalls(2); // move walls up and down
 	}
 
-	// REINITIALIZE_WALLS
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_WALLS)
+	// REINITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
 	{
-		initSoftware(1);  // reinitialize software
+		// Get system variables to pass to initSoftware()
+		uint8_t setup_arr[5] = {
+			EsmaCom.rcvEM.ArgU.ui8[0],
+			EsmaCom.rcvEM.ArgU.ui8[1],
+			EsmaCom.rcvEM.ArgU.ui8[2],
+			EsmaCom.rcvEM.ArgU.ui8[3],
+			EsmaCom.rcvEM.ArgU.ui8[4]};
+
+		initSoftware(1, setup_arr);		   // reinitialize software
 		run_status = initWalls(2); // move walls up and down
 	}
 
@@ -375,7 +383,11 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// @param setup_arr: Setup variables [n_chambers, n_chamb_move_max, n_attempt_move, pwm_duty]
 void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 {
-	// Update wall opperation variables for first initialization
+	// Log/print initialization status
+	_Dbg.printMsg(_Dbg.MT::ATTN_START, "SOFTWARE %s", init_level == 0 ? "INITIALIZED" : init_level == 1 ? "REINITIALIZED"
+																										: "RESET");
+
+	// Update wall opperation variables for initialization or reinitialization
 	if (init_level == 0)
 	{
 		if (setup_arr != nullptr)
@@ -390,6 +402,10 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 		// Update chamber address
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber address
 			C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
+
+		// Print software setup variables
+		_Dbg.printMsg("CHAMBERS[%d] MOVE_MAX[%d] ATTEMPTS[%d] PWM[%d] TIMEOUT[%d]",
+					  nCham, nChambMoveMax, nAttemptMove, pwmDuty, dtMoveTimeout);
 	}
 
 	// Reset all status tracking chamber variables
@@ -407,13 +423,6 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 		EsmaCom.initEcat(true); // connect to ethercat
 	else if (init_level == 2)
 		EsmaCom.initEcat(false); // reset/disconnect ethercat
-
-	// Log/print initialization status
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "SOFTWARE %s", init_level == 0 ? "INITIALIZED" : init_level == 1 ? "REINITIALIZED"
-																										: "RESET");
-	if (init_level == 0)
-		_Dbg.printMsg("SYSTEM SETTINGS: CHAMBERS[%d] MOVE_MAX[%d] ATTEMPTS[%d] PWM[%d] TIMEOUT[%d]",
-					  nCham, nChambMoveMax, nAttemptMove, pwmDuty, dtMoveTimeout);
 }
 
 /// @brief Initialize/reset Cypress hardware
@@ -752,7 +761,7 @@ uint8_t Wall_Operation::moveWallsStaged()
 		cham_arr_next[cham_set_cnt++] = cham_arr_all[cham_i];
 
 		// Run walls once max reached
-		if (cham_set_cnt == nChambMoveMax || cham_set_cnt == nCham)
+		if (cham_set_cnt == nChambMoveMax || cham_set_cnt == n_cham_all)
 		{
 			uint8_t resp = moveWalls(cham_arr_next, cham_set_cnt);
 			run_status = run_status <= 1 ? resp : run_status; // update run status

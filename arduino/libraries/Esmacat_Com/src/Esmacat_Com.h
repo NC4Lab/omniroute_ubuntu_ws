@@ -71,14 +71,14 @@ class Esmacat_Com
     // --------------VARIABLES--------------
 public:
     bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
-    const int dtEcatDisconnect = 750; // time in ms to wait before final ecat register clear
+    const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
     const char message_type_str[7][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
         "INITIALIZE_WALLS",
-        "REINITIALIZE_WALLS",
+        "REINITIALIZE_SYSTEM",
         "RESET_SYSTEM",
         "MOVE_WALLS",
     };
@@ -88,7 +88,7 @@ public:
         HANDSHAKE = 1, // handshake must equal 1
         INITIALIZE_CYPRESS = 2,
         INITIALIZE_WALLS = 3,
-        REINITIALIZE_WALLS = 4,
+        REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
         nMsgTypEnum

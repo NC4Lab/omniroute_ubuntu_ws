@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>789</width>
-    <height>759</height>
+    <height>842</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -88,7 +88,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>510</y>
+      <y>610</y>
       <width>90</width>
       <height>30</height>
      </rect>
@@ -106,7 +106,7 @@
     <property name="geometry">
      <rect>
       <x>170</x>
-      <y>510</y>
+      <y>610</y>
       <width>90</width>
       <height>30</height>
      </rect>
@@ -126,7 +126,7 @@
       <x>10</x>
       <y>120</y>
       <width>250</width>
-      <height>381</height>
+      <height>481</height>
      </rect>
     </property>
     <property name="font">
@@ -217,13 +217,132 @@
      </rect>
     </property>
    </widget>
+   <widget class="QLabel" name="ardStausStatLabel">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>100</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Maze Interface</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="systemGroupBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>660</y>
+     <width>770</width>
+     <height>171</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="title">
+    <string>System Options</string>
+   </property>
+   <widget class="QPushButton" name="sysQuiteBtn">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>120</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>QUIT</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sysReinitBtn">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>80</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Reinitialize</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="sysSettingEdit_1">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>120</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="sysSettingLabel_1">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>50</y>
+      <width>77</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <underline>false</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p align=&quot;center&quot; style=&quot;line-height:100%;&quot;&gt;Total&lt;br&gt;Chambers&lt;br&gt;[1-9]&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
    <widget class="QGroupBox" name="keyGroupBox">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>560</y>
+      <y>50</y>
       <width>90</width>
-      <height>81</height>
+      <height>101</height>
      </rect>
     </property>
     <property name="font">
@@ -251,9 +370,9 @@ QGroupBox::title {
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>60</y>
+       <y>80</y>
        <width>75</width>
-       <height>21</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -271,7 +390,7 @@ QGroupBox::title {
        <x>10</x>
        <y>0</y>
        <width>75</width>
-       <height>21</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -287,9 +406,9 @@ QGroupBox::title {
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>15</y>
+       <y>20</y>
        <width>75</width>
-       <height>21</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -305,9 +424,9 @@ QGroupBox::title {
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>45</y>
+       <y>60</y>
        <width>75</width>
-       <height>21</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -323,9 +442,9 @@ QGroupBox::title {
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>40</y>
        <width>75</width>
-       <height>21</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -338,48 +457,123 @@ QGroupBox::title {
      </property>
     </widget>
    </widget>
-   <widget class="QLabel" name="ardStausStatLabel">
+   <widget class="QLabel" name="sysSettingLabel_2">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>100</y>
-      <width>111</width>
-      <height>21</height>
+      <x>230</x>
+      <y>50</y>
+      <width>77</width>
+      <height>60</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <underline>false</underline>
      </font>
     </property>
     <property name="text">
-     <string>Maze Interface</string>
+     <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p align=&quot;center&quot; style=&quot;line-height:100%;&quot;&gt;Max Move&lt;br&gt;Chambers&lt;br&gt;[1-9]&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
-  </widget>
-  <widget class="QGroupBox" name="systemGroupBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>660</y>
-     <width>770</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
-   <property name="title">
-    <string>System Options</string>
-   </property>
-   <widget class="QPushButton" name="sysQuiteBtn">
+   <widget class="QLabel" name="sysSettingLabel_3">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>40</y>
-      <width>90</width>
+      <x>340</x>
+      <y>50</y>
+      <width>77</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <underline>false</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p align=&quot;center&quot; style=&quot;line-height:100%;&quot;&gt;Move&lt;br&gt;Attempts&lt;br&gt;[1-3]&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="sysSettingLabel_4">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>50</y>
+      <width>77</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <underline>false</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p align=&quot;center&quot; style=&quot;line-height:100%;&quot;&gt;PWM&lt;br&gt;Duty&lt;br&gt;[0-255]&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="sysSettingLabel_5">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>50</y>
+      <width>77</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <underline>false</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p align=&quot;center&quot; style=&quot;line-height:100%;&quot;&gt;Move&lt;br&gt;Timeout&lt;br&gt;[500-2000]&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="sysSettingEdit_2">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>120</y>
+      <width>80</width>
       <height>30</height>
      </rect>
     </property>
@@ -388,14 +582,68 @@ QGroupBox::title {
       <pointsize>12</pointsize>
      </font>
     </property>
-    <property name="text">
-     <string>QUIT</string>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="sysReinitBtn">
+   <widget class="QLineEdit" name="sysSettingEdit_3">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>340</x>
+      <y>120</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="sysSettingEdit_4">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>120</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="sysSettingEdit_5">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>120</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sysStartBtn">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
       <y>40</y>
       <width>100</width>
       <height>30</height>
@@ -407,7 +655,7 @@ QGroupBox::title {
      </font>
     </property>
     <property name="text">
-     <string>Reinitialize</string>
+     <string>START</string>
     </property>
    </widget>
   </widget>

@@ -54,13 +54,6 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
-# Setup variables to be sent to the arduino
-N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze used for testing
-N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
-N_ATTEMPT_MOVE = 1  # number of attempts to move a walls
-PWM_DUTY_CYCLE = 255  # PWM duty cycle for wall motors
-DT_MOVE_TIMEOUT = 100  # timeout for wall movement (centiseconds)
-
 # ======================== GLOBAL CLASSES ========================
 
 
@@ -83,7 +76,7 @@ class EsmacatCom:
         HANDSHAKE = 1  # handshake must equal 1
         INITIALIZE_CYPRESS = 2
         INITIALIZE_WALLS = 3
-        REINITIALIZE_WALLS = 4
+        REINITIALIZE_SYSTEM = 4
         RESET_SYSTEM = 5
         MOVE_WALLS = 6
 
@@ -142,7 +135,7 @@ class EsmacatCom:
             # Union index handler for getting union data
             self.setUI = EsmacatCom.UnionIndStruct()
 
-            self.msgID = 0
+            self.msgID = 0                          # Message ID
             self.msgID_last = 0                     # Last message ID
             self.msgTp = EsmacatCom.MessageType.MSG_NONE  # Message type
             self.msgFoot = [0, 0]                  # Message footer
@@ -1135,6 +1128,15 @@ class Interface(Plugin):
     # Define signals
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
+    # Default system settings
+    systemDefaults = [
+        3,  # Number of chambers to initialize in maze used for testing
+        1,  # Number of chambers to move at once
+        2,  # Number of attempts to move a walls
+        255,  # PWM duty cycle for wall motors
+        1000  # Timeout for wall movement (ms)
+    ]
+
     # ------------------------ NESTED CLASSES ------------------------
 
     def __init__(self, context):
@@ -1207,11 +1209,15 @@ class Interface(Plugin):
         # Set to default config file path
         self._widget.fileDirEdit.setText(config_dir_default)
 
+        # Setup system settings edit boxes
+        self.getMazeSettings()
+
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
         self.csv_files = []
 
         # ................ Maze Setup ................
+
 
         # Calculate chamber width and wall line width and offset
         chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
@@ -1270,10 +1276,15 @@ class Interface(Plugin):
             self.qt_callback_plotClearBtn_clicked)
         self._widget.plotSendBtn.clicked.connect(
             self.qt_callback_plotSendBtn_clicked)
+        self._widget.sysStartBtn.clicked.connect(
+            self.qt_callback_sysStartBtn_clicked)
         self._widget.sysReinitBtn.clicked.connect(
             self.qt_callback_sysReinitBtn_clicked)
         self._widget.sysQuiteBtn.clicked.connect(
             self.qt_callback_sysQuiteBtn_clicked)
+
+        # Disable reinit button
+        self._widget.sysReinitBtn.setEnabled(False)
 
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
@@ -1285,7 +1296,6 @@ class Interface(Plugin):
         self.timer_sendHandshake.timeout.connect(
             self.timer_callback_sendHandshake_once)
         self.timer_sendHandshake.setSingleShot(True)  # Run only once
-        self.timer_sendHandshake.start(self.dt_ecat_start*1000)  # (ms)
 
         # QT timer to send and check handshake confirmation after a delay
         self.timer_endSession = QTimer()
@@ -1326,6 +1336,10 @@ class Interface(Plugin):
 
             # I2C_FAILED
             if self.EsmaCom_A0.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
+
+                # Update number of chambers setting
+                self.systemDefaults[0] = self.EsmaCom_A0.rcvEM.argLen
+                self.updateMazeSettings()
 
                 # Loop through chambers and set enable flag for chamber and wall
                 for cham_i, chamber in enumerate(self.MP.Chambers):
@@ -1380,8 +1394,13 @@ class Interface(Plugin):
 
         # HANDSHAKE
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
-            MazeDB.logMsg('ATTN', "ECAT COMMS CONNECTED")
+            MazeDB.logMsg('ATTN', "SYSTEM INITIALIZED")
 
+            # Update maze settings
+            for i in range(self.EsmaCom_A0.rcvEM.argLen):
+                self.systemDefaults[i] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+            self.updateMazeSettings()
+       
             # Set the handshake flag
             self.EsmaCom_A0.isEcatConnected = True
 
@@ -1411,6 +1430,9 @@ class Interface(Plugin):
                 # Set corresponding chamber to initialized
                 chamber.setStatus(MazePlot.Status.INITIALIZED)
 
+            # Disable text edit for total number of chambers
+            self._widget.sysSettingEdit_1.setEnabled(False)
+
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_WALLS)
@@ -1435,6 +1457,19 @@ class Interface(Plugin):
 
                     # Set walls to initialized
                     wall.setStatus(MazePlot.Status.INITIALIZED)
+
+        # REINITIALIZE_SYSTEM
+        if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
+            MazeDB.logMsg('ATTN', "SYSTEM REINITIALIZED")
+
+            # Update maze settings
+            for i in range(self.EsmaCom_A0.rcvEM.argLen):
+                self.systemDefaults[i] = self.EsmaCom_A0.rcvEM.ArgU.ui8[i]
+            self.updateMazeSettings()
+
+            # Send INITIALIZE_WALLS message again
+            self.EsmaCom_A0.writeEcatMessage(
+                EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # RESET_SYSTEM
         if self.EsmaCom_A0.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
@@ -1511,9 +1546,9 @@ class Interface(Plugin):
                 MazeDB.logMsg(
                     'WARNING', "Handshake Failure [%d]", self.EsmaCom_A0.sndEM.msgID)
 
-            # Send HANDSHAKE message to arduino with number of chambers to initialize
-            self.EsmaCom_A0.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE, [
-                                             N_CHAMBERS_INIT, N_CHAMBERS_MOVE_MAX, N_ATTEMPT_MOVE, PWM_DUTY_CYCLE, DT_MOVE_TIMEOUT])
+            # Send HANDSHAKE message to arduino with current system settings
+            self.EsmaCom_A0.writeEcatMessage(
+                EsmacatCom.MessageType.HANDSHAKE, self.getMazeSettings())
 
             # Restart check/send timer
             self.timer_sendHandshake.start(self.dt_ecat_check*1000)
@@ -1610,7 +1645,7 @@ class Interface(Plugin):
     def qt_callback_plotSaveBtn_clicked(self):
         """ Callback function for the "Save" button."""
 
-         # Get stored config file path
+        # Get stored config file path
         stored_dir_path = self._widget.fileDirEdit.text()
 
         # Open the folder specified by in an explorer window
@@ -1676,12 +1711,24 @@ class Interface(Plugin):
         self.EsmaCom_A0.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
 
+    def qt_callback_sysStartBtn_clicked(self):
+        """ Callback function for the "Start" button."""
+
+        # Start handshake callback timer imidiatly
+        self.timer_sendHandshake.start(0)
+
+        # Disable Start button
+        self._widget.sysStartBtn.setEnabled(False)
+
+        # Enable Reinitialize button
+        self._widget.sysReinitBtn.setEnabled(True)
+
     def qt_callback_sysReinitBtn_clicked(self):
         """ Callback function for the "Reinitialize" button."""
 
-        # Send reinitialize walls message
+        # Send reinitialize walls message with current system settings
         self.EsmaCom_A0.writeEcatMessage(
-            EsmacatCom.MessageType.REINITIALIZE_WALLS)
+            EsmacatCom.MessageType.REINITIALIZE_SYSTEM, self.getMazeSettings())
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
@@ -1702,7 +1749,8 @@ class Interface(Plugin):
         if csv_file_paths:
 
             # Extract the file names from the full paths and store them in self.files
-            self.csv_files = [os.path.basename(file) for file in csv_file_paths]
+            self.csv_files = [os.path.basename(
+                file) for file in csv_file_paths]
 
             # Get the directory of the first selected file
             new_dir_path = os.path.dirname(csv_file_paths[0])
@@ -1719,8 +1767,10 @@ class Interface(Plugin):
                 items = self._widget.fileListWidget.findItems(
                     selected_file_name, Qt.MatchExactly)
                 if items:
-                    self.current_file_index = self._widget.fileListWidget.row(items[0])
-                    self._widget.fileListWidget.setCurrentRow(self.current_file_index)
+                    self.current_file_index = self._widget.fileListWidget.row(
+                        items[0])
+                    self._widget.fileListWidget.setCurrentRow(
+                        self.current_file_index)
 
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
@@ -1766,23 +1816,97 @@ class Interface(Plugin):
                 for row in wall_config_list:
                     csv_writer.writerow(row)
             save_file_name = os.path.basename(save_file_path)
-            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s", save_file_name)
+            MazeDB.logMsg('INFO', "CSV: Data Saved to File: %s",
+                          save_file_name)
         except Exception as e:
             MazeDB.logMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 
+    def getMazeSettings(self):
+        """ 
+        Function to get the maze settings from the UI 
+
+        Returns:
+            unsigned 8-bit ctypes: List of maze settings
+        """
+
+        def check_field(field, min, max, default):
+            """ Function to check the value of a field """
+
+            # Check for empty fields
+            if field.text() == "":
+                field.setText(str(default))
+            # Check if values are integers and in range
+            try:
+                val = int(field.text())
+                if val < min or val > max:
+                    raise ValueError
+            except ValueError:
+                field.setText(str(default))
+                val = int(field.text())
+            return val
+
+        # Check number of chambers to initialize in maze used for testing
+        n_cham_init = check_field(
+            self._widget.sysSettingEdit_1, min=1, max=9, default=self.systemDefaults[0])
+
+        # Check number of chambers to move at once
+        n_cham_move_max = check_field(
+            self._widget.sysSettingEdit_2, min=1, max=self.systemDefaults[0], default=self.systemDefaults[1])
+
+        # Check number of attempts to move a walls
+        n_attempt_move = check_field(
+            self._widget.sysSettingEdit_3, min=1, max=3, default=self.systemDefaults[2])
+
+        # Check PWM duty cycle for wall motors
+        pwm_duty = check_field(
+            self._widget.sysSettingEdit_4, min=0, max=255, default=self.systemDefaults[3])
+
+        # Check timeout for wall movement (ms)
+        dt_timeout = check_field(
+            self._widget.sysSettingEdit_5, min=1, max=2000, default=self.systemDefaults[4])
+
+        # Cast values to unsigned 8-bit ctypes
+        n_cham_init = ctypes.c_uint8(n_cham_init).value
+        n_cham_move_max = ctypes.c_uint8(n_cham_move_max).value
+        n_attempt_move = ctypes.c_uint8(n_attempt_move).value
+        pwm_duty = ctypes.c_uint8(pwm_duty).value
+        # Convert to centiseconds
+        dt_timeout = ctypes.c_uint8(int(dt_timeout/10)).value
+
+        # Return settings as a list
+        return [n_cham_init, n_cham_move_max, n_attempt_move, pwm_duty, dt_timeout]
+    
+    def updateMazeSettings(self):
+        """ 
+        Function to set the maze settings in the UI 
+        """
+        def set_field(field, val):
+            """ Function to check the value of a field """
+
+            is_enabled = field.isEnabled()
+            field.setEnabled(True)
+            field.setText(str(val))
+            field.setEnabled(is_enabled)
+
+        set_field(self._widget.sysSettingEdit_1, self.systemDefaults[0])
+        set_field(self._widget.sysSettingEdit_2, self.systemDefaults[1])
+        set_field(self._widget.sysSettingEdit_3, self.systemDefaults[2])
+        set_field(self._widget.sysSettingEdit_4, self.systemDefaults[3])
+        set_field(self._widget.sysSettingEdit_5, self.systemDefaults[4])
+
+        MazeDB.logMsg('INFO', "CHAMBERS[%d] MOVE_MAX[%d] ATTEMPTS[%d] PWM[%d] TIMEOUT[%d]",
+                    self.systemDefaults[0], self.systemDefaults[1], self.systemDefaults[2], self.systemDefaults[3], self.systemDefaults[4])
+
     def move_ui_window(self, widget, horizontal_alignment, vertical_alignment):
         """
         Move the given widget to the specified position on the given monitor.
 
-        Parameters:
-        - widget: The widget or window to move.
-        - horizontal_alignment: A string specifying the horizontal alignment. Valid values are 'left', 'center', and 'right'.
-        - vertical_alignment: A string specifying the vertical alignment. Valid values are 'top', 'middle', and 'bottom'.
-
-        Returns:
-        - None
+        Arguments:
+            widget: The widget or window to move.
+            horizontal_alignment: A string specifying the horizontal alignment. Valid values are 'left', 'center', and 'right'.
+            vertical_alignment: A string specifying the vertical alignment. Valid values are 'top', 'middle', and 'bottom'.
         """
 
         # Get the geometry of the main monitor
