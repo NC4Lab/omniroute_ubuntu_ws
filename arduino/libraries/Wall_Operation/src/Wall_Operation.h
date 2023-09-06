@@ -27,7 +27,7 @@ public:
 	// ---------------GENERAL---------------
 	uint8_t nCham;		  // number of chambers [1-9]
 	uint8_t nChambMoveMax; // max number of chambers to move at once [1-nCham]
-	uint8_t nWallAttempt; // number of attempts to move a walls
+	uint8_t nAttemptMove; // number of attempts to move a walls
 	uint8_t pwmDuty;	  // pwm duty cycle [0-255]
 
 	// ---------------CYPRESS---------------
@@ -120,7 +120,7 @@ private:
 	void _updateDynamicPMS(PinMapStruct, PinMapStruct &, uint8_t);
 
 public:
-	void initSoftware(uint8_t = 255, uint8_t = 255, uint8_t = 255, uint8_t = 255);
+	void initSoftware(uint8_t, uint8_t[] = nullptr);
 
 public:
 	uint8_t initCypress();
@@ -163,8 +163,8 @@ public:
 public:
 	uint8_t testWallOperation(uint8_t, uint8_t[] = nullptr, uint8_t = 8);
 
-public:
-	void printPMS(PinMapStruct);
+private:
+	void _printPMS(PinMapStruct);
 };
 
 #endif

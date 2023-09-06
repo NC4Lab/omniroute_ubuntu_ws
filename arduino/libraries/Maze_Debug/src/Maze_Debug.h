@@ -75,9 +75,6 @@ public:
 public:
 	void printRegByte(uint8_t);
 	void printRegByte(uint8_t[], uint8_t);
-
-public:
-	void printTest();
 };
 
 #endif

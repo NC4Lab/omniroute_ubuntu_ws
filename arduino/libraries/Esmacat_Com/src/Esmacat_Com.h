@@ -64,25 +64,25 @@ public:
     const int dtEcatDisconnect = 500; // time in ms to wait before final ecat register clear
 
     const char message_type_str[6][30] = {
-        "MSG_NULL",
+        "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
         "INITIALIZE_WALLS",
-        "REINITIALIZE_ALL",
+        "SESTEM_RESET",
         "MOVE_WALLS",
     };
     enum MessageType
     {
-        MSG_NULL = 0,
+        MSG_NONE = 0,
         HANDSHAKE = 1, // handshake must equal 1
         INITIALIZE_CYPRESS = 2,
         INITIALIZE_WALLS = 3,
-        REINITIALIZE_ALL = 4,
+        SESTEM_RESET = 4,
         MOVE_WALLS = 5,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
-        "ERR_NULL",
+        "ERR_NONE",
         "ECAT_ID_DISORDERED",
         "ECAT_NO_MSG_TYPE_MATCH",
         "ECAT_NO_ERR_TYPE_MATCH",
@@ -91,7 +91,7 @@ public:
         "WALL_MOVE_FAILED"};
     enum ErrorType
     {
-        ERR_NULL = 0,
+        ERR_NONE = 0,
         ECAT_ID_DISORDERED = 1,
         ECAT_NO_MSG_TYPE_MATCH = 2,
         ECAT_NO_ERR_TYPE_MATCH = 3,
@@ -122,20 +122,20 @@ public:
 
     struct EcatMessageStruct // class for handeling ethercat messages
     {
-        RegUnion RegU;        // Union for storing ethercat 8 16-bit reg entries
+        RegUnion RegU = {};        // Union for storing ethercat 8 16-bit reg entries
         UnionIndStruct getUI; // Union index handler for getting union data
         UnionIndStruct setUI; // Union index handler for getting union data
 
         uint16_t msgID = 0;                        // Ethercat message ID
         uint16_t msgID_last = 0;                   // Last Ethercat message ID
-        MessageType msgTp = MessageType::MSG_NULL; // Ethercat message type enum
+        MessageType msgTp = MessageType::MSG_NONE; // Ethercat message type enum
         uint8_t msgTp_val = 0;                     // Ethercat message type val
-        ErrorType errTp = ErrorType::ERR_NULL;     // Ethercat message error enum
+        ErrorType errTp = ErrorType::ERR_NONE;     // Ethercat message error enum
         uint8_t errTp_val = 0;                     // Ethercat message error val
         uint8_t msgFoot[2] = {0};                  // Ethercat message footer [254,254]
 
         uint8_t argLen = 0;   // Ethercat number of 8 bit message arguments
-        RegUnion ArgU;        // Union for storing message arguments
+        RegUnion ArgU = {};        // Union for storing message arguments
         UnionIndStruct argUI; // Union index handler for argument union data
 
         bool isNew = false; // Ethercat message new flag
@@ -194,7 +194,7 @@ private:
     void _trackErrors(EcatMessageStruct &, ErrorType, bool = false);
 
 public:
-    void initEcat();
+    void initEcat(bool);
 
 public:
     void readEcatMessage();
@@ -204,9 +204,9 @@ public:
     void writeEcatAck(ErrorType, uint8_t[] = nullptr, uint8_t = 0);
 
 private:
-    void _printEcatReg(Maze_Debug::MT, uint8_t);    
-    void _printEcatReg(Maze_Debug::MT, uint8_t, int[]);
-    void _printEcatReg(Maze_Debug::MT, uint8_t, RegUnion);
+    void _printEcatReg(Maze_Debug::MT);    
+    void _printEcatReg(Maze_Debug::MT, int[]);
+    void _printEcatReg(Maze_Debug::MT, RegUnion);
 };
 
 #endif

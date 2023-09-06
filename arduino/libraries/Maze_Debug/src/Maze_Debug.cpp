@@ -67,7 +67,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 
 	// Make header of '=' characters based on message length
 	size_t n = 30 - strlen(buff) / 2;
-	n = n < sizeof(buff_sym) ? n : sizeof(buff_sym) - 1; // Ensure n doesn't exceed buff_sym size
+	n = n < sizeof(buff_sym) && n < 30 ? n : 3; // Ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
 	memset(buff_sym, '=', n);
@@ -283,20 +283,4 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 		snprintf(buff, sizeof(buff), "\tport[%d]\n\t\t 76543210\n\t\t%s", i, binStr(p_byte_mask_in[i]));
 		Serial.println(buff);
 	}
-}
-
-/// @brief do print test
-void Maze_Debug::printTest()
-{
-	// Print each message type
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::ERROR, "ERROR");
-	printMsg(MT::ATTN_START, "ATTN_START");
-	printMsg(MT::INFO, "INFO");
-	printMsg(MT::ATTN_END, "ATTN_END");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::ATTN, "ATTN");
-	printMsg(MT::WARNING, "WARNING");
 }

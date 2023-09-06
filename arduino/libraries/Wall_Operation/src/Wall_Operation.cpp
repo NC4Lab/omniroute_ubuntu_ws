@@ -18,7 +18,7 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMoveMax, uint8_t _
 	// Store input variables
 	nCham = _nCham;
 	nChambMoveMax = _nChambMoveMax;
-	nWallAttempt = _nWallAttempt;
+	nAttemptMove = _nWallAttempt;
 	pwmDuty = _pwmDuty;
 
 	// Update chamber addressess
@@ -57,6 +57,11 @@ void Wall_Operation::procEcatMessage()
 	if (!EsmaCom.rcvEM.isNew)
 		return;
 
+	// Copy and send back recieved message arguments as the default response
+	arg_len = EsmaCom.rcvEM.argLen;
+	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
+		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
+
 	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
 
 	//............... Process and Execute Messages ...............
@@ -64,18 +69,15 @@ void Wall_Operation::procEcatMessage()
 	// HANDSHAKE
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
 	{
-		// Get software setup variables
-		uint8_t n_chambers = EsmaCom.rcvEM.ArgU.ui8[0];
-		uint8_t n_chamb_move_max = EsmaCom.rcvEM.ArgU.ui8[1];
-		uint8_t n_wall_attempt = EsmaCom.rcvEM.ArgU.ui8[2];
-		uint8_t pwm_duty = EsmaCom.rcvEM.ArgU.ui8[3];
+		// Get software setup variables to pass to initSoftware()
+		uint8_t setup_arr[4] = {
+			EsmaCom.rcvEM.ArgU.ui8[0],
+			EsmaCom.rcvEM.ArgU.ui8[1],
+			EsmaCom.rcvEM.ArgU.ui8[2],
+			EsmaCom.rcvEM.ArgU.ui8[3]};
 
-		// Set ethercat flag
-		_Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS CONNECTED");
-		EsmaCom.isEcatConnected = true;
-
-		// Initialize software
-		initSoftware(n_chambers, n_chamb_move_max, n_wall_attempt, pwm_duty);
+		// Initialize software 
+		initSoftware(0, setup_arr);
 	}
 
 	// INITIALIZE_CYPRESS
@@ -87,16 +89,16 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		run_status = initWalls(1);								 // run wall up
-		run_status = run_status < 1 ? initWalls(0) : run_status; // run wall down
+		uint8_t resp1 = initWalls(1);			// run wall up
+		uint8_t resp2 = initWalls(0);			// run wall down
+		run_status = resp1 > 1 ? resp1 : resp2; // update run status
 	}
 
-	// REINITIALIZE_ALL
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_ALL)
+	// SESTEM_RESET
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SESTEM_RESET)
 	{
 		run_status = initWalls(0);	// move walls down
 		i2c_status = initCypress(); // reinitialize cypress
-		initSoftware();				// lastly, reinitialize software
 	}
 
 	// MOVE_WALLS
@@ -158,14 +160,14 @@ void Wall_Operation::procEcatMessage()
 
 	// NO ERROR
 	else
-		EsmaCom.writeEcatAck();
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen); // send back recieved message arguments
 
-	//............... Reinitialize Ecat ...............
+	//............... Reset Ecat ...............
 
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_ALL)
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SESTEM_RESET)
 	{
-		// Initialize/reset ecat message variables after final ack is sent
-		EsmaCom.initEcat();
+		// Reset software including Ecat message variables after final ack is sent
+		initSoftware(2);
 	}
 }
 
@@ -359,19 +361,20 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 
 /// @brief Initialize/reset all relivant runtime variables to prepare for new session
 ///
-/// @param n_chambers: Specify number of chambers. DEFAULT: 255[ignore]
-void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_chamb_move_max, uint8_t n_wall_attempt, uint8_t pwm_duty)
+/// @param init_level: Specify level of initialization [0:initialize, 1:reinitialize, 2:reset]
+/// @param setup_arr: Setup variables [n_chambers, n_chamb_move_max, n_attempt_move, pwm_duty]
+void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 {
-	// flag if this is a full initilization
-	bool is_full_init = n_chambers != 255 && n_chamb_move_max != 255 && n_wall_attempt != 255 && pwm_duty != 255;
-
-	// Update wall opperation variables
-	if (is_full_init)
+	// Update wall opperation variables for first initialization
+	if (init_level == 0)
 	{
-		nCham = n_chambers;
-		nChambMoveMax = n_chamb_move_max;
-		nWallAttempt = n_wall_attempt;
-		pwmDuty = pwm_duty;
+		if (setup_arr != nullptr)
+		{
+			nCham = setup_arr[0];
+			nChambMoveMax = setup_arr[1];
+			nAttemptMove = setup_arr[2];
+			pwmDuty = setup_arr[3];
+		}
 	}
 
 	// Update chamber address and number
@@ -389,11 +392,18 @@ void Wall_Operation::initSoftware(uint8_t n_chambers, uint8_t n_chamb_move_max, 
 		C[cham_i].bitWallUpdateFlag = 0;
 	}
 
-	if (is_full_init)
-		_Dbg.printMsg(_Dbg.MT::ATTN, "SOFTWARE INITIALIZED: N_CHAM[%d] CHAM_MOVE_MAX[%d] WALL_ATTEMPTS[%d] PWM_DUTY[%d] ",
-					  nCham, nChambMoveMax, nWallAttempt, pwmDuty);
-	else
-		_Dbg.printMsg(_Dbg.MT::ATTN, "SOFTWARE REINITIALIZED");
+	// Initialize and connect or disconnect Ecat
+	if (init_level == 0)
+		EsmaCom.initEcat(true); // connect to ethercat
+	else if (init_level == 2)
+		EsmaCom.initEcat(false); // reset/disconnect ethercat
+
+	// Log/print initialization status
+	_Dbg.printMsg(_Dbg.MT::ATTN_START, "SOFTWARE %s", init_level == 0 ? "INITIALIZED" : init_level == 1 ? "REINITIALIZED"
+																								  : "RESET");
+	if (init_level == 0)
+		_Dbg.printMsg("SYSTEM SETTINGS: N_CHAMBERS_INIT[%d] N_CHAMBERS_MOVE_MAX[%d] N_ATTEMPT_MOVE[%d] PWM_DUTY_CYCLE[%d]",
+					  nCham, nChambMoveMax, nAttemptMove, pwmDuty);
 }
 
 /// @brief Initialize/reset Cypress hardware
@@ -1234,7 +1244,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 ///
 /// @param p_wall_inc: OPTIONAL: [0-7] max 8 entries. DEFAULT: all walls
 /// @param s: OPTIONAL: length of @param p_wall_inc array. DEFAULT: 8
-void Wall_Operation::printPMS(PinMapStruct pms)
+void Wall_Operation::_printPMS(PinMapStruct pms)
 {
 	_Dbg.printMsg(_Dbg.MT::DEBUG, "IO/PWM nPorts[%d]_____________________", pms.nPorts);
 	for (size_t prt_i = 0; prt_i < pms.nPorts; prt_i++)

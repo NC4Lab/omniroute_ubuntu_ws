@@ -20,8 +20,8 @@ Esmacat_Com::Esmacat_Com()
     if (DO_ECAT_SPI)
         _ESMA.start_spi();
 
-    // Setup/reset variables
-    initEcat();
+    // Reset Ecat register data
+    _resetReg();
 }
 
 /// @brief Update union 8 bit and 16 bit index
@@ -51,6 +51,13 @@ void Esmacat_Com::UnionIndStruct::reset()
     ii16 = 0;
 }
 
+/// @brief Checks for registry garbage or incomplete messages and copies register data into union
+///
+/// @note This is a workaround for the fact that the Esmacat does not clear and sometimes will be
+/// read midway through writing a message. This can lead to only partial or overlapping messages being read.
+///
+/// @param p_reg_arr: Pointer to array of 8 register values.
+/// @param do_print_reg: OPTIONAL: If true, print register values for debugging.
 bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do_print_reg)
 {
     // Print changing register values
@@ -59,17 +66,23 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
         static int id_last = 0;
         if (p_reg_arr[0] != id_last)
         {
-            _printEcatReg(_Dbg.MT::DEBUG, 0, p_reg_arr);
+            _printEcatReg(_Dbg.MT::DEBUG, p_reg_arr);
             id_last = p_reg_arr[0];
         }
     }
 
-    // Check if all reg_arr values equal to 0 or -1
+    // Check/handle cleared or registry garbage all values equal to 0 or -1
     bool is_garbage = true;
     for (uint8_t i = 0; i < 8; i++)
         if (p_reg_arr[i] != 0 && p_reg_arr[i] != -1)
             is_garbage = false;
     if (is_garbage)
+        return false;
+
+    // Another check for garbage registry stuff at start of coms
+    if (!isEcatConnected &&   // check if still waiting for handshake
+        (p_reg_arr[0] != 1 || // directly check union id entry for first message
+         p_reg_arr[1] != 1))  // directly check union type entry for handshake (e.g., ui8[1][0])
         return false;
 
     // Copy reg_arr values to union
@@ -137,7 +150,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     // Log error and set type to none if not found
     if (r_EM.isErr)
     {
-        msg_type_val = static_cast<uint8_t>(MessageType::MSG_NULL);
+        msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
         _trackErrors(r_EM, ErrorType::ECAT_NO_MSG_TYPE_MATCH);
     }
 
@@ -149,7 +162,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     if (!r_EM.isErr)
         strncpy(r_EM.msg_tp_str, message_type_str[msg_type_val], sizeof(r_EM.msg_tp_str) - 1);
     else
-        strncpy(r_EM.msg_tp_str, "MSG_NULL", sizeof(r_EM.msg_tp_str) - 1); // set to none if error
+        strncpy(r_EM.msg_tp_str, "MSG_NONE", sizeof(r_EM.msg_tp_str) - 1); // set to none if error
     r_EM.msg_tp_str[sizeof(r_EM.msg_tp_str) - 1] = '\0';                   // ensure null termination
 
     return is_found;
@@ -313,7 +326,7 @@ void Esmacat_Com::_trackErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool d
 
             // Print error
             _Dbg.printMsg(_Dbg.MT::ERROR, "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp_val, r_EM.msg_tp_str);
-            _printEcatReg(_Dbg.MT::ERROR, 0, r_EM.RegU);
+            _printEcatReg(_Dbg.MT::ERROR, r_EM.RegU);
 
             // Send error ack
             writeEcatAck(r_EM.errTp);
@@ -323,36 +336,37 @@ void Esmacat_Com::_trackErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool d
     // Unset error type
     else
     {
-        r_EM.errTp = ErrorType::ERR_NULL;
+        r_EM.errTp = ErrorType::ERR_NONE;
         r_EM.isErr = false;
     }
 }
 
 /// @brief: Initialize/reset all Ecat varables structs.
-void Esmacat_Com::initEcat()
+///
+/// @param do_connect: If true, connect Ecat, if false, disconnect and reset Ecat.
+void Esmacat_Com::initEcat(bool do_connect)
 {
+    // Handle reset
+    if (!do_connect)
+    {
+        // Reset message union data and indeces
+        _uReset(sndEM);
+        _uReset(rcvEM);
 
-    // Reset message union data and indeces
-    _uReset(sndEM);
-    _uReset(rcvEM);
+        // Reset message counters
+        sndEM.msgID = 0;
+        rcvEM.msgID = 0;
 
-    // Reset message counters
-    sndEM.msgID = 0;
-    rcvEM.msgID = 0;
-
-    // Add delay if this is a reinitialization
-    if (isEcatConnected)
+        // Reset reg one last diem after delay to allow last ack to be read before buffer is cleared
         delay(dtEcatDisconnect);
+        _resetReg();
+    }
 
-    // Reset Ecat register data
-    _resetReg();
+    // Set/reset Ethercat handshake flag
+    isEcatConnected = do_connect;
 
-    // Check if this is a reinitialization
-    if (isEcatConnected)
-        _Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS DISCONNECTED");
-
-    // Reset Ethercat handshake flag
-    isEcatConnected = false;
+    // Log connection status changes
+    _Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS %s", isEcatConnected ? "CONNECTED" : "DISCONNECTED");
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
@@ -367,22 +381,8 @@ void Esmacat_Com::readEcatMessage()
     int reg_arr[8];
     _ESMA.get_ecat_registers(reg_arr);
 
-    // // Print register values TEMP
-    // static int id_last = 5;
-    // if (reg_arr[0] != id_last)
-    // {
-    //     _printEcatReg(_Dbg.MT::DEBUG, 0, reg_arr);
-    //     id_last = reg_arr[0];
-    // }
-
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))
-        return;
-
-    // Another check for garbage registry stuff
-    if (!isEcatConnected &&         // check if still waiting for handshake
-        (rcvEM.RegU.ui16[0] != 1 || // directly check union id entry for first message
-         rcvEM.RegU.ui8[2] != 1))   // directly check union type entry for handshake (e.g., 1)
         return;
 
     // Get message id and check for out of sequence messages
@@ -408,7 +408,7 @@ void Esmacat_Com::readEcatMessage()
     rcvEM.isNew = true;
 
     _Dbg.printMsg("(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, 0, rcvEM.RegU); // TEMP
+    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
 }
 
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
@@ -424,7 +424,7 @@ void Esmacat_Com::readEcatMessage()
 /// @param msg_arg_len: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
 void Esmacat_Com::writeEcatAck(uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
-    writeEcatAck(ErrorType::ERR_NULL, p_msg_arg_data, msg_arg_len);
+    writeEcatAck(ErrorType::ERR_NONE, p_msg_arg_data, msg_arg_len);
 }
 
 /// @overload: Option for including an error type to send with the message.
@@ -474,14 +474,13 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
 
     // Print ack message info with message type being acked
     _Dbg.printMsg("(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, 0, sndEM.RegU); // TEMP
+    _printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
 }
 
 /// @brief Used for printing curren Ethercat register values.
 ///
 /// @param msg_type_enum Enum specifying message type.
-/// @param d_type: Specifies the data type to print. [0=uint8, 1=uint16, 2=int16]
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, uint8_t d_type)
+void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum)
 {
     RegUnion U;
 
@@ -489,12 +488,12 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, uint8_t d_type)
     _ESMA.get_ecat_registers(U.si16);
 
     // Pass to other _printEcatU() method
-    _printEcatReg(msg_type_enum, d_type, U);
+    _printEcatReg(msg_type_enum, U);
 }
 /// @overload: Option for printing Ethercat register values from an array.
 ///
 /// @param p_reg: An array of existing register values.
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, uint8_t d_type, int p_reg[])
+void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, int p_reg[])
 {
     RegUnion U;
 
@@ -503,22 +502,21 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, uint8_t d_type, in
         U.ui16[i] = p_reg[i];
 
     // Pass to other _printEcatU() method
-    _printEcatReg(msg_type_enum, d_type, U);
+    _printEcatReg(msg_type_enum, U);
 }
 /// @overload Option for printing Ethercat register values stored in RegUnion.
 ///
 /// @param U: A RegUnion object containing the register values to print.
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, uint8_t d_type, RegUnion U)
+void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, RegUnion U)
 {
     // Print out register
-    _Dbg.printMsg("\t Ecat Register");
+    _Dbg.printMsg("\t Ecat 16 Bit Register:");
     for (size_t i = 0; i < 8; i++)
-    {
-        if (d_type == 1)
-            _Dbg.printMsg("\t ui16[%d] [%d]", i, U.si16[i]);
-        if (d_type == 1)
-            _Dbg.printMsg("\t ui16[%d] [%d]", i, U.ui16[i]);
-        if (d_type == 0)
-            _Dbg.printMsg("\t ui8[%d][%d]  [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
-    }
+        _Dbg.printMsg("\t ui16[%d] [%d]", i, U.ui16[i]);
+    _Dbg.printMsg("\t Ecat 8 Bit Register:");
+    for (size_t i = 0; i < 8; i++)
+        if (i < 5)
+            _Dbg.printMsg("\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+        else
+            _Dbg.printMsg("\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
 }
