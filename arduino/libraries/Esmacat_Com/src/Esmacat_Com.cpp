@@ -71,12 +71,13 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
         }
     }
 
-    // Check/handle cleared or registry garbage all values equal to 0 or -1
-    bool is_garbage = true;
-    for (uint8_t i = 0; i < 8; i++)
-        if (p_reg_arr[i] != 0 && p_reg_arr[i] != -1)
-            is_garbage = false;
-    if (is_garbage)
+    // Copy data to temporary union
+    RegUnion temp_u;
+    for (uint8_t i_16 = 0; i_16 < 8; i_16++)
+        temp_u.si16[i_16] = p_reg_arr[i_16];
+
+    // Bail if registry value is 0 or max int16 value suggesting registry is cleared or garbage
+    if (temp_u.ui16[0] == 0 || temp_u.ui16[0] == 65535)
         return false;
 
     // Another check for garbage registry stuff at start of coms
@@ -85,9 +86,23 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
          p_reg_arr[1] != 1))  // directly check union type entry for handshake (e.g., ui8[1][0])
         return false;
 
-    // Copy reg_arr values to union
-    for (uint8_t i = 0; i < 8; i++)
-        r_EM.RegU.si16[i] = p_reg_arr[i];
+    // Check for footer indicating a complete write from sender
+    bool is_footer = false;
+    for (uint8_t i_8 = 0; i_8 < 15; i_8++)
+    {
+        if (temp_u.ui8[i_8] == 254 && temp_u.ui8[i_8 + 1] == 254)
+        {
+            is_footer = true;
+            break;
+        }
+    }
+    if (!is_footer)
+        return false;
+
+    // Copy over temp union
+    r_EM.RegU.ui64[0] = temp_u.ui64[0];
+    r_EM.RegU.ui64[1] = temp_u.ui64[1];
+
     return true;
 }
 
@@ -106,13 +121,15 @@ bool Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
 {
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
-    // Check/log error skipped or out of sequence messages
-    if (r_EM.msgID - r_EM.msgID_last != 1 &&
-        r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
-    {
-        _trackErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
-        return false;
-    }
+
+    // Check/log error skipped or out of sequence messages if not first message or id has rolled over
+    if (r_EM.msgID != 1)
+        if (r_EM.msgID - r_EM.msgID_last != 1 &&
+            r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
+        {
+            _trackErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
+            return false;
+        }
     return true;
 }
 
@@ -510,13 +527,13 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, int p_reg[])
 void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, RegUnion U)
 {
     // Print out register
-    _Dbg.printMsg("\t Ecat 16 Bit Register:");
+    _Dbg.printMsg("\t Ecat 16-Bit Register:");
     for (size_t i = 0; i < 8; i++)
-        _Dbg.printMsg("\t ui16[%d] [%d]", i, U.ui16[i]);
-    _Dbg.printMsg("\t Ecat 8 Bit Register:");
+        _Dbg.printMsg("\t\t ui16[%d] [%d]", i, U.ui16[i]);
+    _Dbg.printMsg("\t Ecat 8-Bit Register:");
     for (size_t i = 0; i < 8; i++)
         if (i < 5)
-            _Dbg.printMsg("\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+            _Dbg.printMsg("\t\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
         else
-            _Dbg.printMsg("\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+            _Dbg.printMsg("\t\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
 }

@@ -56,7 +56,7 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # Setup variables
 N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze
-N_CHAMBERS_MOVE_MAX = 3  # number of chambers to move at once
+N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
 N_ATTEMPT_MOVE = 3  # number of attempts to move a walls
 PWM_DUTY_CYCLE = 254  # PWM duty cycle for wall motors
 
@@ -180,19 +180,33 @@ class EsmacatCom:
             reg_arr_si16 (list): Register array (signed int16).
         """
 
-        # Bail if any register values are all equal to 0 or -1
-        if all((x == 0 or x == -1) for x in reg_arr_si16):
+        # Copy data to temporary union
+        temp_u = EsmacatCom.RegUnion()
+        for i_16 in range(8):
+            temp_u.si16[i_16] = reg_arr_si16[i_16]
+
+        # Bail if registry value is 0 or max int16 value suggesting registry is cleared or garbage
+        if temp_u.ui16[0] == 0 or temp_u.ui16[0] == 65535:
             return False
 
         # Another check for garbage registry stuff at start of coms
         if (self.isEcatConnected != 1 and       # check if still waiting for handshake
-            (reg_arr_si16[0] != 1 or    # directly check union id entry for first message
-             reg_arr_si16[1] != 1)):      # directly check union type entry for handshake (e.g., ui8[1][0])
+            (temp_u.ui16[0] != 1 or    # directly check union id entry for first message
+             temp_u.ui8[2] != 1)):      # directly check union type entry for handshake (e.g., msg_type_enum == 1)
             return False
 
-        # Set register values in union uint16 type
-        for i in range(8):
-            r_EM.RegU.si16[i] = reg_arr_si16[i]
+        # Check for footer indicating a complete write from sender
+        is_footer = False
+        for i_8 in range(15):
+            if temp_u.ui8[i_8] == 254 and temp_u.ui8[i_8 + 1] == 254:
+                is_footer = True
+                break
+        if not is_footer:
+            return False
+
+        # Copy over temp union
+        r_EM.RegU.ui64[0] = temp_u.ui64[0]
+        r_EM.RegU.ui64[1] = temp_u.ui64[1]
 
         return True
 
@@ -205,7 +219,7 @@ class EsmacatCom:
         """
 
         # Get new message ID: itterate id and roll over to 1 if max 16-bit value is reached
-        msg_id = r_EM.msgID + 1 if r_EM.msgID < 65535 else 1
+        msg_id = r_EM.msgID + 1 if r_EM.msgID < 65535-1 else 1
 
         # Set message ID entry in union
         r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id
@@ -225,11 +239,13 @@ class EsmacatCom:
         r_EM.msgID_last = r_EM.msgID  # store last message ID if
         r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
 
-        # Check/log error skipped or out of sequence messages
-        if r_EM.msgID - r_EM.msgID_last != 1 and \
-                r_EM.msgID != r_EM.msgID_last:  # don't log errors for repeat message reads
-            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
-            return False
+        # Check/log error skipped or out of sequence messages if not first message or id has rolled over
+        if r_EM.msgID != 1:
+            if r_EM.msgID - r_EM.msgID_last != 1 and \
+                    r_EM.msgID != r_EM.msgID_last:  # don't log errors for repeat message reads
+                self._trackErrors(
+                    r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
+                return False
         return True
 
     def _uSetMsgType(self, r_EM, msg_type_enum):
@@ -442,8 +458,8 @@ class EsmacatCom:
         """Reset union data and indices"""
 
         # Reset union data to 0
-        r_EM.RegU.si64[0] = 0
-        r_EM.RegU.si64[1] = 0
+        r_EM.RegU.ui64[0] = 0
+        r_EM.RegU.ui64[1] = 0
 
         # Reset union indices
         r_EM.setUI.reset()
@@ -501,10 +517,10 @@ class EsmacatCom:
         """
 
         # Print message data
-        MazeDB.logMsg(level, "\t Ecat 16 Bit Register:")
+        MazeDB.logMsg(level, "\t Ecat 16-Bit Register:")
         for i in range(8):
             MazeDB.logMsg(level, "\t\t ui16[%d] [%d]", i, reg_u.ui16[i])
-        MazeDB.logMsg(level, "\t Ecat 8 Bit Register:")
+        MazeDB.logMsg(level, "\t Ecat 8-Bit Register:")
         for i in range(8):
             if i < 5:
                 MazeDB.logMsg(level, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i,
@@ -1383,9 +1399,6 @@ class Interface(Plugin):
 
                 # Set corresponding chamber to initialized
                 chamber.setStatus(MazePlot.Status.INITIALIZED)
-
-            # TEMP
-            return
 
             # Send INITIALIZE_WALLS message
             self.EsmaCom_A0.writeEcatMessage(

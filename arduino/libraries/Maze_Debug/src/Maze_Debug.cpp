@@ -110,7 +110,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 /// @return Formatted time string in the form [MM:SS:MS].
 const char *Maze_Debug::_timeStr(uint32_t ts_0)
 {
-	static char buff[3][15]; // track up to 3 instances
+	static char buff[2][15]; // track up to 2 instances
 	static uint8_t i;
 	buff[i][0] = '\0';
 
@@ -123,7 +123,7 @@ const char *Maze_Debug::_timeStr(uint32_t ts_0)
 	// Format string and print
 	snprintf(buff[i], sizeof(buff[i]), "%02lu:%02lu:%03lu", dt_m, dt_s, dt_ms);
 	uint8_t ii = i;
-	i = i == 2 ? 0 : i + 1;
+	i = i == 1 ? 0 : i + 1;
 	return buff[ii];
 }
 
@@ -283,4 +283,20 @@ void Maze_Debug::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 		snprintf(buff, sizeof(buff), "\tport[%d]\n\t\t 76543210\n\t\t%s", i, binStr(p_byte_mask_in[i]));
 		Serial.println(buff);
 	}
+}
+
+/// @brief do print test
+void Maze_Debug::printTest()
+{
+	// Print each message type
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ERROR, "ERROR");
+	printMsg(MT::ATTN_START, "ATTN_START");
+	printMsg(MT::INFO, "INFO");
+	printMsg(MT::ATTN_END, "ATTN_END");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ATTN, "ATTN");
+	printMsg(MT::WARNING, "WARNING");
 }

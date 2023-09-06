@@ -160,7 +160,7 @@ void Wall_Operation::procEcatMessage()
 
 	// NO ERROR
 	else
-		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen); // send back recieved message arguments
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
 
 	//............... Reset Ecat ...............
 

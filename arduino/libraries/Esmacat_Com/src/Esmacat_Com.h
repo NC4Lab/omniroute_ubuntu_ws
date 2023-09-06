@@ -61,7 +61,7 @@ class Esmacat_Com
     // --------------VARIABLES--------------
 public:
     bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
-    const int dtEcatDisconnect = 500; // time in ms to wait before final ecat register clear
+    const int dtEcatDisconnect = 750; // time in ms to wait before final ecat register clear
 
     const char message_type_str[6][30] = {
         "MSG_NONE",
