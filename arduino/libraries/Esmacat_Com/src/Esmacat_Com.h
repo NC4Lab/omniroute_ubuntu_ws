@@ -213,7 +213,7 @@ private:
     void _resetReg();
 
 private:
-    void _trackErrors(EcatMessageStruct &, ErrorType, bool = false);
+    void _trackParseErrors(EcatMessageStruct &, ErrorType, bool = false);
 
 public:
     void initEcat(bool);

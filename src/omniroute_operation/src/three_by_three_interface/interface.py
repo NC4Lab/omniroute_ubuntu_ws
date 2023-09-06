@@ -54,8 +54,8 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
-# Setup variables
-N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze
+# Setup variables to be sent to the arduino
+N_CHAMBERS_INIT = 2  # number of chambers to initialize in maze used for testing
 N_CHAMBERS_MOVE_MAX = 1  # number of chambers to move at once
 N_ATTEMPT_MOVE = 3  # number of attempts to move a walls
 PWM_DUTY_CYCLE = 255  # PWM duty cycle for wall motors
@@ -245,7 +245,7 @@ class EsmacatCom:
         if r_EM.msgID != 1:
             if r_EM.msgID - r_EM.msgID_last != 1 and \
                     r_EM.msgID != r_EM.msgID_last:  # don't log errors for repeat message reads
-                self._trackErrors(
+                self._trackParseErrors(
                     r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
                 return False
         return True
@@ -285,7 +285,7 @@ class EsmacatCom:
         # Log error and set message type to none if not found
         if r_EM.isErr:
             msg_type_val = EsmacatCom.MessageType.MSG_NONE
-            self._trackErrors(
+            self._trackParseErrors(
                 r_EM, EsmacatCom.ErrorType.ECAT_NO_MSG_TYPE_MATCH)
         else:
             r_EM.msgTp = EsmacatCom.MessageType(msg_type_val)
@@ -327,7 +327,7 @@ class EsmacatCom:
         # Log error and set error type to none if not found
         if r_EM.isErr:
             err_type_val = EsmacatCom.ErrorType.ERR_NONE
-            self._trackErrors(
+            self._trackParseErrors(
                 r_EM, EsmacatCom.ErrorType.ECAT_NO_ERR_TYPE_MATCH)
         else:
             r_EM.errTp = EsmacatCom.ErrorType(err_type_val)
@@ -452,7 +452,8 @@ class EsmacatCom:
 
         # Log missing footer error
         if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254:  # check if footer is valid
-            self._trackErrors(r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER)
+            self._trackParseErrors(
+                r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER)
             return False
         return True
 
@@ -479,9 +480,9 @@ class EsmacatCom:
         reg_arr = [-1] * 8
         self.maze_ard0_pub.publish(*reg_arr)
 
-    def _trackErrors(self, r_EM, err_tp, do_reset=False):
+    def _trackParseErrors(self, r_EM, err_tp, do_reset=False):
         """
-        Check for and log any Ecat or runtime errors
+        Check for and log any Ecat message parsing errors
 
         Args:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
@@ -499,10 +500,10 @@ class EsmacatCom:
                 r_EM.errTp = err_tp
                 r_EM.isErr = True
 
-                # Print error message
+                # Print message as warning
                 MazeDB.logMsg(
-                    'ERROR', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
-                self._printEcatReg('ERROR', r_EM.RegU)
+                    'WARNING', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
+                self._printEcatReg('WARNING', r_EM.RegU)
 
         # Unset error type
         elif r_EM.errTp == err_tp:
@@ -1200,8 +1201,7 @@ class Interface(Plugin):
 
         # Initialize file list text and index
         self.current_file_index = 0  # set to zero
-        self._widget.fileDirEdit.setText(
-            self.getPathConfigDir())  # set to default path
+        self._widget.fileDirEdit.setText(self.getPathConfigDir())
 
         # ................ Maze Setup ................
 
@@ -1653,7 +1653,7 @@ class Interface(Plugin):
         # Send the wall byte array to the arduino
         self.EsmaCom_A0.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
-        
+
     def qt_callback_sysReinitBtn_clicked(self):
         """ Callback function for the "Reinitialize" button."""
 
@@ -1677,13 +1677,14 @@ class Interface(Plugin):
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # Create the path to the "config" directory four levels up
-        dir_path = os.path.abspath(os.path.join(
+        dir_abs_path = os.path.abspath(os.path.join(
             script_dir, '..', '..', '..', '..', 'config', 'paths'))
+        
         # Return file or dir path
         if file_name is not None:
-            return os.path.join(dir_path, file_name)
+            return os.path.join(dir_abs_path, file_name)
         else:
-            return dir_path
+            return dir_abs_path
 
     def saveToCSV(self, file_name, wall_config_list):
         """ Function to save the wall config data to a CSV file """
@@ -1714,8 +1715,14 @@ class Interface(Plugin):
 
         # Get the currently selected file path
         file_name = self.files[self.current_file_index]
-        folder_path = self.getPathConfigDir()
+        folder_path = self.getPathConfigDir(file_name)
         file_path = os.path.join(folder_path, file_name)
+
+        # Update the file path in the file path text box
+        self._widget.fileDirEdit.setText(folder_path)
+
+        #TEMP
+        MazeDB.logMsg('DEBUG', "%s", file_path)
 
         # Load and store CSV data
         try:

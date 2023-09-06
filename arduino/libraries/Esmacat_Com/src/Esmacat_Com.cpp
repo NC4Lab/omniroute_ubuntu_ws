@@ -201,7 +201,7 @@ bool Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
         if (r_EM.msgID - r_EM.msgID_last != 1 &&
             r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
         {
-            _trackErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
+            _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
             return false;
         }
     return true;
@@ -242,7 +242,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     if (r_EM.isErr)
     {
         msg_type_val = static_cast<uint8_t>(MessageType::MSG_NONE);
-        _trackErrors(r_EM, ErrorType::ECAT_NO_MSG_TYPE_MATCH);
+        _trackParseErrors(r_EM, ErrorType::ECAT_NO_MSG_TYPE_MATCH);
     }
 
     // Get message type enum and store val
@@ -365,7 +365,7 @@ bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
     // Log missing footer error
     if (r_EM.msgFoot[0] != 254 || r_EM.msgFoot[1] != 254) // check for valid footers
     {
-        _trackErrors(r_EM, ErrorType::ECAT_MISSING_FOOTER);
+        _trackParseErrors(r_EM, ErrorType::ECAT_MISSING_FOOTER);
         return false;
     }
     return true;
@@ -394,11 +394,11 @@ void Esmacat_Com::_resetReg()
         ecatWriteRegValue(i, -1);
 }
 
-/// @brief Check for, log and send any Ecat or runtime errors
+/// @brief Check for, log and send any Ecat message parsing errors
 ///
 /// @param err_tp: The type of error to be logged.
 /// @param do_reset: OPTIONAL: If true, reset error type to none.
-void Esmacat_Com::_trackErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool do_reset)
+void Esmacat_Com::_trackParseErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool do_reset)
 {
     // Check for error
     if (!do_reset)
@@ -416,8 +416,8 @@ void Esmacat_Com::_trackErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool d
             r_EM.err_tp_str[sizeof(r_EM.err_tp_str) - 1] = '\0'; // ensure null termination
 
             // Print error
-            _Dbg.printMsg(_Dbg.MT::ERROR, "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp_val, r_EM.msg_tp_str);
-            _printEcatReg(_Dbg.MT::ERROR, r_EM.RegU);
+            _Dbg.printMsg(_Dbg.MT::WARNING, "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp_val, r_EM.msg_tp_str);
+            _printEcatReg(_Dbg.MT::WARNING, r_EM.RegU);
 
             // Send error ack
             writeEcatAck(r_EM.errTp);
@@ -549,7 +549,7 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
         _uSetArgLength(sndEM, 0); // set arg length to 0
 
     // Reset error type and flag
-    _trackErrors(rcvEM, rcvEM.errTp, true);
+    _trackParseErrors(rcvEM, rcvEM.errTp, true);
 
     // 	------------- Finish setup and write -------------
 

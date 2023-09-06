@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>789</width>
-    <height>769</height>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <x>8</x>
      <y>0</y>
      <width>770</width>
-     <height>671</height>
+     <height>651</height>
     </rect>
    </property>
    <property name="font">
@@ -38,8 +38,8 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>561</width>
-      <height>31</height>
+      <width>671</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -69,10 +69,10 @@
    <widget class="QPushButton" name="fileBrowseBtn">
     <property name="geometry">
      <rect>
-      <x>570</x>
+      <x>680</x>
       <y>60</y>
       <width>80</width>
-      <height>31</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -88,9 +88,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>630</y>
+      <y>510</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -106,9 +106,9 @@
     <property name="geometry">
      <rect>
       <x>170</x>
-      <y>630</y>
+      <y>510</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -124,9 +124,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>140</y>
+      <y>120</y>
       <width>250</width>
-      <height>480</height>
+      <height>381</height>
      </rect>
     </property>
     <property name="font">
@@ -139,9 +139,9 @@
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>630</y>
+      <y>610</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -157,9 +157,9 @@
     <property name="geometry">
      <rect>
       <x>670</x>
-      <y>630</y>
+      <y>610</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -175,9 +175,9 @@
     <property name="geometry">
      <rect>
       <x>570</x>
-      <y>630</y>
+      <y>610</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -193,7 +193,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>120</y>
+      <y>100</y>
       <width>181</width>
       <height>21</height>
      </rect>
@@ -211,7 +211,7 @@
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>140</y>
+      <y>120</y>
       <width>480</width>
       <height>480</height>
      </rect>
@@ -220,8 +220,8 @@
    <widget class="QGroupBox" name="keyGroupBox">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>60</y>
+      <x>10</x>
+      <y>560</y>
       <width>90</width>
       <height>81</height>
      </rect>
@@ -342,7 +342,7 @@ QGroupBox::title {
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>120</y>
+      <y>100</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -361,7 +361,7 @@ QGroupBox::title {
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>680</y>
+     <y>660</y>
      <width>770</width>
      <height>81</height>
     </rect>
@@ -380,7 +380,7 @@ QGroupBox::title {
       <x>670</x>
       <y>40</y>
       <width>90</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -397,8 +397,8 @@ QGroupBox::title {
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>90</width>
-      <height>25</height>
+      <width>100</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
