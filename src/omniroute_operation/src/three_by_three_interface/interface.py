@@ -1221,11 +1221,11 @@ class Interface(Plugin):
 
         # Default system settings [default][min][max]
         self.sysDefaults = [
-            [3, 1, 9],          # Num chamb init
-            [1, 1, 9],          # Max chamb move
+            [9, 1, 9],          # Num chamb init
+            [3, 1, 9],          # Max chamb move
             [2, 1, 3],          # Max move attempt
             [255, 0, 255],      # PWM duty
-            [1000, 500, 2000]   # Move timeout (ms)
+            [750, 500, 2000]   # Move timeout (ms)
         ]
 
         # Make sure n_chambers_move default equal <= n_chambers_init
