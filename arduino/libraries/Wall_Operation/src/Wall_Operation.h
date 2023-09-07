@@ -23,10 +23,11 @@ class Wall_Operation
 
 	// --------------VARIABLES--------------
 public:
-	uint8_t nCham;			// number of chambers [1-9]
-	uint8_t nChambMoveMax;	// max number of chambers to move at once [1-nCham]
-	uint8_t nAttemptMove;	// number of attempts to move a walls
-	uint8_t pwmDuty;		// pwm duty cycle [0-255]
+
+    uint8_t nCham;			// number of chambers to initialize in maze
+	uint8_t nChambMove;	// max number of chambers to move at once
+	uint8_t nMoveAttempt;	// max number of attempts to move a walls
+	uint8_t pwmDuty;		// pwm duty cycle 
 	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
 
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin

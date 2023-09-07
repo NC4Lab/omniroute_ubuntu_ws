@@ -13,12 +13,12 @@
 ///
 /// @param _nCham: Spcify number of chambers to track [1-49]
 /// @param _pwmDuty: Defualt duty cycle for all the pwm [0-255]
-Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMoveMax, uint8_t _nWallAttempt, uint8_t _pwmDuty, uint16_t _dtMoveTimeout)
+Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMove, uint8_t _nWallAttempt, uint8_t _pwmDuty, uint16_t _dtMoveTimeout)
 {
 	// Store input variables
 	nCham = _nCham;
-	nChambMoveMax = _nChambMoveMax;
-	nAttemptMove = _nWallAttempt;
+	nChambMove = _nChambMove;
+	nMoveAttempt = _nWallAttempt;
 	pwmDuty = _pwmDuty;
 	dtMoveTimeout = _dtMoveTimeout;
 
@@ -106,7 +106,6 @@ void Wall_Operation::procEcatMessage()
 			EsmaCom.rcvEM.ArgU.ui8[4]};
 
 		initSoftware(1, setup_arr);		   // reinitialize software
-		run_status = initWalls(2); // move walls up and down
 	}
 
 	// RESET_SYSTEM
@@ -380,8 +379,8 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// @brief Initialize/reset all relivant runtime variables to prepare for new session
 ///
 /// @param init_level: Specify level of initialization [0:initialize, 1:reinitialize, 2:reset]
-/// @param setup_arr: Setup variables [n_chambers, n_chamb_move_max, n_attempt_move, pwm_duty]
-void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
+/// @param setup_arg_arr: Setup variables from Ecat
+void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
 	// Log/print initialization status
 	_Dbg.printMsg(_Dbg.MT::ATTN_START, "SOFTWARE %s", init_level == 0 ? "INITIALIZED" : init_level == 1 ? "REINITIALIZED"
@@ -390,26 +389,33 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arr[])
 	// Update wall opperation variables for initialization or reinitialization
 	if (init_level == 0)
 	{
-		if (setup_arr != nullptr)
+		if (setup_arg_arr != nullptr)
 		{
-			nCham = setup_arr[0];
-			nChambMoveMax = setup_arr[1];
-			nAttemptMove = setup_arr[2];
-			pwmDuty = setup_arr[3];
-			dtMoveTimeout = setup_arr[4] * 10; // convert uint8_t (cs) to uint16_t (ms)
+			nCham = setup_arg_arr[0];
+			nChambMove = setup_arg_arr[1];
+			nMoveAttempt = setup_arg_arr[2];
+			pwmDuty = setup_arg_arr[3];
+			dtMoveTimeout = setup_arg_arr[4] * 10; // convert uint8_t (cs) to uint16_t (ms)
 		}
 
 		// Update chamber address
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber address
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
 			C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
 
 		// Print software setup variables
 		_Dbg.printMsg("CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
-					  nCham, nChambMoveMax, nAttemptMove, pwmDuty, dtMoveTimeout);
+					  nCham, nChambMove, nMoveAttempt, pwmDuty, dtMoveTimeout);
 	}
 
+	// Change wall PWM duty cycle for reinitialize
+	/// @note: This is the only Cypress setting that needs to be changed
+	if (init_level == 1)
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
+			for (size_t wall_i = 0; wall_i < 8; wall_i++)
+				changeWallDutyPWM(cham_i, wall_i, pwmDuty);
+
 	// Reset all status tracking chamber variables
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++) // update chamber struct entries
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
 	{
 		C[cham_i].i2cStatus = 0;
 		C[cham_i].runStatus = 0;
@@ -751,7 +757,7 @@ uint8_t Wall_Operation::moveWallsStaged()
 			cham_arr_all[n_cham_all++] = cham_i;
 
 	// Store chambers to move next
-	uint8_t cham_arr_next[nChambMoveMax];
+	uint8_t cham_arr_next[nChambMove];
 	size_t cham_set_cnt = 0;
 
 	// Move sets of chambers in stages
@@ -761,7 +767,7 @@ uint8_t Wall_Operation::moveWallsStaged()
 		cham_arr_next[cham_set_cnt++] = cham_arr_all[cham_i];
 
 		// Run walls once max reached
-		if (cham_set_cnt == nChambMoveMax || cham_set_cnt == n_cham_all)
+		if (cham_set_cnt == nChambMove || cham_set_cnt == n_cham_all)
 		{
 			uint8_t resp = moveWalls(cham_arr_next, cham_set_cnt);
 			run_status = run_status <= 1 ? resp : run_status; // update run status
@@ -823,8 +829,8 @@ uint8_t Wall_Operation::_moveWalls(uint8_t cham_arr[], uint8_t n_cham)
 		byte_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
 	}
 
-	// Make multiple attempts to move walls based on nAttemptMove
-	for (size_t att_i = 0; att_i < nAttemptMove; att_i++)
+	// Make multiple attempts to move walls based on nMoveAttempt
+	for (size_t att_i = 0; att_i < nMoveAttempt; att_i++)
 	{
 		attempt++;
 		_Dbg.printMsg("\t RUNNING: MOVE WALLS ATTEMPT #%d: chambers%s", attempt, _Dbg.arrayStr(cham_arr, n_cham));
@@ -845,10 +851,10 @@ uint8_t Wall_Operation::_moveWalls(uint8_t cham_arr[], uint8_t n_cham)
 	}
 
 	// Pring success/warning message
-	_Dbg.printMsg(attempt == nAttemptMove ? _Dbg.MT::INFO : attempt < nAttemptMove ? _Dbg.MT::WARNING
+	_Dbg.printMsg(attempt == nMoveAttempt ? _Dbg.MT::INFO : attempt < nMoveAttempt ? _Dbg.MT::WARNING
 																				   : _Dbg.MT::ERROR,
 				  "\t %s: MOVE WALLS AFTER #%d ATTEMPT: chambers%s",
-				  attempt == nAttemptMove ? "FINISHED" : attempt < nAttemptMove ? "INCOMPLETE"
+				  attempt == nMoveAttempt ? "FINISHED" : attempt < nMoveAttempt ? "INCOMPLETE"
 																				: "FAILED",
 				  attempt, _Dbg.arrayStr(cham_arr, n_cham));
 
@@ -950,7 +956,7 @@ uint8_t Wall_Operation::_moveConductor(uint8_t cham_arr[], uint8_t n_cham, uint8
 
 				// Print error message
 				uint8_t wall_n = C[cham_i].pmsActvIO.wallInc[prt_i][pin_i]; // get wall number
-				_Dbg.printMsg(attempt < nAttemptMove ? _Dbg.MT::WARNING : _Dbg.MT::ERROR,
+				_Dbg.printMsg(attempt < nMoveAttempt ? _Dbg.MT::WARNING : _Dbg.MT::ERROR,
 							  "\t\t FAILED: ATTEMPT #%d: chamber[%d] wall[%d] cause[%s] dt[%s]",
 							  attempt, cham_i, wall_n,
 							  C[cham_i].runStatus == 2	 ? "i2c"
