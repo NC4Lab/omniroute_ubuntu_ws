@@ -42,6 +42,8 @@ sudo apt install libxmlrpcpp-dev liblog4cxx-dev librosconsole-dev
 ```
 change ethenet address for ethercat sheild in launch file depending on what computer you are using
 ```
+# TO DO: Add instructions for port permisions for writing sketches to Arduino
+
 # Run catkin_make after changing things
 ```
 cd omniroute_operation_ws
