@@ -70,7 +70,7 @@ class Esmacat_Com
 
     // --------------VARIABLES--------------
 public:
-    bool isEcatConnected = false;     // flag to track setup handshake of ethercat coms
+    bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
     const char message_type_str[7][30] = {
@@ -160,8 +160,8 @@ public:
     EcatMessageStruct rcvEM; //  initialize message handler instance for receiving messages
 
 private:
-    static Maze_Debug _Dbg; // local instance of Maze_Debug class
-    int ecatPinCS;           // chip select pin for ethercat shield
+    static Maze_Debug _Dbg;      // local instance of Maze_Debug class
+    int ecatPinCS;               // chip select pin for ethercat shield
     SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 
     // ---------------METHODS---------------

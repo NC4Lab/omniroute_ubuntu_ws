@@ -29,7 +29,7 @@ uint8_t nCham = 3;		  // number of chambers being used [1-9]
 uint8_t nChambMove = 3;	  // max number of chambers to move at once [1-nCham]
 uint8_t nMoveAttempt = 3; // number of attempts to move a walls [1-255]
 uint8_t pwmDuty = 255;	  // PWM duty for all walls [0-255]
-uint16_t dtMoveTimeout;	   // timeout for wall movement (ms)
+uint16_t dtMoveTimeout;	  // timeout for wall movement (ms)
 
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
@@ -44,7 +44,7 @@ void setup()
 	Serial.begin(115200);
 	Serial1.begin(115200);
 	/// @todo: Consider moveing this to Cypress_Com class
-	Wire.begin(); // join I2C bus 
+	Wire.begin(); // join I2C bus
 	delay(100);
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -63,6 +63,31 @@ void setup()
 	// // Scan connected I2C devices
 	// CypCom.i2cScan();
 	// while(true);
+
+	// Dbg.printMsg("WallOper.C[0].flagTest = init [%d]", WallOper.C[0].flagTest);
+	// WallOper.C[0].flagTest = 1;
+	// Dbg.printMsg("WallOper.C[0].flagTest = 1 [%d]", WallOper.C[0].flagTest);
+	// WallOper.C[0].flagTest = 0;
+	// Dbg.printMsg("WallOper.C[0].flagTest = 0 [%d]", WallOper.C[0].flagTest);
+	// WallOper.C[0].flagTest = 5;
+	// Dbg.printMsg("WallOper.C[0].flagTest = 5 [%d]", WallOper.C[0].flagTest);
+	// WallOper.C[0].flagTest = 3;
+	// Dbg.printMsg("WallOper.C[0].flagTest = 3 [%d]", WallOper.C[0].flagTest);
+	// WallOper.C[0].flagTest.value = 0;
+	// Dbg.printMsg("WallOper.C[0].flagTest.value = 0 [%d]", WallOper.C[0].flagTest);
+
+	// TEMP
+	Dbg.printMsg("WallOper.flagTest = init [%u]", WallOper.flagTest);
+	WallOper.flagTest = 1;
+	Dbg.printMsg("WallOper.flagTest = 1 [%u]", WallOper.flagTest);
+	WallOper.flagTest = 0;
+	Dbg.printMsg("WallOper.flagTest = 0 [%u]", WallOper.flagTest);
+	WallOper.flagTest = 5;
+	Dbg.printMsg("WallOper.flagTest = 5 [%u]", WallOper.flagTest);
+	WallOper.flagTest = 3;
+	Dbg.printMsg("WallOper.flagTest = 3 [%u]", WallOper.flagTest);
+	WallOper.flagTest.value = 0;
+	Dbg.printMsg("WallOper.flagTest.value = 0 [%u]", WallOper.flagTest);
 }
 
 //=============== LOOP ==================

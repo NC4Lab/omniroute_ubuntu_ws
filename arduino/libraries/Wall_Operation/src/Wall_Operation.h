@@ -23,12 +23,26 @@ class Wall_Operation
 
 	// --------------VARIABLES--------------
 public:
-
-    uint8_t nCham;			// number of chambers to initialize in maze
-	uint8_t nChambMove;	// max number of chambers to move at once
+	uint8_t nCham;			// number of chambers to initialize in maze
+	uint8_t nChambMove;		// max number of chambers to move at once
 	uint8_t nMoveAttempt;	// max number of attempts to move a walls
-	uint8_t pwmDuty;		// pwm duty cycle 
+	uint8_t pwmDuty;		// pwm duty cycle
 	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
+
+	struct FlagSetStruct // struct for managing flag setting
+	{
+		uint8_t value;
+
+		// Default constructor declaration
+		FlagSetStruct();
+
+		// Overloaded assignment operator
+		FlagSetStruct &operator=(uint8_t newVal);
+
+		// Getter to retrieve the value (optional, since value is public)
+		int get() const;
+	};
+	FlagSetStruct flagTest;		  // flag to track if chamber should be moved
 
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
@@ -73,6 +87,7 @@ public:
 
 	struct ChamberStruct // struct for tracking each chamber
 	{
+		FlagSetStruct flagTest;		  // flag to track if chamber should be moved
 		uint8_t addr = 0;			  // chamber I2C address
 		uint8_t i2cStatus = 0;		  // track I2C status errors for chamber
 		uint8_t runStatus = 0;		  // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]
@@ -94,9 +109,6 @@ private:
 
 public:
 	Wall_Operation(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
-
-public:
-	void procEcatMessage();
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);
@@ -160,10 +172,10 @@ private:
 	uint8_t _moveCheck(uint8_t);
 
 public:
-	uint8_t changeWallDutyPWM(uint8_t, uint8_t, uint8_t);
+	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);
 
 public:
-	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);
+	void procEcatMessage();
 
 public:
 	uint8_t testWallIO(uint8_t, uint8_t[] = nullptr, uint8_t = 8);

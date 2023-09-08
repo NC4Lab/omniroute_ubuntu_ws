@@ -893,11 +893,17 @@ class MazePlot(QGraphicsView):
             self.status = MazePlot.Status.UNINITIALIZED
             self.setStatus(MazePlot.Status.UNINITIALIZED)
 
-        def setStatus(self, status_enum):
-            """Sets the wall status and color"""
+        def setStatus(self, status_enum, do_force=False):
+            """
+            Set/update wall status and set UI object colors
+            
+            Args:
+                status_enum (MazePlot.Status): Status enum
+                do_force (bool): Force status update if true (Optional)
+            """
 
             # Check and set the new status
-            if not MazePlot.checkStatus(self.status, status_enum):
+            if not MazePlot.checkStatus(self.status, status_enum, do_force):
                 return
             self.status = status_enum
 
@@ -985,11 +991,17 @@ class MazePlot(QGraphicsView):
                              for i in np.linspace(math.pi, 3*math.pi, 9) + offset]
             return vertices_list
 
-        def setStatus(self, status_enum):
-            """Sets the chamber status and color"""
+        def setStatus(self, status_enum, do_force=False):
+            """
+            Set/update chamber status and set UI object colors
+            
+            Args:
+                status_enum (MazePlot.Status): Status enum
+                do_force (bool): Force status update if true (Optional)
+            """
 
             # Check and set the new status
-            if not MazePlot.checkStatus(self.status, status_enum):
+            if not MazePlot.checkStatus(self.status, status_enum, do_force):
                 return
             self.status = status_enum
 
@@ -1049,11 +1061,17 @@ class MazePlot(QGraphicsView):
             self.status = MazePlot.Status.UNINITIALIZED
             self.setStatus(MazePlot.Status.UNINITIALIZED)
 
-        def setStatus(self, status_enum):
-            """Get plot color for a given status"""
+        def setStatus(self, status_enum, do_force=False):
+            """
+            Set/update maze status and set UI object colors
+            
+            Args:
+                status_enum (MazePlot.Status): Status enum
+                do_force (bool): Force status update if true (Optional)
+            """
 
             # Check and set the new status
-            if not MazePlot.checkStatus(self.status, status_enum):
+            if not MazePlot.checkStatus(self.status, status_enum, do_force):
                 return
             self.status = status_enum
 
@@ -1096,12 +1114,21 @@ class MazePlot(QGraphicsView):
         y_pos = center_y - text_rect.height() / 2
         text_item.setPos(x_pos, y_pos)
 
-    def checkStatus(current_status_enum, new_status_enum):
-        """ Checks if the new status is valid and updates the status if it is """
+    def checkStatus(current_status_enum, new_status_enum, do_force=False):
+        """
+        Checks if the new status is valid and updates the status if it is
+        
+        Args:
+            current_status_enum (MazePlot.Status): Current status enum
+            new_status_enum (MazePlot.Status): New status enum to set
+            do_force (bool): Force status update if true (Optional)
+        """
 
-        # TEMP
-        return True
+        # Check if change is forced
+        if do_force:
+            return True
 
+        # Check if status is valid based on following rules
         if current_status_enum == MazePlot.Status.EXCLUDED:
             return False
         elif current_status_enum == MazePlot.Status.ERROR:
@@ -1227,10 +1254,6 @@ class Interface(Plugin):
             [255, 0, 255],      # PWM duty
             [750, 500, 2000]   # Move timeout (ms)
         ]
-
-        # Make sure n_chambers_move default equal <= n_chambers_init
-        if self.sysDefaults[1][2] > self.sysDefaults[0][0]:
-            self.sysDefaults[1][2] = self.sysDefaults[0][0]
 
         # Setup/initialize system settings edit boxes
         self.getParamTxtBox()
@@ -1405,7 +1428,7 @@ class Interface(Plugin):
 
                         # Log walls with errors for this chamber
                         MazeDB.printMsg(
-                            'ERROR', "\t chamber[%d] walls[%s]", cham_i, MazeDB.arrStr(wall_numbers))
+                            'ERROR', "\t chamber[%d] walls%s", cham_i, MazeDB.arrStr(wall_numbers))
 
         # ................ Process Ack Message ................
 
@@ -1838,6 +1861,14 @@ class Interface(Plugin):
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 
+    def scale_to_byte(self, val):
+        """ Function to scale values greater than 255 to 8-bit for Ecat"""
+
+        if val != 0 and val > 255:
+            factor = 10 ** (int(math.log10(val)) - 2)
+            val = int(val / factor)
+        return val
+    
     def getParamTxtBox(self):
         """ 
         Function to get the maze settings from the UI line edit boxes and return them as a list.
@@ -1845,9 +1876,12 @@ class Interface(Plugin):
         Returns:
             unsigned 8-bit ctypes: List of maze settings
         """
-
+            
         def check_field(field, default, min, max):
             """ Function to check the value of a field """
+
+            # Scale values greter than 255 for Ecat
+            default = self.scale_to_byte(default)
 
             # Check for empty fields
             if field.text() == "":
@@ -1855,6 +1889,7 @@ class Interface(Plugin):
             # Check if values are integers and in range
             try:
                 val = int(field.text())
+                val = self.scale_to_byte(val)
                 if val < min or val > max:
                     raise ValueError
             except ValueError:
@@ -1867,9 +1902,6 @@ class Interface(Plugin):
         for i, (field, defaults) in enumerate(zip(self.sys_widgets, self.sysDefaults)):
             read_settings[i] = check_field(
                 field, defaults[0], defaults[1], defaults[2])
-
-        # Convert timeout to centiseconds so it can be sent as an unsigned 8-bit value
-        read_settings[i] = int(read_settings[i]/10)
 
         # Cast values to unsigned 8-bit ctypes
         read_settings = [ctypes.c_uint8(val).value for val in read_settings]
@@ -1886,6 +1918,10 @@ class Interface(Plugin):
 
             # Cast arg as intiger
             arg = int(arg)
+
+            # Scale values greter than 255 for Ecat
+            arg = self.scale_to_byte(arg)
+
             # Check if arg is in range
             if arg >= defaults[1] or arg <= defaults[2]:
 
@@ -1917,7 +1953,7 @@ class Interface(Plugin):
                 self.sys_widgets[param_ind], self.sysDefaults[param_ind], arg_val)
 
         # Print current status
-        MazeDB.printMsg('INFO', "CHAMBERS[%d] MOVE_MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+        MazeDB.printMsg('INFO', "SETTINGS: CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
                         * [self.sysDefaults[i][0] for i in range(len(self.sysDefaults))])
 
     def move_ui_window(self, widget, horizontal_alignment, vertical_alignment):

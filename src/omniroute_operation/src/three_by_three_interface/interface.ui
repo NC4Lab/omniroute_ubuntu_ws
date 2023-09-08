@@ -294,7 +294,7 @@
    <widget class="QLineEdit" name="sysSettingEdit_1">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>140</x>
       <y>120</y>
       <width>80</width>
       <height>30</height>
@@ -312,7 +312,7 @@
    <widget class="QLabel" name="sysSettingLabel_1">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>140</x>
       <y>50</y>
       <width>77</width>
       <height>60</height>
@@ -462,7 +462,7 @@ QGroupBox::title {
    <widget class="QLabel" name="sysSettingLabel_2">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>240</x>
       <y>50</y>
       <width>77</width>
       <height>60</height>
@@ -517,7 +517,7 @@ QGroupBox::title {
    <widget class="QLabel" name="sysSettingLabel_4">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>440</x>
       <y>50</y>
       <width>77</width>
       <height>60</height>
@@ -545,7 +545,7 @@ QGroupBox::title {
    <widget class="QLabel" name="sysSettingLabel_5">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>540</x>
       <y>50</y>
       <width>77</width>
       <height>60</height>
@@ -573,7 +573,7 @@ QGroupBox::title {
    <widget class="QLineEdit" name="sysSettingEdit_2">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>240</x>
       <y>120</y>
       <width>80</width>
       <height>30</height>
@@ -609,7 +609,7 @@ QGroupBox::title {
    <widget class="QLineEdit" name="sysSettingEdit_4">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>440</x>
       <y>120</y>
       <width>80</width>
       <height>30</height>
@@ -627,7 +627,7 @@ QGroupBox::title {
    <widget class="QLineEdit" name="sysSettingEdit_5">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>540</x>
       <y>120</y>
       <width>80</width>
       <height>30</height>

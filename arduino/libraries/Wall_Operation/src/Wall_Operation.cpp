@@ -44,145 +44,24 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMove, uint8_t _nWa
 	}
 }
 
-//------------------------ ETHERCAT COMMS METHODS ------------------------
+//------------------------ FLAGSETSTRUCT METHODS ------------------------
 
-/// @brief Used to process new ROS ethercat msg argument data.
-void Wall_Operation::procEcatMessage()
+/// @brief Default constructor definition to initialize to zero
+Wall_Operation::FlagSetStruct::FlagSetStruct() : value(0) {}
+
+/// @brief Overloaded assignment operator for @ref Wall_Operation::FlagSetStruct
+/// This method is used to set the value of the flag set struct.
+Wall_Operation::FlagSetStruct &Wall_Operation::FlagSetStruct::operator=(uint8_t newVal)
 {
-	uint8_t msg_arg_arr[9];	  // store message arguments
-	uint8_t arg_len = 0;	  // store argument length
-	uint8_t i2c_status = 255; // track i2c status
-	uint8_t run_status = 255; // track run status
+	if (newVal > value)
+		value = newVal;
+	return *this;
+}
 
-	// Check for new message
-	if (!EsmaCom.rcvEM.isNew)
-		return;
-
-	// Copy and send back recieved message arguments as the default response
-	arg_len = EsmaCom.rcvEM.argLen;
-	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
-		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
-
-	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
-
-	//............... Process and Execute Messages ...............
-
-	// HANDSHAKE
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
-	{
-		// Get system variables to pass to initSoftware()
-		uint8_t setup_arr[5] = {
-			EsmaCom.rcvEM.ArgU.ui8[0],
-			EsmaCom.rcvEM.ArgU.ui8[1],
-			EsmaCom.rcvEM.ArgU.ui8[2],
-			EsmaCom.rcvEM.ArgU.ui8[3],
-			EsmaCom.rcvEM.ArgU.ui8[4]};
-
-		// Initialize software
-		initSoftware(0, setup_arr);
-	}
-
-	// INITIALIZE_CYPRESS
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_CYPRESS)
-	{
-		i2c_status = initCypress();
-	}
-
-	// INITIALIZE_WALLS
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
-	{
-		run_status = initWalls(2); // move walls up and down
-	}
-
-	// REINITIALIZE_SYSTEM
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
-	{
-		// Get system variables to pass to initSoftware()
-		uint8_t setup_arr[5] = {
-			EsmaCom.rcvEM.ArgU.ui8[0],
-			EsmaCom.rcvEM.ArgU.ui8[1],
-			EsmaCom.rcvEM.ArgU.ui8[2],
-			EsmaCom.rcvEM.ArgU.ui8[3],
-			EsmaCom.rcvEM.ArgU.ui8[4]};
-
-		initSoftware(1, setup_arr);		   // reinitialize software
-	}
-
-	// RESET_SYSTEM
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
-	{
-		run_status = initWalls(0);	// move walls down
-		i2c_status = initCypress(); // reinitialize cypress
-	}
-
-	// MOVE_WALLS
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
-	{
-		// Loop through arguments and update walls to move
-		for (size_t cham_i = 0; cham_i < EsmaCom.rcvEM.argLen; cham_i++)
-		{
-			// Get wall byte mask data
-			uint8_t byte_wall_inc = EsmaCom.rcvEM.ArgU.ui8[cham_i];
-
-			// Set walls to move up for this chamber
-			setWallMove(cham_i, 1, byte_wall_inc);
-		}
-
-		// Run move walls operation
-		run_status = moveWallsStaged();
-	}
-
-	//............... Format Ecat Ack Data ...............
-
-	// Check for errors and store error type
-
-	// INITIALIZE_CYPRESS
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_CYPRESS)
-	{
-		// Set arg length to number of chambers
-		arg_len = nCham;
-
-		// Send i2c status
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			msg_arg_arr[cham_i] = C[cham_i].i2cStatus;
-	}
-
-	// INITIALIZE_WALLS OR MOVE_WALLS
-	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS ||
-			 EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
-	{
-		// Set arg length to number of chambers
-		arg_len = nCham;
-
-		// Get wall data for each chamber
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			if (run_status == 1) // send wall position byte mask
-				msg_arg_arr[cham_i] = C[cham_i].bitWallPosition;
-			else // send wall error byte mask
-				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag;
-	}
-
-	//............... Send Ecat Ack ...............
-
-	// I2C_FAILED
-	if (i2c_status != 0 && i2c_status != 255)
-		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
-
-	// WALL_MOVE_FAILED
-	else if (run_status != 1 && run_status != 255)
-		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
-
-	// NO ERROR
-	else
-		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
-
-	//............... Reset Ecat ...............
-
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
-	{
-		// Reset software including Ecat message variables after final ack is sent
-		initSoftware(2);
-	}
+/// @brief Getter to retrieve the value of the flag set struct.
+int Wall_Operation::FlagSetStruct::get() const
+{
+	return value;
 }
 
 //------------------------ DATA HANDELING ------------------------
@@ -382,12 +261,10 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// @param setup_arg_arr: Setup variables from Ecat
 void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
-	// Log/print initialization status
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "SOFTWARE %s", init_level == 0 ? "INITIALIZED" : init_level == 1 ? "REINITIALIZED"
-																										: "RESET");
-
+	_Dbg.printMsg(_Dbg.MT::ATTN_START, "RUNNING: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
+																													: "RESET");
 	// Update wall opperation variables for initialization or reinitialization
-	if (init_level == 0)
+	if (init_level == 0 || init_level == 1)
 	{
 		if (setup_arg_arr != nullptr)
 		{
@@ -399,25 +276,26 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 		}
 
 		// Update chamber address
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
 
 		// Print software setup variables
-		_Dbg.printMsg("CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+		_Dbg.printMsg("SETTINGS: CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
 					  nCham, nChambMove, nMoveAttempt, pwmDuty, dtMoveTimeout);
 	}
 
 	// Change wall PWM duty cycle for reinitialize
 	/// @note: This is the only Cypress setting that needs to be changed
 	if (init_level == 1)
-		for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			for (size_t wall_i = 0; wall_i < 8; wall_i++)
-				changeWallDutyPWM(cham_i, wall_i, pwmDuty);
+				_CypCom.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], pwmDuty);
 
 	// Reset all status tracking chamber variables
-	for (size_t cham_i = 0; cham_i < nCham; cham_i++) 
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{
-		C[cham_i].i2cStatus = 0;
+		if (init_level != 1) // keep i2c status if reinitializing
+			C[cham_i].i2cStatus = 0;
 		C[cham_i].runStatus = 0;
 		C[cham_i].bitWallPosition = 0;
 		C[cham_i].bitWallRaiseFlag = 0;
@@ -429,6 +307,10 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 		EsmaCom.initEcat(true); // connect to ethercat
 	else if (init_level == 2)
 		EsmaCom.initEcat(false); // reset/disconnect ethercat
+
+	// Log/print initialization status
+	_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
+																												   : "RESET");
 }
 
 /// @brief Initialize/reset Cypress hardware
@@ -496,7 +378,7 @@ uint8_t Wall_Operation::initCypress()
 			_Dbg.printMsg("\t FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 	}
 
-	// Set return flag to value of any non zero chamber flag
+	// Set status return to any error
 	uint8_t i2c_status = 0;
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 		i2c_status = i2c_status == 0 ? C[cham_i].i2cStatus : i2c_status; // update status
@@ -716,7 +598,7 @@ uint8_t Wall_Operation::_setWallMove(uint8_t cham_i, uint8_t pos_state_set, uint
 	// Bail if chamber is flagged with I2C error
 	if (C[cham_i].i2cStatus != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::WARNING, "\t SKIPPED: WALL MOVE SETUP: I2C Error: chamber[%d] i2c_status[%d]", cham_i, C[cham_i].i2cStatus);
+		_Dbg.printMsg(_Dbg.MT::WARNING, "\t SKIPPED: WALL MOVE SETUP: I2C Flagged: chamber[%d] i2c_status[%d]", cham_i, C[cham_i].i2cStatus);
 		return 0;
 	}
 
@@ -1152,21 +1034,143 @@ uint8_t Wall_Operation::getWallState(uint8_t cham_i, uint8_t pos_state_get, uint
 	return resp;
 }
 
-/// @brief Option to change the PWM duty cycle for a given wall.
-/// @note This is basically a wrapper for @ref Cypress_Com::setSourceDutyPWM.
-/// @note Could be useful if some walls are running at different speeds.
-///
-/// @param cham_i: Index of the chamber to set [0-48]
-/// @param source: Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
-/// @param duty: PWM duty cycle [0-255].
-///
-/// @return Wire::method output [0-4] or [-1=255:input argument error].
-uint8_t Wall_Operation::changeWallDutyPWM(uint8_t cham_i, uint8_t wall_i, uint8_t duty)
+/// @brief Used to process new ROS ethercat msg argument data.
+void Wall_Operation::procEcatMessage()
 {
-	if (cham_i > nCham || wall_i > 7 || duty > 255)
-		return -1;
-	uint8_t resp = _CypCom.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], duty); // set duty cycle to duty
-	return resp;
+	uint8_t msg_arg_arr[9];	  // store message arguments
+	uint8_t arg_len = 0;	  // store argument length
+	uint8_t i2c_status = 255; // track i2c status
+	uint8_t run_status = 255; // track run status
+
+	// Check for new message
+	if (!EsmaCom.rcvEM.isNew)
+		return;
+
+	// Copy and send back recieved message arguments as the default response
+	arg_len = EsmaCom.rcvEM.argLen;
+	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
+		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
+
+	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
+
+	//............... Process and Execute Messages ...............
+
+	// HANDSHAKE
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
+	{
+		// Get system variables to pass to initSoftware()
+		uint8_t setup_arr[5] = {
+			EsmaCom.rcvEM.ArgU.ui8[0],
+			EsmaCom.rcvEM.ArgU.ui8[1],
+			EsmaCom.rcvEM.ArgU.ui8[2],
+			EsmaCom.rcvEM.ArgU.ui8[3],
+			EsmaCom.rcvEM.ArgU.ui8[4]};
+
+		// Initialize software
+		initSoftware(0, setup_arr);
+	}
+
+	// INITIALIZE_CYPRESS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_CYPRESS)
+	{
+		i2c_status = initCypress();
+	}
+
+	// INITIALIZE_WALLS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
+	{
+		run_status = initWalls(2); // move walls up and down
+	}
+
+	// REINITIALIZE_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REINITIALIZE_SYSTEM)
+	{
+		// Get system variables to pass to initSoftware()
+		uint8_t setup_arr[5] = {
+			EsmaCom.rcvEM.ArgU.ui8[0],
+			EsmaCom.rcvEM.ArgU.ui8[1],
+			EsmaCom.rcvEM.ArgU.ui8[2],
+			EsmaCom.rcvEM.ArgU.ui8[3],
+			EsmaCom.rcvEM.ArgU.ui8[4]};
+
+		initSoftware(1, setup_arr); // reinitialize software
+	}
+
+	// RESET_SYSTEM
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
+	{
+		run_status = initWalls(0);	// move walls down
+		i2c_status = initCypress(); // reinitialize cypress
+	}
+
+	// MOVE_WALLS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
+	{
+		// Loop through arguments and update walls to move
+		for (size_t cham_i = 0; cham_i < EsmaCom.rcvEM.argLen; cham_i++)
+		{
+			// Get wall byte mask data
+			uint8_t byte_wall_inc = EsmaCom.rcvEM.ArgU.ui8[cham_i];
+
+			// Set walls to move up for this chamber
+			setWallMove(cham_i, 1, byte_wall_inc);
+		}
+
+		// Run move walls operation
+		run_status = moveWallsStaged();
+	}
+
+	//............... Format Ecat Ack Data ...............
+
+	// Check for errors and store error type
+
+	// INITIALIZE_CYPRESS
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_CYPRESS)
+	{
+		// Set arg length to number of chambers
+		arg_len = nCham;
+
+		// Send i2c status
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+			msg_arg_arr[cham_i] = C[cham_i].i2cStatus;
+	}
+
+	// INITIALIZE_WALLS OR MOVE_WALLS
+	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS ||
+			 EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::MOVE_WALLS)
+	{
+		// Set arg length to number of chambers
+		arg_len = nCham;
+
+		// Get wall data for each chamber
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+			if (run_status == 1) // send wall position byte mask
+				msg_arg_arr[cham_i] = C[cham_i].bitWallPosition;
+			else // send wall error byte mask
+				msg_arg_arr[cham_i] = C[cham_i].bitWallErrorFlag;
+	}
+
+	//............... Send Ecat Ack ...............
+
+	// I2C_FAILED
+	if (i2c_status != 0 && i2c_status != 255)
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
+
+	// WALL_MOVE_FAILED
+	else if (run_status != 1 && run_status != 255)
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
+
+	// NO ERROR
+	else
+		EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
+
+	//............... Reset Ecat ...............
+
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
+	{
+		// Reset software including Ecat message variables after final ack is sent
+		initSoftware(2);
+	}
 }
 
 //------------------------ TESTING AND DEBUGGING METHODS ------------------------
@@ -1207,7 +1211,7 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 	// Test input pins
 	uint8_t r_bit_out;
 	uint8_t resp = 0;
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test IO switches: chamber[%d] walls[%s]", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test IO switches: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	while (true)
 	{ // loop indefinitely
 		for (size_t i = 0; i < s; i++)
@@ -1233,7 +1237,7 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 		}
 	}
 	// Print failure message if while loop is broken out of because of I2C coms issues
-	_Dbg.printMsg(_Dbg.MT::ERROR, "Test IO switches: chamber[%d] walls[%s]", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::ERROR, "Test IO switches: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	return resp;
 }
 
@@ -1265,7 +1269,7 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 	}
 
 	// Run each wall up then down for dt_run ms
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test PWM: chamber[%d] walls[%s]", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test PWM: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	uint8_t resp = 0;
 	for (size_t i = 0; i < s; i++)
 	{ // loop walls
@@ -1318,7 +1322,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 	}
 
 	// Test all walls
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test move opperation: chamber[%d] walls[%s]", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test move opperation: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	uint8_t r_bit_out = 1;
 	uint16_t dt = 2000;
 	uint16_t ts;

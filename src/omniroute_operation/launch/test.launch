@@ -7,10 +7,10 @@
     <!-- launch-prefix gives instructions as to how to launch the node -->
 
     <!-- Esmacat ethernet addapter address (STOUT) -->
-    <!-- <param name="ethercat_adapter_name" type="str" value="enp4s0f1" /> -->
+    <param name="ethercat_adapter_name" type="str" value="enp4s0f1" />
     
     <!-- Esmacat ethernet addapter address (GINGER_BEER) -->
-    <param name="ethercat_adapter_name" type="str" value="enp8s0" /> 
+    <!-- <param name="ethercat_adapter_name" type="str" value="enp8s0" />  -->
     
     <!-- Esmacat parameter -->
     <param name="maze_ard0_ease_slave_index" type="int" value="0" />
