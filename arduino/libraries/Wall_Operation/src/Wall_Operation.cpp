@@ -302,7 +302,7 @@ uint8_t Wall_Operation::initCypress()
 	_Dbg.printMsg(_Dbg.MT::ATTN_START, "RUNNING: CYPRESS INITIALIZATION");
 
 	// Scan connected I2C devices
-	_CypCom.i2cScan();
+	// TEMP _CypCom.i2cScan();
 
 	// Loop through all chambers
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)

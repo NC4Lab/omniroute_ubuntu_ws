@@ -59,10 +59,6 @@ void setup()
 #ifdef ARDUINO_SAM_DUE
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
-
-	// TEMP
-	CypCom.setupCypress(CypCom.ADDR_LIST[0]);
-	while (true);
 	
 }
 

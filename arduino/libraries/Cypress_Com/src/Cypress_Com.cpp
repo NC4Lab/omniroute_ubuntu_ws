@@ -241,7 +241,7 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 	if (p_reg_last_byte_arr == nullptr)
 	{
 		resp = ioReadReg(address, REG_GO0, p_byte_val, s); // get current registry values
-		/// @note: Just discovered a likely big bug here had this returning with successful reads!
+		/// @note: Just discovered a likely big bug here! Had this returning with successful reads!
 		if (resp != 0)
 			return resp;
 	}
@@ -271,20 +271,18 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 {
 
 	// Check I2C lines
-	uint8_t scl_line;
-	uint8_t sda_line;
-#ifdef ARDUINO_SAM_DUE || __AVR_ATmega2560__
-	cl_line = 20;
-	sda_line = 21;
+	bool is_err = false;
+#ifdef ARDUINO_SAM_DUE
+	is_err = (digitalRead(20) == LOW) || (digitalRead(21) == LOW);
+#endif
+#ifdef __AVR_ATmega2560__
+	is_err = (digitalRead(20) == LOW) || (digitalRead(21) == LOW);
 #endif
 #ifdef ARDUINO_AVR_UNO
-	cl_line = 20;
-	sda_line = 21;
+	is_err = (digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW);
 #endif
-	if ((digitalRead(scl_line) == LOW) || (digitalRead(sda_line) == LOW))
-	{
+	if (is_err)
 		_Dbg.printMsg(_Dbg.MT::ERROR, "!!!!! I2C LINES LOW: CHECK POWER !!!!!");
-	}
 
 	// Setup timeout
 	Wire.setTimeout(1000); // set timeout to 1000ms
@@ -305,9 +303,6 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	// Bail if error
 	if (resp != 0)
 		return resp;
-
-	// Scan for i2c devices
-	i2cScan();
 
 	// Setup Cypress chip
 	if (resp == 0)
@@ -430,7 +425,7 @@ uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 /// @note This library was designed to support the Cypress CY8C9540A and should work for the CY8C9520A
 ///	but will not support the additional registries of the CY8C9560A.
 ///
-/// @return Last address found.
+/// @return Last address found
 uint8_t Cypress_Com::i2cScan()
 {
 	uint8_t address;
