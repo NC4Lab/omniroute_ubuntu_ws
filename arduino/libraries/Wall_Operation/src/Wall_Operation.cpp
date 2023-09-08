@@ -44,26 +44,6 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChambMove, uint8_t _nWa
 	}
 }
 
-//------------------------ FLAGSETSTRUCT METHODS ------------------------
-
-/// @brief Default constructor definition to initialize to zero
-Wall_Operation::FlagSetStruct::FlagSetStruct() : value(0) {}
-
-/// @brief Overloaded assignment operator for @ref Wall_Operation::FlagSetStruct
-/// This method is used to set the value of the flag set struct.
-Wall_Operation::FlagSetStruct &Wall_Operation::FlagSetStruct::operator=(uint8_t newVal)
-{
-	if (newVal > value)
-		value = newVal;
-	return *this;
-}
-
-/// @brief Getter to retrieve the value of the flag set struct.
-int Wall_Operation::FlagSetStruct::get() const
-{
-	return value;
-}
-
 //------------------------ DATA HANDELING ------------------------
 
 /// @brief Used to create @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to
@@ -288,8 +268,9 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 	/// @note: This is the only Cypress setting that needs to be changed
 	if (init_level == 1)
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			for (size_t wall_i = 0; wall_i < 8; wall_i++)
-				_CypCom.setSourceDutyPWM(C[cham_i].addr, wms.pwmSrc[wall_i], pwmDuty);
+			if (C[cham_i].i2cStatus == 0)
+				for (size_t wall_i = 0; wall_i < 8; wall_i++)
+					_CypCom.setupSourcePWM(C[cham_i].addr, wms.pwmSrc[wall_i], pwmDuty);
 
 	// Reset all status tracking chamber variables
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
@@ -332,8 +313,7 @@ uint8_t Wall_Operation::initCypress()
 		//............... Initialize Cypress Chip ...............
 
 		// Setup Cypress chips and check I2C
-		resp = _CypCom.setupCypress(C[cham_i].addr);
-		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _CypCom.setupCypress(C[cham_i].addr);
 		if (C[cham_i].i2cStatus != 0)
 		{
 			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
@@ -345,9 +325,8 @@ uint8_t Wall_Operation::initCypress()
 		//............... Initialize Cypress IO ...............
 
 		// Setup IO pins for each chamber
-		resp = _setupCypressIO(C[cham_i].addr);
-		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
-		if (C[cham_i].i2cStatus != 0)												 // print error if failed
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _setupCypressIO(C[cham_i].addr);
+		if (C[cham_i].i2cStatus != 0) // print error if failed
 		{
 			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 			continue; // skip chamber if failed
@@ -367,8 +346,7 @@ uint8_t Wall_Operation::initCypress()
 		//............... Initialize Cypress PWM ...............
 
 		// Setup PWM pins for each chamber
-		resp = _setupCypressPWM(C[cham_i].addr);
-		C[cham_i].i2cStatus = C[cham_i].i2cStatus == 0 ? resp : C[cham_i].i2cStatus; // update i2c status
+		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _setupCypressPWM(C[cham_i].addr);
 		if (C[cham_i].i2cStatus != 0)
 		{
 			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
@@ -453,36 +431,31 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 /// @return method output from @ref Wire::endTransmission().
 uint8_t Wall_Operation::_setupCypressIO(uint8_t address)
 {
-	uint8_t resp = 0;
 	uint8_t i2c_status = 0;
 
 	// Set entire output register to off
 	uint8_t p_byte_mask_in[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-	resp = _CypCom.ioWriteReg(address, p_byte_mask_in, 6, 0);
-	i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
+	i2c_status = _CypCom.ioWriteReg(address, p_byte_mask_in, 6, 0);
+	if (i2c_status != 0)
+		return i2c_status;
 
-	if (resp == 0)
+	for (size_t prt_i = 0; prt_i < pmsAllIO.nPortsInc; prt_i++)
 	{
-		for (size_t prt_i = 0; prt_i < pmsAllIO.nPortsInc; prt_i++)
-		{ // loop through port list
-			// Set input pins as input
-			resp = _CypCom.setPortRegister(address, REG_PIN_DIR, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
-			i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-			if (resp == 0)
-			{
-				// Set pins as pull down
-				resp = _CypCom.setPortRegister(address, DRIVE_PULLDOWN, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
-				i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-				if (resp == 0)
-				{
-					// Set corrisponding output register entries to 1 as per datasheet
-					resp = _CypCom.ioWritePort(address, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
-					i2c_status = i2c_status == 0 ? resp : i2c_status; // update i2c status
-					if (resp != 0)
-						return resp;
-				}
-			}
-		}
+
+		// Set input pins as input
+		i2c_status = _CypCom.setPortRegister(address, REG_PIN_DIR, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
+		if (i2c_status != 0)
+			return i2c_status;
+
+		// Set pins as pull down
+		i2c_status = _CypCom.setPortRegister(address, DRIVE_PULLDOWN, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
+		if (i2c_status != 0)
+			return i2c_status;
+
+		// Set corrisponding output register entries to 1 as per datasheet
+		i2c_status = _CypCom.ioWritePort(address, pmsAllIO.portInc[prt_i], pmsAllIO.byteMaskInc[prt_i], 1);
+		if (i2c_status != 0)
+			return i2c_status;
 	}
 
 	return i2c_status;
@@ -490,36 +463,39 @@ uint8_t Wall_Operation::_setupCypressIO(uint8_t address)
 
 /// @brief Setup PWM pins for each chamber including the specifying them as PWM outputs
 /// and also detting the drive mode to "Strong Drive". This also sets up the PWM
-/// Source using @ref Cypress_Com::setupSourcePWM()
+/// Source duty cycle
 ///
 /// @param address: I2C address of Cypress chip to setup.
 ///
 /// @return Wire::method output from @ref Wire::endTransmission().
 uint8_t Wall_Operation::_setupCypressPWM(uint8_t address)
 {
-	uint8_t resp = 0;
+	uint8_t i2c_status = 0;
 
 	// Setup PWM sources
 	for (size_t src_i = 0; src_i < 8; src_i++)
 	{
-		resp = _CypCom.setupSourcePWM(address, wms.pwmSrc[src_i], pwmDuty);
-		if (resp != 0)
-			_Dbg.printMsg("\t !!failed PWM source setup: source[%d]", src_i);
+		i2c_status = _CypCom.setupSourcePWM(address, wms.pwmSrc[src_i], pwmDuty);
+		if (i2c_status != 0)
+			return i2c_status;
 	}
 
 	// Setup wall pwm pins
 	for (size_t prt_i = 0; prt_i < pmsAllPWM.nPortsInc; prt_i++)
 	{ // loop through port list
+		
 		// Set pwm pins as pwm output
-		resp = _CypCom.setPortRegister(address, REG_SEL_PWM_PORT_OUT, pmsAllPWM.portInc[prt_i], pmsAllPWM.byteMaskInc[prt_i], 1);
-		if (resp == 0)
-		{
-			// Set pins as strong drive
-			resp = _CypCom.setPortRegister(address, DRIVE_STRONG, pmsAllPWM.portInc[prt_i], pmsAllPWM.byteMaskInc[prt_i], 1);
-		}
+		i2c_status = _CypCom.setPortRegister(address, REG_SEL_PWM_PORT_OUT, pmsAllPWM.portInc[prt_i], pmsAllPWM.byteMaskInc[prt_i], 1);
+		if (i2c_status != 0)
+			return i2c_status;
+		
+		// Set pins as strong drive
+		i2c_status = _CypCom.setPortRegister(address, DRIVE_STRONG, pmsAllPWM.portInc[prt_i], pmsAllPWM.byteMaskInc[prt_i], 1);
+		if (i2c_status != 0)
+			return i2c_status;
 	}
 
-	return resp;
+	return i2c_status;
 }
 
 //------------------------ RUNTIME METHODS ------------------------
@@ -839,12 +815,8 @@ uint8_t Wall_Operation::_moveConductor(uint8_t cham_arr[], uint8_t n_cham, uint8
 				// Print error message
 				uint8_t wall_n = C[cham_i].pmsActvIO.wallInc[prt_i][pin_i]; // get wall number
 				_Dbg.printMsg(attempt < nMoveAttempt ? _Dbg.MT::WARNING : _Dbg.MT::ERROR,
-							  "\t\t FAILED: ATTEMPT #%d: chamber[%d] wall[%d] cause[%s] dt[%s]",
-							  attempt, cham_i, wall_n,
-							  C[cham_i].runStatus == 2	 ? "i2c"
-							  : C[cham_i].runStatus == 3 ? "timedout"
-														 : "unknown",
-							  _Dbg.dtTrack());
+							  "\t\t FAILED: ATTEMPT #%d: chamber[%d] wall[%d] run_status[%s] dt[%s]",
+							  attempt, cham_i, wall_n, C[cham_i].runStatus, _Dbg.dtTrack());
 			}
 		}
 	}
@@ -999,7 +971,7 @@ uint8_t Wall_Operation::_moveCheck(uint8_t cham_i)
 	// Update run status
 	run_status = i2c_status == 0 ? 1 : i2c_status; // update flag based on i2c status
 
-	return run_status; // return error
+	return run_status; // return overal status
 }
 
 /// @brief Used to get the current wall state/position based on limit switch IO

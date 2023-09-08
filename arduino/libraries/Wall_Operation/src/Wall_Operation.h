@@ -29,21 +29,6 @@ public:
 	uint8_t pwmDuty;		// pwm duty cycle
 	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
 
-	struct FlagSetStruct // struct for managing flag setting
-	{
-		uint8_t value;
-
-		// Default constructor declaration
-		FlagSetStruct();
-
-		// Overloaded assignment operator
-		FlagSetStruct &operator=(uint8_t newVal);
-
-		// Getter to retrieve the value (optional, since value is public)
-		int get() const;
-	};
-	FlagSetStruct flagTest;		  // flag to track if chamber should be moved
-
 	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
 	{
 		uint8_t pwmSrc[8] =
@@ -87,7 +72,6 @@ public:
 
 	struct ChamberStruct // struct for tracking each chamber
 	{
-		FlagSetStruct flagTest;		  // flag to track if chamber should be moved
 		uint8_t addr = 0;			  // chamber I2C address
 		uint8_t i2cStatus = 0;		  // track I2C status errors for chamber
 		uint8_t runStatus = 0;		  // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]

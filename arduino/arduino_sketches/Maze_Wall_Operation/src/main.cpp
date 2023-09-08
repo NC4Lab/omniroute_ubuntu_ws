@@ -60,34 +60,10 @@ void setup()
 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 
-	// // Scan connected I2C devices
-	// CypCom.i2cScan();
-	// while(true);
-
-	// Dbg.printMsg("WallOper.C[0].flagTest = init [%d]", WallOper.C[0].flagTest);
-	// WallOper.C[0].flagTest = 1;
-	// Dbg.printMsg("WallOper.C[0].flagTest = 1 [%d]", WallOper.C[0].flagTest);
-	// WallOper.C[0].flagTest = 0;
-	// Dbg.printMsg("WallOper.C[0].flagTest = 0 [%d]", WallOper.C[0].flagTest);
-	// WallOper.C[0].flagTest = 5;
-	// Dbg.printMsg("WallOper.C[0].flagTest = 5 [%d]", WallOper.C[0].flagTest);
-	// WallOper.C[0].flagTest = 3;
-	// Dbg.printMsg("WallOper.C[0].flagTest = 3 [%d]", WallOper.C[0].flagTest);
-	// WallOper.C[0].flagTest.value = 0;
-	// Dbg.printMsg("WallOper.C[0].flagTest.value = 0 [%d]", WallOper.C[0].flagTest);
-
 	// TEMP
-	Dbg.printMsg("WallOper.flagTest = init [%u]", WallOper.flagTest);
-	WallOper.flagTest = 1;
-	Dbg.printMsg("WallOper.flagTest = 1 [%u]", WallOper.flagTest);
-	WallOper.flagTest = 0;
-	Dbg.printMsg("WallOper.flagTest = 0 [%u]", WallOper.flagTest);
-	WallOper.flagTest = 5;
-	Dbg.printMsg("WallOper.flagTest = 5 [%u]", WallOper.flagTest);
-	WallOper.flagTest = 3;
-	Dbg.printMsg("WallOper.flagTest = 3 [%u]", WallOper.flagTest);
-	WallOper.flagTest.value = 0;
-	Dbg.printMsg("WallOper.flagTest.value = 0 [%u]", WallOper.flagTest);
+	CypCom.setupCypress(CypCom.ADDR_LIST[0]);
+	while (true);
+	
 }
 
 //=============== LOOP ==================

@@ -896,7 +896,7 @@ class MazePlot(QGraphicsView):
         def setStatus(self, status_enum, do_force=False):
             """
             Set/update wall status and set UI object colors
-            
+
             Args:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
@@ -915,6 +915,15 @@ class MazePlot(QGraphicsView):
             current_pen.setColor(self.status.color)
             self.line.setPen(current_pen)
 
+        def togglePosStatus(self):
+            """Toggle the wall status between UP and DOWN"""
+
+            if self.status == MazePlot.Status.DOWN or \
+                    self.status == MazePlot.Status.INITIALIZED:
+                self.setStatus(MazePlot.Status.UP)
+            elif self.status == MazePlot.Status.UP:
+                self.setStatus(MazePlot.Status.DOWN)
+
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the wall status"""
 
@@ -925,11 +934,7 @@ class MazePlot(QGraphicsView):
             if event.button() == Qt.LeftButton:
 
                 # Toggle wall status
-                if self.status == MazePlot.Status.DOWN or \
-                        self.status == MazePlot.Status.INITIALIZED:
-                    self.setStatus(MazePlot.Status.UP)
-                elif self.status == MazePlot.Status.UP:
-                    self.setStatus(MazePlot.Status.DOWN)
+                self.togglePosStatus()
 
                 # Update configuration list
                 if self.status == MazePlot.Status.UP:  # add list entry
@@ -994,7 +999,7 @@ class MazePlot(QGraphicsView):
         def setStatus(self, status_enum, do_force=False):
             """
             Set/update chamber status and set UI object colors
-            
+
             Args:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
@@ -1013,13 +1018,18 @@ class MazePlot(QGraphicsView):
 
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the chamber status"""
+            # @todo: Figure out why this is not working
+            MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
 
             # Bail if chamber is not enabled
             if not MazePlot.isEnabled(self.status):
                 return
 
             if event.button() == Qt.LeftButton:
-                pass
+
+                # Change state setting of all walls
+                for _, wall in enumerate(self.Walls):
+                    wall.togglePosStatus()
 
     # ------------------------ METHODS ------------------------
 
@@ -1064,7 +1074,7 @@ class MazePlot(QGraphicsView):
         def setStatus(self, status_enum, do_force=False):
             """
             Set/update maze status and set UI object colors
-            
+
             Args:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
@@ -1117,7 +1127,7 @@ class MazePlot(QGraphicsView):
     def checkStatus(current_status_enum, new_status_enum, do_force=False):
         """
         Checks if the new status is valid and updates the status if it is
-        
+
         Args:
             current_status_enum (MazePlot.Status): Current status enum
             new_status_enum (MazePlot.Status): New status enum to set
@@ -1295,35 +1305,44 @@ class Interface(Plugin):
         self.dt_ecat_check = 0.5  # (sec)
 
         # Couter to incrementally shut down opperations
-        self.cnt_shutdown_step = 0
+        self.cnt_shutdown_step = 0  # tracks the current step
+        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
 
         # ................ QT Callback Setup ................
 
-        # QT UI object callback setup
-        self._widget.fileListWidget.itemClicked.connect(
-            self.qt_callback_fileListWidget_item_clicked)
+        # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
-        self._widget.plotSaveBtn.clicked.connect(
-            self.qt_callback_plotSaveBtn_clicked)
         self._widget.filePreviousBtn.clicked.connect(
             self.qt_callback_filePreviousBtn_clicked)
         self._widget.fileNextBtn.clicked.connect(
             self.qt_callback_fileNextBtn_clicked)
         self._widget.plotClearBtn.clicked.connect(
             self.qt_callback_plotClearBtn_clicked)
+        self._widget.plotSaveBtn.clicked.connect(
+            self.qt_callback_plotSaveBtn_clicked)
         self._widget.plotSendBtn.clicked.connect(
             self.qt_callback_plotSendBtn_clicked)
+        # QT UI system button callback setup
         self._widget.sysStartBtn.clicked.connect(
             self.qt_callback_sysStartBtn_clicked)
         self._widget.sysReinitBtn.clicked.connect(
             self.qt_callback_sysReinitBtn_clicked)
         self._widget.sysQuiteBtn.clicked.connect(
             self.qt_callback_sysQuiteBtn_clicked)
+        # Other object callbacks
+        self._widget.fileListWidget.itemClicked.connect(
+            self.qt_callback_fileListWidget_item_clicked)
 
-        # Disable reinit button
+        # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
+        self._widget.fileBrowseBtn.setEnabled(False)
+        self._widget.filePreviousBtn.setEnabled(False)
+        self._widget.fileNextBtn.setEnabled(False)
+        self._widget.plotClearBtn.setEnabled(False)
+        self._widget.plotSaveBtn.setEnabled(False)
+        self._widget.plotSendBtn.setEnabled(False)
 
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
@@ -1376,7 +1395,7 @@ class Interface(Plugin):
             # I2C_FAILED
             if self.EsmaCom.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
 
-                # Update number of init chambers setting based on chambersi2c errors
+                # Update number of init chambers setting based on chambers i2c status
                 cham_cnt = sum(1 for i in range(
                     self.EsmaCom.rcvEM.argLen) if self.EsmaCom.rcvEM.ArgU.ui8[i] == 0)
                 self.setParamTxtBox(param_ind=0, arg_val=cham_cnt)
@@ -1445,6 +1464,15 @@ class Interface(Plugin):
             # Send INITIALIZE_CYPRESS message
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_CYPRESS)
+            
+            # Enable buttons
+            self._widget.sysReinitBtn.setEnabled(True)
+            self._widget.fileBrowseBtn.setEnabled(True)
+            self._widget.filePreviousBtn.setEnabled(True)
+            self._widget.fileNextBtn.setEnabled(True)
+            self._widget.plotClearBtn.setEnabled(True)
+            self._widget.plotSaveBtn.setEnabled(True)
+            self._widget.plotSendBtn.setEnabled(True)
 
         # INITIALIZE_CYPRESS
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
@@ -1496,10 +1524,6 @@ class Interface(Plugin):
         # REINITIALIZE_SYSTEM
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             MazeDB.printMsg('ATTN', "SYSTEM REINITIALIZED")
-
-            # Update settings edit boxes based on arguments
-            self.setParamTxtBox(
-                msg_arg_data=self.EsmaCom.rcvEM.ArgU.ui8, msg_arg_len=self.EsmaCom.rcvEM.argLen)
 
             # Send INITIALIZE_WALLS message again
             self.EsmaCom.writeEcatMessage(
@@ -1591,14 +1615,21 @@ class Interface(Plugin):
         """ Timer callback to incrementally shutdown session. """
 
         if self.cnt_shutdown_step == 0:
-            # Send RESET_SYSTEM message
-            self.EsmaCom.writeEcatMessage(
-                EsmacatCom.MessageType.RESET_SYSTEM)
+            # Send RESET_SYSTEM message if connected
+            if self.EsmaCom.isEcatConnected:
+                self.EsmaCom.writeEcatMessage(
+                    EsmacatCom.MessageType.RESET_SYSTEM)
 
         elif self.EsmaCom.isEcatConnected == True:
-            # Wait for RESET_SYSTEM message confirmation and restart timer
-            self.timer_endSession.start(self.dt_shutdown_step*1000)
-            return
+            if self.cnt_shutdown_ack_check > int(5/self.dt_shutdown_step):
+                MazeDB.printMsg(
+                    'ERROR', "FAILED: RESET_SYSTEM CONFIRMATION AFTER 5 SEC")
+                self.EsmaCom.isEcatConnected = False
+            else:
+                self.cnt_shutdown_ack_check += 1
+                # Wait for RESET_SYSTEM message confirmation and restart timer
+                self.timer_endSession.start(self.dt_shutdown_step*1000)
+                return
 
         elif self.cnt_shutdown_step == 1:
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
@@ -1861,14 +1892,6 @@ class Interface(Plugin):
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 
-    def scale_to_byte(self, val):
-        """ Function to scale values greater than 255 to 8-bit for Ecat"""
-
-        if val != 0 and val > 255:
-            factor = 10 ** (int(math.log10(val)) - 2)
-            val = int(val / factor)
-        return val
-    
     def getParamTxtBox(self):
         """ 
         Function to get the maze settings from the UI line edit boxes and return them as a list.
@@ -1876,12 +1899,24 @@ class Interface(Plugin):
         Returns:
             unsigned 8-bit ctypes: List of maze settings
         """
-            
-        def check_field(field, default, min, max):
-            """ Function to check the value of a field """
 
-            # Scale values greter than 255 for Ecat
-            default = self.scale_to_byte(default)
+        def scale_to_byte(val):
+            """ Function to scale values greater than 255 and set to 8-bit for Ecat"""
+
+            # Scale values greater than 255
+            if val != 0 and val > 255:
+                factor = 10
+                for _ in range(4):
+                    if val / factor < 255:
+                        break
+                    factor *= 10
+                val = int(val / factor)
+
+            # Return unsigned 8-bit ctypes
+            return ctypes.c_uint8(val).value
+
+        def check_get_field(field, default, min, max):
+            """ Function to check the value of a field """
 
             # Check for empty fields
             if field.text() == "":
@@ -1889,27 +1924,28 @@ class Interface(Plugin):
             # Check if values are integers and in range
             try:
                 val = int(field.text())
-                val = self.scale_to_byte(val)
-                if val < min or val > max:
+                val = scale_to_byte(val)
+                if default < min or default > max:
                     raise ValueError
             except ValueError:
                 field.setText(str(default))
-                val = int(field.text())
+                val = scale_to_byte(default)
             return val
 
         # Check the fieilds for each entry in sys_widgets
         read_settings = [0] * len(self.sysDefaults)
         for i, (field, defaults) in enumerate(zip(self.sys_widgets, self.sysDefaults)):
-            read_settings[i] = check_field(
+            read_settings[i] = check_get_field(
                 field, defaults[0], defaults[1], defaults[2])
 
-        # Cast values to unsigned 8-bit ctypes
-        read_settings = [ctypes.c_uint8(val).value for val in read_settings]
+        # Print current status
+        MazeDB.printMsg('INFO', "SETTINGS: CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+                        *read_settings)
 
         # Return settings as a list
         return read_settings
 
-    def setParamTxtBox(self, param_ind=None, arg_val=None, msg_arg_data=None, msg_arg_len=None):
+    def setParamTxtBox(self, param_ind=None, arg_val=None):
         """ 
         Function to set the maze settings in the UI 
         """
@@ -1919,13 +1955,10 @@ class Interface(Plugin):
             # Cast arg as intiger
             arg = int(arg)
 
-            # Scale values greter than 255 for Ecat
-            arg = self.scale_to_byte(arg)
-
             # Check if arg is in range
             if arg >= defaults[1] or arg <= defaults[2]:
 
-                # Reeenable the field if it was disabled
+                # Reenable the field if it was disabled
                 is_enabled = field.isEnabled()
                 field.setEnabled(True)
 
@@ -1935,20 +1968,8 @@ class Interface(Plugin):
                 field.setEnabled(is_enabled)
             return defaults
 
-        # Set fields from message data
-        if msg_arg_data is not None and msg_arg_len is not None:
-            # Check if arg length is correct
-            if msg_arg_len != len(self.sysDefaults):
-                MazeDB.printMsg(
-                    'ERROR', "Wrong Argument Length from Ecat: expected[%d] actual[%d]", len(self.sysDefaults), msg_arg_len)
-                return
-            else:
-                # Update widgets and data for each argument
-                for i, (field, defaults, arg) in enumerate(zip(self.sys_widgets, self.sysDefaults, msg_arg_data)):
-                    set_field(field, defaults, arg)
-
         # Update widgets and data for given argument
-        elif param_ind is not None and arg_val is not None:
+        if param_ind is not None and arg_val is not None:
             self.sysDefaults[param_ind] = set_field(
                 self.sys_widgets[param_ind], self.sysDefaults[param_ind], arg_val)
 

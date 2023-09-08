@@ -34,7 +34,7 @@ uint8_t Cypress_Com::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_ar
 	_beginTransmissionWrapper(address);
 	Wire.write(reg);
 	uint8_t resp = _endTransmissionWrapper(false); // master stops sending but keeps the transmission line open
-	if (!resp)
+	if (resp == 0)
 	{
 		Wire.requestFrom(address, s);
 
@@ -128,7 +128,7 @@ uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8
 		uint8_t byte_val_out_arr[1];
 		uint8_t resp = i2cRead(address, REG_GI0 + port, byte_val_out_arr, 1);
 		delay(1); // hack to deal with strange resp variable behavior
-		if (!resp)
+		if (resp == 0)
 			r_bit_val_out = bitRead(byte_val_out_arr[0], pin);
 		return resp;
 	}
@@ -152,7 +152,7 @@ uint8_t Cypress_Com::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint
 	{
 		uint8_t byte_val_out_arr[1];
 		uint8_t resp = i2cRead(address, REG_GO0 + port, byte_val_out_arr, 1); // get current port registry value
-		if (!resp)
+		if (resp == 0)
 		{
 			uint8_t byte_val_in = byte_val_out_arr[0];
 			bitWrite(byte_val_in, pin, bit_val_set);			   // set pin specific bit of uint8_t
@@ -176,7 +176,7 @@ uint8_t Cypress_Com::ioReadPort(uint8_t address, uint8_t reg, uint8_t port, uint
 	if (port > 5)
 		return -1;
 	uint8_t resp = reg > REG_GO5 ? i2cWrite(address, REG_PORT_SEL, port) : 0; // specify port to set for reading non io registers
-	if (!resp)
+	if (resp == 0)
 		resp = i2cRead(address, reg + port, &r_byte_val_out, 1);
 	return resp;
 }
@@ -302,14 +302,14 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	}
 
 	// Bail if error
-	if (resp)
+	if (resp != 0)
 		return resp;
 
 	// Scan for i2c devices
 	i2cScan();
 
 	// Setup Cypress chip
-	if (!resp)
+	if (resp == 0)
 	{
 		// Restore chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
@@ -339,13 +339,13 @@ uint8_t Cypress_Com::setupSourcePWM(uint8_t address, uint8_t source, uint8_t dut
 	else
 	{
 		uint8_t resp = i2cWrite(address, REG_SEL_PWM, source); // specify pwm source to set
-		if (!resp)
+		if (resp == 0)
 		{
 			resp = i2cWrite(address, REG_CONF_PWM, pwmClockVal); // set hardware clock to 0 (32kHz)
-			if (!resp)
+			if (resp == 0)
 			{
 				resp = i2cWrite(address, REG_PERI_PWM, pwmPeriodVal); // set period to 32 (clock = 32kHz/32 = 1kHz)
-				if (!resp)
+				if (resp == 0)
 				{
 					resp = setSourceDutyPWM(address, source, duty); // set duty cycle to duty
 				}
@@ -386,11 +386,11 @@ uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port,
 	if (port > 5)
 		return -1;
 	uint8_t resp = i2cWrite(address, REG_PORT_SEL, port); // specify port to set
-	if (!resp)
+	if (resp == 0)
 	{
 		uint8_t port_byte;
 		resp = i2cRead(address, reg, &port_byte, 1); // get port registry byte
-		if (!resp)
+		if (resp == 0)
 		{
 			_updateRegByte(port_byte, byte_mask, bit_val_set);
 			resp = i2cWrite(address, reg, port_byte); // update register
