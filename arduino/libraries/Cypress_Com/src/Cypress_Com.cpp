@@ -241,7 +241,7 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 	if (p_reg_last_byte_arr == nullptr)
 	{
 		resp = ioReadReg(address, REG_GO0, p_byte_val, s); // get current registry values
-		/// @note: Just discovered a likely big bug here! Had this returning with successful reads!
+		/// @bug: Just discovered a likely big bug here! Had this returning with successful reads!
 		if (resp != 0)
 			return resp;
 	}
