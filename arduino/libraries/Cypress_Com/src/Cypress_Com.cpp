@@ -265,34 +265,48 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 ///
 /// @param address I2C address for a given Cypress chip.
 ///
-/// @return Status codes from @ref Wire::endTransmission().
+/// @return CStatus codes [-1: critical error or from @ref Wire::endTransmission()].
 uint8_t Cypress_Com::setupCypress(uint8_t address)
 {
 
 	// Check I2C lines
-#ifdef ARDUINO_SAM_DUE
-	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
-	}
-#endif
-#ifdef __AVR_ATmega2560__
-	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
-	}
+	uint8_t scl_line;
+	uint8_t sda_line;
+#ifdef ARDUINO_SAM_DUE || __AVR_ATmega2560__
+	cl_line = 20;
+	sda_line = 21;
 #endif
 #ifdef ARDUINO_AVR_UNO
-	if ((digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW))
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "i2c lines LOW");
-	}
+	cl_line = 20;
+	sda_line = 21;
 #endif
+	if ((digitalRead(scl_line) == LOW) || (digitalRead(sda_line) == LOW))
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "!!!!! I2C LINES LOW: CHECK POWER !!!!!");
+	}
+
+	// Setup timeout
+	Wire.setTimeout(1000); // set timeout to 1000ms
 
 	// Test I2C connection
 	_beginTransmissionWrapper(address);
 	Wire.write((uint8_t)0);
 	uint8_t resp = _endTransmissionWrapper();
+
+	// Check for timeout
+	/// @todo Get this working
+	if (Wire.getWireTimeoutFlag())
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C TIMEOUT: CHECK CONNECTION");
+		resp = -1;
+	}
+
+	// Bail if error
+	if (resp)
+		return resp;
+
+	// Scan for i2c devices
+	i2cScan();
 
 	// Setup Cypress chip
 	if (!resp)

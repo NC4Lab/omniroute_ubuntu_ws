@@ -129,7 +129,7 @@ void Wall_Operation::procEcatMessage()
 		}
 
 		// Run move walls operation
-		run_status = moveWalls();
+		run_status = moveWallsStaged();
 	}
 
 	//............... Format Ecat Ack Data ...............

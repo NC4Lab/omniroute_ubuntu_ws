@@ -43,7 +43,8 @@ void setup()
 	// Setup serial coms
 	Serial.begin(115200);
 	Serial1.begin(115200);
-	Wire.begin(); // join I2C bus
+	/// @todo: Consider moveing this to Cypress_Com class
+	Wire.begin(); // join I2C bus 
 	delay(100);
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
