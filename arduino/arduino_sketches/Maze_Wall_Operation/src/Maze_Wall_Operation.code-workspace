@@ -1,28 +1,22 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": ".."
 		},
 		{
-			"path": "../../libraries/Cypress_Com"
+			"path": "../../../libraries/Maze_Debug"
 		},
 		{
-			"path": "../../libraries/Maze_Debug"
+			"path": "../../../libraries/Cypress_Com"
 		},
 		{
-			"path": "../../libraries/Wall_Operation"
+			"path": "../../../libraries/Esmacat_Com"
 		},
 		{
-			"path": "../../libraries/Esmacat_Com"
+			"path": "../../../libraries/Wall_Operation"
 		}
 	],
 	"settings": {
-		"editor.foldingStrategy": "auto",
-		"files.associations": {
-			"utility": "cpp",
-			"tuple": "cpp",
-			"thread": "cpp"
-		},
 		"python.autoComplete.extraPaths": [
 			"/home/nc4lab/omniroute_operation_ws/devel/lib/python3/dist-packages",
 			"/home/nc4lab/catkin_ws/devel/lib/python3/dist-packages",

@@ -24,7 +24,7 @@ class Wall_Operation
 	// --------------VARIABLES--------------
 public:
 	uint8_t nCham;			// number of chambers to initialize in maze
-	uint8_t nChambMove;		// max number of chambers to move at once
+	uint8_t nChamPerBlock;	// max number of chambers to move at once
 	uint8_t nMoveAttempt;	// max number of attempts to move a walls
 	uint8_t pwmDuty;		// pwm duty cycle
 	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
@@ -137,14 +137,10 @@ private:
 	uint8_t _setWallMove(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t moveWallsStaged();
-
-public:
-	uint8_t moveWalls();
-	uint8_t moveWalls(uint8_t[], uint8_t);
+	uint8_t moveWalls(bool=true);
 
 private:
-	uint8_t _moveWalls(uint8_t[], uint8_t);
+	uint8_t _moveWalls(uint8_t[], uint8_t, uint8_t = 1);
 
 private:
 	uint8_t _moveConductor(uint8_t[], uint8_t, uint8_t);

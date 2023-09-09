@@ -26,7 +26,7 @@ bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
 uint8_t nCham = 3;		  // number of chambers being used [1-9]
-uint8_t nChambMove = 3;	  // max number of chambers to move at once [1-nCham]
+uint8_t nChamPerBlock = 3;	  // max number of chambers to move at once [1-nCham]
 uint8_t nMoveAttempt = 3; // number of attempts to move a walls [1-255]
 uint8_t pwmDuty = 255;	  // PWM duty for all walls [0-255]
 uint16_t dtMoveTimeout;	  // timeout for wall movement (ms)
@@ -34,7 +34,7 @@ uint16_t dtMoveTimeout;	  // timeout for wall movement (ms)
 // Initialize class instances for local libraries
 Maze_Debug Dbg;
 Cypress_Com CypCom;
-Wall_Operation WallOper(nCham, nChambMove, nMoveAttempt, pwmDuty, dtMoveTimeout);
+Wall_Operation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout);
 
 //=============== SETUP =================
 void setup()

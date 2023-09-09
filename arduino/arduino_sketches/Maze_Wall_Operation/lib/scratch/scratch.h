@@ -1,79 +1,60 @@
-// // ######################################
-
-// //=========== Maze_Debug.h =============
-
-// // ######################################
-
-// /// @file Used for the Maze_Debug class
-
-// //============= INCLUDE ================
-// #include "Arduino.h"
-// #include "Esmacat_Com.h"
-
-// #ifndef _MAZE_DEBUG_h
-// #define _MAZE_DEBUG_h
-
-// extern bool DB_VERBOSE; ///< set this variable in your INO file to control debugging [0:silent, 1:verbose]
-
-// /// @brief Used for printing different types of information to the Serial Output Window.
+// /// @overload: Option to change wall positions for blocks of chambers set to move
 // ///
-// /// @remarks This class is used in both the Cypress_Comm and Wall_Operation classes.
-// class Maze_Debug
+// /// @param do_cham_blocks: Pointer array of chamber indexes to move. DEFAULT: true.
+// /// @return Status/error codes from @ref Wall_Operation::_moveConductor()
+// uint8_t Wall_Operation::moveWalls(bool do_cham_blocks)
 // {
+// 	uint8_t run_status = 0;
+// 	uint8_t block_cnt = 0; // counter for number of stages
 
-// 	// ---------VARIABLES-----------------
-// public:
-// 	const char _message_type_str[7][30] = {
-// 		"[INFO]",
-// 		"[INFO]",
-// 		"[INFO]",
-// 		"[INFO]",
-// 		"[!ERROR!]",
-// 		"[WARNING]",
-// 		"[DEBUG]"};
+// 	// Create and array of all chambers set to move
+// 	uint8_t cham_all_arr[nCham];
+// 	uint8_t n_cham_all = 0;
 
-// 	enum MT
+// 	// Find sand store all chambers flagged for movement
+// 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+// 		if (C[cham_i].bitWallRaiseFlag != 0)
+// 			cham_all_arr[n_cham_all++] = cham_i;
+
+// 	// Pass all walls to main version of method
+// 	if (!do_cham_blocks)
+// 		return _moveWalls(cham_all_arr, n_cham_all);
+
+// 	// TEMP
+// 	_Dbg.printMsg(_Dbg.MT::DEBUG, "########### START DEBUG ###########");
+// 	_Dbg.printMsg(_Dbg.MT::DEBUG, "_____TEST1: nCham[%d] nChamPerBlock[%d] n_cham_all[%d]", nCham, nChamPerBlock, n_cham_all);
+
+// 	// Store chambers to move next
+// 	uint8_t cham_queued_arr[nChamPerBlock];
+// 	size_t n_cham_queued = 0;
+
+// 	// Move sets of chambers in stages
+// 	for (size_t cham_i = 0; cham_i < n_cham_all; cham_i++)
 // 	{
-// 		ATTN = 0,
-// 		ATTN_START = 1,
-// 		ATTN_END = 2,
-// 		INFO = 3,
-// 		ERROR = 4,
-// 		WARNING = 5,
-// 		DEBUG = 6
-// 	};
+// 		// Store chambers to move next
+// 		cham_queued_arr[n_cham_queued++] = cham_all_arr[cham_i];
 
-// 	// -----------METHODS-----------------
-// public:
-// 	Maze_Debug();
+// 		// TEMP
+// 		_Dbg.printMsg(_Dbg.MT::DEBUG, "_____TEST1A: cham_i[%d|%d] n_cham_queued[%d] block_cnt[%d]", cham_i, n_cham_all, n_cham_queued, block_cnt);
+// 		_Dbg.printMsg(_Dbg.MT::DEBUG, "_____TEST1B: (cham_i + 1)[%d]    n_cham_all[%d]    {(cham_i + 1) == n_cham_all}[%d]",
+// 					  (cham_i + 1), n_cham_all, (cham_i + 1) == n_cham_all);
+// 		_Dbg.printMsg(_Dbg.MT::DEBUG, "_____TEST1C: (n_cham_queued == nChamPerBlock || (cham_i + 1) == n_cham_all)[%d]",
+// 					  n_cham_queued == nChamPerBlock || (cham_i + 1) == n_cham_all);
 
-// public:
-// 	void printMsg(const char *, ...);
-// 	void printMsg(MT, const char *, ...);
+// 		// Run walls once max reached
+// 		if (n_cham_queued == nChamPerBlock || (cham_i + 1) == n_cham_all)
+// 		{
+// 			_Dbg.printMsg(_Dbg.MT::DEBUG, "_____________TEST2: cham_queued_arr%s", _Dbg.arrayStr(cham_queued_arr, n_cham_queued));
 
-// private:
-// 	void _printMsg(MT, const char *, va_list);
+// 			block_cnt++;
+// 			run_status = run_status > 1 ? run_status : _moveWalls(cham_queued_arr, n_cham_queued, block_cnt);
 
-// private:
-// 	const char *_timeStr(uint32_t);
+// 			// Reset counter
+// 			n_cham_queued = 0;
+// 		}
+// 	}
 
-// public:
-// 	const char *arrayStr(uint8_t[], size_t);
+// 	_Dbg.printMsg(_Dbg.MT::DEBUG, "########### END DEBUG ###########");
 
-// public:
-// 	const char *binStr(uint8_t);
-
-// public:
-// 	const char *hexStr(uint8_t);
-
-// public:
-// 	const char *dtTrack(uint8_t = 0);
-
-// public:
-// 	const char *bitIndStr(uint8_t);
-
-// public:
-// 	void printRegByte(uint8_t);
-// 	void printRegByte(uint8_t[], uint8_t);
-
-// #endif
+// 	return run_status;
+// }
