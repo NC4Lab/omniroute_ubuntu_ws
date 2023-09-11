@@ -23,9 +23,9 @@ class Maze_Debug
 
 	// ---------------VARIABLES---------------
 public:
-	const char _message_type_str[8][15] = {
+	const char _message_type_str[8][10] = {
 		"[INFO]",
-		"[INFO]"
+		"[INFO]",
 		"[INFO]",
 		"[INFO]",
 		"[INFO]",
@@ -50,11 +50,7 @@ public:
 	Maze_Debug();
 
 public:
-	void printMsg(const char *, ...);
 	void printMsg(MT, const char *, ...);
-
-private:
-	void _printMsg(MT, const char *, va_list);
 
 private:
 	const char *_timeStr(uint32_t);

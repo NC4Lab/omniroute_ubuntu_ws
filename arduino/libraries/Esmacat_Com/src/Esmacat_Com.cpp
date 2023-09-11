@@ -498,7 +498,7 @@ void Esmacat_Com::readEcatMessage()
     // Set new message flag
     rcvEM.isNew = true;
 
-    _Dbg.printMsg("(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
+    _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
 }
 
@@ -564,7 +564,7 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
     rcvEM.isNew = false;
 
     // Print ack message info with message type being acked
-    _Dbg.printMsg("(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
+    _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
     _printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
 }
 
@@ -601,13 +601,13 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, int p_reg[])
 void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, RegUnion U)
 {
     // Print out register
-    _Dbg.printMsg("\t Ecat 16-Bit Register:");
+    _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 16-Bit Register:");
     for (size_t i = 0; i < 8; i++)
-        _Dbg.printMsg("\t\t ui16[%d] [%d]", i, U.ui16[i]);
-    _Dbg.printMsg("\t Ecat 8-Bit Register:");
+        _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui16[%d] [%d]", i, U.ui16[i]);
+    _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 8-Bit Register:");
     for (size_t i = 0; i < 8; i++)
         if (i < 5)
-            _Dbg.printMsg("\t\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+            _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
         else
-            _Dbg.printMsg("\t\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+            _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
 }

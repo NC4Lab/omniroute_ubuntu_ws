@@ -455,10 +455,10 @@ uint8_t Cypress_Com::i2cScan()
 	// Print results
 	if (cnt_addr > 0)
 	{
-		_Dbg.printMsg("I2C Devices Found:");
+		_Dbg.printMsg(_Dbg.MT::INFO, "I2C Devices Found:");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print devices
-			_Dbg.printMsg("\t%d) %s", i, _Dbg.hexStr(list_addr[i]));
+			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_addr[i]));
 		}
 	}
 	else
@@ -470,7 +470,7 @@ uint8_t Cypress_Com::i2cScan()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Errors Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
-			_Dbg.printMsg("\t%d) %s", i, _Dbg.hexStr(list_err[i]));
+			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_err[i]));
 		}
 	}
 
@@ -498,9 +498,9 @@ void Cypress_Com::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 	if (DB_VERBOSE == 0)
 		return;
 
-	_Dbg.printMsg("\tRegistry Bytes: ");
+	_Dbg.printMsg(_Dbg.MT::INFO, "\tRegistry Bytes: ");
 	for (size_t i = 0; i < s; i++)
 	{
-		_Dbg.printMsg("\tport[%d]\n\t\t 76543210\n\t\t%s", i, _Dbg.binStr(p_byte_mask_in[i]));
+		_Dbg.printMsg(_Dbg.MT::INFO, "\tport[%d]\n\t\t 76543210\n\t\t%s", i, _Dbg.binStr(p_byte_mask_in[i]));
 	}
 }

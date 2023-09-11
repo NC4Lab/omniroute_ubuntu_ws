@@ -16,42 +16,12 @@
 /// @brief Constructor
 Maze_Debug::Maze_Debug() {}
 
-/// @brief Print a message using printf formatting with elapsed time.
-///
-/// @param p_fmt Message string with formatting comparable to sprintf().
-/// @param ... Variable arguments related to the formatting string.
-void Maze_Debug::printMsg(const char *p_fmt, ...)
-{
-	if (DB_VERBOSE == 0)
-		return;
-
-	// Handle input args
-	va_list args;
-	va_start(args, p_fmt);			  // Start retrieving additional arguments
-	_printMsg(MT::INFO, p_fmt, args); // Pass arguments to _printMsg with default message type
-	va_end(args);
-}
-/// @overload: Option for including message type
-///
-/// @param msg_type_enum Enum specifying message type.
-void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
-{
-	if (DB_VERBOSE == 0)
-		return;
-
-	// Handle input args
-	va_list args;
-	va_start(args, p_fmt);				   // Start retrieving additional arguments
-	_printMsg(msg_type_enum, p_fmt, args); // Pass arguments to _printMsg
-	va_end(args);
-}
-
 /// @brief Print a message with elapsed time.
 ///
 /// @param msg_type_enum Enum specifying message type.
-/// @param p_fmt Message string with formatting passed from Maze_Debug::printMsg().
-/// @param args Variable arguments list.
-void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
+/// @param p_fmt Message string with formatting comparable to sprintf().
+/// @param ... Variable arguments related to the formatting string.
+void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
 	const uint8_t buff_s = 125;
 	static char buff[buff_s];
@@ -65,11 +35,14 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	bool is_head2_msg = (msg_type_enum == MT::HEAD2);
 
 	// Format message
+	va_list args;
+	va_start(args, p_fmt); // Start retrieving additional arguments
 	vsnprintf(buff, buff_s, p_fmt, args);
+	va_end(args);
 
 	// Make header of '=' characters based on message length
 	size_t n = buff_sym_s - 1 - strlen(buff) / 2;
-	n = n < sizeof(buff_sym) && n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
+	n = n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
 	if (is_head1_msg)
@@ -82,7 +55,7 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 
 	// Add additional new line for attention messages
 	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A)
-		Serial.print("\n");
+		Serial.write("\n");
 
 	// Print message type
 	Serial.print(_message_type_str[msg_type_enum]);
@@ -268,7 +241,7 @@ void Maze_Debug::printTest()
 	// Print each message type
 	printMsg(MT::INFO, "INFO");
 	printMsg(MT::HEAD1, "HEAD1");
-	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::INFO, "INFO");
 	printMsg(MT::ERROR, "ERROR");
 	printMsg(MT::WARNING, "WARNING");
 	printMsg(MT::HEAD1A, "HEAD1A");
