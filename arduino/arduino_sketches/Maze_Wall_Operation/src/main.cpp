@@ -51,13 +51,13 @@ void setup()
 
 // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO UNO");
+	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO UNO");
 #endif
 #ifdef __AVR_ATmega2560__
-	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO MEGA");
+	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO MEGA");
 #endif
 #ifdef ARDUINO_SAM_DUE
-	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO DUE");
+	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
 
 // TEMP
@@ -83,7 +83,7 @@ void loop()
 	// if (!init)
 	// {
 	// 	init = 1;
-	// 	Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
+	// 	Dbg.printMsg(Dbg.MT::HEAD1, "RUNNNING: STANDALONE SETUP");
 
 	// 	// Initalize Cypress Chips
 	// 	WallOper.initCypress();
@@ -92,7 +92,7 @@ void loop()
 	// 	WallOper.initWalls(1); // Run wall up
 	// 	WallOper.initWalls(0); // Run wall down
 
-	// 	Dbg.printMsg(Dbg.MT::ATTN_END, "FINISHED: STANDALONE SETUP");
+	// 	Dbg.printMsg(Dbg.MT::HEAD1B, "FINISHED: STANDALONE SETUP");
 	// }
 
 	// //............... Cypress Testing ...............

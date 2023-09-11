@@ -23,8 +23,9 @@ class Maze_Debug
 
 	// ---------------VARIABLES---------------
 public:
-	const char _message_type_str[7][15] = {
+	const char _message_type_str[8][15] = {
 		"[INFO]",
+		"[INFO]"
 		"[INFO]",
 		"[INFO]",
 		"[INFO]",
@@ -34,13 +35,14 @@ public:
 
 	enum MT
 	{
-		ATTN = 0,
-		ATTN_START = 1,
-		ATTN_END = 2,
-		INFO = 3,
-		ERROR = 4,
-		WARNING = 5,
-		DEBUG = 6
+		HEAD1 = 0,
+		HEAD1A = 1,
+		HEAD1B = 2,
+		HEAD2 = 3,
+		INFO = 4,
+		ERROR = 5,
+		WARNING = 6,
+		DEBUG = 7
 	};
 
 	// ---------------METHODS---------------

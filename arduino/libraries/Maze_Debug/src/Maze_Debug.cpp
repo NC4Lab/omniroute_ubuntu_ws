@@ -60,8 +60,9 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	static char buff_sym[buff_sym_s];
 	buff_sym[0] = '\0';
 
-	// Check if message type is an attention message
-	bool is_attn_msg = (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_START || msg_type_enum == MT::ATTN_END);
+	// Check if message type is an attention grabbing header message
+	bool is_head1_msg = (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A || msg_type_enum == MT::HEAD1B);
+	bool is_head2_msg = (msg_type_enum == MT::HEAD2);
 
 	// Format message
 	vsnprintf(buff, buff_s, p_fmt, args);
@@ -71,14 +72,16 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	n = n < sizeof(buff_sym) && n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
-	if (is_attn_msg)
+	if (is_head1_msg)
 		memset(buff_sym, '=', n);
+	else if (is_head2_msg)
+		memset(buff_sym, '_', n);
 	else if (msg_type_enum == MT::ERROR)
 		memset(buff_sym, '!', n);
 	buff_sym[n] = '\0';
 
 	// Add additional new line for attention messages
-	if (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_START)
+	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A)
 		Serial.print("\n");
 
 	// Print message type
@@ -89,22 +92,22 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	Serial.print(_timeStr(0));
 	Serial.print("]: ");
 
-	// Print header
-	if (is_attn_msg || msg_type_enum == MT::ERROR)
+	// Print preceding header symbols
+	if (is_head1_msg || is_head2_msg || msg_type_enum == MT::ERROR)
 		Serial.print(buff_sym);
 
 	// Print message
 	Serial.print(buff);
 
-	// Print footer
-	if (is_attn_msg || msg_type_enum == MT::ERROR)
+	// Print proceding header symbols
+	if (is_head1_msg || is_head2_msg || msg_type_enum == MT::ERROR)
 		Serial.print(buff_sym);
 
 	// Add new line
 	Serial.print("\n");
 
 	// Add additional new line for attention messages
-	if (msg_type_enum == MT::ATTN || msg_type_enum == MT::ATTN_END)
+	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1B)
 		Serial.print("\n");
 }
 
@@ -264,12 +267,14 @@ void Maze_Debug::printTest()
 {
 	// Print each message type
 	printMsg(MT::INFO, "INFO");
-	printMsg(MT::ATTN, "ATTN");
+	printMsg(MT::HEAD1, "HEAD1");
 	printMsg(MT::DEBUG, "DEBUG");
 	printMsg(MT::ERROR, "ERROR");
 	printMsg(MT::WARNING, "WARNING");
-	printMsg(MT::ATTN_START, "ATTN_START");
+	printMsg(MT::HEAD1A, "HEAD1A");
 	printMsg(MT::INFO, "INFO");
-	printMsg(MT::ATTN_END, "ATTN_END");
+	printMsg(MT::HEAD1B, "HEAD1B");
+	printMsg(MT::INFO, "INFO");
+	printMsg(MT::HEAD2, "HEAD2");
 	printMsg(MT::INFO, "INFO");
 }

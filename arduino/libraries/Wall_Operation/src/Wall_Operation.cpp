@@ -241,7 +241,7 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 /// @param setup_arg_arr: Setup variables from Ecat
 void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "START: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
 																												  : "RESET");
 	// Update wall opperation variables for initialization or reinitialization
 	if (init_level == 0 || init_level == 1)
@@ -294,7 +294,7 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 		EsmaCom.initEcat(false); // reset/disconnect ethercat
 
 	// Log/print initialization status
-	_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
+	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
 																												   : "RESET");
 }
 
@@ -303,7 +303,7 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
 uint8_t Wall_Operation::initCypress()
 {
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "START: CYPRESS INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: CYPRESS INITIALIZATION");
 
 	// Scan connected I2C devices
 	// TEMP _CypCom.i2cScan();
@@ -365,7 +365,7 @@ uint8_t Wall_Operation::initCypress()
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 		i2c_status = i2c_status == 0 ? C[cham_i].i2cStatus : i2c_status; // update status
 
-	_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: CYPRESS INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: CYPRESS INITIALIZATION");
 	return i2c_status;
 }
 
@@ -379,7 +379,7 @@ uint8_t Wall_Operation::initCypress()
 uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 {
 	uint8_t run_status = 0;
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "START: WALL %s INITIALIZATION",
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: WALL %s INITIALIZATION",
 				  init_walls == 0 ? "DOWN" : "UP");
 
 	//............... Run Walls Up ...............
@@ -409,7 +409,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 	//............... Check Status ...............
 
 	// Print status
-	_Dbg.printMsg(run_status <= 1 ? _Dbg.MT::ATTN_END : _Dbg.MT::ERROR,
+	_Dbg.printMsg(run_status <= 1 ? _Dbg.MT::HEAD1B : _Dbg.MT::ERROR,
 				  "%s: WALL %s INITIALIZATION: STATUS[%d]",
 				  run_status <= 1 ? "FINISHED" : "FAILED",
 				  init_walls == 0 ? "DOWN" : "UP", run_status);
@@ -624,7 +624,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 	}
 
 	// Print starting message
-	_Dbg.printMsg(_Dbg.MT::ATTN_START, "START: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
 
 	// Reset run status
 
@@ -659,7 +659,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 
 	// Print final success/warning message for final attempt
 	if (run_status <= 1)
-		_Dbg.printMsg(_Dbg.MT::ATTN_END, "FINISHED: MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
+		_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
 					  run_status, block_cnt, attempt_cnt, _Dbg.arrayStr(cham_all_arr, n_cham_all));
 	else
 	{
@@ -1161,7 +1161,7 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 	// Test input pins
 	uint8_t r_bit_out;
 	uint8_t resp = 0;
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test IO switches: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::HEAD1, "RUNNING: Test IO switches: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	while (true)
 	{ // loop indefinitely
 		for (size_t i = 0; i < s; i++)
@@ -1218,7 +1218,7 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 	}
 
 	// Run each wall up then down for dt_run ms
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test PWM: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::HEAD1, "RUNNING: Test PWM: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	uint8_t resp = 0;
 	for (size_t i = 0; i < s; i++)
 	{ // loop walls
@@ -1270,7 +1270,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 	}
 
 	// Test all walls
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test move opperation: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::HEAD1, "RUNNING: Test move opperation: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	uint8_t r_bit_out = 1;
 	uint16_t dt = 2000;
 	uint16_t ts;
