@@ -242,7 +242,7 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
-																												  : "RESET");
+																											  : "RESET");
 	// Update wall opperation variables for initialization or reinitialization
 	if (init_level == 0 || init_level == 1)
 	{
@@ -295,7 +295,7 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 
 	// Log/print initialization status
 	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
-																												   : "RESET");
+																												 : "RESET");
 }
 
 /// @brief Initialize/reset Cypress hardware
@@ -320,11 +320,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _CypCom.setupCypress(C[cham_i].addr);
 		if (C[cham_i].i2cStatus != 0)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t FINISHED: Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::INFO, "FINISHED: Cypress Chip Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 
 		//............... Initialize Cypress IO ...............
 
@@ -332,11 +332,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _setupCypressIO(C[cham_i].addr);
 		if (C[cham_i].i2cStatus != 0) // print error if failed
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t FINISHED: Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::INFO, "FINISHED: Cypress IO Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 
 		//............... Get Starting Wall Position ...............
 
@@ -345,7 +345,7 @@ uint8_t Wall_Operation::initCypress()
 
 		// Print warning if walls initialized in up position
 		if (C[cham_i].bitWallPosition != 0)
-			_Dbg.printMsg(_Dbg.MT::WARNING, "\t WALLS DETECTED IN UP STATE: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(C[cham_i].bitWallPosition));
+			_Dbg.printMsg(_Dbg.MT::WARNING, "WALLS DETECTED IN UP STATE: chamber[%d] walls%s", cham_i, _Dbg.bitIndStr(C[cham_i].bitWallPosition));
 
 		//............... Initialize Cypress PWM ...............
 
@@ -353,11 +353,11 @@ uint8_t Wall_Operation::initCypress()
 		C[cham_i].i2cStatus = C[cham_i].i2cStatus > 0 ? C[cham_i].i2cStatus : _setupCypressPWM(C[cham_i].addr);
 		if (C[cham_i].i2cStatus != 0)
 		{
-			_Dbg.printMsg(_Dbg.MT::ERROR, "\t Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 			continue; // skip chamber if failed
 		}
 		else
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
+			_Dbg.printMsg(_Dbg.MT::INFO, "FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 	}
 
 	// Set status return to any error
@@ -689,28 +689,43 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 	r_attempt_cnt = 0; // reset attempt counter reference
 
 	// Store a copy of the wall byte for move wall and error flags
-	uint8_t byte_wall_move_up_flag[n_cham];
-	uint8_t byte_wall_move_down_flag[n_cham];
-	uint8_t byte_wall_error_flag[n_cham];
-	for (size_t cham_i = 0; cham_i < n_cham; cham_i++)
+	uint8_t saved_byte_wall_move_up_flag[n_cham];
+	uint8_t saved_byte_wall_move_down_flag[n_cham];
+	uint8_t saved_byte_wall_error_flag[n_cham];
+
+	// Copy over orginal chamber array
+	uint8_t saved_cham_arr[n_cham];
+	uint8_t saved_n_cham = n_cham;
+
+	for (size_t i = 0; i < n_cham; i++)
 	{
-		byte_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
-		byte_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
-		byte_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
+		size_t cham_i = cham_arr[i]; // get chamber index
+
+		// Copy over chamber index
+		saved_cham_arr[i] = cham_i;
+
+		// Copy over flags
+		saved_cham_arr[i] = cham_i;
+		saved_byte_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
+		saved_byte_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
+		saved_byte_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
 	}
 
 	// Make multiple attempts to move walls based on nMoveAttempt
 	for (size_t att_i = 0; att_i < nMoveAttempt; att_i++)
 	{
-		run_status = 0;	 // reset run status
 		r_attempt_cnt++; // increment attempt counter
+		run_status = 0;	 // reset run status
 
 		// Print attempt message
-		_Dbg.printMsg(_Dbg.MT::INFO, "\t RUNNING: Move Wall Block #%d Attempt #%d...............", block_cnt, r_attempt_cnt);
+		_Dbg.printMsg(r_attempt_cnt == 1 ? _Dbg.MT::INFO : _Dbg.MT::WARNING,
+					  "\t %s: Move Wall Block #%d Attempt #%d: chambers%s...............",
+					  r_attempt_cnt == 1 ? "RUNNING" : "RE-RUNNING",
+					  block_cnt, r_attempt_cnt, _Dbg.arrayStr(cham_arr, n_cham));
 
 		// Copy back saved error flag to ensure reattempts include previously failed walls
 		for (size_t cham_i = 0; cham_i < n_cham; cham_i++)
-			C[cham_i].bitWallErrorFlag = byte_wall_error_flag[cham_i];
+			C[cham_i].bitWallErrorFlag = saved_byte_wall_error_flag[cham_i];
 
 		// Run wall movement
 		uint8_t resp = _moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
@@ -720,11 +735,25 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 		if (resp <= 1)
 			break;
 
-		// Reset wall move up/down flags to include any walls with errors so these will be run again
-		for (size_t cham_i = 0; cham_i < n_cham; cham_i++)
+		// Remove any finished chambers from the chamber array
+		n_cham = 0;
+		for (size_t i = 0; i < saved_n_cham; i++)
 		{
-			C[cham_i].bitWallMoveUpFlag = byte_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-			C[cham_i].bitWallMoveDownFlag = byte_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			size_t cham_i = saved_cham_arr[i]; // get chamber index
+
+			// Add back to list if still flagged to move
+			if (C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0)
+				continue; 
+			cham_arr[n_cham++] = cham_i;
+		}
+
+		// Reset wall move up/down flags to include any walls with errors so these will be run again
+		for (size_t i = 0; i < n_cham; i++)
+		{
+			size_t cham_i = cham_arr[i]; // get chamber index
+
+			C[cham_i].bitWallMoveUpFlag = saved_byte_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			C[cham_i].bitWallMoveDownFlag = saved_byte_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
 		}
 	}
 
@@ -1028,7 +1057,7 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		uint8_t resp1 = initWalls(1); // move walls up
+		uint8_t resp1 = initWalls(1);			 // move walls up
 		uint8_t resp2 = initWalls(0);			 // move walls down
 		run_status = resp1 <= 1 ? resp2 : resp1; // update run status
 	}
