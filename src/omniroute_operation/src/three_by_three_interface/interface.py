@@ -1248,7 +1248,7 @@ class Interface(Plugin):
         # Create an array of system setting edit boxes
         self.sys_widgets = [
             self._widget.sysSettingEdit_1,  # Number of chambers to initialize in maze
-            self._widget.sysSettingEdit_2,  # Max number of chambers to move at once
+            self._widget.sysSettingEdit_2,  # Max chamb to move per block
             self._widget.sysSettingEdit_3,  # Max number of attempts to move a walls
             self._widget.sysSettingEdit_4,  # PWM duty cycle for wall motors
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
@@ -1258,8 +1258,8 @@ class Interface(Plugin):
 
         # Default system settings [default][min][max]
         self.sysDefaults = [
-            [9, 1, 9],          # Num chamb init
-            [3, 1, 9],          # Max chamb move
+            [2, 1, 9],          # Num chamb init
+            [1, 1, 1],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
             [255, 0, 255],      # PWM duty
             [750, 500, 2000]   # Move timeout (ms)
@@ -1589,7 +1589,7 @@ class Interface(Plugin):
             # Give up after 3 attempts based on message ID
             if self.EsmaCom.sndEM.msgID > 2:
                 MazeDB.printMsg(
-                    'ERROR', "Handshake Failure Final [%d]", self.EsmaCom.sndEM.msgID)
+                    'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaCom.sndEM.msgID)
 
                 # Set maze hardware status to error
                 self.MP.setStatus(MazePlot.Status.ERROR)
@@ -1602,7 +1602,7 @@ class Interface(Plugin):
             # Print warning if more than 1 message has been sent
             elif self.EsmaCom.sndEM.msgID > 0:
                 MazeDB.printMsg(
-                    'WARNING', "Handshake Failure [%d]", self.EsmaCom.sndEM.msgID)
+                    'WARNING', "SHUTDOWN: Handshake Failure [%d]", self.EsmaCom.sndEM.msgID)
 
             # Send HANDSHAKE message with current system settings
             self.EsmaCom.writeEcatMessage(
@@ -1623,7 +1623,7 @@ class Interface(Plugin):
         elif self.EsmaCom.isEcatConnected == True:
             if self.cnt_shutdown_ack_check > int(5/self.dt_shutdown_step):
                 MazeDB.printMsg(
-                    'ERROR', "FAILED: RESET_SYSTEM CONFIRMATION AFTER 5 SEC")
+                    'ERROR', "FAILED: SHUTDOWN: RESET_SYSTEM CONFIRMATION AFTER 5 SEC")
                 self.EsmaCom.isEcatConnected = False
             else:
                 self.cnt_shutdown_ack_check += 1
@@ -1635,38 +1635,38 @@ class Interface(Plugin):
             # Kill self.signal_Esmacat_read_maze_ard0_ease thread
             self.signal_Esmacat_read_maze_ard0_ease.disconnect()
             MazeDB.printMsg(
-                'INFO', "Disconnected from Esmacat read timer thread")
+                'INFO', "SHUTDOWN: Disconnected from Esmacat read timer thread")
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/interface_test_node")
-            MazeDB.printMsg('INFO', "Killed specific nodes")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:
             # Kill all nodes (This will also kill this script's node)
             os.system("rosnode kill -a")
-            MazeDB.printMsg('INFO', "Killed all nodes")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Killed all nodes")
 
         elif self.cnt_shutdown_step == 4:
             # Process any pending events in the event loop
             QCoreApplication.processEvents()
-            MazeDB.printMsg('INFO', "Processed all events")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Processed all events")
 
         elif self.cnt_shutdown_step == 5:
             # Close the UI window
             self._widget.close()
-            MazeDB.printMsg('INFO', "Closed UI window")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Closed UI window")
 
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            MazeDB.printMsg('INFO', "Sent shutdown request to ROS master")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Sent shutdown request to ROS master")
 
         elif self.cnt_shutdown_step == 7:
             # End the application
             QApplication.quit()
-            MazeDB.printMsg('INFO', "Ended application")
+            MazeDB.printMsg('INFO', "SHUTDOWN: Ended application")
             return  # Return here to prevent the timer from being restarted after the application is closed
 
         # Increment the shutdown step after ecat disconnected
@@ -1939,7 +1939,7 @@ class Interface(Plugin):
                 field, defaults[0], defaults[1], defaults[2])
 
         # Print current status
-        MazeDB.printMsg('INFO', "SETTINGS: CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+        MazeDB.printMsg('INFO', "SETTINGS: CHAM INIT[%d] CHAM PER BLOCK[%d] ATTEMPTS MOVE[%d] PWM[%d] TIMEOUT[%d]",
                         *read_settings)
 
         # Return settings as a list
@@ -1974,7 +1974,7 @@ class Interface(Plugin):
                 self.sys_widgets[param_ind], self.sysDefaults[param_ind], arg_val)
 
         # Print current status
-        MazeDB.printMsg('INFO', "SETTINGS: CHAMBERS[%d] MOVE MAX[%d] ATTEMPT MAX[%d] PWM[%d] TIMEOUT[%d]",
+        MazeDB.printMsg('INFO', "SETTINGS: CHAM INIT[%d] CHAM PER BLOCK[%d] ATTEMPTS MOVE[%d] PWM[%d] TIMEOUT[%d]",
                         * [self.sysDefaults[i][0] for i in range(len(self.sysDefaults))])
 
     def move_ui_window(self, widget, horizontal_alignment, vertical_alignment):

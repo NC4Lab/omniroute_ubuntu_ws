@@ -53,7 +53,7 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 /// @param args Variable arguments list.
 void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 {
-	const uint8_t buff_s = 100;
+	const uint8_t buff_s = 125;
 	static char buff[buff_s];
 	buff[0] = '\0';
 	const uint8_t buff_sym_s = 31;

@@ -72,14 +72,14 @@ public:
 
 	struct ChamberStruct // struct for tracking each chamber
 	{
-		uint8_t addr = 0;			  // chamber I2C address
-		uint8_t i2cStatus = 0;		  // track I2C status errors for chamber
-		uint8_t runStatus = 0;		  // track run status for chamber [0:no move, 1:move success, 2:i2c error, 3:timeout, 4:unspecified]
-		uint8_t bitWallPosition = 0;  // bitwise variable, current wall position [0:down, 1:up]
-		uint8_t bitWallRaiseFlag = 0; // bitwise variable, flag current walls that should be raised/active [0:inactive, 1:active]
-		uint8_t bitWallErrorFlag = 0; // bitwise variable, flag wall move errors [0:no error, 1:error]
-		PinMapStruct pmsActvPWM;	  // reusable dynamic instance for active PWM
-		PinMapStruct pmsActvIO;		  // reusable dynamic instance for active IO
+		uint8_t addr = 0;				 // chamber I2C address
+		uint8_t i2cStatus = 0;			 // track I2C status errors for chamber
+		uint8_t bitWallPosition = 0;	 // bitwise variable, current wall position [0:down, 1:up]
+		uint8_t bitWallMoveUpFlag = 0;	 // bitwise variable, flag current walls that should be raised [0:inactive, 1:active]
+		uint8_t bitWallMoveDownFlag = 0; // bitwise variable, flag current walls that should be lowered [0:inactive, 1:active]
+		uint8_t bitWallErrorFlag = 0;	 // bitwise variable, flag wall move errors [0:no error, 1:error]
+		PinMapStruct pmsActvPWM;		 // reusable dynamic instance for active PWM
+		PinMapStruct pmsActvIO;			 // reusable dynamic instance for active IO
 	};
 	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
 
@@ -129,27 +129,27 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 public:
-	uint8_t setWallMove(uint8_t, uint8_t);
-	uint8_t setWallMove(uint8_t, uint8_t, uint8_t[], uint8_t);
-	uint8_t setWallMove(uint8_t, uint8_t, uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t[], uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t);
 
 private:
-	uint8_t _setWallMove(uint8_t, uint8_t, uint8_t);
+	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t moveWalls(bool=true);
+	uint8_t moveWallsByChamberBlocks(bool = true);
 
 private:
-	uint8_t _moveWalls(uint8_t[], uint8_t, uint8_t = 1);
+	uint8_t _moveWallsByChamberBlocksWithRetry(uint8_t[], uint8_t, uint8_t, uint8_t &);
 
 private:
-	uint8_t _moveConductor(uint8_t[], uint8_t, uint8_t);
+	uint8_t _moveWallsConductor(uint8_t[], uint8_t, uint8_t, uint8_t);
 
 private:
-	uint8_t _moveStart(uint8_t);
+	uint8_t _moveWallsInit(uint8_t);
 
 private:
-	uint8_t _moveCheck(uint8_t);
+	uint8_t _moveWallsMonitor(uint8_t, uint32_t);
 
 public:
 	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);
