@@ -28,7 +28,7 @@ public:
 		"[INFO]",
 		"[INFO]",
 		"[INFO]",
-		"[!ERROR!]",
+		"[ERROR]",
 		"[WARNING]",
 		"[DEBUG]"};
 

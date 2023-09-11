@@ -71,7 +71,10 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	n = n < sizeof(buff_sym) && n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with '=' characters
-	memset(buff_sym, '=', n);
+	if (is_attn_msg)
+		memset(buff_sym, '=', n);
+	else if (msg_type_enum == MT::ERROR)
+		memset(buff_sym, '!', n);
 	buff_sym[n] = '\0';
 
 	// Add additional new line for attention messages
@@ -87,14 +90,14 @@ void Maze_Debug::_printMsg(MT msg_type_enum, const char *p_fmt, va_list args)
 	Serial.print("]: ");
 
 	// Print header
-	if (is_attn_msg)
+	if (is_attn_msg || msg_type_enum == MT::ERROR)
 		Serial.print(buff_sym);
 
 	// Print message
 	Serial.print(buff);
 
 	// Print footer
-	if (is_attn_msg)
+	if (is_attn_msg || msg_type_enum == MT::ERROR)
 		Serial.print(buff_sym);
 
 	// Add new line
@@ -260,14 +263,13 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 void Maze_Debug::printTest()
 {
 	// Print each message type
-	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::INFO, "INFO");
 	printMsg(MT::ATTN, "ATTN");
+	printMsg(MT::DEBUG, "DEBUG");
 	printMsg(MT::ERROR, "ERROR");
+	printMsg(MT::WARNING, "WARNING");
 	printMsg(MT::ATTN_START, "ATTN_START");
 	printMsg(MT::INFO, "INFO");
 	printMsg(MT::ATTN_END, "ATTN_END");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::WARNING, "WARNING");
+	printMsg(MT::INFO, "INFO");
 }
