@@ -1259,7 +1259,7 @@ class Interface(Plugin):
         # Default system settings [default][min][max]
         self.sysDefaults = [
             [9, 1, 9],          # Num chamb init
-            [3, 1, 1],          # Max chamb to move per block
+            [3, 1, 9],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
             [255, 0, 255],      # PWM duty
             [1000, 500, 2000]   # Move timeout (ms)
