@@ -169,7 +169,7 @@ const char *Maze_Debug::binStr(uint8_t b)
 	if (DB_VERBOSE == 0)
 		return "";
 
-	static char buff[12]; 
+	static char buff[12];
 	buff[0] = '\0';
 
 	snprintf(buff, sizeof(buff), "B%d%d%d%d%d%d%d%d", bitRead(b, 7), bitRead(b, 6), bitRead(b, 5), bitRead(b, 4), bitRead(b, 3), bitRead(b, 2), bitRead(b, 1), bitRead(b, 0));
@@ -261,6 +261,7 @@ void Maze_Debug::printTest()
 {
 	// Print each message type
 	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ATTN, "ATTN");
 	printMsg(MT::ERROR, "ERROR");
 	printMsg(MT::ATTN_START, "ATTN_START");
 	printMsg(MT::INFO, "INFO");
@@ -268,6 +269,5 @@ void Maze_Debug::printTest()
 	printMsg(MT::DEBUG, "DEBUG");
 	printMsg(MT::DEBUG, "DEBUG");
 	printMsg(MT::DEBUG, "DEBUG");
-	printMsg(MT::ATTN, "ATTN");
 	printMsg(MT::WARNING, "WARNING");
 }
