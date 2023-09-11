@@ -255,9 +255,12 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 			dtMoveTimeout = setup_arg_arr[4] * 10; // convert uint8_t (cs) to uint16_t (ms)
 		}
 
-		// Update chamber address
+		// Update chamber address and existing walls map
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		{
 			C[cham_i].addr = _CypCom.ADDR_LIST[cham_i];
+			C[cham_i].bitWallExist = bitWallExistMap[cham_i];
+		}
 
 		// Print software setup variables
 		_Dbg.printMsg("SETTINGS: CHAM INIT[%d] CHAM PER BLOCK[%d] ATTEMPTS MOVE[%d] PWM[%d] TIMEOUT[%d]",
@@ -571,8 +574,12 @@ uint8_t Wall_Operation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, u
 	}
 
 	// Set up/down move flags using bitwise comparison and exclude any walls with errors
-	C[cham_i].bitWallMoveUpFlag = (~C[cham_i].bitWallPosition & byte_wall_state_new) & ~C[cham_i].bitWallErrorFlag;
-	C[cham_i].bitWallMoveDownFlag = (C[cham_i].bitWallPosition & ~byte_wall_state_new) & ~C[cham_i].bitWallErrorFlag;
+	C[cham_i].bitWallMoveUpFlag = C[cham_i].bitWallExist &
+								  (~C[cham_i].bitWallPosition & byte_wall_state_new) &
+								  ~C[cham_i].bitWallErrorFlag;
+	C[cham_i].bitWallMoveDownFlag = C[cham_i].bitWallExist &
+									(C[cham_i].bitWallPosition & ~byte_wall_state_new) &
+									~C[cham_i].bitWallErrorFlag;
 
 	// Bail if nothing to move
 	if (C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0)
@@ -619,7 +626,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 	// Print starting message
 	_Dbg.printMsg(_Dbg.MT::ATTN_START, "START: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
 
-	// Reset run status 
+	// Reset run status
 
 	// Pass all walls to main version of method
 	if (!do_cham_blocks)
@@ -708,10 +715,10 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 		// Run wall movement
 		uint8_t resp = _moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
 		run_status = run_status <= 1 ? resp : run_status; // update run status
-		
+
 		// Break if all move completed without errors
 		if (resp <= 1)
-			break; 
+			break;
 
 		// Reset wall move up/down flags to include any walls with errors so these will be run again
 		for (size_t cham_i = 0; cham_i < n_cham; cham_i++)
@@ -782,7 +789,7 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 
 			// Check wall movement status based on IO readings
 			uint8_t resp = _moveWallsMonitor(cham_i, ts_start);
-			run_status = run_status <= 1 ? resp : run_status; // update overal run status		
+			run_status = run_status <= 1 ? resp : run_status; // update overal run status
 
 			// Check for timeout
 			is_timedout = resp == 3;
@@ -1021,7 +1028,7 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		uint8_t resp1 = initWalls(1);			 // move walls up
+		uint8_t resp1 = initWalls(1); // move walls up
 		uint8_t resp2 = initWalls(0);			 // move walls down
 		run_status = resp1 <= 1 ? resp2 : resp1; // update run status
 	}
@@ -1101,7 +1108,7 @@ void Wall_Operation::procEcatMessage()
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
 
 	// WALL_MOVE_FAILED
-	else if (run_status != 1 && run_status != 255)
+	else if (run_status > 1 && run_status != 255)
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
 
 	// NO ERROR

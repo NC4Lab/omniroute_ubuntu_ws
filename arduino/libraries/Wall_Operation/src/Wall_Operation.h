@@ -29,7 +29,21 @@ public:
 	uint8_t pwmDuty;		// pwm duty cycle
 	uint16_t dtMoveTimeout; // timeout for wall movement (ms)
 
-	struct WallMapStruct // pin mapping organized by wall with entries corresponding to the associated port or pin
+	// Bitwise variable, specifying the walls that actually exist for each chamber [1:exists]
+	uint8_t bitWallExistMap[9] = {
+		B11111111, // 0 [0, 1, 2, 3, 4, 5, 6, 7]
+		B10101110, // 1 [1, 3, 5, 7, 2]
+		B11111111, // 2 [0, 1, 2, 3, 4, 5, 6, 7]
+		B10101001, // 3 [1, 3, 5, 7, 0]
+		B11111111, // 4 [0, 1, 2, 3, 4, 5, 6, 7]
+		B10111010, // 5 [1, 3, 5, 7, 4]
+		B11111111, // 6 [0, 1, 2, 3, 4, 5, 6, 7]
+		B11101010, // 7 [1, 3, 5, 7, 6]
+		B11111111  // 8 [0, 1, 2, 3, 4, 5, 6, 7]
+	};
+
+	// Pin mapping organized by wall with entries corresponding to the associated port or pin
+	struct WallMapStruct
 	{
 		uint8_t pwmSrc[8] =
 			{4, 6, 7, 5, 3, 1, 0, 2};
@@ -53,7 +67,8 @@ public:
 	};
 	WallMapStruct wms; // only one instance used
 
-	struct PinMapStruct // pin mapping orgnanized by port / pin number
+	// Pin mapping orgnanized by port / pin number
+	struct PinMapStruct
 	{
 		uint8_t nPortsInc;		// stores number of included ports in the arrays
 		uint8_t nPinsInc[6];	// stores number of included pins in the arrays for each included port
@@ -70,20 +85,22 @@ public:
 	PinMapStruct pmsUpPWM;	 // pwm up pins
 	PinMapStruct pmsDownPWM; // pwm down pins
 
-	struct ChamberStruct // struct for tracking each chamber
+	// Struct for tracking each chamber
+	struct ChamberStruct
 	{
 		uint8_t addr = 0;				 // chamber I2C address
 		uint8_t i2cStatus = 0;			 // track I2C status errors for chamber
+		uint8_t bitWallExist = 0;		 // bitwise variable, flag current walls that should be moved [0:inactive, 1:active]
 		uint8_t bitWallPosition = 0;	 // bitwise variable, current wall position [0:down, 1:up]
 		uint8_t bitWallMoveUpFlag = 0;	 // bitwise variable, flag current walls that should be raised [0:inactive, 1:active]
 		uint8_t bitWallMoveDownFlag = 0; // bitwise variable, flag current walls that should be lowered [0:inactive, 1:active]
-		uint8_t bitWallErrorFlag = 0;	 // bitwise variable, flag wall move errors [0:no error, 1:error]
+		uint8_t bitWallErrorFlag = 1;	 // bitwise variable, flag wall move errors [0:no error, 1:error]
 		PinMapStruct pmsActvPWM;		 // reusable dynamic instance for active PWM
 		PinMapStruct pmsActvIO;			 // reusable dynamic instance for active IO
 	};
 	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
 
-	Esmacat_Com EsmaCom; //< instance of Esmacatshield class
+	Esmacat_Com EsmaCom; // instance of Esmacatshield class
 
 private:
 	Maze_Debug _Dbg;	 // local instance of Maze_Debug class

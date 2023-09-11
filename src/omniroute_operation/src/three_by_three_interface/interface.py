@@ -1258,11 +1258,11 @@ class Interface(Plugin):
 
         # Default system settings [default][min][max]
         self.sysDefaults = [
-            [2, 1, 9],          # Num chamb init
-            [1, 1, 1],          # Max chamb to move per block
+            [9, 1, 9],          # Num chamb init
+            [3, 1, 1],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
             [255, 0, 255],      # PWM duty
-            [750, 500, 2000]   # Move timeout (ms)
+            [1000, 500, 2000]   # Move timeout (ms)
         ]
 
         # Setup/initialize system settings edit boxes
@@ -1797,7 +1797,7 @@ class Interface(Plugin):
             if MazePlot.isEnabled(chamber.status):
                 for _, wall in enumerate(chamber.Walls):
                     if wall.status != MazePlot.Status.EXCLUDED:
-                        wall.setStatus(MazePlot.Status.UNINITIALIZED)
+                        wall.setStatus(MazePlot.Status.UNINITIALIZED, do_force=True)
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""
