@@ -23,10 +23,10 @@ Maze_Debug::Maze_Debug() {}
 /// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
-	const uint8_t buff_s = 125;
+	const uint8_t buff_s = 126;
 	static char buff[buff_s];
 	buff[0] = '\0';
-	const uint8_t buff_sym_s = 31;
+	const uint8_t buff_sym_s = 51;
 	static char buff_sym[buff_sym_s];
 	buff_sym[0] = '\0';
 
@@ -40,11 +40,12 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 	vsnprintf(buff, buff_s, p_fmt, args);
 	va_end(args);
 
-	// Make header of '=' characters based on message length
-	size_t n = buff_sym_s - 1 - strlen(buff) / 2;
-	n = n < buff_sym_s ? n : 3; // ensure n is not negative and doesn't exceed buff_sym size
+	// Get number of attention grabbing characters to print before and after message
+	size_t n =
+		(buff_s - 30) / 2 - strlen(buff) / 2; // account for current message (strlen(buff)) and type and time string (~30) and buffer size
+	n = n < buff_sym_s && n > 0 ? n : 3;	  // ensure n is not negative and doesn't exceed buff_sym size
 
-	// Fill buffer with '=' characters
+	// Fill buffer with attention grabbing characters
 	if (is_head1_msg)
 		memset(buff_sym, '=', n);
 	else if (is_head2_msg)
@@ -55,7 +56,7 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 
 	// Add additional new line for attention messages
 	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A)
-		Serial.write("\n");
+		Serial.print("\n");
 
 	// Print message type
 	Serial.print(_message_type_str[msg_type_enum]);
@@ -238,16 +239,15 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 /// @brief do print test
 void Maze_Debug::printTest()
 {
-	// Print each message type
-	printMsg(MT::INFO, "INFO");
-	printMsg(MT::HEAD1, "HEAD1");
-	printMsg(MT::INFO, "INFO");
-	printMsg(MT::ERROR, "ERROR");
-	printMsg(MT::WARNING, "WARNING");
-	printMsg(MT::HEAD1A, "HEAD1A");
-	printMsg(MT::INFO, "INFO");
-	printMsg(MT::HEAD1B, "HEAD1B");
-	printMsg(MT::INFO, "INFO");
-	printMsg(MT::HEAD2, "HEAD2");
-	printMsg(MT::INFO, "INFO");
+	/// @note: Keep commmented out unless using because const strings take up memory
+
+	// printMsg(MT::ERROR, "ERROR");
+	// printMsg(MT::HEAD2, "HEAD2");
+	// printMsg(MT::DEBUG, "DEBUG");
+	// printMsg(MT::HEAD1, "HEAD1");
+	// printMsg(MT::INFO, "INFO .........................");																											 // 30 char
+	// printMsg(MT::HEAD1A, "           HEAD1A           ");																											 // 30 char
+	// printMsg(MT::INFO, "INFO ...................................................................................................................................."); // 130 char
+	// printMsg(MT::HEAD1B, "                                                                 HEAD1B                                                                "); // 130 char
+	// printMsg(MT::HEAD2, "HEAD2");
 }

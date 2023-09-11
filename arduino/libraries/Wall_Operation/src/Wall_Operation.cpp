@@ -624,7 +624,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 	}
 
 	// Print starting message
-	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
+	_Dbg.printMsg(_Dbg.MT::HEAD2, "START: MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
 
 	// Reset run status
 
@@ -659,7 +659,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 
 	// Print final success/warning message for final attempt
 	if (run_status <= 1)
-		_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
+		_Dbg.printMsg(_Dbg.MT::HEAD2, "FINISHED: MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
 					  run_status, block_cnt, attempt_cnt, _Dbg.arrayStr(cham_all_arr, n_cham_all));
 	else
 	{
