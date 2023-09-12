@@ -163,10 +163,10 @@ private:
 	uint8_t _moveWallsConductor(uint8_t[], uint8_t, uint8_t, uint8_t);
 
 private:
-	uint8_t _moveWallsInit(uint8_t);
+	uint8_t _initWallsMove(uint8_t);
 
 private:
-	uint8_t _moveWallsMonitor(uint8_t, uint32_t);
+	uint8_t _monitorWallsMove(uint8_t, uint32_t);
 
 public:
 	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);

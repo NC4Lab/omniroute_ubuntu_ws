@@ -23,7 +23,7 @@ Maze_Debug::Maze_Debug() {}
 /// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
-	const uint8_t buff_s = 101;
+	const uint8_t buff_s = 111;
 	static char buff[buff_s];
 	buff[0] = '\0';
 	const uint8_t buff_sym_s = 31;
@@ -42,7 +42,7 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 
 	// Get number of attention grabbing characters to print before and after message
 	size_t n =
-		(buff_s - 30) / 2 - strlen(buff) / 2; // account for current message (strlen(buff)) and type and time string (~30) and buffer size
+		(buff_s - 30) / 2 - strlen(buff) / 2 - 1; // account for current message (strlen(buff)) and type and time string (~30) and buffer size
 	n = n < buff_sym_s && n > 0 ? n : 3;	  // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with attention grabbing characters
@@ -174,10 +174,10 @@ const char *Maze_Debug::hexStr(uint8_t h)
 /// @brief Track and return the elapsed time between calls.
 /// Initially call with an input argument of 1 to set the clock. Subsequent calls provide elapsed time.
 ///
-/// @param do_reset If set to 1, resets the clock.
+/// @param do_reset If true, resets the clock. DEFAULT: false.
 ///
 /// @return Formatted time string in the form [s:ms:us].
-const char *Maze_Debug::dtTrack(uint8_t do_reset)
+const char *Maze_Debug::dtTrack(bool do_reset)
 {
 	static unsigned long ts_0 = 0;
 	if (do_reset == 1)

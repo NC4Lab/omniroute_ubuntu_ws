@@ -65,7 +65,7 @@ public:
 	const char *hexStr(uint8_t);
 
 public:
-	const char *dtTrack(uint8_t = 0);
+	const char *dtTrack(bool = false);
 
 public:
 	const char *bitIndStr(uint8_t);
