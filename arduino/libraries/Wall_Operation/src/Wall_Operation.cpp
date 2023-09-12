@@ -374,38 +374,44 @@ uint8_t Wall_Operation::initCypress()
 
 /// @brief Initialize/reset wall position
 ///
-/// @note Running walls in both directions (init_walls=1) will allow the system to
+/// @note Running walls in both directions (init_level=0) will allow the system to
 /// identify and flag any walls that are not moving properly.
 ///
-/// @param init_walls: Specify wall iniialization [0=down, 1=up].
-/// @return Success/error codes from @ref Wall_Operation::moveWalls())
-uint8_t Wall_Operation::initWalls(uint8_t init_walls)
+/// @param init_level: Specify level of initialization [0:initialize/reinitialize, 1:reset]
+/// @return Success/error codes from @ref Wall_Operation::moveWallsByChamberBlocks()
+uint8_t Wall_Operation::initWalls(uint8_t init_level)
 {
 	uint8_t run_status = 0;
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: WALL %s INITIALIZATION",
-				  init_walls == 0 ? "DOWN" : "UP");
+				  init_level == 0 ? "UP/DOWN" : "DWON");
 
-	//............... Run Walls Up ...............
-	if (init_walls == 1)
+	//............... Run Walls Up for initialize/reinitialize ...............
+
+	if (init_level == 0)
 	{
 		// Set wall movef for all chambers
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			setWallsToMove(cham_i, 1);
 
-		// Move walls
-		uint8_t resp = moveWallsByChamberBlocks();
+		// Move walls and inlude chambers with errors
+		uint8_t resp = moveWallsByChamberBlocks(true);
 		run_status = run_status <= 1 ? resp : run_status; // update run status
+
+		// Set posiion to up even for failed walls to ensure they are rerun
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+			C[cham_i].bitWallPosition = 255;
 	}
 
-	//............... Run Walls Down ...............
-	if (init_walls == 0)
+	//............... Run Walls Down for initialize/reinitialize or reset ...............
+
+	if (init_level == 0 || init_level == 1)
 	{
 		// Set wall movef for all chambers
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			setWallsToMove(cham_i, 0);
 
-		// Move walls
-		uint8_t resp = moveWallsByChamberBlocks();
+		// Move walls and inlude chambers with errors
+		uint8_t resp = moveWallsByChamberBlocks(true);
 		run_status = run_status <= 1 ? resp : run_status; // update run status
 	}
 
@@ -415,7 +421,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_walls)
 	_Dbg.printMsg(run_status <= 1 ? _Dbg.MT::HEAD1B : _Dbg.MT::ERROR,
 				  "%s: WALL %s INITIALIZATION: STATUS[%d]",
 				  run_status <= 1 ? "FINISHED" : "FAILED",
-				  init_walls == 0 ? "DOWN" : "UP", run_status);
+				  init_level == 0 ? "UP/DOWN" : "DOWN", run_status);
 
 	return run_status;
 }
@@ -578,11 +584,9 @@ uint8_t Wall_Operation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, u
 
 	// Set up/down move flags using bitwise comparison and exclude any walls with errors
 	C[cham_i].bitWallMoveUpFlag = C[cham_i].bitWallExist &
-								  (~C[cham_i].bitWallPosition & byte_wall_state_new) &
-								  ~C[cham_i].bitWallErrorFlag;
+								  (~C[cham_i].bitWallPosition & byte_wall_state_new);
 	C[cham_i].bitWallMoveDownFlag = C[cham_i].bitWallExist &
-									(C[cham_i].bitWallPosition & ~byte_wall_state_new) &
-									~C[cham_i].bitWallErrorFlag;
+									(C[cham_i].bitWallPosition & ~byte_wall_state_new);
 
 	// Bail if nothing to move
 	if (C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0)
@@ -602,9 +606,9 @@ uint8_t Wall_Operation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, u
 /// @brief: Main public method to change wall positions for all chambers set to move
 /// either in blocks of all at once
 ///
-/// @param do_cham_blocks: Pointer array of chamber indexes to move. DEFAULT: true.
+/// @param do_inc_err_walls: Flag to include chambers with errors in the move.
 /// @return Status codes [0:no move, 1:success, 2:error]
-uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
+uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_inc_err_cham)
 {
 	uint8_t run_status = 0;
 	uint8_t block_cnt = 0;	 // counter for number of stages
@@ -616,7 +620,8 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 
 	// Find and store all chambers flagged for movement
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-		if (C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0)
+		if ((C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0) &&
+			(do_inc_err_cham || C[cham_i].bitWallErrorFlag == 0)) // check for error flag
 			cham_all_arr[n_cham_all++] = cham_i;
 
 	// Bail if no chambers set to move
@@ -628,12 +633,6 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_cham_blocks)
 
 	// Print starting message
 	_Dbg.printMsg(_Dbg.MT::HEAD2, "START: STAGED MOVE WALL: chambers%s", _Dbg.arrayStr(cham_all_arr, n_cham_all));
-
-	// Reset run status
-
-	// Pass all walls to main version of method
-	if (!do_cham_blocks)
-		return _moveWallsByChamberBlocksWithRetry(cham_all_arr, n_cham_all, 1, attempt_cnt);
 
 	// Store chambers to move next
 	uint8_t cham_queued_arr[nChamPerBlock];
@@ -722,7 +721,7 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 
 		// Print attempt message
 		_Dbg.printMsg(r_attempt_cnt == 1 ? _Dbg.MT::INFO : _Dbg.MT::WARNING,
-					  "\t %s: Move Wall Block #%d Attempt #%d: chambers%s...............",
+					  "\t %s: MOVE WALL BLOCK #%d ATTEMPT #%d: chambers%s",
 					  r_attempt_cnt == 1 ? "RUNNING" : "RE-RUNNING",
 					  block_cnt, r_attempt_cnt, _Dbg.arrayStr(cham_arr, n_cham));
 
@@ -755,21 +754,12 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 		{
 			size_t cham_i = saved_cham_arr[i]; // get chamber index
 
-			// TEMP
-			_Dbg.printMsg(_Dbg.MT::WARNING, "TEMP1___________ chamber[%d] up%s down%s",
-						  cham_i,
-						  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[none]",
-						  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]");
-
 			C[cham_i].bitWallMoveUpFlag = saved_byte_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
 			C[cham_i].bitWallMoveDownFlag = saved_byte_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-
-			// TEMP
-			_Dbg.printMsg(_Dbg.MT::WARNING, "TEMP2___________ chamber[%d] up%s down%s",
-						  cham_i,
-						  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[none]",
-						  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]");
 		}
+
+		// Print attempt message
+		_Dbg.printMsg(_Dbg.MT::WARNING, "\t REVERSING FAILED WALLS: chambers%s", _Dbg.arrayStr(cham_arr, n_cham));
 
 		// Run wall movement in reverse direction
 		_moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
@@ -798,7 +788,7 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 /// @param n_cham: Number of chambers in "cham_arr".
 /// @param block_cnt: Current chamber block count.
 /// @param attempt_cnt: Current move attempt count.
-/// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:temeout]
+/// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout]
 uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, uint8_t block_cnt, uint8_t attempt_cnt)
 {
 	uint8_t run_status = 0;
@@ -806,6 +796,17 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 	// Set timeout variables
 	uint32_t ts_start = millis();
 	_Dbg.dtTrack(1);
+
+	// Store a copy of the move wall bit masks
+	uint8_t saved_byte_wall_move_up_flag[n_cham];
+	uint8_t saved_byte_wall_move_down_flag[n_cham];
+	for (size_t i = 0; i < n_cham; i++)
+	{
+		size_t cham_i = cham_arr[i]; // get chamber index
+
+		saved_byte_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
+		saved_byte_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
+	}
 
 	//............... Start Wall Move ...............
 
@@ -818,13 +819,14 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 		run_status = run_status <= 1 ? resp : run_status; // update overal run status
 
 		// Print walls being moved
-		_Dbg.printMsg(_Dbg.MT::INFO, "\t START: Chamber Wall Move: status[%d] block[%d] attempt[%d] chamber[%d] up%s down%s",
-					  resp, block_cnt, attempt_cnt, cham_i,
+		_Dbg.printMsg(_Dbg.MT::INFO, "\t START: Chamber Wall Move: chamber[%d] up%s down%s block[%d] attempt[%d] status[%d]",
+					  cham_i,
 					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[none]",
-					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]");
+					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]",
+					  block_cnt, attempt_cnt, resp);
 	}
 
-	//............... Check/Track Wall Move ...............
+	//............... Monitor Wall Move ...............
 
 	// Initialize flags
 	bool is_timedout = false;  // flag timeout
@@ -844,36 +846,50 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 				continue;
 
 			// Check wall movement status based on IO readings
-			uint8_t resp = _monitorWallsMove(cham_i, ts_start);
+			uint8_t resp = _monitorWallsMove(cham_i);
 			run_status = run_status <= 1 ? resp : run_status; // update overal run status
 
 			// Check for timeout
-			is_timedout = resp == 3;
+			is_timedout = millis() >= ts_start + dtMoveTimeout; // check for timeout
 
 			// Update check flag and and timeout flag
 			do_move_check += C[cham_i].bitWallMoveUpFlag;
 			do_move_check += C[cham_i].bitWallMoveDownFlag;
-
-			// Print failures
-			if (resp > 1)
-			{
-				// Update error flag bitwise, set bit in error flag to 1 if it or the corresponding bit in move up or down flag is equal to 1
-				C[cham_i].bitWallErrorFlag = C[cham_i].bitWallErrorFlag | (C[cham_i].bitWallMoveUpFlag | C[cham_i].bitWallMoveDownFlag);
-
-				// Print status for this chamber
-				_Dbg.printMsg(_Dbg.MT::WARNING, "\t FAILED: Chamber Wall Move: status[%d] block[%d] attempt[%d] chamber[%d] up%s down%s",
-							  resp, block_cnt, attempt_cnt, cham_i,
-							  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[none]",
-							  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]");
-			}
 		}
 	}
 
-	/// @todo: Turn off all pwm
+	//............... Check/Track Final Move Status ...............
+
+	// Check for timeout
+	run_status = is_timedout ? 3 : run_status; // update overal run status
+
+	// Check final status
 	for (size_t i = 0; i < n_cham; i++)
 	{
 		size_t cham_i = cham_arr[i];
-		resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.byteMaskAll, 6, 0); // stop all pwm output
+
+		// Get move finished status for chamber
+		bool is_done = C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0;
+
+		// Check status for this chamber
+		_Dbg.printMsg(is_done ? _Dbg.MT::INFO : _Dbg.MT::WARNING,
+					  "\t %s: Chamber Wall Move: chamber[%d] up%s down%s block[%d] attempt[%d] status[%d]",
+					  is_done ? "FINISHED" : "FAILED",
+					  cham_i,
+					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(is_done ? saved_byte_wall_move_up_flag[cham_i] : C[cham_i].bitWallMoveUpFlag) : "[none]",
+					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(is_done ? saved_byte_wall_move_down_flag[cham_i] : C[cham_i].bitWallMoveDownFlag) : "[none]",
+					  block_cnt, attempt_cnt, run_status);
+
+		// Handle chaimber failure
+		if (!is_done)
+		{
+			// Update error flag bitwise, set bit in error flag to 1 if it or the corresponding bit in move up or down flag is equal to 1
+			C[cham_i].bitWallErrorFlag = C[cham_i].bitWallErrorFlag | (C[cham_i].bitWallMoveUpFlag | C[cham_i].bitWallMoveDownFlag);
+
+			// Turn off all pwm for this chamber
+			uint8_t resp = _CypCom.ioWriteReg(C[cham_i].addr, pmsAllPWM.byteMaskAll, 6, 0); // stop all pwm output
+			run_status = run_status <= 1 ? resp : run_status;								// update overal run status
+		}
 	}
 
 	return run_status;
@@ -882,7 +898,7 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 /// @brief Used to start wall movement through PWM output
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
-/// @return Status/error codes [1:no error, 2:i2c error]
+/// @return Status/error codes [1:move started, 2:i2c error]
 uint8_t Wall_Operation::_initWallsMove(uint8_t cham_i)
 {
 
@@ -909,9 +925,8 @@ uint8_t Wall_Operation::_initWallsMove(uint8_t cham_i)
 /// call to avoid an additional read if we need to write the pwm output later
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
-/// @param ts_start Time stamp of when the wall movement started
-/// @return Status/error codes [1:no error, 2:i2c error, 3:temeout]
-uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i, uint32_t ts_start)
+/// @return Status/error codes [0:still_waiting 1:all_move_down, 2:i2c error, 3:temeout]
+uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i)
 {
 	// Local vars
 	uint8_t i2c_status = 0; // track i2c status
@@ -980,22 +995,15 @@ uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i, uint32_t ts_start)
 		}
 	}
 
-	// Chceck for timeout
-	bool is_timedout = millis() >= ts_start + dtMoveTimeout; // check for timeout
-
 	// Send pwm off command if move complete or timed out
-	if (do_pwm_update || is_timedout)
+	if (do_pwm_update)
 	{																					  // check for update flag
 		uint8_t resp = _CypCom.ioWriteReg(C[cham_i].addr, io_out_mask, 6, 0, io_out_reg); // include last reg read and turn off pwms
 		i2c_status = i2c_status == 0 ? resp : i2c_status;								  // update i2c status
 	}
 
-	// Update run status
-	uint8_t run_status = i2c_status != 0 ? 2 : is_timedout ? 3
-														   : 1;
-
 	// Return run status
-	return run_status;
+	return i2c_status != 0 ? 2 : (C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0);
 }
 
 /// @brief Used to get the current wall state/position based on limit switch IO
@@ -1074,9 +1082,7 @@ void Wall_Operation::procEcatMessage()
 	// INITIALIZE_WALLS
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::INITIALIZE_WALLS)
 	{
-		uint8_t resp1 = initWalls(1);			 // move walls up
-		uint8_t resp2 = initWalls(0);			 // move walls down
-		run_status = resp1 <= 1 ? resp2 : resp1; // update run status
+		run_status = initWalls(0);
 	}
 
 	// REINITIALIZE_SYSTEM
@@ -1096,7 +1102,7 @@ void Wall_Operation::procEcatMessage()
 	// RESET_SYSTEM
 	else if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_SYSTEM)
 	{
-		run_status = initWalls(0);	// move walls down
+		run_status = initWalls(1);	// move walls down
 		i2c_status = initCypress(); // reinitialize cypress
 	}
 

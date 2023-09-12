@@ -154,7 +154,7 @@ private:
 	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t);
 
 public:
-	uint8_t moveWallsByChamberBlocks(bool = true);
+	uint8_t moveWallsByChamberBlocks(bool = false);
 
 private:
 	uint8_t _moveWallsByChamberBlocksWithRetry(uint8_t[], uint8_t, uint8_t, uint8_t &);
@@ -166,7 +166,7 @@ private:
 	uint8_t _initWallsMove(uint8_t);
 
 private:
-	uint8_t _monitorWallsMove(uint8_t, uint32_t);
+	uint8_t _monitorWallsMove(uint8_t);
 
 public:
 	uint8_t getWallState(uint8_t, uint8_t, uint8_t &);

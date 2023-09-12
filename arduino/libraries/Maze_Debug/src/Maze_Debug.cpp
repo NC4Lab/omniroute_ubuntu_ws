@@ -23,10 +23,10 @@ Maze_Debug::Maze_Debug() {}
 /// @param ... Variable arguments related to the formatting string.
 void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
-	const uint8_t buff_s = 111;
+	const uint8_t buff_s = 121;
 	static char buff[buff_s];
 	buff[0] = '\0';
-	const uint8_t buff_sym_s = 31;
+	const uint8_t buff_sym_s = 41;
 	static char buff_sym[buff_sym_s];
 	buff_sym[0] = '\0';
 
