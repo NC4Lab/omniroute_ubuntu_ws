@@ -279,12 +279,12 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 	// Reset all status tracking chamber variables
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 	{
-		// Keep i2c status and wall position if reinitializing
+		// Keep i2c status if reinitializing
 		if (init_level != 1)
 		{
 			C[cham_i].i2cStatus = 0;
-			C[cham_i].bitWallPosition = 0;
 		}
+		C[cham_i].bitWallPosition = 0;
 		C[cham_i].bitWallMoveUpFlag = 0;
 		C[cham_i].bitWallMoveDownFlag = 0;
 		C[cham_i].bitWallErrorFlag = 0;
@@ -690,29 +690,6 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 	uint8_t run_status = 0;
 	r_attempt_cnt = 0; // reset attempt counter reference
 
-	// Store a copy of the wall byte for move wall and error flags
-	uint8_t saved_byte_wall_move_up_flag[n_cham];
-	uint8_t saved_byte_wall_move_down_flag[n_cham];
-	uint8_t saved_byte_wall_error_flag[n_cham];
-
-	// Copy over orginal chamber array
-	uint8_t saved_cham_arr[n_cham];
-	uint8_t saved_n_cham = n_cham;
-
-	for (size_t i = 0; i < n_cham; i++)
-	{
-		size_t cham_i = cham_arr[i]; // get chamber index
-
-		// Copy over chamber index
-		saved_cham_arr[i] = cham_i;
-
-		// Copy over flags
-		saved_cham_arr[i] = cham_i;
-		saved_byte_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
-		saved_byte_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
-		saved_byte_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
-	}
-
 	// Make multiple attempts to move walls based on nMoveAttempt
 	for (size_t att_i = 0; att_i < nMoveAttempt; att_i++)
 	{
@@ -725,10 +702,6 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 					  r_attempt_cnt == 1 ? "RUNNING" : "RE-RUNNING",
 					  block_cnt, r_attempt_cnt, _Dbg.arrayStr(cham_arr, n_cham));
 
-		// Copy back saved error flag to ensure reattempts include previously failed walls
-		for (size_t cham_i = 0; cham_i < n_cham; cham_i++)
-			C[cham_i].bitWallErrorFlag = saved_byte_wall_error_flag[cham_i];
-
 		// Run wall movement
 		uint8_t resp = _moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
 		run_status = run_status <= 1 ? resp : run_status; // update run status
@@ -738,24 +711,40 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 			break;
 
 		// Remove any finished chambers from the chamber array
-		n_cham = 0;
-		for (size_t i = 0; i < saved_n_cham; i++)
+		uint8_t cnt_cham = 0; // reset chamber counter
+		for (size_t i = 0; i < n_cham; i++)
 		{
-			size_t cham_i = saved_cham_arr[i]; // get chamber index
+			size_t cham_i = cham_arr[i]; // get chamber index
 
 			// Add back to list if still flagged to move
 			if (C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0)
 				continue;
-			cham_arr[n_cham++] = cham_i;
+			cham_arr[cnt_cham++] = cham_i;
+		}
+		n_cham = cnt_cham; // update chamber count
+
+		// Store a copy of flags
+		uint8_t temp_bit_wall_move_up_flag[n_cham];
+		uint8_t temp_bit_wall_move_down_flag[n_cham];
+		uint8_t temp_bit_wall_error_flag[n_cham];
+		uint8_t temp_bit_wall_position[n_cham];
+		for (size_t i = 0; i < n_cham; i++)
+		{
+			size_t cham_i = cham_arr[i]; // get chamber index
+			temp_bit_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
+			temp_bit_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
+			temp_bit_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
+			temp_bit_wall_position[cham_i] = C[cham_i].bitWallPosition;
 		}
 
-		// Flip wall move direction flags to run failed walls in reverse direction
-		for (size_t i = 0; i < saved_n_cham; i++)
+		// Flip wall move direction flags for error flagged chambers to run failed walls in reverse direction
+		for (size_t i = 0; i < n_cham; i++)
 		{
-			size_t cham_i = saved_cham_arr[i]; // get chamber index
+			size_t cham_i = cham_arr[i]; // get chamber index
 
-			C[cham_i].bitWallMoveUpFlag = saved_byte_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-			C[cham_i].bitWallMoveDownFlag = saved_byte_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			// Store saved up and down flag in opposite flag variable to run in reverse direction
+			C[cham_i].bitWallMoveUpFlag = temp_bit_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			C[cham_i].bitWallMoveDownFlag = temp_bit_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
 		}
 
 		// Print attempt message
@@ -765,12 +754,19 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 		_moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
 
 		// Reset wall move up/down flags to include any walls with errors so these will be run again
-		for (size_t i = 0; i < saved_n_cham; i++)
+		for (size_t i = 0; i < n_cham; i++)
 		{
-			size_t cham_i = saved_cham_arr[i]; // get chamber index
+			size_t cham_i = cham_arr[i]; // get chamber index
 
-			C[cham_i].bitWallMoveUpFlag = saved_byte_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-			C[cham_i].bitWallMoveDownFlag = saved_byte_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			// Copy back saved error flag
+			C[cham_i].bitWallErrorFlag = temp_bit_wall_error_flag[cham_i];
+
+			// Copy back saved position byte
+			C[cham_i].bitWallPosition = temp_bit_wall_position[cham_i];
+
+			// Copy back up/down flags for chambers flagged for errors
+			C[cham_i].bitWallMoveUpFlag = temp_bit_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
+			C[cham_i].bitWallMoveDownFlag = temp_bit_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
 		}
 	}
 
@@ -986,6 +982,10 @@ uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i)
 			// Set both flags to false for convenience
 			bitWrite(C[cham_i].bitWallMoveUpFlag, wall_n, 0);	// reset wall bit in flag
 			bitWrite(C[cham_i].bitWallMoveDownFlag, wall_n, 0); // reset wall bit in flag
+
+			/// Unset error flag
+			/// @todo: Consider if error flag should be reset here
+			bitWrite(C[cham_i].bitWallErrorFlag, wall_n, 0);
 
 			// Flag to update pwm
 			do_pwm_update = true;

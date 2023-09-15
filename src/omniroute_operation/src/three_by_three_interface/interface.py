@@ -1013,6 +1013,10 @@ class MazePlot(QGraphicsView):
             # Set text color
             self.label.setDefaultTextColor(self.status.color)
 
+            # # TEMP Print chamber status change
+            # MazeDB.printMsg('DEBUG', "Chamber %d: %s", self.chamber_num,
+            #                 self.status.name)
+
             # Set chamber color
             # self.octagon.setBrush(QBrush(self.status.color))
 
