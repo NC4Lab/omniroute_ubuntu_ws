@@ -147,15 +147,15 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 public:
-	uint8_t setWallsToMove(uint8_t, uint8_t);
-	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t[], uint8_t);
-	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t, bool = false);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t[], uint8_t, bool = false);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t, bool = false);
 
 private:
-	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t);
+	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t, bool = false);
 
 public:
-	uint8_t moveWallsByChamberBlocks(bool = false);
+	uint8_t moveWallsByChamberBlocks();
 
 private:
 	uint8_t _moveWallsByChamberBlocksWithRetry(uint8_t[], uint8_t, uint8_t, uint8_t &);

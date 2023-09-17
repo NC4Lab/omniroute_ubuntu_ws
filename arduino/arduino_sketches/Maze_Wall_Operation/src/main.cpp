@@ -59,7 +59,16 @@ void setup()
 #ifdef ARDUINO_SAM_DUE
 	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
-	
+
+// // TEMP
+// uint8_t b1 = B11111101;
+// uint8_t b2 = B00000100;
+// uint8_t bx = 255;
+// uint8_t b3 = B01000011;
+// uint8_t up = b1 & (~b2 | bx) & b3;
+// uint8_t down = b1 & (b2 | bx) & ~b3;
+// Dbg.printMsg(Dbg.MT::INFO, "up%s down%s", Dbg.bitIndStr(up), Dbg.bitIndStr(down));
+
 }
 
 //=============== LOOP ==================
