@@ -28,6 +28,7 @@
 /// 	3: Received NACK on transmit of data. This means the slave device acknowledged its address but
 ///			did not acknowledge the receipt of data.
 /// 	4: Other error. A miscellaneous error occurred.
+///		5: Timeout. The transmission timed out.
 class Cypress_Com
 {
 

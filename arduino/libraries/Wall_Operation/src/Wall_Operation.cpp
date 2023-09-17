@@ -367,12 +367,19 @@ uint8_t Wall_Operation::initCypress()
 			_Dbg.printMsg(_Dbg.MT::INFO, "FINISHED: Cypress PWM Setup: chamber=[%d|%s] status[%d]", cham_i, _Dbg.hexStr(C[cham_i].addr), resp);
 	}
 
+	//............... Check Status ...............
+
 	// Set status return to any error
 	uint8_t i2c_status = 0;
 	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 		i2c_status = i2c_status == 0 ? C[cham_i].i2cStatus : i2c_status; // update status
 
-	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: CYPRESS INITIALIZATION");
+	// Print status
+	_Dbg.printMsg(i2c_status == 0 ? _Dbg.MT::HEAD1B : _Dbg.MT::ERROR,
+				  "%s: CYPRESS INITIALIZATION: STATUS[%d]",
+				  i2c_status == 0 <= 1 ? "FINISHED" : "FAILED",
+				  i2c_status);
+
 	return i2c_status;
 }
 
@@ -402,6 +409,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_level)
 		run_status = run_status <= 1 ? resp : run_status; // update run status
 
 		// Set posiion to up even for failed walls to ensure they are rerun
+		/// @todo: Find a less hacky way to achive this
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			C[cham_i].bitWallPosition = 255;
 	}
@@ -663,18 +671,25 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks(bool do_inc_err_cham)
 		}
 	}
 
-	// Print final success/warning message for final attempt
+	// Check final run status
 	if (run_status <= 1)
 		_Dbg.printMsg(_Dbg.MT::HEAD2, "FINISHED: STAGED MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
 					  run_status, block_cnt, attempt_cnt, _Dbg.arrayStr(cham_all_arr, n_cham_all));
 	else
 	{
-		// Get failed chambers to print
+		// Check each chamber
 		uint8_t cham_err_arr[nCham];
 		uint8_t n_cham_err = 0;
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			if (C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0)
+			{
+				// Store chamber index for error message
 				cham_err_arr[n_cham_err++] = cham_i;
+
+				// Reset move flags
+				C[cham_i].bitWallMoveUpFlag = 0;
+				C[cham_i].bitWallMoveDownFlag = 0;
+			}
 		_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: STAGED MOVE WALL: status[%d] blocks[%d] attempts[%d] chambers%s",
 					  run_status, block_cnt, attempt_cnt, _Dbg.arrayStr(cham_err_arr, n_cham_err));
 	}
@@ -711,7 +726,7 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 					  block_cnt, r_attempt_cnt, _Dbg.arrayStr(cham_arr, n_cham));
 
 		// Run wall movement
-		uint8_t resp = _moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
+		uint8_t resp = _moveWallsConductor(cham_arr, n_cham);
 		run_status = run_status <= 1 ? resp : run_status; // update run status
 
 		// Break if all move completed without errors
@@ -743,10 +758,8 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 ///
 /// @param cham_arr: Pointer array of chamber indexes to move.
 /// @param n_cham: Number of chambers in "cham_arr".
-/// @param block_cnt: Current chamber block count.
-/// @param attempt_cnt: Current move attempt count.
 /// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout] or [-1=255:input argument error].
-uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, uint8_t block_cnt, uint8_t attempt_cnt)
+uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
 {
 	// Handle array inputs
 	if (n_cham > nCham)
@@ -769,12 +782,12 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 		run_status = run_status <= 1 ? resp : run_status; // update overal run status
 
 		// Print walls being moved
-		_Dbg.printMsg(_Dbg.MT::INFO, "\t START: Chamber Wall Move: chamber[%d] up%s down%s error%s block[%d] attempt[%d] status[%d]",
+		_Dbg.printMsg(_Dbg.MT::INFO, "\t START: Walls Move: chamber[%d] up%s down%s error%s status[%d]",
 					  cham_i,
 					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[none]",
 					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[none]",
 					  C[cham_i].bitWallErrorFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallErrorFlag) : "[none]",
-					  block_cnt, attempt_cnt, resp);
+					  resp);
 	}
 
 	//............... Monitor Wall Move ...............
@@ -820,14 +833,16 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 		size_t cham_i = cham_arr[i];
 
 		// Check status for this chamber
-		_Dbg.printMsg(C[cham_i].bitWallErrorFlag == 0 ? _Dbg.MT::INFO : _Dbg.MT::ERROR,
-					  "\t %s: Chamber Wall Move: chamber[%d] up%s down%s error%s block[%d] attempt[%d] status[%d]",
-					  C[cham_i].bitWallErrorFlag == 0 ? "FINISHED" : "FAILED",
+		bool is_err = C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0;
+		_Dbg.printMsg(is_err ? _Dbg.MT::ERROR : _Dbg.MT::INFO,
+					  "%s%s: Walls Move: chamber[%d] up%s down%s error%s status[%d]",
+					  is_err ? " " : "\t",
+					  is_err ? "FAILED" : "FINISHED",
 					  cham_i,
 					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[done]",
 					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[done]",
 					  C[cham_i].bitWallErrorFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallErrorFlag) : "[none]",
-					  block_cnt, attempt_cnt, run_status);
+					  run_status);
 
 		// Handle chamber failure
 		if (C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0)
@@ -1002,8 +1017,8 @@ void Wall_Operation::procEcatMessage()
 {
 	uint8_t msg_arg_arr[9];	  // store message arguments
 	uint8_t arg_len = 0;	  // store argument length
-	uint8_t i2c_status = 255; // track i2c status
-	uint8_t run_status = 255; // track run status
+	uint8_t i2c_status = 0; // track i2c status
+	uint8_t run_status = 0; // track run status
 
 	// Check for new message
 	if (!EsmaCom.rcvEM.isNew)
@@ -1117,11 +1132,11 @@ void Wall_Operation::procEcatMessage()
 	//............... Send Ecat Ack ...............
 
 	// I2C_FAILED
-	if (i2c_status != 0 && i2c_status != 255)
+	if (i2c_status != 0)
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::I2C_FAILED, msg_arg_arr, arg_len);
 
 	// WALL_MOVE_FAILED
-	else if (run_status > 1 && run_status != 255)
+	else if (run_status > 1)
 		EsmaCom.writeEcatAck(EsmaCom.ErrorType::WALL_MOVE_FAILED, msg_arg_arr, arg_len);
 
 	// NO ERROR

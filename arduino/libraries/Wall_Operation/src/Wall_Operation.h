@@ -86,6 +86,7 @@ public:
 	PinMapStruct pmsDownPWM; // pwm down pins
 
 	// Struct for tracking each chamber
+	/// @todo: Consider going back to a single move flag for each chamber
 	struct ChamberStruct
 	{
 		uint8_t addr = 0;				 // chamber I2C address
@@ -160,7 +161,7 @@ private:
 	uint8_t _moveWallsByChamberBlocksWithRetry(uint8_t[], uint8_t, uint8_t, uint8_t &);
 
 private:
-	uint8_t _moveWallsConductor(uint8_t[], uint8_t, uint8_t, uint8_t);
+	uint8_t _moveWallsConductor(uint8_t[], uint8_t);
 
 private:
 	uint8_t _initWallsMove(uint8_t);

@@ -282,10 +282,11 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 	is_err = (digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW);
 #endif
 	if (is_err)
-		_Dbg.printMsg(_Dbg.MT::ERROR, "!!!!! I2C LINES LOW: CHECK POWER !!!!!");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C LINES LOW: CHECK POWER");
 
-	// Setup timeout
-	Wire.setTimeout(1000); // set timeout to 1000ms
+	// Setup I2C timeout to 0.5 second
+	Wire.setWireTimeout(500000); // (us) for Wire librarary (default: 25000)
+	Wire.setTimeout(500);		// (ms) for Stream librarary
 
 	// Test I2C connection
 	_beginTransmissionWrapper(address);
@@ -294,15 +295,10 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 
 	// Check for timeout
 	/// @todo Get this working
-	if (Wire.getWireTimeoutFlag())
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C TIMEOUT: CHECK CONNECTION");
-		resp = -1;
-	}
-
-	// Bail if error
 	if (resp != 0)
-		return resp;
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED SETUP I2C CHECK: WIRE STATUS[%d]", resp);
+	}
 
 	// Setup Cypress chip
 	if (resp == 0)
@@ -310,12 +306,12 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 		// Restore chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
 		if (resp)
-			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress Chip Restore");
+			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS CHIP RESTORE: WIRE STATUS[%d]", resp);
 
 		// Reset chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
 		if (resp)
-			_Dbg.printMsg(_Dbg.MT::ERROR, "Cypress Chip Reconfigure");
+			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS CHIP RECONFIGURE: WIRE STATUS[%d]", resp);
 	}
 
 	return resp;
@@ -414,7 +410,7 @@ uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 {
 	uint8_t resp = Wire.endTransmission(send_stop);
 	if (resp != 0 && do_print_err)
-		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Error[%d] Address[%s]", resp, _Dbg.hexStr(ADDR));
+		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Error[%d] Address[%s] from Wire::endTransmission()", resp, _Dbg.hexStr(ADDR));
 	return resp;
 }
 
