@@ -147,7 +147,7 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
 
     // Copy data to temporary union
     RegUnion temp_u;
-    for (uint8_t i_16 = 0; i_16 < 8; i_16++)
+    for (size_t i_16 = 0; i_16 < 8; i_16++)
         temp_u.si16[i_16] = p_reg_arr[i_16];
 
     // Bail if registry value is 0 or max int16 value suggesting registry is cleared or garbage
@@ -162,7 +162,7 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
 
     // Check for footer indicating a complete write from sender
     bool is_footer = false;
-    for (uint8_t i_8 = 0; i_8 < 15; i_8++)
+    for (size_t i_8 = 0; i_8 < 15; i_8++)
     {
         if (temp_u.ui8[i_8] == 254 && temp_u.ui8[i_8 + 1] == 254)
         {
