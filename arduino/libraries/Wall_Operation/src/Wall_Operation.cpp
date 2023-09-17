@@ -728,52 +728,7 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 			if (C[cham_i].bitWallMoveUpFlag > 0 || C[cham_i].bitWallMoveDownFlag > 0)
 				cham_arr[cnt_cham++] = cham_i;
 		}
-
-		// Store a copy of flags
-		uint8_t temp_bit_wall_move_up_flag[nCham];
-		uint8_t temp_bit_wall_move_down_flag[nCham];
-		uint8_t temp_bit_wall_error_flag[nCham];
-		uint8_t temp_bit_wall_position[nCham];
-		for (size_t i = 0; i < n_cham; i++)
-		{
-			size_t cham_i = cham_arr[i]; // get chamber index
-			temp_bit_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
-			temp_bit_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
-			temp_bit_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
-			temp_bit_wall_position[cham_i] = C[cham_i].bitWallPosition;
-		}
-
-		// Flip wall move direction flags for error flagged chambers to run failed walls in reverse direction
-		for (size_t i = 0; i < n_cham; i++)
-		{
-			size_t cham_i = cham_arr[i]; // get chamber index
-
-			// Store saved up and down flag in opposite flag variable to run in reverse direction
-			C[cham_i].bitWallMoveUpFlag = temp_bit_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-			C[cham_i].bitWallMoveDownFlag = temp_bit_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-		}
-
-		// Print attempt message
-		_Dbg.printMsg(_Dbg.MT::WARNING, "\t REVERSING FAILED WALLS: chambers%s", _Dbg.arrayStr(cham_arr, n_cham));
-
-		// Run wall movement in reverse direction
-		_moveWallsConductor(cham_arr, n_cham, r_attempt_cnt, block_cnt);
-
-		// Reset wall move up/down flags to include any walls with errors so these will be run again
-		for (size_t i = 0; i < n_cham; i++)
-		{
-			size_t cham_i = cham_arr[i]; // get chamber index
-
-			// Copy back saved error flag
-			C[cham_i].bitWallErrorFlag = temp_bit_wall_error_flag[cham_i];
-
-			// Copy back saved position byte
-			C[cham_i].bitWallPosition = temp_bit_wall_position[cham_i];
-
-			// Copy back up/down flags for chambers flagged for errors
-			C[cham_i].bitWallMoveUpFlag = temp_bit_wall_move_up_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-			C[cham_i].bitWallMoveDownFlag = temp_bit_wall_move_down_flag[cham_i] & C[cham_i].bitWallErrorFlag;
-		}
+		n_cham = cnt_cham; // update chamber count
 	}
 
 	return run_status;
@@ -802,17 +757,6 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 	// Set timeout variables
 	uint32_t ts_start = millis();
 	_Dbg.dtTrack(1);
-
-	// Store a copy of the move wall bit masks
-	uint8_t saved_byte_wall_move_up_flag[n_cham];
-	uint8_t saved_byte_wall_move_down_flag[n_cham];
-	for (size_t i = 0; i < n_cham; i++)
-	{
-		size_t cham_i = cham_arr[i]; // get chamber index
-
-		saved_byte_wall_move_up_flag[cham_i] = C[cham_i].bitWallMoveUpFlag;
-		saved_byte_wall_move_down_flag[cham_i] = C[cham_i].bitWallMoveDownFlag;
-	}
 
 	//............... Start Wall Move ...............
 
@@ -875,21 +819,18 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham, 
 	{
 		size_t cham_i = cham_arr[i];
 
-		// Get move finished status for chamber
-		bool is_done = C[cham_i].bitWallMoveUpFlag == 0 && C[cham_i].bitWallMoveDownFlag == 0;
-
 		// Check status for this chamber
-		_Dbg.printMsg(is_done ? _Dbg.MT::INFO : _Dbg.MT::WARNING,
+		_Dbg.printMsg(C[cham_i].bitWallErrorFlag == 0 ? _Dbg.MT::INFO : _Dbg.MT::ERROR,
 					  "\t %s: Chamber Wall Move: chamber[%d] up%s down%s error%s block[%d] attempt[%d] status[%d]",
-					  is_done ? "FINISHED" : "FAILED",
+					  C[cham_i].bitWallErrorFlag == 0 ? "FINISHED" : "FAILED",
 					  cham_i,
-					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(is_done ? saved_byte_wall_move_up_flag[cham_i] : C[cham_i].bitWallMoveUpFlag) : "[none]",
-					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(is_done ? saved_byte_wall_move_down_flag[cham_i] : C[cham_i].bitWallMoveDownFlag) : "[none]",
+					  C[cham_i].bitWallMoveUpFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveUpFlag) : "[done]",
+					  C[cham_i].bitWallMoveDownFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallMoveDownFlag) : "[done]",
 					  C[cham_i].bitWallErrorFlag > 0 ? _Dbg.bitIndStr(C[cham_i].bitWallErrorFlag) : "[none]",
 					  block_cnt, attempt_cnt, run_status);
 
-		// Handle chaimber failure
-		if (!is_done)
+		// Handle chamber failure
+		if (C[cham_i].bitWallMoveUpFlag != 0 || C[cham_i].bitWallMoveDownFlag != 0)
 		{
 			// Update error flag bitwise, set bit in error flag to 1 if it or the corresponding bit in move up or down flag is equal to 1
 			C[cham_i].bitWallErrorFlag = C[cham_i].bitWallErrorFlag | (C[cham_i].bitWallMoveUpFlag | C[cham_i].bitWallMoveDownFlag);
