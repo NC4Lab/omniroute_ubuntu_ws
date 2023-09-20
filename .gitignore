@@ -7,6 +7,6 @@ src/plog/build/
 src/CMakeLists.txt
 /.vscode/
 .ini/
-arduino/arduino_sketches/Maze_Wall_Operation/platformio.ini
+arduino/arduino_sketches/MazeWallOperation/platformio.ini
 arduino/arduino_sketches/QC_Testing/platformio.ini
 arduino/arduino_sketches/QC_Testing/platformio.ini
