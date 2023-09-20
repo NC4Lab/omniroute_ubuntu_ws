@@ -1,6 +1,6 @@
 // ######################################
 
-//=========== Esmacat_Com.h ============
+//=========== EsmacatCom.h ============
 
 // ######################################
 #ifndef ESMACAT_COM_H
@@ -8,8 +8,8 @@
 
 //============= INCLUDE ================
 #include "Arduino.h"
-#include "Maze_Debug.h"
-#include "Cypress_Com.h"
+#include "MazeDebug.h"
+#include "CypressCom.h"
 #include "SPI.h"
 
 //============= GLOBALS ================
@@ -65,7 +65,7 @@ extern bool DO_ECAT_SPI; // set this variable in your INO file to control block 
 ///     ui16[5], ui8[10][11]   	// ui8  [cham 5 wall byte]  [cham 6 wall byte]
 ///     ui16[6], ui8[12]  	    // ui8  [cham 7 wall byte]  [cham 8 wall byte]
 ///
-class Esmacat_Com
+class EsmacatCom
 {
 
     // --------------VARIABLES--------------
@@ -160,14 +160,14 @@ public:
     EcatMessageStruct rcvEM; //  initialize message handler instance for receiving messages
 
 private:
-    static Maze_Debug _Dbg;      // local instance of Maze_Debug class
+    static MazeDebug _Dbg;      // local instance of MazeDebug class
     int ecatPinCS;               // chip select pin for ethercat shield
     SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 
     // ---------------METHODS---------------
 
 public:
-    Esmacat_Com(int = 10);
+    EsmacatCom(int = 10);
 
 public:
     void ecatWriteRegValue(int, int);
@@ -226,9 +226,9 @@ public:
     void writeEcatAck(ErrorType, uint8_t[] = nullptr, uint8_t = 0);
 
 private:
-    void _printEcatReg(Maze_Debug::MT);
-    void _printEcatReg(Maze_Debug::MT, int[]);
-    void _printEcatReg(Maze_Debug::MT, RegUnion);
+    void _printEcatReg(MazeDebug::MT);
+    void _printEcatReg(MazeDebug::MT, int[]);
+    void _printEcatReg(MazeDebug::MT, RegUnion);
 };
 
 #endif

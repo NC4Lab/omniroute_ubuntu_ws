@@ -1,21 +1,21 @@
 // // ######################################
 
-//========= Cypress_Com.cpp ===========
+//========= CypressCom.cpp ===========
 
 // ######################################
 
-/// @file Used for the Cypress_Com class
+/// @file Used for the CypressCom class
 
 //============= INCLUDE ================
-#include "Cypress_Com.h"
-#include "Cypress_Com_Base.h"
+#include "CypressCom.h"
+#include "CypressCom_Base.h"
 
-//========CLASS: Cypress_Com==========
+//========CLASS: CypressCom==========
 
 /// <summary>
 /// Constructor
 /// </summary>
-Cypress_Com::Cypress_Com() {}
+CypressCom::CypressCom() {}
 
 //------------------------ LOW-LEVEL METHODS ------------------------
 
@@ -27,7 +27,7 @@ Cypress_Com::Cypress_Com() {}
 /// @param s Length of p_byte_out_arr [1-16].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
+uint8_t CypressCom::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
 {
 	if (s > 16)
 		return -1;
@@ -60,7 +60,7 @@ uint8_t Cypress_Com::i2cRead(uint8_t address, uint8_t reg, uint8_t p_byte_out_ar
 /// @param byte_val_in Value to set the registry pin/bit to [0,1].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
+uint8_t CypressCom::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
 {
 	_beginTransmissionWrapper(address);
 	Wire.write(reg);
@@ -74,7 +74,7 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t byte_val_in)
 /// @param s Length of the "p_byte_val_in_arr" array [1-16]
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_in_arr[], uint8_t s)
+uint8_t CypressCom::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_in_arr[], uint8_t s)
 {
 	if (s > 16)
 		return -1;
@@ -94,7 +94,7 @@ uint8_t Cypress_Com::i2cWrite(uint8_t address, uint8_t reg, uint8_t p_byte_val_i
 /// @param r_byte_val_out Reference to the byte value to change (used as output).
 /// @param byte_mask Byte value in which bits set to one denote the bit to set in "r_byte_val_out".
 /// @param bit_val_set Value to set the bits to [0,1].
-void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uint8_t bit_val_set)
+void CypressCom::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (bit_val_set == 1)
 	{ // bitwise comparison, set bit in byte1 to 1 if it or the corresponding bit in byte2 is equal to 1
@@ -111,7 +111,7 @@ void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uin
 /// @brief Read from a given IO pin associated with a given limit switch.
 ///
 /// @note This is only setup for input, not output, registers.
-/// @note See, for example, @ref Wall_Operation::wms.ioUp for wall to port mapping.
+/// @note See, for example, @ref WallOperation::wms.ioUp for wall to port mapping.
 ///
 /// @param address I2C address for a given Cypress chip.
 /// @param port Number of port to set [0-5].
@@ -119,7 +119,7 @@ void Cypress_Com::_updateRegByte(uint8_t &r_byte_val_out, uint8_t byte_mask, uin
 /// @param r_bit_val_out Reference with the registry bit value (used as output).
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8_t &r_bit_val_out)
+uint8_t CypressCom::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8_t &r_bit_val_out)
 {
 	if (port > 5 || pin > 7)
 		return -1;
@@ -136,7 +136,7 @@ uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8
 
 /// @brief Read from a given IO pin associated with a given limit switch.
 ///
-/// @note See, for example, @ref Wall_Operation::wms.pwmUp for wall to port mapping.
+/// @note See, for example, @ref WallOperation::wms.pwmUp for wall to port mapping.
 ///
 /// @param address I2C address for a given Cypress chip.
 /// @param port Number of port to set [0-5].
@@ -144,7 +144,7 @@ uint8_t Cypress_Com::ioReadPin(uint8_t address, uint8_t port, uint8_t pin, uint8
 /// @param bit_val_set Value to set the bits to [0,1].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint8_t bit_val_set)
+uint8_t CypressCom::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint8_t bit_val_set)
 {
 	if (port > 5 || pin > 7)
 		return -1;
@@ -171,7 +171,7 @@ uint8_t Cypress_Com::ioWritePin(uint8_t address, uint8_t port, uint8_t pin, uint
 /// @param r_byte_val_out Byte reference with the registry value (used as output).
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioReadPort(uint8_t address, uint8_t reg, uint8_t port, uint8_t &r_byte_val_out)
+uint8_t CypressCom::ioReadPort(uint8_t address, uint8_t reg, uint8_t port, uint8_t &r_byte_val_out)
 {
 	if (port > 5)
 		return -1;
@@ -190,7 +190,7 @@ uint8_t Cypress_Com::ioReadPort(uint8_t address, uint8_t reg, uint8_t port, uint
 /// @param bit_val_set Value to set the bits to [0,1].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioWritePort(uint8_t address, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
+uint8_t CypressCom::ioWritePort(uint8_t address, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (port > 5)
 		return -1;
@@ -212,7 +212,7 @@ uint8_t Cypress_Com::ioWritePort(uint8_t address, uint8_t port, uint8_t byte_mas
 /// @param s Length of the "p_byte_out_arr" array [1-16].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioReadReg(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
+uint8_t CypressCom::ioReadReg(uint8_t address, uint8_t reg, uint8_t p_byte_out_arr[], uint8_t s)
 {
 	if (s > 16)
 		return -1;
@@ -230,7 +230,7 @@ uint8_t Cypress_Com::ioReadReg(uint8_t address, uint8_t reg, uint8_t p_byte_out_
 /// @param p_reg_last_byte_arr OPTIONAL: pointer byte array of the previous registry. Should be same length as "s".
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint8_t s, uint8_t bit_val_set, uint8_t p_reg_last_byte_arr[])
+uint8_t CypressCom::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint8_t s, uint8_t bit_val_set, uint8_t p_reg_last_byte_arr[])
 {
 	uint8_t resp = 0;
 	if (s > 16)
@@ -267,7 +267,7 @@ uint8_t Cypress_Com::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint
 /// @param address I2C address for a given Cypress chip.
 ///
 /// @return CStatus codes [-1: critical error or from @ref Wire::endTransmission()].
-uint8_t Cypress_Com::setupCypress(uint8_t address)
+uint8_t CypressCom::setupCypress(uint8_t address)
 {
 
 	// Check I2C lines
@@ -320,11 +320,11 @@ uint8_t Cypress_Com::setupCypress(uint8_t address)
 /// @brief Sets up the different properties of the PWM source.
 ///
 /// @param address I2C address for a given Cypress chip.
-/// @param source Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
+/// @param source Specifies one of 8 sources to set. See @ref WallOperation::wms.pwmSrc.
 /// @param duty PWM duty cycle [0-255].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::setupSourcePWM(uint8_t address, uint8_t source, uint8_t duty)
+uint8_t CypressCom::setupSourcePWM(uint8_t address, uint8_t source, uint8_t duty)
 {
 	if (source > 7 || duty > 255)
 		return -1;
@@ -351,11 +351,11 @@ uint8_t Cypress_Com::setupSourcePWM(uint8_t address, uint8_t source, uint8_t dut
 /// Sets up the different properties of the PWM source.
 ///
 /// @param address I2C address for a given Cypress chip.
-/// @param source Specifies one of 8 sources to set. See @ref Wall_Operation::wms.pwmSrc.
+/// @param source Specifies one of 8 sources to set. See @ref WallOperation::wms.pwmSrc.
 /// @param duty PWM duty cycle [0-255].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::setSourceDutyPWM(uint8_t address, uint8_t source, uint8_t duty)
+uint8_t CypressCom::setSourceDutyPWM(uint8_t address, uint8_t source, uint8_t duty)
 {
 	if (source > 7 || duty > 255)
 		return -1;
@@ -373,7 +373,7 @@ uint8_t Cypress_Com::setSourceDutyPWM(uint8_t address, uint8_t source, uint8_t d
 /// @param bit_val_set Value to set the bits to [0,1].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
+uint8_t CypressCom::setPortRegister(uint8_t address, uint8_t reg, uint8_t port, uint8_t byte_mask, uint8_t bit_val_set)
 {
 	if (port > 5)
 		return -1;
@@ -394,7 +394,7 @@ uint8_t Cypress_Com::setPortRegister(uint8_t address, uint8_t reg, uint8_t port,
 /// @brief Wrapper for Wire::beginTransmission() to catch address value for debugging.
 ///
 /// @param address I2C address for a given Cypress chip.
-void Cypress_Com::_beginTransmissionWrapper(uint8_t address)
+void CypressCom::_beginTransmissionWrapper(uint8_t address)
 {
 	ADDR = address;
 	Wire.beginTransmission(address);
@@ -406,7 +406,7 @@ void Cypress_Com::_beginTransmissionWrapper(uint8_t address)
 /// @param print_err Indicates whether or not to print error if received [default=true].
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
+uint8_t CypressCom::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 {
 	uint8_t resp = Wire.endTransmission(send_stop);
 	if (resp != 0 && do_print_err)
@@ -422,7 +422,7 @@ uint8_t Cypress_Com::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 ///	but will not support the additional registries of the CY8C9560A.
 ///
 /// @return Last address found
-uint8_t Cypress_Com::i2cScan()
+uint8_t CypressCom::i2cScan()
 {
 	uint8_t address;
 	uint8_t resp;
@@ -477,7 +477,7 @@ uint8_t Cypress_Com::i2cScan()
 /// @brief Print a single registry byte in binary format.
 ///
 /// @param byte_mask_in Byte value used as a mask with Cypress methods.
-void Cypress_Com::printRegByte(uint8_t byte_mask_in)
+void CypressCom::printRegByte(uint8_t byte_mask_in)
 {
 	if (DB_VERBOSE == 0)
 		return;
@@ -489,7 +489,7 @@ void Cypress_Com::printRegByte(uint8_t byte_mask_in)
 ///
 /// @param p_byte_mask_in Pointer to an array of byte values used as masks.
 /// @param s Size of the byte array.
-void Cypress_Com::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
+void CypressCom::printRegByte(uint8_t p_byte_mask_in[], uint8_t s)
 {
 	if (DB_VERBOSE == 0)
 		return;

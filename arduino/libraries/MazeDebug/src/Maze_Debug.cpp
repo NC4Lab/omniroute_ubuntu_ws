@@ -1,27 +1,27 @@
 // ######################################
 
-//========== Maze_Debug.cpp ============
+//========== MazeDebug.cpp ============
 
 // ######################################
 
 /// <file>
-/// Used for the Maze_Debug class
+/// Used for the MazeDebug class
 /// <file>
 
 //============= INCLUDE ================
-#include "Maze_Debug.h"
+#include "MazeDebug.h"
 
-//===========CLASS: Maze_Debug============
+//===========CLASS: MazeDebug============
 
 /// @brief Constructor
-Maze_Debug::Maze_Debug() {}
+MazeDebug::MazeDebug() {}
 
 /// @brief Print a message with elapsed time.
 ///
 /// @param msg_type_enum Enum specifying message type.
 /// @param p_fmt Message string with formatting comparable to sprintf().
 /// @param ... Variable arguments related to the formatting string.
-void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
+void MazeDebug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
 	const uint8_t buff_s = 125;
 	static char buff[buff_s];
@@ -89,7 +89,7 @@ void Maze_Debug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 ///
 /// @param ts_0 Reference time (ms).
 /// @return Formatted time string in the form [MM:SS:MS].
-const char *Maze_Debug::_timeStr(uint32_t ts_0)
+const char *MazeDebug::_timeStr(uint32_t ts_0)
 {
 	static char buff[2][15]; // track up to 2 instances
 	static uint8_t i;
@@ -114,7 +114,7 @@ const char *Maze_Debug::_timeStr(uint32_t ts_0)
 /// @param s Size of the array.
 ///
 /// @return Formatted string representing the array.
-const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
+const char *MazeDebug::arrayStr(uint8_t p_arr[], size_t s)
 {
 	if (DB_VERBOSE == 0)
 		return "";
@@ -144,7 +144,7 @@ const char *Maze_Debug::arrayStr(uint8_t p_arr[], size_t s)
 /// @param b Byte to be converted to its binary representation.
 ///
 /// @return Formatted byte string in the form [B00000000].
-const char *Maze_Debug::binStr(uint8_t b)
+const char *MazeDebug::binStr(uint8_t b)
 {
 	if (DB_VERBOSE == 0)
 		return "";
@@ -162,7 +162,7 @@ const char *Maze_Debug::binStr(uint8_t b)
 /// @param h Value to be converted to its hexadecimal representation.
 ///
 /// @return Formatted hex string, e.g., [0xFF].
-const char *Maze_Debug::hexStr(uint8_t h)
+const char *MazeDebug::hexStr(uint8_t h)
 {
 	static char buff[10];
 	buff[0] = '\0';
@@ -177,7 +177,7 @@ const char *Maze_Debug::hexStr(uint8_t h)
 /// @param do_reset If true, resets the clock. DEFAULT: false.
 ///
 /// @return Formatted time string in the form [s:ms:us].
-const char *Maze_Debug::dtTrack(bool do_reset)
+const char *MazeDebug::dtTrack(bool do_reset)
 {
 	static unsigned long ts_0 = 0;
 	if (do_reset == 1)
@@ -196,7 +196,7 @@ const char *Maze_Debug::dtTrack(bool do_reset)
 /// @param byte_mask_in Byte value used as a mask.
 ///
 /// @return Formatted array string, e.g., "[0,1,2]".
-const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
+const char *MazeDebug::bitIndStr(uint8_t byte_mask_in)
 {
 	if (DB_VERBOSE == 0)
 		return "";
@@ -240,7 +240,7 @@ const char *Maze_Debug::bitIndStr(uint8_t byte_mask_in)
 }
 
 /// @brief do print test
-void Maze_Debug::printTest()
+void MazeDebug::printTest()
 {
 	/// @note: Keep commmented out unless using because const strings take up memory
 

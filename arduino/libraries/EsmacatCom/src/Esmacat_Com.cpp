@@ -1,20 +1,20 @@
 // ######################################
 
-//========== Esmacat_Com.cpp ===========
+//========== EsmacatCom.cpp ===========
 
 // ######################################
 
 //============= INCLUDE ================
-#include "Esmacat_Com.h"
+#include "EsmacatCom.h"
 
-//========DEFINES: Esmacat_Com==========
+//========DEFINES: EsmacatCom==========
 
-Maze_Debug Esmacat_Com::_Dbg; ///< static local instance of Maze_Debug class
+MazeDebug EsmacatCom::_Dbg; ///< static local instance of MazeDebug class
 
-//========CLASS: Esmacat_Com==========
+//========CLASS: EsmacatCom==========
 
-/// @brief CONSTUCTOR: Create Esmacat_Com class instance
-Esmacat_Com::Esmacat_Com(int _ecat_cs)
+/// @brief CONSTUCTOR: Create EsmacatCom class instance
+EsmacatCom::EsmacatCom(int _ecat_cs)
 {
     // Set Ecat chip select pin
     ecatPinCS = _ecat_cs;
@@ -37,7 +37,7 @@ Esmacat_Com::Esmacat_Com(int _ecat_cs)
 ///
 /// @param write_addr: Address to write to.
 /// @param value: Value to write.
-void Esmacat_Com::ecatWriteRegValue(int write_addr, int value)
+void EsmacatCom::ecatWriteRegValue(int write_addr, int value)
 {
     static bool led_on = false;
     uint8_t v1, v2;
@@ -64,7 +64,7 @@ void Esmacat_Com::ecatWriteRegValue(int write_addr, int value)
 /// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
 ///
 /// @param p_out_reg: Pointer to array of 8 register values.
-void Esmacat_Com::ecatReadRegAll(int p_out_reg[8])
+void EsmacatCom::ecatReadRegAll(int p_out_reg[8])
 {
     p_out_reg[0] = _ecatReadRegValue(1);
     p_out_reg[1] = _ecatReadRegValue(2);
@@ -81,7 +81,7 @@ void Esmacat_Com::ecatReadRegAll(int p_out_reg[8])
 /// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
 ///
 /// @param read_addr: Esmacat address to read from [0-7]. 
-int Esmacat_Com::_ecatReadRegValue(int read_addr)
+int EsmacatCom::_ecatReadRegValue(int read_addr)
 {
     uint16_t v2, v3;
     SPI.beginTransaction(ecatSettingsSPI);
@@ -100,7 +100,7 @@ int Esmacat_Com::_ecatReadRegValue(int read_addr)
 
 /// @brief Update union 8 bit and 16 bit index
 /// @return Last updated 8 bit index
-uint8_t Esmacat_Com::UnionIndStruct::upd8(uint8_t b_i)
+uint8_t EsmacatCom::UnionIndStruct::upd8(uint8_t b_i)
 {
     b_i = b_i == 255 ? ii8 : b_i; // if b_i is 255, use current union index
     ii8 = b_i + 1;
@@ -110,7 +110,7 @@ uint8_t Esmacat_Com::UnionIndStruct::upd8(uint8_t b_i)
 
 /// @brief Update union 16 bit and 8 bit index
 /// @return Last updated 16 bit index
-uint8_t Esmacat_Com::UnionIndStruct::upd16(uint8_t b_i)
+uint8_t EsmacatCom::UnionIndStruct::upd16(uint8_t b_i)
 {
     b_i = b_i == 255 ? ii16 : b_i; // if b_i is 255, use current union index
     ii16 = b_i + 1;
@@ -119,7 +119,7 @@ uint8_t Esmacat_Com::UnionIndStruct::upd16(uint8_t b_i)
 }
 
 /// @brief Reset union 8 bit and 16 bit index
-void Esmacat_Com::UnionIndStruct::reset()
+void EsmacatCom::UnionIndStruct::reset()
 {
     ii8 = 0;
     ii16 = 0;
@@ -132,7 +132,7 @@ void Esmacat_Com::UnionIndStruct::reset()
 ///
 /// @param p_reg_arr: Pointer to array of 8 register values.
 /// @param do_print_reg: OPTIONAL: If true, print register values for debugging.
-bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do_print_reg)
+bool EsmacatCom::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do_print_reg)
 {
     // Print changing register values
     if (do_print_reg)
@@ -181,7 +181,7 @@ bool Esmacat_Com::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool d
 }
 
 /// @brief Set message ID entry in union and updated associated variable
-void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
+void EsmacatCom::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 {
     // Set message ID union entry
     r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id;
@@ -191,7 +191,7 @@ void Esmacat_Com::_uSetMsgID(EcatMessageStruct &r_EM, uint16_t msg_id)
 /// @brief Get message ID from union
 ///
 /// @return True if message ID is valid (in sequence with last), false if not
-bool Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
+bool EsmacatCom::_uGetMsgID(EcatMessageStruct &r_EM)
 {
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
@@ -208,7 +208,7 @@ bool Esmacat_Com::_uGetMsgID(EcatMessageStruct &r_EM)
 }
 
 /// @brief Set message type entry in union and updated associated variable
-void Esmacat_Com::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enum)
+void EsmacatCom::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enum)
 {
     // Get message type value
     uint8_t msg_type_val = static_cast<uint8_t>(msg_type_enum);
@@ -221,7 +221,7 @@ void Esmacat_Com::_uSetMsgType(EcatMessageStruct &r_EM, MessageType msg_type_enu
 /// @brief Get message type from union
 ///
 /// @return True if message type is valid, false if not
-bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
+bool EsmacatCom::_uGetMsgType(EcatMessageStruct &r_EM)
 {
     // Get message type value
     uint8_t msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)];
@@ -246,7 +246,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
     }
 
     // Get message type enum and store val
-    r_EM.msgTp = static_cast<Esmacat_Com::MessageType>(msg_type_val);
+    r_EM.msgTp = static_cast<EsmacatCom::MessageType>(msg_type_val);
     r_EM.msgTp_val = msg_type_val;
 
     // Copy string to struct
@@ -260,7 +260,7 @@ bool Esmacat_Com::_uGetMsgType(EcatMessageStruct &r_EM)
 }
 
 /// @brief Set error type entry in union and updated associated variable
-void Esmacat_Com::_uSetErrType(EcatMessageStruct &r_EM, ErrorType err_type_enum)
+void EsmacatCom::_uSetErrType(EcatMessageStruct &r_EM, ErrorType err_type_enum)
 {
     // Get error type value
     uint8_t err_type_val = static_cast<uint8_t>(err_type_enum);
@@ -271,13 +271,13 @@ void Esmacat_Com::_uSetErrType(EcatMessageStruct &r_EM, ErrorType err_type_enum)
 }
 
 /// @brief Get error type from union
-void Esmacat_Com::_uGetErrType(EcatMessageStruct &r_EM)
+void EsmacatCom::_uGetErrType(EcatMessageStruct &r_EM)
 {
     // Get error type value
     r_EM.errTp_val = r_EM.RegU.ui8[r_EM.getUI.upd8(3)];
 
     // Get error type enum and store val
-    r_EM.errTp = static_cast<Esmacat_Com::ErrorType>(r_EM.errTp_val);
+    r_EM.errTp = static_cast<EsmacatCom::ErrorType>(r_EM.errTp_val);
 
     // Copy string to struct
     strncpy(r_EM.err_tp_str, error_type_str[r_EM.errTp_val], sizeof(r_EM.err_tp_str) - 1);
@@ -285,7 +285,7 @@ void Esmacat_Com::_uGetErrType(EcatMessageStruct &r_EM)
 }
 
 /// @brief Set message argument length entry in union and updated associated variable
-void Esmacat_Com::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
+void EsmacatCom::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
 {
     // Set argument length union entry
     r_EM.RegU.ui8[r_EM.setUI.upd8(4)] = msg_arg_len;
@@ -293,15 +293,15 @@ void Esmacat_Com::_uSetArgLength(EcatMessageStruct &r_EM, uint8_t msg_arg_len)
 }
 
 /// @brief Get message argument length
-void Esmacat_Com::_uGetArgLength(EcatMessageStruct &r_EM)
+void EsmacatCom::_uGetArgLength(EcatMessageStruct &r_EM)
 {
     r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(4)];
 }
 
 /// @brief Set 8-bit message argument data and length entries in union
 ///
-/// @note calls @ref Esmacat_Com::_uSetArgLength
-void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
+/// @note calls @ref EsmacatCom::_uSetArgLength
+void EsmacatCom::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
     // Store argurment length
 
@@ -321,8 +321,8 @@ void Esmacat_Com::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 
 /// @brief Set 16-bit message argument data and length entries in union
 ///
-/// @note calls @ref Esmacat_Com::_uSetArgLength
-void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
+/// @note calls @ref EsmacatCom::_uSetArgLength
+void EsmacatCom::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data16)
 {
     // Increment argument union index
     r_EM.argUI.upd16();
@@ -339,7 +339,7 @@ void Esmacat_Com::_uSetArgData16(EcatMessageStruct &r_EM, uint16_t msg_arg_data1
 }
 
 /// @brief Get 8-bit reg union message argument data and copy to arg union
-void Esmacat_Com::_uGetArgData8(EcatMessageStruct &r_EM)
+void EsmacatCom::_uGetArgData8(EcatMessageStruct &r_EM)
 {
     _uGetArgLength(r_EM); // get argument length from union
     for (size_t i = 0; i < r_EM.argLen; i++)
@@ -347,7 +347,7 @@ void Esmacat_Com::_uGetArgData8(EcatMessageStruct &r_EM)
 }
 
 /// @brief Set message footer entry in union and updated associated variable
-void Esmacat_Com::_uSetFooter(EcatMessageStruct &r_EM)
+void EsmacatCom::_uSetFooter(EcatMessageStruct &r_EM)
 {
     r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
     r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254;
@@ -357,7 +357,7 @@ void Esmacat_Com::_uSetFooter(EcatMessageStruct &r_EM)
 /// @brief Get message footer from union
 ///
 /// @return True if footer is valid, false if not
-bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
+bool EsmacatCom::_uGetFooter(EcatMessageStruct &r_EM)
 {
     r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy first footer byte
     r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]; // copy second footer byte
@@ -372,7 +372,7 @@ bool Esmacat_Com::_uGetFooter(EcatMessageStruct &r_EM)
 }
 
 /// @brief Reset union data and indeces
-void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
+void EsmacatCom::_uReset(EcatMessageStruct &r_EM)
 {
     // Reset union data to 0
     r_EM.RegU.ui64[0] = 0;
@@ -388,7 +388,7 @@ void Esmacat_Com::_uReset(EcatMessageStruct &r_EM)
 ///
 /// @note  This is a workaround for the fact that the Esmacat does not clear
 /// this can lead to only partial or overlapping messages being read
-void Esmacat_Com::_resetReg()
+void EsmacatCom::_resetReg()
 {
     for (size_t i = 0; i < 8; i++)
         ecatWriteRegValue(i, -1);
@@ -398,7 +398,7 @@ void Esmacat_Com::_resetReg()
 ///
 /// @param err_tp: The type of error to be logged.
 /// @param do_reset: OPTIONAL: If true, reset error type to none.
-void Esmacat_Com::_trackParseErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool do_reset)
+void EsmacatCom::_trackParseErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bool do_reset)
 {
     // Check for error
     if (!do_reset)
@@ -435,7 +435,7 @@ void Esmacat_Com::_trackParseErrors(EcatMessageStruct &r_EM, ErrorType err_tp, b
 /// @brief: Initialize/reset all Ecat varables structs.
 ///
 /// @param do_connect: If true, connect Ecat, if false, disconnect and reset Ecat.
-void Esmacat_Com::initEcat(bool do_connect)
+void EsmacatCom::initEcat(bool do_connect)
 {
     // Handle reset
     if (!do_connect)
@@ -461,7 +461,7 @@ void Esmacat_Com::initEcat(bool do_connect)
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
-void Esmacat_Com::readEcatMessage()
+void EsmacatCom::readEcatMessage()
 {
 
     // Bail if previous message not processed
@@ -513,7 +513,7 @@ void Esmacat_Com::readEcatMessage()
 /// @param error_type_enum: The type of error to be logged.
 /// @param p_msg_arg_data: OPTIONAL: The data for the message arguments. DEFAULT: nullptr.
 /// @param msg_arg_len: OPTIONAL: The length of the message arguments in uint8. DEFAULT: 255.
-void Esmacat_Com::writeEcatAck(uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
+void EsmacatCom::writeEcatAck(uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
     writeEcatAck(ErrorType::ERR_NONE, p_msg_arg_data, msg_arg_len);
 }
@@ -521,7 +521,7 @@ void Esmacat_Com::writeEcatAck(uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 /// @overload: Option for including an error type to send with the message.
 ///
 /// @param error_type_enum: Specifies an enum from for the @ref ErrorType enum.
-void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
+void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[], uint8_t msg_arg_len)
 {
 
     // Set all register values to -1 to clear buffer
@@ -571,7 +571,7 @@ void Esmacat_Com::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data
 /// @brief Used for printing curren Ethercat register values.
 ///
 /// @param msg_type_enum Enum specifying message type.
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum)
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum)
 {
     RegUnion U;
 
@@ -584,7 +584,7 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum)
 /// @overload: Option for printing Ethercat register values from an array.
 ///
 /// @param p_reg: An array of existing register values.
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, int p_reg[])
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, int p_reg[])
 {
     RegUnion U;
 
@@ -598,7 +598,7 @@ void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, int p_reg[])
 /// @overload Option for printing Ethercat register values stored in RegUnion.
 ///
 /// @param U: A RegUnion object containing the register values to print.
-void Esmacat_Com::_printEcatReg(Maze_Debug::MT msg_type_enum, RegUnion U)
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, RegUnion U)
 {
     // Print out register
     _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 16-Bit Register:");

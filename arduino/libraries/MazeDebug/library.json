@@ -1,10 +1,10 @@
 {
-  "name": "Maze_Debug",
+  "name": "MazeDebug",
   "version": "1.0.0",
   "repository":
   {
     "type": "git",
-    "url": "https://github/Maze_Debug"
+    "url": "https://github/MazeDebug"
   },
   "authors":
   [

@@ -1,6 +1,6 @@
 // ######################################
 
-//====== Maze_Wall_Operation.ino ======
+//====== Maze_WallOperation.ino ======
 
 // ######################################
 
@@ -13,10 +13,10 @@
 #include <Wire.h>
 
 // CUSTOM
-#include <Esmacat_Com.h>
-#include <Maze_Debug.h>
-#include <Cypress_Com.h>
-#include <Wall_Operation.h>
+#include <EsmacatCom.h>
+#include <MazeDebug.h>
+#include <CypressCom.h>
+#include <WallOperation.h>
 
 //============ VARIABLES ===============
 
@@ -32,9 +32,9 @@ uint8_t pwmDuty = 255;	  // PWM duty for all walls [0-255]
 uint16_t dtMoveTimeout;	  // timeout for wall movement (ms)
 
 // Initialize class instances for local libraries
-Maze_Debug Dbg;
-Cypress_Com CypCom;
-Wall_Operation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout);
+MazeDebug Dbg;
+CypressCom CypCom;
+WallOperation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout);
 
 //=============== SETUP =================
 void setup()
@@ -43,7 +43,7 @@ void setup()
 	// Setup serial coms
 	Serial.begin(115200);
 	Serial1.begin(115200);
-	/// @todo: Consider moveing this to Cypress_Com class
+	/// @todo: Consider moveing this to CypressCom class
 	Wire.begin(); // join I2C bus
 	delay(100);
 	Serial.print('\n');

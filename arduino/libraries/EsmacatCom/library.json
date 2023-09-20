@@ -1,0 +1,17 @@
+{
+  "name": "EsmacatCom",
+  "version": "1.0.0",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github/EsmacatCom"
+  },
+  "authors":
+  [
+    {
+      "name": "Adam Lester"
+    }
+  ],
+  "frameworks": "*",
+  "platforms": "*"
+}

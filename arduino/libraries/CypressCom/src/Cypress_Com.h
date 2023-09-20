@@ -1,10 +1,10 @@
 // ######################################
 
-//========== Cypress_Com.h ============
+//========== CypressCom.h ============
 
 // ######################################
 
-/// @file Used for the Cypress_Com class
+/// @file Used for the CypressCom class
 
 #ifndef _CYPRESS_COMM_h
 #define _CYPRESS_COMM_h
@@ -12,12 +12,12 @@
 //============= INCLUDE ================
 #include "Arduino.h"
 #include <Wire.h>
-#include "Cypress_Com_Base.h"
-#include "Maze_Debug.h"
+#include "CypressCom_Base.h"
+#include "MazeDebug.h"
 
 /// @brief This class handles all of the Cypress chip I2C comms.
 ///
-/// @remarks This class uses an instance of the Maze_Debug class.
+/// @remarks This class uses an instance of the MazeDebug class.
 ///
 /// @remarks Status codes from @ref Wire::beginTransmission()
 /// 	0: Success. Indicates that the transmission was successful.
@@ -29,7 +29,7 @@
 ///			did not acknowledge the receipt of data.
 /// 	4: Other error. A miscellaneous error occurred.
 ///		5: Timeout. The transmission timed out.
-class Cypress_Com
+class CypressCom
 {
 
 	// ---------VARIABLES-----------------
@@ -66,11 +66,11 @@ public:
 	const uint8_t pwmPeriodVal = 32; /// PWM period of the PWM counter(1 - 255).Devisor for hardward clock
 
 private:
-	Maze_Debug _Dbg; /// unique instance of Maze_Debug class
+	MazeDebug _Dbg; /// unique instance of MazeDebug class
 
 	// -----------METHODS-----------------
 public:
-	Cypress_Com();
+	CypressCom();
 
 public:
 	uint8_t i2cRead(uint8_t, uint8_t, uint8_t[], uint8_t = 1);

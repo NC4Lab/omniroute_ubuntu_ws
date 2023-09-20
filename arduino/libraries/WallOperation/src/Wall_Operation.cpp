@@ -1,19 +1,19 @@
 // ######################################
 
-//======== Wall_Operation.cpp ==========
+//======== WallOperation.cpp ==========
 
 // ######################################
 
 //============= INCLUDE ================
-#include "Wall_Operation.h"
+#include "WallOperation.h"
 
 //======== CLASS: WALL_OPERATION ==========
 
-/// @brief CONSTUCTOR: Create Wall_Operation class instance
+/// @brief CONSTUCTOR: Create WallOperation class instance
 ///
 /// @param _nCham: Spcify number of chambers to track [1-49]
 /// @param _pwmDuty: Defualt duty cycle for all the pwm [0-255]
-Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChamPerBlock, uint8_t _nWallAttempt, uint8_t _pwmDuty, uint16_t _dtMoveTimeout)
+WallOperation::WallOperation(uint8_t _nCham, uint8_t _nChamPerBlock, uint8_t _nWallAttempt, uint8_t _pwmDuty, uint16_t _dtMoveTimeout)
 {
 	// Store input variables
 	nCham = _nCham;
@@ -46,28 +46,28 @@ Wall_Operation::Wall_Operation(uint8_t _nCham, uint8_t _nChamPerBlock, uint8_t _
 
 //------------------------ DATA HANDELING ------------------------
 
-/// @brief Used to create @ref Wall_Operation::PinMapStruct (PMS) structs, which are used to
+/// @brief Used to create @ref WallOperation::PinMapStruct (PMS) structs, which are used to
 /// store information related to pin/port and wall mapping for specified functions
 /// (i.e., pwm, io, up, down)
 ///
 /// @note these methods are only used in the construtor
 ///
 /// @param r_pms: Reference to PMS to be updated
-/// @param p_port_1: Array of port values from an @ref Wall_Operation::WallMapStruct
-/// @param p_pin_1: Array of pin values from an @ref Wall_Operation::WallMapStruct
-void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
+/// @param p_port_1: Array of port values from an @ref WallOperation::WallMapStruct
+/// @param p_pin_1: Array of pin values from an @ref WallOperation::WallMapStruct
+void WallOperation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
 	_addPinPMS(r_pms, p_port_1, p_pin_1);
 }
 
-/// @overload: Option for additional @ref Wall_Operation::WallMapStruct entries used
+/// @overload: Option for additional @ref WallOperation::WallMapStruct entries used
 /// for creating PMS structs that include pins both up and down (e.g., all IO or all PWM pins)
 ///
-/// @param p_port_2: Array of port values from an @ref Wall_Operation::WallMapStruct
-/// @param p_pin_2: Array of pin values from an @ref Wall_Operation::WallMapStruct
-void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
+/// @param p_port_2: Array of port values from an @ref WallOperation::WallMapStruct
+/// @param p_pin_2: Array of pin values from an @ref WallOperation::WallMapStruct
+void WallOperation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p_pin_1[], uint8_t p_port_2[], uint8_t p_pin_2[])
 {
 	_resetPMS(r_pms);
 	_addPortPMS(r_pms, p_port_1, p_pin_1);
@@ -76,12 +76,12 @@ void Wall_Operation::_makePMS(PinMapStruct &r_pms, uint8_t p_port_1[], uint8_t p
 	_addPinPMS(r_pms, p_port_2, p_pin_2);
 }
 
-/// @brief Used within @ref Wall_Operation::_makePMS to do the actual work of adding the pin entries to the PMS structs.
+/// @brief Used within @ref WallOperation::_makePMS to do the actual work of adding the pin entries to the PMS structs.
 ///
 /// @param r_pms: Reference to PMS to be updated
-/// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct
-/// @param p_pin: Array of pin values from an @ref Wall_Operation::WallMapStruct
-void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+/// @param p_port: Array of port values from an @ref WallOperation::WallMapStruct
+/// @param p_pin: Array of pin values from an @ref WallOperation::WallMapStruct
+void WallOperation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 
 	for (size_t wal_i = 0; wal_i < 8; wal_i++)
@@ -99,12 +99,12 @@ void Wall_Operation::_addPortPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t 
 	_sortArr(r_pms.portInc, 6);
 }
 
-/// @brief Used within @ref Wall_Operation::_makePMS to do the actual work of adding the port entries to the PMS structs.
+/// @brief Used within @ref WallOperation::_makePMS to do the actual work of adding the port entries to the PMS structs.
 ///
 /// @param r_pms: Reference to PMS to be updated.
-/// @param p_port: Array of port values from an @ref Wall_Operation::WallMapStruct.
-/// @param p_pin: Array of pin values from an @ref Wall_Operation::WallMapStruct.
-void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
+/// @param p_port: Array of port values from an @ref WallOperation::WallMapStruct.
+/// @param p_pin: Array of pin values from an @ref WallOperation::WallMapStruct.
+void WallOperation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p_pin[])
 {
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
 	{ // loop ports in struct arr
@@ -142,7 +142,7 @@ void Wall_Operation::_addPinPMS(PinMapStruct &r_pms, uint8_t p_port[], uint8_t p
 /// @param p_arr: Array to be sorted
 /// @param s: Length of array
 /// @param p_co_arr: OPTIONAL: array to be sorted in the same order as "p_arr"
-void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
+void WallOperation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 {
 	bool is_sorted = false;
 	while (!is_sorted)
@@ -174,7 +174,7 @@ void Wall_Operation::_sortArr(uint8_t p_arr[], size_t s, uint8_t p_co_arr[])
 /// @brief Initializes/Reinitializes entries in a dynamic PMS struct to there default values.
 ///
 /// @param r_pms: Reference to PMS struct to be reset
-void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
+void WallOperation::_resetPMS(PinMapStruct &r_pms)
 {
 	r_pms.nPortsInc = 0;
 	for (size_t prt_i = 0; prt_i < 6; prt_i++)
@@ -196,7 +196,7 @@ void Wall_Operation::_resetPMS(PinMapStruct &r_pms)
 /// @param r_pms1: PMS struct to use as the basis for entries in "r_pms2"
 /// @param r_pms2: Reference to a PMS struct to update
 /// @param wall_byte_mask: Byte mask in which bits set to one denote the active walls to include in the "r_pms2" struct.
-void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2, uint8_t wall_byte_mask)
+void WallOperation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2, uint8_t wall_byte_mask)
 {
 	for (size_t prt_i = 0; prt_i < r_pms1.nPortsInc; prt_i++)
 	{ // loop ports
@@ -239,7 +239,7 @@ void Wall_Operation::_updateDynamicPMS(PinMapStruct r_pms1, PinMapStruct &r_pms2
 ///
 /// @param init_level: Specify level of initialization [0:initialize, 1:reinitialize, 2:reset]
 /// @param setup_arg_arr: Setup variables from Ecat
-void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
+void WallOperation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
 																											  : "RESET");
@@ -308,7 +308,7 @@ void Wall_Operation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 /// @brief Initialize/reset Cypress hardware
 ///
 /// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
-uint8_t Wall_Operation::initCypress()
+uint8_t WallOperation::initCypress()
 {
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: CYPRESS INITIALIZATION");
 
@@ -389,8 +389,8 @@ uint8_t Wall_Operation::initCypress()
 /// identify and flag any walls that are not moving properly.
 ///
 /// @param init_level: Specify level of initialization [0:initialize/reinitialize, 1:reset]
-/// @return Success/error codes from @ref Wall_Operation::moveWallsByChamberBlocks()
-uint8_t Wall_Operation::initWalls(uint8_t init_level)
+/// @return Success/error codes from @ref WallOperation::moveWallsByChamberBlocks()
+uint8_t WallOperation::initWalls(uint8_t init_level)
 {
 	uint8_t run_status = 0;
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: WALL %s INITIALIZATION",
@@ -452,7 +452,7 @@ uint8_t Wall_Operation::initWalls(uint8_t init_level)
 ///
 /// @param address: I2C address of Cypress chip to setup.
 /// @return method output from @ref Wire::endTransmission().
-uint8_t Wall_Operation::_setupCypressIO(uint8_t address)
+uint8_t WallOperation::_setupCypressIO(uint8_t address)
 {
 	uint8_t i2c_status = 0;
 
@@ -490,7 +490,7 @@ uint8_t Wall_Operation::_setupCypressIO(uint8_t address)
 ///
 /// @param address: I2C address of Cypress chip to setup.
 /// @return Wire::method output from @ref Wire::endTransmission() or [-1=255:input argument error].
-uint8_t Wall_Operation::_setupCypressPWM(uint8_t address)
+uint8_t WallOperation::_setupCypressPWM(uint8_t address)
 {
 	uint8_t i2c_status = 0;
 
@@ -531,10 +531,10 @@ uint8_t Wall_Operation::_setupCypressPWM(uint8_t address)
 ///
 /// @details Here's an example of how to use this overload:
 /// @code
-/// Wall_Operation::WallOper.setWallsToMove(cham_i, 0); // lower all walls in chamber 0 up
-/// Wall_Operation::WallOper.setWallsToMove(cham_i, 0); // raise all walls in chamber 0 down
+/// WallOperation::WallOper.setWallsToMove(cham_i, 0); // lower all walls in chamber 0 up
+/// WallOperation::WallOper.setWallsToMove(cham_i, 0); // raise all walls in chamber 0 down
 /// @endcode
-uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, bool do_err_overide)
 {
 	// set all bits to 0 or 1
 	uint8_t byte_wall_state_new = pos_state_set == 0 ? 0 : 255;
@@ -550,10 +550,10 @@ uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, bo
 /// @details Here's an example of how to use this overload
 /// @code
 /// uint8_t p_wall_inc[s] = {0, 2, 5}; // array with wall numbers to move
-/// Wall_Operation::setWallsToMove(cham_i, 1, p_wall_inc, 3); // move walls in p_wall_inc up
-/// Wall_Operation::setWallsToMove(cham_i, 0, p_wall_inc, 3); // move walls in p_wall_inc down
+/// WallOperation::setWallsToMove(cham_i, 1, p_wall_inc, 3); // move walls in p_wall_inc up
+/// WallOperation::setWallsToMove(cham_i, 0, p_wall_inc, 3); // move walls in p_wall_inc down
 /// @endcode
-uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t p_wall_inc[], uint8_t s, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t p_wall_inc[], uint8_t s, bool do_err_overide)
 {
 	// Handle array inputs
 	if (s > 8)
@@ -572,16 +572,16 @@ uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, ui
 ///
 /// @details This function and its versions updates the byte mask specifying which walls should be up.
 /// It can be run more than once to setup multiple chambers with different wall configurations.
-/// Run @ref Wall_Operation::moveWallsByChamberBlocks() after all settings complete.
+/// Run @ref WallOperation::moveWallsByChamberBlocks() after all settings complete.
 ///
 /// @param byte_wall_state_new Byte mask with bits specifying the new wall position state [0:down, 1:up]
 ///
 /// @details Here's an example of how to use this overload:
 /// @code
-/// Wall_Operation::WallOper.setWallsToMove(cham_i, 0, B00000110); // move walls 2 aind 3 down
-/// Wall_Operation::WallOper.setWallsToMove(cham_i, 1, B00000110); // move walls 2 aind 3 up
+/// WallOperation::WallOper.setWallsToMove(cham_i, 0, B00000110); // move walls 2 aind 3 down
+/// WallOperation::WallOper.setWallsToMove(cham_i, 1, B00000110); // move walls 2 aind 3 up
 /// @endcode
-uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
 {
 	// Run private version of the method
 	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new, do_err_overide);
@@ -589,8 +589,8 @@ uint8_t Wall_Operation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, ui
 
 /// @brief: Private workhorse version of the method
 ///
-/// @return Status codes @ref Wall_Operation::setWallsToMove().
-uint8_t Wall_Operation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
+/// @return Status codes @ref WallOperation::setWallsToMove().
+uint8_t WallOperation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
 {
 
 	// Bail if chamber is flagged with I2C error
@@ -630,7 +630,7 @@ uint8_t Wall_Operation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, u
 /// either in blocks of all at once
 ///
 /// @return Status codes [0:no move, 1:success, 2:error] or [-1=255:input argument error].
-uint8_t Wall_Operation::moveWallsByChamberBlocks()
+uint8_t WallOperation::moveWallsByChamberBlocks()
 {
 	uint8_t run_status = 0;
 	uint8_t block_cnt = 0;	 // counter for number of stages
@@ -713,7 +713,7 @@ uint8_t Wall_Operation::moveWallsByChamberBlocks()
 /// @param n_cham: Number of chambers in "cham_arr".
 /// @param block_cnt: Current chamber block count.
 //// @return Status codes [0:no move, 1:success, 2:error] or [-1=255:input argument error].
-uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], uint8_t n_cham, uint8_t block_cnt, uint8_t &r_attempt_cnt)
+uint8_t WallOperation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], uint8_t n_cham, uint8_t block_cnt, uint8_t &r_attempt_cnt)
 {
 	// Handle array inputs
 	if (n_cham > nCham)
@@ -768,7 +768,7 @@ uint8_t Wall_Operation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], u
 /// @param cham_arr: Pointer array of chamber indexes to move.
 /// @param n_cham: Number of chambers in "cham_arr".
 /// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout] or [-1=255:input argument error].
-uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
+uint8_t WallOperation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
 {
 	// Handle array inputs
 	if (n_cham > nCham)
@@ -872,7 +872,7 @@ uint8_t Wall_Operation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
 /// @return Status/error codes [1:move started, 2:i2c error] or [-1=255:input argument error].
-uint8_t Wall_Operation::_initWallsMove(uint8_t cham_i)
+uint8_t WallOperation::_initWallsMove(uint8_t cham_i)
 {
 	// Handle array inputs
 	if (cham_i > nCham)
@@ -902,7 +902,7 @@ uint8_t Wall_Operation::_initWallsMove(uint8_t cham_i)
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
 /// @return Status/error codes [0:still_waiting 1:all_move_down, 2:i2c error, 3:temeout] or [-1=255:input argument error].
-uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i)
+uint8_t WallOperation::_monitorWallsMove(uint8_t cham_i)
 {
 	// Handle array inputs
 	if (cham_i > nCham)
@@ -993,7 +993,7 @@ uint8_t Wall_Operation::_monitorWallsMove(uint8_t cham_i)
 /// @param pos_state_get Value specifying the wall position switch to get [0:down, 1:up].
 /// @param byte_state_out Byte reference  to store state of up or down switches by wall (used as output).
 /// @return Wire::method output [0-4] or [-1=255: input argument error] or [-1=255:input argument error].
-uint8_t Wall_Operation::getWallState(uint8_t cham_i, uint8_t pos_state_get, uint8_t &byte_state_out)
+uint8_t WallOperation::getWallState(uint8_t cham_i, uint8_t pos_state_get, uint8_t &byte_state_out)
 {
 	if (cham_i > nCham)
 		return -1;
@@ -1019,7 +1019,7 @@ uint8_t Wall_Operation::getWallState(uint8_t cham_i, uint8_t pos_state_get, uint
 }
 
 /// @brief Used to process new ROS ethercat msg argument data.
-void Wall_Operation::procEcatMessage()
+void WallOperation::procEcatMessage()
 {
 	uint8_t msg_arg_arr[9]; // store message arguments
 	uint8_t arg_len = 0;	// store argument length
@@ -1172,9 +1172,9 @@ void Wall_Operation::procEcatMessage()
 /// uint8_t cham_i = 0; // Index of the chamber
 /// uint8_t s = 3; // Number of walls
 /// uint8_t p_wall_inc[s] = {0, 2, 5}; // Array with wall numbers to move
-/// Wall_Operation::testWallIO(cham_i, a_wall, s); // This can be run more than once to setup multiple chambers
-/// Wall_Operation::testWallIO(0); // This will test all walls in chamber 0
-uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
+/// WallOperation::testWallIO(cham_i, a_wall, s); // This can be run more than once to setup multiple chambers
+/// WallOperation::testWallIO(0); // This will test all walls in chamber 0
+uint8_t WallOperation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
 {
 	if (cham_i > nCham || s > 8)
 		return -1;
@@ -1233,9 +1233,9 @@ uint8_t Wall_Operation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 /// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: 8
 /// @return Wire::method output [0-4] or [-1=255: input argument error].
 ///
-/// @see Wall_Operation::testWallIO()
-/// @example Refer to the example provided in @ref Wall_Operation::testWallIO().
-uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s, uint16_t dt_run)
+/// @see WallOperation::testWallIO()
+/// @example Refer to the example provided in @ref WallOperation::testWallIO().
+uint8_t WallOperation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s, uint16_t dt_run)
 {
 	if (cham_i > nCham || s > 8)
 		return -1;
@@ -1285,9 +1285,9 @@ uint8_t Wall_Operation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_
 /// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: 8
 /// @return Wire::method output [0-4] or [-1=255: input argument error].
 ///
-/// @see Wall_Operation::testWallIO()
-/// @example Refer to the example provided in @ref Wall_Operation::testWallIO().
-uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
+/// @see WallOperation::testWallIO()
+/// @example Refer to the example provided in @ref WallOperation::testWallIO().
+uint8_t WallOperation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t s)
 {
 	if (cham_i > nCham || s > 8)
 		return -1;
@@ -1380,7 +1380,7 @@ uint8_t Wall_Operation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], 
 ///
 /// @param p_wall_inc: OPTIONAL: [0-7] max 8 entries. DEFAULT: all walls
 /// @param s: OPTIONAL: length of @param p_wall_inc array. DEFAULT: 8
-void Wall_Operation::_printPMS(PinMapStruct pms)
+void WallOperation::_printPMS(PinMapStruct pms)
 {
 	_Dbg.printMsg(_Dbg.MT::DEBUG, "IO/PWM nPorts[%d]_____________________", pms.nPortsInc);
 	for (size_t prt_i = 0; prt_i < pms.nPortsInc; prt_i++)

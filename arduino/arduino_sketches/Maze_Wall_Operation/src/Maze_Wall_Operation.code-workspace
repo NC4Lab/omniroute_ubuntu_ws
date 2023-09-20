@@ -4,16 +4,16 @@
 			"path": ".."
 		},
 		{
-			"path": "../../../libraries/Maze_Debug"
+			"path": "../../../libraries/MazeDebug"
 		},
 		{
-			"path": "../../../libraries/Cypress_Com"
+			"path": "../../../libraries/CypressCom"
 		},
 		{
-			"path": "../../../libraries/Esmacat_Com"
+			"path": "../../../libraries/EsmacatCom"
 		},
 		{
-			"path": "../../../libraries/Wall_Operation"
+			"path": "../../../libraries/WallOperation"
 		}
 	],
 	"settings": {

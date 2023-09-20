@@ -1,14 +1,14 @@
 // ######################################
 
-//=========== Maze_Debug.h =============
+//=========== MazeDebug.h =============
 
 // ######################################
 
-/// @file Used for the Maze_Debug class
+/// @file Used for the MazeDebug class
 
 //============= INCLUDE ================
 #include "Arduino.h"
-#include "Esmacat_Com.h"
+#include "EsmacatCom.h"
 
 #ifndef _MAZE_DEBUG_h
 #define _MAZE_DEBUG_h
@@ -17,8 +17,8 @@ extern bool DB_VERBOSE; ///< set this variable in your INO file to control debug
 
 /// @brief Used for printing different types of information to the Serial Output Window.
 ///
-/// @remarks This class is used in both the Cypress_Comm and Wall_Operation classes.
-class Maze_Debug
+/// @remarks This class is used in both the CypressComm and WallOperation classes.
+class MazeDebug
 {
 
 	// ---------------VARIABLES---------------
@@ -47,7 +47,7 @@ public:
 
 	// ---------------METHODS---------------
 public:
-	Maze_Debug();
+	MazeDebug();
 
 public:
 	void printMsg(MT, const char *, ...);

@@ -1,6 +1,6 @@
 // ######################################
 
-//========= Wall_Operation.h ===========
+//========= WallOperation.h ===========
 
 // ######################################
 #ifndef _WALL_OPERATION_h
@@ -8,17 +8,17 @@
 
 //============= INCLUDE ================
 #include "Arduino.h"
-#include "Maze_Debug.h"
-#include "Cypress_Com.h"
-#include "Esmacat_Com.h"
+#include "MazeDebug.h"
+#include "CypressCom.h"
+#include "EsmacatCom.h"
 
 /// @brief This class handles the actual opperation of the maze walls and Ethercat coms.
 ///
 /// @remarks
-/// This class uses an instance of the Maze_Debug and Cypress_Com classes.
+/// This class uses an instance of the MazeDebug and CypressCom classes.
 /// This class also deals with the mapping of walls to associated Cypress pins.
 /// This class also deals with incoming and outgoing Ethercat communication.
-class Wall_Operation
+class WallOperation
 {
 
 	// --------------VARIABLES--------------
@@ -101,16 +101,16 @@ public:
 	};
 	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
 
-	Esmacat_Com EsmaCom; // instance of Esmacatshield class
+	EsmacatCom EsmaCom; // instance of Esmacatshield class
 
 private:
-	Maze_Debug _Dbg;	 // local instance of Maze_Debug class
-	Cypress_Com _CypCom; // local instance of Cypress_Com class
+	MazeDebug _Dbg;	 // local instance of MazeDebug class
+	CypressCom _CypCom; // local instance of CypressCom class
 
 	// ---------------METHODS---------------
 
 public:
-	Wall_Operation(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
+	WallOperation(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
 
 private:
 	void _makePMS(PinMapStruct &, uint8_t[], uint8_t[]);

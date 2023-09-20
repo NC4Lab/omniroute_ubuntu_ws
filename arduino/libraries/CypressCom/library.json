@@ -1,10 +1,10 @@
 {
-  "name": "Cypress_Com",
+  "name": "CypressCom",
   "version": "1.0.0",
   "repository":
   {
     "type": "git",
-    "url": "https://github/Cypress_Com"
+    "url": "https://github/CypressCom"
   },
   "authors":
   [
@@ -13,7 +13,7 @@
     }
   ],
   "dependencies": {
-    "Maze_Debug": ">=1.0.0 ../Maze_Debug"
+    "MazeDebug": ">=1.0.0 ../MazeDebug"
   },
   "frameworks": "*",
   "platforms": "*"

@@ -1,8 +1,8 @@
 // /// @overload: Option to change wall positions for blocks of chambers set to move
 // ///
 // /// @param do_cham_blocks: Pointer array of chamber indexes to move. DEFAULT: true.
-// /// @return Status/error codes from @ref Wall_Operation::_moveConductor()
-// uint8_t Wall_Operation::moveWalls(bool do_cham_blocks)
+// /// @return Status/error codes from @ref WallOperation::_moveConductor()
+// uint8_t WallOperation::moveWalls(bool do_cham_blocks)
 // {
 // 	uint8_t run_status = 0;
 // 	uint8_t block_cnt = 0; // counter for number of stages
