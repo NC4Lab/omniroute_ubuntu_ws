@@ -8,7 +8,7 @@
 
 //============= INCLUDE ================
 #include "CypressCom.h"
-#include "CypressCom_Base.h"
+#include "CypressComBase.h"
 
 //========CLASS: CypressCom==========
 

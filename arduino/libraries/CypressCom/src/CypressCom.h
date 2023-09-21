@@ -12,7 +12,7 @@
 //============= INCLUDE ================
 #include "Arduino.h"
 #include <Wire.h>
-#include "CypressCom_Base.h"
+#include "CypressComBase.h"
 #include "MazeDebug.h"
 
 /// @brief This class handles all of the Cypress chip I2C comms.

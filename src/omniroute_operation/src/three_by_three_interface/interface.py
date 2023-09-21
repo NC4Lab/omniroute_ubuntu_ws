@@ -1625,9 +1625,9 @@ class Interface(Plugin):
                     EsmacatCom.MessageType.RESET_SYSTEM)
 
         elif self.EsmaCom.isEcatConnected == True:
-            if self.cnt_shutdown_ack_check > int(5/self.dt_shutdown_step):
+            if self.cnt_shutdown_ack_check > int(10/self.dt_shutdown_step):
                 MazeDB.printMsg(
-                    'ERROR', "FAILED: SHUTDOWN: RESET_SYSTEM CONFIRMATION AFTER 5 SEC")
+                    'ERROR', "FAILED: SHUTDOWN: RESET_SYSTEM CONFIRMATION AFTER 10 SEC")
                 self.EsmaCom.isEcatConnected = False
             else:
                 self.cnt_shutdown_ack_check += 1
