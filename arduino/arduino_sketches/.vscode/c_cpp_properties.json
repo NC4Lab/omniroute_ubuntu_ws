@@ -6,7 +6,7 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_operation_ws/devel/include/**",
+        "/media/windows/Users/lester/MeDocuments/Research/MadhavLab/CodeBase/omniroute_ubuntu_ws/devel/include/**",
         "/opt/ros/noetic/include/**",
         "/usr/include/**"
       ],

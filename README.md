@@ -1,4 +1,4 @@
-# start in omniroute_operation_ws
+# start in omniroute_ubuntu_ws
 # Need to run this with each local repo clone
 
 ```
@@ -46,7 +46,7 @@ change ethenet address for ethercat sheild in launch file depending on what comp
 
 # Run catkin_make after changing things
 ```
-cd omniroute_operation_ws
+cd omniroute_ubuntu_ws
 
 catkin_make
 ```
