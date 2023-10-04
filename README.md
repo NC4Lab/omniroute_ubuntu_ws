@@ -1,5 +1,21 @@
-# start in omniroute_ubuntu_ws
+# Need to perform only once on a given OS
+```
+For ethercat_grant, you will likely need to install library libcap-dev
+
+sudo apt install libcap-dev
+
+After running catkin_make, copy executable into /usr/local/bin
+
+sudo cp devel/lib/ethercat_grant/ethercat_grant /usr/local/bin
+sudo chmod +s /usr/local/bin/ethercat_grant
+
+Three packages may need to be installed:
+
+sudo apt install libxmlrpcpp-dev liblog4cxx-dev librosconsole-dev
+```
+
 # Need to run this with each local repo clone
+# start in omniroute_ubuntu_ws
 
 ```
 cd src/esmacat_master_software
@@ -18,25 +34,24 @@ make
 
 cd ../../..
 
+source /opt/ros/noetic/setup.bash
+
+catkin_init_workspace src
+
+# Note you may need to comment out any catkin_make alias in the .basher
+sudo nano ~/.bashrc 
+source ~/.bashrc
+
+
 catkin_make
 ```
 
-# Need to perform only once on a given OS
+# Change terminal starting directory
+
 ```
-For ethercat_grant, you will likely need to install library libcap-dev
-
-sudo apt install libcap-dev
-
-After running catkin_make, copy executable into /usr/local/bin
-
-sudo cp devel/lib/ethercat_grant/ethercat_grant /usr/local/bin
-sudo chmod +s /usr/local/bin/ethercat_grant
-
-Three packages may need to be installed:
-
-sudo apt install libxmlrpcpp-dev liblog4cxx-dev librosconsole-dev
+sudo nano ~/.bashrc
+xdg-open ~/.bashrc
 ```
-
 
 # Setup ethernet
 ```
