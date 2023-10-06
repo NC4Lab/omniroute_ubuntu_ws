@@ -6,3 +6,4 @@ src/plog/build/
 /.vscode/
 src/CMakeLists.txt
 /.vscode/
+**/settings.json
