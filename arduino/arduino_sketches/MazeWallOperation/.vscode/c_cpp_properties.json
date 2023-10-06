@@ -1,0 +1,70 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/include",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/src",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/WallOperation/src",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/EsmacatCom/src",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/MazeDebug/src",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/CypressCom/src",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/variants/mega",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/doxygen_template_2",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/doxygen_templates_1",
+                "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/scratch",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/include",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/src",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/WallOperation/src",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/EsmacatCom/src",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/MazeDebug/src",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/libraries/CypressCom/src",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/cores/arduino",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/variants/mega",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/doxygen_template_2",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/doxygen_templates_1",
+                    "/home/nc4lab/omniroute_ubuntu_ws/arduino/arduino_sketches/MazeWallOperation/lib/scratch",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                    "/home/nc4lab/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60111",
+                "ARDUINO_AVR_MEGA2560",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega2560__",
+                ""
+            ],
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++11",
+            "compilerPath": "/home/nc4lab/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega2560",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}

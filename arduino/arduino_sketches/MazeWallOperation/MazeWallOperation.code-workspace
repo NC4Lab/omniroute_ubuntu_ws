@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../libraries/CypressCom"
+		},
+		{
+			"path": "../../libraries/EsmacatCom"
+		},
+		{
+			"path": "../../libraries/MazeDebug"
+		},
+		{
+			"path": "../../libraries/WallOperation"
+		}
+	],
+	"settings": {
+		"python.autoComplete.extraPaths": [
+			"/home/nc4lab/omniroute_operation_ws/devel/lib/python3/dist-packages",
+			"/home/nc4lab/catkin_ws/devel/lib/python3/dist-packages",
+			"/opt/ros/noetic/lib/python3/dist-packages"
+		],
+		"python.analysis.extraPaths": [
+			"/home/nc4lab/omniroute_operation_ws/devel/lib/python3/dist-packages",
+			"/home/nc4lab/catkin_ws/devel/lib/python3/dist-packages",
+			"/opt/ros/noetic/lib/python3/dist-packages"
+		]
+	}
+}
