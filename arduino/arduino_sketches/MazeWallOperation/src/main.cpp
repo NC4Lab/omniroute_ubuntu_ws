@@ -65,30 +65,30 @@ void setup()
 void loop()
 {
 
-	//............... ROS Controlled ...............
+	// //............... ROS Controlled ...............
 
-	// Check ethercat coms
-	WallOper.EsmaCom.readEcatMessage();
+	// // Check ethercat coms
+	// WallOper.EsmaCom.readEcatMessage();
 
-	// Process and exicute ethercat arguments
-	WallOper.procEcatMessage();
+	// // Process and exicute ethercat arguments
+	// WallOper.procEcatMessage();
 
-	// //............... Standalone Setup ...............
-	// static bool init = 0;
-	// if (!init)
-	// {
-	// 	init = 1;
-	// 	Dbg.printMsg(Dbg.MT::HEAD1, "RUNNNING: STANDALONE SETUP");
+	//............... Standalone Setup ...............
+	static bool init = 0;
+	if (!init)
+	{
+		init = 1;
+		Dbg.printMsg(Dbg.MT::HEAD1, "RUNNNING: STANDALONE SETUP");
 
-	// 	// Initalize Cypress Chips
-	// 	WallOper.initCypress();
+		// Initalize Cypress Chips
+		WallOper.initCypress();
 
-	// 	// Initalize Walls
-	// 	WallOper.initWalls(1); // Run wall up
-	// 	WallOper.initWalls(0); // Run wall down
+		// Initalize Walls
+		// WallOper.initWalls(1); // Run wall up and down
+		// WallOper.initWalls(0); // Run wall down
 
-	// 	Dbg.printMsg(Dbg.MT::HEAD1B, "FINISHED: STANDALONE SETUP");
-	// }
+		Dbg.printMsg(Dbg.MT::HEAD1B, "FINISHED: STANDALONE SETUP");
+	}
 
 	// //............... Cypress Testing ...............
 
