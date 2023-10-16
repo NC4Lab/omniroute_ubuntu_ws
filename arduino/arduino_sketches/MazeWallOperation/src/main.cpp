@@ -25,11 +25,11 @@ bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose
 bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
-uint8_t nCham = 9;		   // number of chambers being used [1-9]
-uint8_t nChamPerBlock = 3; // max number of chambers to move at once [1-nCham]
-uint8_t nMoveAttempt = 3;  // number of attempts to move a walls [1-255]
-uint8_t pwmDuty = 255;	   // PWM duty for all walls [0-255]
-uint16_t dtMoveTimeout;	   // timeout for wall movement (ms)
+uint8_t nCham = 1;			   // number of chambers being used [1-9]
+uint8_t nChamPerBlock = 3;	   // max number of chambers to move at once [1-nCham]
+uint8_t nMoveAttempt = 3;	   // number of attempts to move a walls [1-255]
+uint8_t pwmDuty = 255;		   // PWM duty for all walls [0-255]
+uint16_t dtMoveTimeout = 1000; // timeout for wall movement (ms)
 
 // Initialize class instances for local libraries
 MazeDebug Dbg;
@@ -80,12 +80,14 @@ void loop()
 		init = 1;
 		Dbg.printMsg(Dbg.MT::HEAD1, "RUNNNING: STANDALONE SETUP");
 
+		// Initialize software
+		WallOper.initSoftware(0);
+
 		// Initalize Cypress Chips
 		WallOper.initCypress();
 
 		// Initalize Walls
-		// WallOper.initWalls(1); // Run wall up and down
-		// WallOper.initWalls(0); // Run wall down
+		WallOper.initWalls(0); // Run wall up and down
 
 		Dbg.printMsg(Dbg.MT::HEAD1B, "FINISHED: STANDALONE SETUP");
 	}
