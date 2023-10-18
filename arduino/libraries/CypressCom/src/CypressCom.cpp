@@ -284,9 +284,9 @@ uint8_t CypressCom::setupCypress(uint8_t address)
 	if (is_err)
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C LINES LOW: CHECK POWER");
 
-	// Setup I2C timeout to 0.5 second
-	Wire.setWireTimeout(500000); // (us) for Wire librarary (default: 25000)
-	Wire.setTimeout(500);		// (ms) for Stream librarary
+	// Setup I2C timeout to 1 second
+	Wire.setWireTimeout(1000000); // (us) for Wire librarary (default: 25000)
+	Wire.setTimeout(1000);		// (ms) for Stream librarary
 
 	// Test I2C connection
 	_beginTransmissionWrapper(address);
