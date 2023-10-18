@@ -25,7 +25,7 @@ cd build
 cmake ..
 make
 
-cd ../plog
+cd ../../plog
 
 mkdir build
 cd build
