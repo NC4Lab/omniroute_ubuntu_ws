@@ -59,6 +59,10 @@ void setup()
 #ifdef ARDUINO_SAM_DUE
 	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
+
+// Scan I2C bus for Cypress chips
+CypCom.i2cScan();
+
 }
 
 //=============== LOOP ==================
