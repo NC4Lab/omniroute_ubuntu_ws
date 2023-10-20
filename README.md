@@ -55,7 +55,9 @@ xdg-open ~/.bashrc
 
 # Setup ethernet
 ```
-change ethenet address for ethercat sheild in launch file depending on what computer you are using
+change ethenet address for ethercat sheild in launch file:
+src/omniroute_operation/launch/test.launch
+
 ```
 # TO DO: Add instructions for port permisions for writing sketches to Arduino
 
@@ -66,8 +68,12 @@ cd omniroute_ubuntu_ws
 catkin_make
 ```
 
-# Launching the ROS system test
+# Launching the ROS three_by_three_interface
 ```
-roslaunch omniroute_operation test.launch
+cd omniroute_ubuntu_ws
+
+source devel/setup.bash
+
+roslaunch omniroute_operation three_by_three_interface.launch
 ```
 ```

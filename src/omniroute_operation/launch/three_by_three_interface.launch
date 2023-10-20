@@ -10,19 +10,15 @@
     <!-- <param name="ethercat_adapter_name" type="str" value="enp4s0f1" /> -->
     
     <!-- Esmacat ethernet addapter address (GINGER_BEER) -->
-    <param name="ethercat_adapter_name" type="str" value="enp8s0" /> 
+    <param name="ethercat_adapter_name" type="str" value="enp7s0" /> 
     
     <!-- Esmacat parameter -->
     <param name="maze_ard0_ease_slave_index" type="int" value="0" />
 
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
-    
-    <!-- Wall controller test -->
-    <!-- <node name = "wall_controller_test_node" pkg = "omniroute_operation" type = "wall_controller.py" output = "screen"/> -->
 
-     <!-- Omniroute interface test -->
-    <!-- <node name = "interface_test_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/> -->
+     <!-- Omniroute three_by_three_interface interface -->
     <node name = "interface_test_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
 
 </launch>
