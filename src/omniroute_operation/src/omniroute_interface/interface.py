@@ -96,8 +96,8 @@ class Interface(Plugin):
     def _handle_fileBrowseBtn_clicked(self):
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Create the path to the "config" directory four levels up
-        self.csvDir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'config', 'paths'))
+        # Create the path to the "data" directory four levels up
+        self.csvDir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'data', 'paths'))
         self.csvFileName = QFileDialog.getOpenFileName(None,"Open csv file",self.csvDir,"CSV files (*.csv)")
         self._widget.fileNameEdit.setText(os.path.join(self.csvDir,self.csvFileName[0]))
 

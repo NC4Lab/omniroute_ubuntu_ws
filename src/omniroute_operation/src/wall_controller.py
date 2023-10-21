@@ -86,7 +86,7 @@ class WallController:
 
         # Option to automatically load csv
         self.do_auto_load_csv = True
-        self.csv_file_path = "/home/nc4lab/omniroute_ubuntu_ws/config/path_1x3_1.csv"
+        self.csv_file_path = "/home/nc4lab/omniroute_ubuntu_ws/data/path_1x3_1.csv"
 
         # Option to hard code wall/chamber config list
         self.do_hardcode_cw_config_list = True

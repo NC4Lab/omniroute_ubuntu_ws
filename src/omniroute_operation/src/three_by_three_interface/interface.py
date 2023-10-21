@@ -1240,10 +1240,10 @@ class Interface(Plugin):
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # Specify the defualt directory
-        config_dir_default = os.path.abspath(os.path.join(
-            script_dir, '..', '..', '..', '..', 'config', 'paths'))
-        # Set to default config file path
-        self._widget.fileDirEdit.setText(config_dir_default)
+        data_dir_default = os.path.abspath(os.path.join(
+            script_dir, '..', '..', '..', '..', 'data', 'paths'))
+        # Set to default data file path
+        self._widget.fileDirEdit.setText(data_dir_default)
 
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
