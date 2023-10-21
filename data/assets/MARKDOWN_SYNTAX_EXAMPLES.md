@@ -1,5 +1,11 @@
 # Markdown Syntax Examples
 
+# Main Header: `# Header 1`
+
+## Sub-header: `## Header 2`
+
+### Sub-sub-header: `### Header 3`
+
 ## Text Formatting
 
 **Bold**: `**Bold Text**` or `__Bold Text__`
@@ -53,14 +59,6 @@ Blockquote:
 ## Horizontal Rule
 
 `---` or `___` or `***`
-
-## Headers
-
-Main Header: `# Header 1`
-
-Sub-header: `## Header 2`
-
-Sub-sub-header: `### Header 3`
 
 ## Tables
 
