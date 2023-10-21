@@ -85,6 +85,26 @@ source devel/setup.bash
 
 roslaunch omniroute_operation three_by_three_interface.launch
 ```
+## Changing ROS environment settings in Ubuntu
+
+### Check the IP address of the computer
+```
+ipconfig
+```
+Note the inet ip: 
+```
+enp11s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+inet 10.34.5.184  netmask 255.255.255.128  broadcast 10.34.5.255
+```
+### Edit the bashrc
+```
+nano ~/.bashrc
+gedit ~/.bashrc &
+
+export ROS_MASTER_URI=http://10.34.5.184:11311
+export ROS_HOSTNAME=10.34.5.184
+```
+
 ## Simple topic test
 ```
 rosrun rospy_tutorials talker.py 
