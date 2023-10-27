@@ -23,6 +23,9 @@ class WallOperation
 
 	// --------------VARIABLES--------------
 public:
+	static const uint8_t nChamInitMax = 9; // Number of chambers in actual maze
+
+	// Paramiters set by GUI
 	uint8_t nCham;			// number of chambers to initialize in maze
 	uint8_t nChamPerBlock;	// max number of chambers to move at once
 	uint8_t nMoveAttempt;	// max number of attempts to move a walls
@@ -32,13 +35,13 @@ public:
 	// Bitwise variable, specifying the walls that actually exist for each chamber [1:exists]
 	uint8_t bitWallExistMap[9] = {
 		B11111111, // 0 [0, 1, 2, 3, 4, 5, 6, 7]
-		B10101110, // 1 [1, 3, 5, 7, 2]
+		B10101110, // 1 [1, 2, 3, 5, 7]
 		B11111111, // 2 [0, 1, 2, 3, 4, 5, 6, 7]
-		B10101001, // 3 [1, 3, 5, 7, 0]
+		B10101011, // 3 [0, 1, 3, 5, 7]
 		B11111111, // 4 [0, 1, 2, 3, 4, 5, 6, 7]
-		B10111010, // 5 [1, 3, 5, 7, 4]
+		B10111010, // 5 [1, 3, 4, 5, 7]
 		B11111111, // 6 [0, 1, 2, 3, 4, 5, 6, 7]
-		B11101010, // 7 [1, 3, 5, 7, 6]
+		B11101010, // 7 [1, 3, 5, 6, 7]
 		B11111111  // 8 [0, 1, 2, 3, 4, 5, 6, 7]
 	};
 
@@ -99,12 +102,12 @@ public:
 		PinMapStruct pmsActvPWM;		 // reusable dynamic instance for active PWM
 		PinMapStruct pmsActvIO;			 // reusable dynamic instance for active IO
 	};
-	ChamberStruct C[9]; // initialize with max number of chambers for 3x3
+	ChamberStruct C[nChamInitMax]; // initialize with max number of chambers for 3x3
 
 	EsmacatCom EsmaCom; // instance of Esmacatshield class
 
 private:
-	MazeDebug _Dbg;	 // local instance of MazeDebug class
+	MazeDebug _Dbg;		// local instance of MazeDebug class
 	CypressCom _CypCom; // local instance of CypressCom class
 
 	// ---------------METHODS---------------
@@ -147,12 +150,12 @@ private:
 	uint8_t _setupCypressPWM(uint8_t);
 
 public:
-	uint8_t setWallsToMove(uint8_t, uint8_t, bool = false);
-	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t[], uint8_t, bool = false);
-	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t, bool = false);
+	uint8_t setWallsToMove(uint8_t, uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t[], uint8_t);
+	uint8_t setWallsToMove(uint8_t, uint8_t, uint8_t);
 
 private:
-	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t, bool = false);
+	uint8_t _setWallsToMove(uint8_t, uint8_t, uint8_t);
 
 public:
 	uint8_t moveWallsByChamberBlocks();

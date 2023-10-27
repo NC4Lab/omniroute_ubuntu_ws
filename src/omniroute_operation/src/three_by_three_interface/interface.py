@@ -44,13 +44,13 @@ DB_VERBOSE = True  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     0: [0, 1, 2, 3, 4, 5, 6, 7],
-    1: [1, 3, 5, 7, 2],
+    1: [1, 2, 3, 5, 7],
     2: [0, 1, 2, 3, 4, 5, 6, 7],
-    3: [1, 3, 5, 7, 0],
+    3: [0, 1, 3, 5, 7],
     4: [0, 1, 2, 3, 4, 5, 6, 7],
-    5: [1, 3, 5, 7, 4],
+    5: [1, 3, 4, 5, 7],
     6: [0, 1, 2, 3, 4, 5, 6, 7],
-    7: [1, 3, 5, 7, 6],
+    7: [1, 3, 5, 6, 7],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
@@ -1023,6 +1023,7 @@ class MazePlot(QGraphicsView):
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
+            return  # TEMP
             MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
 
             # Bail if chamber is not enabled
@@ -1468,7 +1469,7 @@ class Interface(Plugin):
             # Send INITIALIZE_CYPRESS message
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_CYPRESS)
-            
+
             # Enable buttons
             self._widget.sysReinitBtn.setEnabled(True)
             self._widget.fileBrowseBtn.setEnabled(True)
@@ -1665,7 +1666,8 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 6:
             # Send a shutdown request to the ROS master
             rospy.signal_shutdown("User requested shutdown")
-            MazeDB.printMsg('INFO', "SHUTDOWN: Sent shutdown request to ROS master")
+            MazeDB.printMsg(
+                'INFO', "SHUTDOWN: Sent shutdown request to ROS master")
 
         elif self.cnt_shutdown_step == 7:
             # End the application
@@ -1801,7 +1803,8 @@ class Interface(Plugin):
             if MazePlot.isEnabled(chamber.status):
                 for _, wall in enumerate(chamber.Walls):
                     if wall.status != MazePlot.Status.EXCLUDED:
-                        wall.setStatus(MazePlot.Status.UNINITIALIZED, do_force=True)
+                        wall.setStatus(
+                            MazePlot.Status.UNINITIALIZED, do_force=True)
 
     def qt_callback_sysQuiteBtn_clicked(self):
         """ Callback function for the "Quit" button."""

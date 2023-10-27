@@ -396,6 +396,9 @@ uint8_t WallOperation::initWalls(uint8_t init_level)
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: WALL %s INITIALIZATION",
 				  init_level == 0 ? "UP/DOWN" : "DWON");
 
+	// Save wall errors
+	uint8_t bit_wall_error_flag[nChamInitMax] = {0};
+
 	//............... Run Walls Up for initialize/reinitialize ...............
 
 	if (init_level == 0)
@@ -412,6 +415,13 @@ uint8_t WallOperation::initWalls(uint8_t init_level)
 		/// @todo: Find a less hacky way to achive this
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			C[cham_i].bitWallPosition = 255;
+
+		// Copy over error flag and reset to ensure down move runs
+		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		{
+			bit_wall_error_flag[cham_i] = C[cham_i].bitWallErrorFlag;
+			C[cham_i].bitWallErrorFlag = 0;
+		}
 	}
 
 	//............... Run Walls Down for initialize/reinitialize or reset ...............
@@ -421,7 +431,7 @@ uint8_t WallOperation::initWalls(uint8_t init_level)
 		// Set wall move for all chambers
 		/// @note: Set to include err flagged walls for init/reinit
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
-			setWallsToMove(cham_i, 0, init_level == 0); 
+			setWallsToMove(cham_i, 0);
 
 		// Move walls down
 		uint8_t resp = moveWallsByChamberBlocks();
@@ -431,6 +441,10 @@ uint8_t WallOperation::initWalls(uint8_t init_level)
 		for (size_t cham_i = 0; cham_i < nCham; cham_i++)
 			getWallState(cham_i, 1, C[cham_i].bitWallPosition);
 	}
+
+	// Include wall erros from either run
+	for (size_t cham_i = 0; cham_i < nCham; cham_i++)
+		C[cham_i].bitWallErrorFlag = C[cham_i].bitWallErrorFlag | bit_wall_error_flag[cham_i];
 
 	//............... Check Status ...............
 
@@ -526,7 +540,7 @@ uint8_t WallOperation::_setupCypressPWM(uint8_t address)
 ///
 /// @param cham_i Index of the chamber to set [0-nCham].
 /// @param pos_state_set Value specifying the new wall position state [0:down, 1:up].
-/// @param do_err_overide If true, walls flag for errors will still be set to move. DEFUALT: false.
+///
 /// @return Status codes [0:no move, 1:success].@return
 ///
 /// @details Here's an example of how to use this overload:
@@ -534,14 +548,15 @@ uint8_t WallOperation::_setupCypressPWM(uint8_t address)
 /// WallOperation::WallOper.setWallsToMove(cham_i, 0); // lower all walls in chamber 0 up
 /// WallOperation::WallOper.setWallsToMove(cham_i, 0); // raise all walls in chamber 0 down
 /// @endcode
-uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set)
 {
 	// set all bits to 0 or 1
 	uint8_t byte_wall_state_new = pos_state_set == 0 ? 0 : 255;
 
 	// Run private version of the method
-	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new, do_err_overide);
+	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new);
 }
+
 /// @overload: Option for including an array of wall numbers to move
 ///
 /// @param p_wall_inc OPTIONAL: Pointer array specifying wall numbers for walls to move [0-7] max 8 entries. .
@@ -553,7 +568,7 @@ uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, boo
 /// WallOperation::setWallsToMove(cham_i, 1, p_wall_inc, 3); // move walls in p_wall_inc up
 /// WallOperation::setWallsToMove(cham_i, 0, p_wall_inc, 3); // move walls in p_wall_inc down
 /// @endcode
-uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t p_wall_inc[], uint8_t s, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t p_wall_inc[], uint8_t s)
 {
 	// Handle array inputs
 	if (s > 8)
@@ -567,8 +582,10 @@ uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uin
 		bitWrite(byte_wall_state_new, p_wall_inc[i], pos_state_set);
 
 	// Run private version of the method
-	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new, do_err_overide);
-} /// @overload: Option for including byte mask for walls to move
+	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new);
+}
+
+/// @overload: Option for including byte mask for walls to move
 ///
 /// @details This function and its versions updates the byte mask specifying which walls should be up.
 /// It can be run more than once to setup multiple chambers with different wall configurations.
@@ -581,16 +598,16 @@ uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uin
 /// WallOperation::WallOper.setWallsToMove(cham_i, 0, B00000110); // move walls 2 aind 3 down
 /// WallOperation::WallOper.setWallsToMove(cham_i, 1, B00000110); // move walls 2 aind 3 up
 /// @endcode
-uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
+uint8_t WallOperation::setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new)
 {
 	// Run private version of the method
-	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new, do_err_overide);
+	return _setWallsToMove(cham_i, pos_state_set, byte_wall_state_new);
 }
 
 /// @brief: Private workhorse version of the method
 ///
 /// @return Status codes @ref WallOperation::setWallsToMove().
-uint8_t WallOperation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new, bool do_err_overide)
+uint8_t WallOperation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, uint8_t byte_wall_state_new)
 {
 
 	// Bail if chamber is flagged with I2C error
@@ -601,13 +618,12 @@ uint8_t WallOperation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, ui
 	}
 
 	// Set up/down move flags using bitwise comparison and exclude any walls with errors
-	uint8_t byte_wall_err_check = do_err_overide ? 0 : C[cham_i].bitWallErrorFlag; // set to 0 if overide
 	C[cham_i].bitWallMoveUpFlag = C[cham_i].bitWallExist &
-								  ~byte_wall_err_check &
+								  ~C[cham_i].bitWallErrorFlag &
 								  ~C[cham_i].bitWallPosition &
 								  byte_wall_state_new;
 	C[cham_i].bitWallMoveDownFlag = C[cham_i].bitWallExist &
-									~byte_wall_err_check &
+									~C[cham_i].bitWallErrorFlag &
 									C[cham_i].bitWallPosition &
 									~byte_wall_state_new;
 
@@ -629,7 +645,7 @@ uint8_t WallOperation::_setWallsToMove(uint8_t cham_i, uint8_t pos_state_set, ui
 /// @brief: Main public method to change wall positions for all chambers set to move
 /// either in blocks of all at once
 ///
-/// @return Status codes [0:no move, 1:success, 2:error] or [-1=255:input argument error].
+/// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout] or [-1=255:input argument error].
 uint8_t WallOperation::moveWallsByChamberBlocks()
 {
 	uint8_t run_status = 0;
@@ -712,7 +728,8 @@ uint8_t WallOperation::moveWallsByChamberBlocks()
 /// @param cham_arr: Pointer array of chamber indexes to move.
 /// @param n_cham: Number of chambers in "cham_arr".
 /// @param block_cnt: Current chamber block count.
-//// @return Status codes [0:no move, 1:success, 2:error] or [-1=255:input argument error].
+///
+/// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout] or [-1=255:input argument error].
 uint8_t WallOperation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], uint8_t n_cham, uint8_t block_cnt, uint8_t &r_attempt_cnt)
 {
 	// Handle array inputs
@@ -767,6 +784,7 @@ uint8_t WallOperation::_moveWallsByChamberBlocksWithRetry(uint8_t cham_arr[], ui
 ///
 /// @param cham_arr: Pointer array of chamber indexes to move.
 /// @param n_cham: Number of chambers in "cham_arr".
+///
 /// @return Status/error codes [0:no move, 1:success, 2:i2c error, 3:timeout] or [-1=255:input argument error].
 uint8_t WallOperation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
 {
@@ -871,6 +889,7 @@ uint8_t WallOperation::_moveWallsConductor(uint8_t cham_arr[], uint8_t n_cham)
 /// @brief Used to start wall movement through PWM output
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
+///
 /// @return Status/error codes [1:move started, 2:i2c error] or [-1=255:input argument error].
 uint8_t WallOperation::_initWallsMove(uint8_t cham_i)
 {
@@ -901,6 +920,7 @@ uint8_t WallOperation::_initWallsMove(uint8_t cham_i)
 /// call to avoid an additional read if we need to write the pwm output later
 ///
 /// @param cham_i Index/number of the chamber to set [0-48]
+///
 /// @return Status/error codes [0:still_waiting 1:all_move_down, 2:i2c error, 3:temeout] or [-1=255:input argument error].
 uint8_t WallOperation::_monitorWallsMove(uint8_t cham_i)
 {
@@ -992,7 +1012,8 @@ uint8_t WallOperation::_monitorWallsMove(uint8_t cham_i)
 /// @param cham_i Index/number of the chamber to set [0-nCham].
 /// @param pos_state_get Value specifying the wall position switch to get [0:down, 1:up].
 /// @param byte_state_out Byte reference  to store state of up or down switches by wall (used as output).
-/// @return Wire::method output [0-4] or [-1=255: input argument error] or [-1=255:input argument error].
+///
+/// @return Wire::method output [0-4] or [-1=255: input argument error]
 uint8_t WallOperation::getWallState(uint8_t cham_i, uint8_t pos_state_get, uint8_t &byte_state_out)
 {
 	if (cham_i > nCham)
@@ -1166,6 +1187,7 @@ void WallOperation::procEcatMessage()
 /// @param cham_i Index/number of the chamber to set [0-48]
 /// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: all walls
 /// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: 8
+///
 /// @return Wire::method output [0-4] or [-1=255: input argument error].
 ///
 /// @example Here's an example of how to use testWallIO
@@ -1231,6 +1253,7 @@ uint8_t WallOperation::testWallIO(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t 
 /// @param cham_i Index/number of the chamber to set [0-48]
 /// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: all walls
 /// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: 8
+///
 /// @return Wire::method output [0-4] or [-1=255: input argument error].
 ///
 /// @see WallOperation::testWallIO()
@@ -1283,6 +1306,7 @@ uint8_t WallOperation::testWallPWM(uint8_t cham_i, uint8_t p_wall_inc[], uint8_t
 /// @param cham_i Index/number of the chamber to set [0-48]
 /// @param p_wall_inc OPTIONAL: Pointer array specifying wall index/number for wall(s) to test [0-7], max 8 entries. DEFAULT: all walls
 /// @param s OPTIONAL: Length of "p_wall_inc" array. DEFAULT: 8
+///
 /// @return Wire::method output [0-4] or [-1=255: input argument error].
 ///
 /// @see WallOperation::testWallIO()

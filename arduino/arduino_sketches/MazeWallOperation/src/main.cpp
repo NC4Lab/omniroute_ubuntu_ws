@@ -49,6 +49,9 @@ void setup()
 	Serial.print('\n');
 	pinMode(LED_BUILTIN, OUTPUT);
 
+	// Scan I2C bus for Cypress chips
+	CypCom.i2cScan();
+
 // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
 	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO UNO");
@@ -59,10 +62,6 @@ void setup()
 #ifdef ARDUINO_SAM_DUE
 	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO DUE");
 #endif
-
-// Scan I2C bus for Cypress chips
-CypCom.i2cScan();
-
 }
 
 //=============== LOOP ==================

@@ -2,6 +2,7 @@
 ```
 - Add instructions for port permisions for writing sketches to Arduino
 - Add instructions for setting up ROS network environment variables
+- Fix issue with incorrect indexing for Chamber mouse press
 ```
 # Setup
 
