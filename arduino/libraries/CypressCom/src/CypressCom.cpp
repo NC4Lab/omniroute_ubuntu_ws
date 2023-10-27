@@ -19,6 +19,22 @@ CypressCom::CypressCom() {}
 
 //------------------------ LOW-LEVEL METHODS ------------------------
 
+/// @brief Initialize wire coms and setup I2C.
+///
+/// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
+uint8_t CypressCom::i2cInit()
+{
+	// Join I2C bus
+	Wire.begin();
+
+	// Set I2C timeout to 5 second
+	Wire.setWireTimeout(5000000); // (us) for Wire librarary (default: 25000)
+	Wire.setTimeout(5000);		   // (ms) for Stream librarary
+
+	// Scan I2C bus for Cypress chips and print found addresses
+	i2cScan();
+}
+
 /// @brief Lowest level function to read from a given Cypress register.
 ///
 /// @param address I2C address for a given Cypress chip.
@@ -284,10 +300,6 @@ uint8_t CypressCom::setupCypress(uint8_t address)
 	if (is_err)
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C LINES LOW: CHECK POWER");
 
-	// Setup I2C timeout to 10 second
-	Wire.setWireTimeout(10000000); // (us) for Wire librarary (default: 25000)
-	Wire.setTimeout(10000);		// (ms) for Stream librarary
-
 	// Test I2C connection
 	_beginTransmissionWrapper(address);
 	Wire.write((uint8_t)0);
@@ -429,22 +441,32 @@ uint8_t CypressCom::i2cScan()
 	uint8_t cnt_addr = 0;
 	uint8_t cnt_err = 0;
 	uint8_t list_addr[128] = {0};
-	uint8_t list_err[128] = {0};
+	uint8_t list_addr_with_err[128] = {0};
+	uint8_t list__err_code[128] = {0};
 
 	// Loop and test all 128 possible addresses
 	for (address = 1; address < 127; address++)
 	{
+		// Track dt for errors
+		_Dbg.dtTrack(1);
+
+		// Test address
 		_beginTransmissionWrapper(address);
 		resp = _endTransmissionWrapper(true, false);
+
+		// Handle response
 		if (resp == 0)
 		{ // check for repsonse
 			list_addr[cnt_addr] = address;
 			cnt_addr++;
 		}
-		else if (resp == 4)
+		else if (resp > 4)
 		{ // catch unknown error
-			list_err[cnt_addr] = address;
+			list_addr_with_err[cnt_addr] = address;
 			cnt_err++;
+
+			// Print unknown error code immediately
+			_Dbg.printMsg(_Dbg.MT::WARNING, "I2C Error[%d] Address[%s] DT[%s]", resp, _Dbg.hexStr(address), _Dbg.dtTrack());
 		}
 	}
 
@@ -466,7 +488,7 @@ uint8_t CypressCom::i2cScan()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Errors Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_err[i]));
+			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_addr_with_err[i]));
 		}
 	}
 

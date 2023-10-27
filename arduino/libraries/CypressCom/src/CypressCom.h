@@ -44,9 +44,9 @@ public:
 
 	// 3x3 maze addresses
 	uint8_t ADDR_LIST[9]{
-		0x2, 0x4, 0x6, 
-	    0x8, 0xA, 0xC, 
-		0xE, 0x10,0x12};
+		0x2, 0x4, 0x6,
+		0x8, 0xA, 0xC,
+		0xE, 0x10, 0x12};
 
 	// // 7x7 maze addresses
 	//  uint8_t ADDR_LIST[49]{ /// list of all possible I2C addresses
@@ -72,6 +72,9 @@ private:
 	// -----------METHODS-----------------
 public:
 	CypressCom();
+
+public:
+	uint8_t i2cInit();
 
 public:
 	uint8_t i2cRead(uint8_t, uint8_t, uint8_t[], uint8_t = 1);

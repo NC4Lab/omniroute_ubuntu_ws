@@ -43,14 +43,14 @@ void setup()
 	// Setup serial coms
 	Serial.begin(115200);
 	Serial1.begin(115200);
-	/// @todo: Consider moveing this to CypressCom class
-	Wire.begin(); // join I2C bus
 	delay(100);
 	Serial.print('\n');
-	pinMode(LED_BUILTIN, OUTPUT);
+	
+	// Print setup started
+	Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
 
-	// Scan I2C bus for Cypress chips
-	CypCom.i2cScan();
+	// Initialize I2C for Cypress chips
+	CypCom.i2cInit();
 
 // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
