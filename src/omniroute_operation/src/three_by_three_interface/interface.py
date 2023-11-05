@@ -33,6 +33,8 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 
+from three_by_three_interface.gcodeclient import Client as GcodeClient
+
 # It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove
 # the ones that are not necessary to avoid confusion and make the code cleaner.
 
@@ -949,6 +951,7 @@ class MazePlot(QGraphicsView):
 
             # Store arguments parameters
             self.chamber_num = _chamber_num
+            self.test_num = _chamber_num
             self.center_x = _center_x
             self.center_y = _center_y
             self.chamber_width = _chamber_width
@@ -983,9 +986,9 @@ class MazePlot(QGraphicsView):
             self.label = QGraphicsTextItem(str(_chamber_num))
             font_size = _wall_width*1.75
             self.label.setFont(QFont("Arial", font_size, QFont.Bold))
-            self.addToGroup(self.label)
             # Center the text over the chamber's center
             MazePlot._centerText(self.label, _center_x, _center_y)
+            self.addToGroup(self.label)
 
             # Create chamber status status var and set status
             self.status = MazePlot.Status.UNINITIALIZED
@@ -1023,8 +1026,14 @@ class MazePlot(QGraphicsView):
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
-            return  # TEMP
             MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
+
+
+            gantry_x = 400 + 300 * (self.chamber_num%3)
+            gantry_y = 300 + 300 * (self.chamber_num//3)
+            MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
+
+            return  # TEMP
 
             # Bail if chamber is not enabled
             if not MazePlot.isEnabled(self.status):
@@ -1314,8 +1323,9 @@ class Interface(Plugin):
         self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
 
-        # ................ QT Callback Setup ................
-
+        # ................ GCode Client Setup ................
+        self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
+      
         # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
@@ -1339,6 +1349,9 @@ class Interface(Plugin):
         # Other object callbacks
         self._widget.fileListWidget.itemClicked.connect(
             self.qt_callback_fileListWidget_item_clicked)
+        
+        self._widget.runGantryBtn.clicked.connect(
+            self.qt_callback_runGantryBtn_clicked)
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
@@ -1778,6 +1791,15 @@ class Interface(Plugin):
         # Send MOVE_WALLS message with wall byte array
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+
+    def qt_callback_runGantryBtn_clicked(self):
+        """ Callback function for the "Run Gantry" button."""
+
+        MazeDB.printMsg('INFO', "Run Gantry")
+        MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
+        MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
+
+        self.gcode_client.raw_command("G0 X{} Y{}".format(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())))
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
