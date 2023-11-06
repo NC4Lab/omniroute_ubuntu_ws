@@ -38,9 +38,10 @@ public:
 	uint8_t ADDR = 0; /// tracks current I2C address for debugging
 
 	// // 1x3 testing addresses
-	// uint8_t ADDR_LIST[9]{
-	// 	0x12, 0x10, 0x6, 0x8, 0xA,
-	// 	0xC, 0xE, 0x14, 0x16};
+	// uint8_t ADDR_LIST[8]{
+	// 	0x2, 0x4,
+	// 	0x8, 0xA, 0xC,
+	// 	0xE, 0x10, 0x12};
 
 	// 3x3 maze addresses
 	uint8_t ADDR_LIST[9]{

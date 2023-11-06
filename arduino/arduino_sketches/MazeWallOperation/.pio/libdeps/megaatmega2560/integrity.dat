@@ -1,5 +1,5 @@
 symlink://../../libraries/WallOperation
-symlink://../../libraries/CypressCom
 symlink://../../libraries/MazeDebug
-Wire
 symlink://../../libraries/EsmacatCom
+symlink://../../libraries/CypressCom
+Wire

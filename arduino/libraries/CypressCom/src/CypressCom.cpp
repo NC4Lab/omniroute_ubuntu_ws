@@ -27,9 +27,9 @@ uint8_t CypressCom::i2cInit()
 	// Join I2C bus
 	Wire.begin();
 
-	// Set I2C timeout to 1 second
-	Wire.setWireTimeout(1000000); // (us) for Wire librarary (default: 25000)
-	Wire.setTimeout(1000);		   // (ms) for Stream librarary
+	// Set I2C timeout to 5 seconds
+	Wire.setWireTimeout(5000000); // (us) for Wire librarary (default: 25000)
+	Wire.setTimeout(5000);		   // (ms) for Stream librarary
 
 	// Scan I2C bus for Cypress chips and print found addresses
 	i2cScan();

@@ -1,12 +1,12 @@
 // ######################################
 
-//====== Maze_WallOperation.ino ======
+// ======== MazeWallOperation.ino =======
 
 // ######################################
 
-/// <file>
-/// Main Arduino INO file for running the maze.
-/// <file>
+/**
+* @file Main Arduino INO file for running the maze.
+*/
 
 // BUILT IN
 #include "Arduino.h"
@@ -39,7 +39,6 @@ WallOperation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeou
 //=============== SETUP =================
 void setup()
 {
-
 	// Setup serial coms
 	Serial.begin(115200);
 	Serial1.begin(115200);
