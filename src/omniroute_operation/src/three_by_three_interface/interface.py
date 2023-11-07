@@ -33,6 +33,7 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 
+# Importing Gantry library
 from three_by_three_interface.gcodeclient import Client as GcodeClient
 
 # It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove
