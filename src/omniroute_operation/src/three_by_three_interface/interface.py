@@ -33,9 +33,6 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 
-# Importing Gantry library
-from three_by_three_interface.gcodeclient import Client as GcodeClient
-
 # It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove
 # the ones that are not necessary to avoid confusion and make the code cleaner.
 
@@ -956,6 +953,8 @@ class MazePlot(QGraphicsView):
             self.center_x = _center_x
             self.center_y = _center_y
             self.chamber_width = _chamber_width
+            
+            self.feeder_pub = rospy.Publisher('/feed', FeedState, queue_size=1)
 
             # Compute chamber octogon parameters
             octagon_vertices = self.getOctagonVertices(
@@ -1033,6 +1032,8 @@ class MazePlot(QGraphicsView):
             gantry_x = 400 + 300 * (self.chamber_num%3)
             gantry_y = 300 + 300 * (self.chamber_num//3)
             MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
+
+            self.feeder_pub.publish(gantry_x, gantry_y, False)
 
             return  # TEMP
 
@@ -1268,6 +1269,9 @@ class Interface(Plugin):
             self._widget.sysSettingEdit_4,  # PWM duty cycle for wall motors
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
         ]
+        
+        # ROS Publishers
+        self.feeder_pub = rospy.Publisher('/feed', FeedState, queue_size=1)
 
         # ................ Maze Setup ................
 
@@ -1324,9 +1328,6 @@ class Interface(Plugin):
         self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
 
-        # ................ GCode Client Setup ................
-        # self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-      
         # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
@@ -1800,7 +1801,8 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        # self.gcode_client.raw_command("G0 X{} Y{}".format(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())))
+        self.feeder_pub.publish(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value()), False)
+
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""

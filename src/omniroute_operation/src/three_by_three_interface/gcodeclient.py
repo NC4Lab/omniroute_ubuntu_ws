@@ -4,6 +4,9 @@ import time
 #Inspired from 
 #https://kevinponce.com/blog/python/send-gcode-through-serial-to-a-3d-printer-using-python/
 
+# Code from Tic-Tac-Toe Gantry robot
+# https://github.com/TonyJacb/TicTacToe-Gantry-Bot.git
+
 class Client:
     def __init__(self, port, baud) -> None:
         '''
