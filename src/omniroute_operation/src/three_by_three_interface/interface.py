@@ -1357,7 +1357,7 @@ class Interface(Plugin):
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
-        self._widget.fileBrowseBtn.setEnabled(True) # TEMP AWL
+        self._widget.fileBrowseBtn.setEnabled(False) 
         self._widget.filePreviousBtn.setEnabled(False)
         self._widget.fileNextBtn.setEnabled(False)
         self._widget.plotClearBtn.setEnabled(False)
@@ -1381,17 +1381,6 @@ class Interface(Plugin):
             self.timer_callback_endSession_once)
         self.timer_endSession.setSingleShot(True)  # Run only once
 
-        # ................ SFN DEMO ................
-
-        # SFN DEMO TIMER
-        self.timer_SfN_DEMO = QTimer()
-        self.timer_SfN_DEMO.timeout.connect(
-            self.timer_callback_SfN_DEMO)
-        self.timer_SfN_DEMO.setSingleShot(True)  # Run only once
-
-        self.cnt_SfN_DEMO_step = 0  # tracks the current step
-        self.dt_SfN_DEMO_step = 0.25  # (sec)
-
         # ................ ROS Setup ................
 
         # @obsolete ROS Sublisher: @obsolete
@@ -1406,45 +1395,6 @@ class Interface(Plugin):
             self.sig_callback_Esmacat_read_maze_ard0_ease)
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
-
-
- # ------------------------ SFN DEMO START------------------------
-
-    def timer_callback_SfN_DEMO(self):
-        """ Timer callback to incrementally SfN_DEMO session. """
-
-        if not isEcatConnected:
-            return
-        
-        if self.cnt_SfN_DEMO_step == 0:
-            pass
-
-        elif self.cnt_shutdcnt_SfN_DEMO_stepown_step == 1:
-            pass   
-
-        # Increment the shutdown step after ecat disconnected
-        self.cnt_SfN_DEMO_step += 1
-
-        # Restart the timer for the next step
-        self.timer_SfN_DEMO.start(self.dt_SfN_DEMO_step*1000)   
-
-def clearWallsSfN_DEMO(self): 
-
-    # Clear walls
-    WallConfig.reset()  # reset all values in list
-    self.MP.updatePlotFromWallConfig()  # update walls 
-
-def sendWallsSfN_DEMO(self):
-        """ Callback function for the "Send" button."""
-
-        # Sort entries
-        WallConfig._sort_entries()
-
-        # Send MOVE_WALLS message with wall byte array
-        self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
- 
- # ------------------------ SFN DEMO END------------------------
  
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
