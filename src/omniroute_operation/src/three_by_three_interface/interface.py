@@ -33,9 +33,6 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 
-# Importing Gantry library
-from three_by_three_interface.gcodeclient import Client as GcodeClient
-
 # It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove
 # the ones that are not necessary to avoid confusion and make the code cleaner.
 
@@ -956,6 +953,8 @@ class MazePlot(QGraphicsView):
             self.center_x = _center_x
             self.center_y = _center_y
             self.chamber_width = _chamber_width
+            
+            self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
 
             # Compute chamber octogon parameters
             octagon_vertices = self.getOctagonVertices(
@@ -1027,12 +1026,15 @@ class MazePlot(QGraphicsView):
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
-            MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
+            # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
 
+            gantry_offset_x = 0
+            gantry_offset_y = -150
+            gantry_x = gantry_offset_x + 400 + 300 * (2-self.chamber_num//3)
+            gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num%3)
+            # MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
 
-            gantry_x = 400 + 300 * (self.chamber_num%3)
-            gantry_y = 300 + 300 * (self.chamber_num//3)
-            MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
+            self.gantry_cmd_pub.publish("MOVE", [gantry_x, gantry_y])
 
             return  # TEMP
 
@@ -1268,6 +1270,9 @@ class Interface(Plugin):
             self._widget.sysSettingEdit_4,  # PWM duty cycle for wall motors
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
         ]
+        
+        # ROS Publishers
+        self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
 
         # ................ Maze Setup ................
 
@@ -1324,9 +1329,6 @@ class Interface(Plugin):
         self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
 
-        # ................ GCode Client Setup ................
-        # self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-      
         # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
             self.qt_callback_fileBrowseBtn_clicked)
@@ -1353,10 +1355,14 @@ class Interface(Plugin):
         
         self._widget.runGantryBtn.clicked.connect(
             self.qt_callback_runGantryBtn_clicked)
+        self._widget.homeGantryBtn.clicked.connect(
+            self.qt_callback_homeGantryBtn_clicked)
+        self._widget.pumpGantryBtn.clicked.connect(
+            self.qt_callback_pumpGantryBtn_clicked)
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
-        self._widget.fileBrowseBtn.setEnabled(False)
+        self._widget.fileBrowseBtn.setEnabled(False) 
         self._widget.filePreviousBtn.setEnabled(False)
         self._widget.fileNextBtn.setEnabled(False)
         self._widget.plotClearBtn.setEnabled(False)
@@ -1394,7 +1400,7 @@ class Interface(Plugin):
             self.sig_callback_Esmacat_read_maze_ard0_ease)
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
-
+ 
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
     def procEcatMessage(self):
@@ -1800,7 +1806,16 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        # self.gcode_client.raw_command("G0 X{} Y{}".format(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())))
+        self.gantry_cmd_pub.publish("MOVE",[round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
+    
+    def qt_callback_homeGantryBtn_clicked(self):
+        self.gantry_cmd_pub.publish("HOME",[])
+        self._widget.xSpinBox.setValue(0)
+        self._widget.ySpinBox.setValue(0)
+
+    def qt_callback_pumpGantryBtn_clicked(self):
+        # Run pump for 1 second
+        self.gantry_cmd_pub.publish("PUMP", [1.0])
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""

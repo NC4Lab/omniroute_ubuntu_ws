@@ -703,7 +703,7 @@ QGroupBox::title {
    <widget class="QPushButton" name="runGantryBtn">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>220</x>
       <y>180</y>
       <width>101</width>
       <height>25</height>
@@ -749,6 +749,32 @@ QGroupBox::title {
     </property>
     <property name="singleStep">
      <double>100.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="homeGantryBtn">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>180</y>
+      <width>101</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Home</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pumpGantryBtn">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>180</y>
+      <width>101</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Feed</string>
     </property>
    </widget>
   </widget>

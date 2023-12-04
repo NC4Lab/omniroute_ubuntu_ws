@@ -117,3 +117,11 @@ echo $ROS_HOSTNAME
 echo $ROS_MASTER_URI
 
 ```
+
+## Simple topic test
+```
+
+roslaunch omniroute_operation three_by_three_interface.launch 
+rosrun omniroute_operation gantry_feeder.py 
+
+```

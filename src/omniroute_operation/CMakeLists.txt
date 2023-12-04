@@ -56,6 +56,7 @@ add_message_files(
 	msg
 	FILES
   WallState.msg
+  GantryCmd.msg
 )
 
 ## Generate services in the 'srv' folder
