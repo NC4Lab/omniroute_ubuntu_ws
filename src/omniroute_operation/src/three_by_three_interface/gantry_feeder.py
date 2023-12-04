@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import time
 import rospy
 from omniroute_operation.msg import *
 
@@ -21,6 +21,15 @@ class GantryFeeder:
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
         ## TODO: Automatically determine the port
 
+        # Wait for a few secs
+        # time.sleep(1)
+        self.home()
+    
+    def home(self):
+        self.gcode_client.raw_command("$H")
+        self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
+        
+
     def move_gantry(self, x, y):
         self.gcode_client.raw_command("G0 X{} Y{}".format(x,y))
 
@@ -29,6 +38,10 @@ class GantryFeeder:
         self.move_gantry(msg.x, msg.y)
 
         ## TODO: Based on the state of msg.feed, operate the pump
+        if msg.feed:
+            self.gcode_client.raw_command("M3 S127")
+            time.sleep(3)
+            self.gcode_client.raw_command("M5")
 
 
 # @brief Main code

@@ -1354,6 +1354,10 @@ class Interface(Plugin):
         
         self._widget.runGantryBtn.clicked.connect(
             self.qt_callback_runGantryBtn_clicked)
+        self._widget.homeGantryBtn.clicked.connect(
+            self.qt_callback_homeGantryBtn_clicked)
+        self._widget.pumpGantryBtn.clicked.connect(
+            self.qt_callback_pumpGantryBtn_clicked)
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
@@ -1802,7 +1806,14 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
         self.feeder_pub.publish(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value()), False)
+    
+    def qt_callback_homeGantryBtn_clicked(self):
+        self.feeder_pub.publish(0, 0, False)
+        self._widget.xSpinBox.setValue(0)
+        self._widget.ySpinBox.setValue(0)
 
+    def qt_callback_pumpGantryBtn_clicked(self):
+        self.feeder_pub.publish(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value()), True)
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
