@@ -954,7 +954,7 @@ class MazePlot(QGraphicsView):
             self.center_y = _center_y
             self.chamber_width = _chamber_width
             
-            self.feeder_pub = rospy.Publisher('/feed', FeedState, queue_size=1)
+            self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
 
             # Compute chamber octogon parameters
             octagon_vertices = self.getOctagonVertices(
@@ -1026,15 +1026,15 @@ class MazePlot(QGraphicsView):
         def mousePressEvent(self, event):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
-            MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
+            # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
 
             gantry_offset_x = 0
             gantry_offset_y = -150
             gantry_x = gantry_offset_x + 400 + 300 * (2-self.chamber_num//3)
             gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num%3)
-            MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
+            # MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
 
-            self.feeder_pub.publish(gantry_x, gantry_y, False)
+            self.gantry_cmd_pub.publish("MOVE", [gantry_x, gantry_y])
 
             return  # TEMP
 
@@ -1272,7 +1272,7 @@ class Interface(Plugin):
         ]
         
         # ROS Publishers
-        self.feeder_pub = rospy.Publisher('/feed', FeedState, queue_size=1)
+        self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
 
         # ................ Maze Setup ................
 
@@ -1806,15 +1806,16 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        self.feeder_pub.publish(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value()), False)
+        self.gantry_cmd_pub.publish("MOVE",[round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
     
     def qt_callback_homeGantryBtn_clicked(self):
-        self.feeder_pub.publish(0, 0, False)
+        self.gantry_cmd_pub.publish("HOME",[])
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
     def qt_callback_pumpGantryBtn_clicked(self):
-        self.feeder_pub.publish(round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value()), True)
+        # Run pump for 1 second
+        self.gantry_cmd_pub.publish("PUMP", [1.0])
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""

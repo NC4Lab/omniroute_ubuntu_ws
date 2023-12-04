@@ -15,7 +15,7 @@ class GantryFeeder:
         # self.maze_ard0_pub = rospy.Publisher('/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)
 
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
-        rospy.Subscriber('/feed', FeedState, self.feed_msg_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
@@ -26,23 +26,28 @@ class GantryFeeder:
         self.home()
     
     def home(self):
+        self.gcode_client.raw_command("$25=5000")
         self.gcode_client.raw_command("$H")
         self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
         
 
     def move_gantry(self, x, y):
         self.gcode_client.raw_command("G0 X{} Y{}".format(x,y))
+    
+    def run_pump(self, duration):
+        self.gcode_client.raw_command("M3 S127")
+        time.sleep(duration)
+        self.gcode_client.raw_command("M5")
 
-    def feed_msg_callback(self, msg):
-        # Move the gantry to the specified location
-        self.move_gantry(msg.x, msg.y)
-
-        ## TODO: Based on the state of msg.feed, operate the pump
-        if msg.feed:
-            self.gcode_client.raw_command("M3 S127")
-            time.sleep(3)
-            self.gcode_client.raw_command("M5")
-
+    def gantry_cmd_callback(self, msg):
+        
+        if msg.cmd == "HOME":
+            self.home()
+        elif msg.cmd == "MOVE":
+            # Move the gantry to the specified location
+            self.move_gantry(msg.args[0], msg.args[1])
+        elif msg.cmd == "FEED":
+            self.run_pump(msg.args[0])
 
 # @brief Main code
 if __name__ == '__main__':
