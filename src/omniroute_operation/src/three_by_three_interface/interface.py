@@ -1028,9 +1028,10 @@ class MazePlot(QGraphicsView):
             # @todo: Figure out why this is not working
             MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
 
-
-            gantry_x = 400 + 300 * (self.chamber_num%3)
-            gantry_y = 300 + 300 * (self.chamber_num//3)
+            gantry_offset_x = 0
+            gantry_offset_y = -150
+            gantry_x = gantry_offset_x + 400 + 300 * (2-self.chamber_num//3)
+            gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num%3)
             MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
 
             self.feeder_pub.publish(gantry_x, gantry_y, False)
