@@ -2,6 +2,8 @@
 import time
 import rospy
 from omniroute_operation.msg import *
+from geometry_msgs.msg import PoseStamped, PointStamped
+import numpy as np
 
 # Importing Gantry library
 from three_by_three_interface.gcodeclient import Client as GcodeClient
@@ -16,6 +18,21 @@ class GantryFeeder:
 
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
         rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker2/pose', PointStamped, self.mazeboundary_marker2_callback, queue_size=1, tcp_nodelay=True)
+
+        self.gantry_pose = PoseStamped()
+        self.harness_pose = PoseStamped()
+
+        self.mazeboundary_marker0 = np.zeros(3)
+        self.mazeboundary_marker1 = np.zeros(3)
+        self.mazeboundary_marker2 = np.zeros(3)
+
+        self.track_harness = False
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
@@ -24,14 +41,60 @@ class GantryFeeder:
         # Wait for a few secs
         # time.sleep(1)
         self.home()
+
+        time.sleep(1)
+
+        r = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            self.loop()
+            r.sleep()
+        
+    def loop(self):
+        # Define gantry xhat and yhat according to the maze boundary markers
+        self.xhat = self.mazeboundary_marker0 - self.mazeboundary_marker1
+        self.yhat = self.mazeboundary_marker2 - self.mazeboundary_marker0
+
+        # print("Length of xhat: ", np.linalg.norm(self.xhat))
+        # print("Length of yhat: ", np.linalg.norm(self.yhat))
+
+        self.xhat = self.xhat / np.linalg.norm(self.xhat)
+        self.yhat = self.yhat / np.linalg.norm(self.yhat)
+        
+        if self.track_harness:
+            # Vector from gantry to harness
+            self.gantry_to_harness = np.array([self.harness_pose.pose.position.x - self.gantry_pose.pose.position.x, 
+                                               self.harness_pose.pose.position.y - self.gantry_pose.pose.position.y, 
+                                               self.harness_pose.pose.position.z - self.gantry_pose.pose.position.z])
+
+            # X component of the harness vector
+            x = 1000.0*np.dot(self.gantry_to_harness, self.xhat)
+            # Y component of the harness vector
+            y = 1000.0*np.dot(self.gantry_to_harness, self.yhat)
+
+            print("X: ", x, "Y: ", y)
+            # Move the gantry to the specified location
+            self.move_gantry_rel(x, y)
+    
+    def mazeboundary_marker0_callback(self, msg):
+        self.mazeboundary_marker0 = np.array([msg.point.x, msg.point.y, msg.point.z])
+
+    def mazeboundary_marker1_callback(self, msg):
+        self.mazeboundary_marker1 = np.array([msg.point.x, msg.point.y, msg.point.z])
+    
+    def mazeboundary_marker2_callback(self, msg):
+        self.mazeboundary_marker2 = np.array([msg.point.x, msg.point.y, msg.point.z])
     
     def home(self):
         self.gcode_client.raw_command("$25=5000")
         self.gcode_client.raw_command("$H")
         self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
         
+    def move_gantry_rel(self, x, y):
+        self.gcode_client.raw_command("G91")
+        self.gcode_client.raw_command("G0 X{} Y{}".format(x,y))
 
-    def move_gantry(self, x, y):
+    def move_gantry_abs(self, x, y):
+        self.gcode_client.raw_command("G90")
         self.gcode_client.raw_command("G0 X{} Y{}".format(x,y))
     
     def run_pump(self, duration):
@@ -40,14 +103,27 @@ class GantryFeeder:
         self.gcode_client.raw_command("M5")
 
     def gantry_cmd_callback(self, msg):
-        
         if msg.cmd == "HOME":
+            self.track_harness = False
             self.home()
         elif msg.cmd == "MOVE":
+            self.track_harness = False
             # Move the gantry to the specified location
-            self.move_gantry(msg.args[0], msg.args[1])
+            self.move_gantry_abs(msg.args[0], msg.args[1])
         elif msg.cmd == "FEED":
+            self.track_harness = False
             self.run_pump(msg.args[0])
+        elif msg.cmd == "TRACK_HARNESS":
+            self.track_harness = True
+
+
+    def gantry_pose_callback(self, msg):
+        self.gantry_pose = msg
+        # print("Gantry Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+
+    def harness_pose_callback(self, msg):
+        self.harness_pose = msg
+        # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
 # @brief Main code
 if __name__ == '__main__':
