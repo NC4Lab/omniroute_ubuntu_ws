@@ -73,7 +73,7 @@ class Client:
             cmd = cmd.upper()
             cmd = cmd + "\r\n"
             self.ser.write(str.encode(cmd))
-            time.sleep(1)
+            # time.sleep(1)
             while True:
                 feedback = self.ser.readline()
                 if feedback == b'ok\r\n':
