@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import time
 import rospy
 from omniroute_operation.msg import *
@@ -6,7 +7,7 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 
 # Importing Gantry library
-from three_by_three_interface.gcodeclient import Client as GcodeClient
+from gantry.gcodeclient import Client as GcodeClient
 # from three_by_three_interface.find_port port find_port
 
 class GantryFeeder:
@@ -78,8 +79,10 @@ class GantryFeeder:
             y = k*np.dot(self.gantry_to_harness, self.yhat)
 
             # print("X: ", x, "Y: ", y)
-        #     # Move the gantry to the specified location
-            self.move_gantry_rel(x, y)
+            # Move the gantry to the specified location
+            # TODO: Check if the gantry is within the maze boundary
+            if ~np.isnan(x) and ~np.isnan(y):
+                self.move_gantry_rel(x, y)
     
     def mazeboundary_marker0_callback(self, msg):
         self.mazeboundary_marker0 = np.array([msg.point.x, msg.point.y, msg.point.z])
@@ -141,6 +144,6 @@ class GantryFeeder:
 # @brief Main code
 if __name__ == '__main__':
     # Initialize the ROS node with name 'wall_controller'
-    rospy.init_node('gantry_feeder')
+    rospy.init_node('gantry_operation')
     GantryFeeder()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown
