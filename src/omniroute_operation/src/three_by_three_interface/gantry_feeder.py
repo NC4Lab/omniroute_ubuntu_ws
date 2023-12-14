@@ -77,7 +77,7 @@ class GantryFeeder:
             # Y component of the harness movement vector
             y = k*np.dot(self.gantry_to_harness, self.yhat)
 
-            print("X: ", x, "Y: ", y)
+            # print("X: ", x, "Y: ", y)
         #     # Move the gantry to the specified location
             self.move_gantry_rel(x, y)
     
