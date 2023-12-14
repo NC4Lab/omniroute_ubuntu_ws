@@ -30,10 +30,12 @@ class Trial:
     def __init__(self):
         self.file_path = 'Training_Trials.xlsx'
         self.df = pd.read_excel(self.file_path)
-        self.column_lists = [self.df[col].tolist() for col in self.df.columns]
-        self.left_visual_cue = self.column_lists[0]
-        self.right_visual_cue = self.column_lists[1]
-        self.sound_cue = self.column_lists[2]
+        #self.column_lists = [self.df[col].tolist() for col in self.df.columns]
+        #self.left_visual_cue = self.column_lists[0]
+        #self.right_visual_cue = self.column_lists[1]
+        #self.sound_cue = self.column_lists[2]
+        self.trials = self.df.values.tolist()
+        self.nTrials = len(self.rows_list)
 
 
 class Interface(Plugin):
@@ -41,7 +43,7 @@ class Interface(Plugin):
         super(Interface, self).__init__(context)
 
         self._joint_sub = None
-        self.setObjectName('Interface')
+        self.setObjectName('Maze Experiment Interface')
 
         from argparse import ArgumentParser
         parser = ArgumentParser()
@@ -58,8 +60,7 @@ class Interface(Plugin):
         ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'maze_experiment_interface.ui')
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
-        # Give QObjects reasonable names
-
+        
         rospy.logerr('Test Interface started')
 
         self._widget.setObjectName('InterfacePluginUi')
@@ -101,17 +102,16 @@ class Interface(Plugin):
         self.current_time = rospy.Time.now()
 
         self.currentTrial = 0
-        self.nTrials
 
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
             self.run_experiment()
             r.sleep()
-            
-            
+
+
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'experiment_node', 'mze_experiment_interface'))
-        filter = "Text Files (*.py)"  # Change this to the file type you want to allow
+        filter = "Text Files (*.xlsx)"  
         files, _ = QFileDialog.getOpenFileNames(None, "Select files to add", pathDir, filter)
 
         if files:
@@ -161,6 +161,61 @@ class Interface(Plugin):
         # Set the current file in the list widget
         self._widget.listWidget.setCurrentRow(self.current_file_index)
 
+        
+    def _handle_startBtn_clicked(self):
+        self.mode = Mode.START_EXPERIMENT
+        self.nTrials = self._widget.nTrialsEdit.text()
+        self.run_experiment()
+
+    def _handle_pauseBtn_clicked(self):
+        rospy.loginfo("Experiment paused")
+        self.mode_before_pause = self.mode
+        self.mode = Mode.PAUSE_EXPERIMENT
+
+    def _handle_resumeBtn_clicked(self):
+        rospy.loginfo("Experiment resumed")
+        self.mode = Mode.RESUME_EXPERIMENT
+
+    def _handle_cellOneBtn_clicked(self):
+        self.cells_list = [1,3,4,5]
+        self.walls_list = [123, 345, 678, 789]
+        self.project_left_cue_wall = [1]
+        self.project_right_cue_wall = [2]
+        self.start_door = [1]
+        self.left_goal_door = [2]
+        self.right_goal_door = [3]
+        self.door_pub.publish("activate walls in self.walls_list")
+        
+    def _handle_cellThreeBtn_clicked(self):
+        self.cells_list = [1,3,4,7]
+        self.walls_list = [123, 345, 678, 789]
+        self.project_left_cue_wall = [1]
+        self.project_right_cue_wall = [2]
+        self.start_door = [1]
+        self.left_goal_door = [2]
+        self.right_goal_door = [3]
+        self.door_pub.publish("activate walls in self.walls_list")
+        
+    def _handle_cellFiveBtn_clicked(self):
+        self.cells_list = [1,4,5,7]
+        self.walls_list = [123, 345, 678, 789]
+        self.project_left_cue_wall = [1]
+        self.project_right_cue_wall = [2]
+        self.start_door = [1]
+        self.left_goal_door = [2]
+        self.right_goal_door = [3]
+        self.door_pub.publish("activate walls in self.walls_list")
+               
+    def _handle_cellSevenBtn_clicked(self):
+        self.cells_list = [3,4,5,7]
+        self.walls_list = [123, 345, 678, 789]
+        self.project_left_cue_wall = [1]
+        self.project_right_cue_wall = [2]
+        self.start_door = [1]
+        self.left_goal_door = [2]
+        self.right_goal_door = [3]
+        self.door_pub.publish("activate walls in self.walls_list")
+    
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
@@ -170,7 +225,7 @@ class Interface(Plugin):
             # Load trial file
             # populate a list of trials
             # populate nTrials
-            self.currentTrial = -1
+            self.currentTrialNumber= -1
 
             # Load starting maze config
             # Wait for experimenter signal
@@ -178,17 +233,25 @@ class Interface(Plugin):
             self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.START_TRIAL:
-            rospy.loginfo(f"START OF TRIAL {i}")
-            self.currentTrial = self.currentTrial+1
+            self.currentTrialNumber = self.currentTrialNumber+1
+            self.currentTrial = Trial.trials[self.currentTrialNumber]
+            rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-            if self.currentTrial >= self.nTrials:
+            if self.currentTrial >= Trial.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
             # Load maze config according to animal location
             # Project cues
 
             # Play sound cue
-            self.play_sound_cue()
+            self.sound_cue = self.currentTrial[2]
+            self.play_sound_cue(self.sound_cue)
+
+            self.left_visual_cue = self.currentTrial[0]
+            self.right_visual_cue = self.currentTrial[1]
+            self.projec_left_cue(self.left_visual_cue)
+            self.projec_right_cue(self.right_visual_cue)
+        
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_START_CHAMBER
@@ -206,10 +269,10 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.door_pub.publish("close_start_door")
+            self.door_deactivate("close_start_door")
 
             if (self.current_time - self.mode_start_time) >= self.choice_wait_duration.to_sec():
-                self.door_pub.publish("open_chosen_door")
+                self.door_activate("open_chosen_door")
                 self.stop_sound_cue()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_TO_GOAL
@@ -217,16 +280,28 @@ class Interface(Plugin):
         elif self.mode == Mode.CHOICE_TO_GOAL:
             rospy.loginfo("CHOICE TO GOAL")
             if rat_made_right_choice:
-                self.door_pub.publish("close_goal_door")
+                self.door_deactivate("close_goal_door")
                 self.reward_dispense()
                 if (self.current_time - self.start_time) == self.reward_duration.to_sec():
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.END_TRIAL
             else:
-                self.door_pub.publish("close_goal_door")
+                self.door_deactivate("close_goal_door")
                 if (self.current_time - self.start_time) == self.wrong_choice_duration.to_sec():
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.END_TRIAL
+
+        elif self.mode == Mode.PAUSE_EXPERIMENT:
+            rospy.loginfo("PAUSE_EXPERIMENT")
+            self.mode_start_time = rospy.Time.now()
+            sender_button = self.sender()
+            if sender_button == self._widget.resumeBtn:
+                self.mode == Mode.RESUME_EXPERIMENT
+            
+        elif self.mode == Mode.RESUME_EXPERIMENT:
+            rospy.loginfo("RESUME_EXPERIMENT")
+            self.mode_start_time = rospy.Time.now()
+            self.mode == self.mode_before_pause
 
         elif self.mode == Mode.END_TRIAL:
             rospy.loginfo("END TRIAL")
@@ -234,17 +309,28 @@ class Interface(Plugin):
             self.mode == Mode.START_TRIAL
 
     def play_sound_cue(self):
-        self.sound_pub.publish("play_sound")
+        if self.sound_cue == "white_noise":
+            self.sound_pub.publish("white_noise")
+        elif self.sound_cue == "5khz_tone":
+            self.sound_pub.publish("5khz_tone")
 
     def stop_sound_cue(self):
         self.sound_pub.publish("stop_sound")
+
+    def project_left_cue(self):
+        self.projector_pub.publish("project_left_cue on the wall number ?")
+
+    def project_right_cue(self):
+        self.projector_pub.publish("project_right_cue on the wall number ?")
+
+    def door_activate(self):
+        self.door_pub.publish("open_start_door")
+
+    def door_deactivate(self):
+        self.door_pub.publish("close_start_door")
 
 
 if __name__ == '__main__':
     rospy.init_node('maze_experiment_controller')
     Interface()
     rospy.spin()
-
-
-
-
