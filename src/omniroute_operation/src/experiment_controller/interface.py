@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os,time
 import rospy
 from std_msgs.msg import String
 import pandas as pd
@@ -8,7 +9,7 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
-from python_qt_binding import QButtonGroup
+#from python_qt_binding import QButtonGroup
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
@@ -27,16 +28,12 @@ class Mode(Enum):
     RESUME_EXPERIMENT = 9
 
 
-class Trial:
-    def __init__(self):
-        self.file_path = 'Training_Trials.xlsx'
-        self.df = pd.read_excel(self.file_path)
-        #self.column_lists = [self.df[col].tolist() for col in self.df.columns]
-        #self.left_visual_cue = self.column_lists[0]
-        #self.right_visual_cue = self.column_lists[1]
-        #self.sound_cue = self.column_lists[2]
-        self.trials = self.df.values.tolist()
-        self.nTrials = len(self.rows_list)
+#class Trial:
+ #   def __init__(self):
+  #      self.file_path = 'Training_Trials.xlsx'
+    #    self.df = pd.read_excel(self.file_path)
+     #   self.trials = self.df.values.tolist()
+       # self.nTrials = len(self.rows_list)
 
 
 class Interface(Plugin):
@@ -94,6 +91,7 @@ class Interface(Plugin):
         self._widget.cellFiveBtn.clicked.connect(self._handle_cellFiveBtn_clicked)
         self._widget.cellSevenBtn.clicked.connect(self._handle_cellSevenBtn_clicked)
         self._widget.startCellBtnGroup.buttonClicked.connect(self._handle_startCellBtnGroup_clicked)
+        self._widget.listWidget.itemClicked.connect(self._handle_listWidget_item_clicked)
 
         self._widget.pathDirEdit.setText(
             os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
@@ -151,7 +149,17 @@ class Interface(Plugin):
             self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
             self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
             
-            
+    def _handle_listWidget_item_clicked(self):
+        # Get the selected file name
+        self.selected_file_name = self._widget.listWidget.currentItem().text()
+
+        # Get the full path of the selected file
+        self.selected_file_path = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experimet_controller', 'interface'))
+
+        # Load the file by passing the file path to load_csvfile
+        self.load_csvfile(self.selected_file_path)
+
+
     def _handle_nextBtn_clicked(self):
         # Increment the current file index
         self.current_file_index += 1
@@ -247,6 +255,11 @@ class Interface(Plugin):
         self.left_chamber = [1]
         self.right_chamber = [2]
         self.door_pub.publish("activate walls in self.walls_list")
+
+    def load_csvfile(self, file_path):
+        self.df = pd.read_excel(file_path)
+        self.trials = self.df.values.tolist()
+        self.nTrials = len(self.trials)
     
 
     def run_experiment(self):
@@ -268,10 +281,10 @@ class Interface(Plugin):
 
         elif self.mode == Mode.START_TRIAL:
             self.currentTrialNumber = self.currentTrialNumber+1
-            self.currentTrial = Trial.trials[self.currentTrialNumber]
+            self.currentTrial = self.trials[self.currentTrialNumber]
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-            if self.currentTrial >= Trial.nTrials:
+            if self.currentTrial >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
             # Load maze config according to animal location
