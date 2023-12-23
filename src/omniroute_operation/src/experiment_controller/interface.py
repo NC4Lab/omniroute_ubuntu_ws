@@ -9,7 +9,7 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
-#from python_qt_binding import QButtonGroup
+from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
@@ -22,10 +22,12 @@ class Mode(Enum):
     START_TO_CHOICE = 3
     CHOICE = 4
     CHOICE_TO_GOAL = 5
-    END_TRIAL = 6
-    END_EXPERIMENT = 7
-    PAUSE_EXPERIMENT = 8
-    RESUME_EXPERIMENT = 9
+    SUCCESS = 6
+    ERROR = 7
+    END_TRIAL = 8
+    END_EXPERIMENT = 9
+    PAUSE_EXPERIMENT = 10
+    RESUME_EXPERIMENT = 11
 
 
 #class Trial:
@@ -83,20 +85,19 @@ class Interface(Plugin):
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
+        self._widget.nextBtn_2.clicked.connect(self._handle_nextBtn_2_clicked)
+        self._widget.previousBtn_2.clicked.connect(self._handle_previousBtn_2_clicked)
         self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
         self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
         self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
-        self._widget.cellOneBtn.clicked.connect(self._handle_cellOneBtn_clicked)
-        self._widget.cellThreeBtn.clicked.connect(self._handle_cellThreeBtn_clicked)
-        self._widget.cellFiveBtn.clicked.connect(self._handle_cellFiveBtn_clicked)
-        self._widget.cellSevenBtn.clicked.connect(self._handle_cellSevenBtn_clicked)
         self._widget.startCellBtnGroup.buttonClicked.connect(self._handle_startCellBtnGroup_clicked)
         self._widget.listWidget.itemClicked.connect(self._handle_listWidget_item_clicked)
+        self._widget.excelListWidget.itemClicked.connect(self._handle_excelListWidget_item_clicked)
 
         self._widget.pathDirEdit.setText(
             os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
 
-        rospy.init_node('maze_experiment_node', anonymous=True)
+        #rospy.init_node('experiment_controller', anonymous=True)
         self.sound_pub = rospy.Publisher('sound_command', String, queue_size=1)
         self.door_pub = rospy.Publisher('door_command', String, queue_size=1)
         self.projector_pub = rospy.Publisher('projector_command', String, queue_size=1)
@@ -111,9 +112,16 @@ class Interface(Plugin):
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
-        self.currentTrial = 0
+        self.currentTrial = []
+        self.currentTrialNumber = 0 
+        self.nTrials = 0 
+        self.trials = [] 
 
         self.currentStartConfig = 0
+
+        self.current_file_index = 0
+        self.current_trial_index = 0
+        
 
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
@@ -143,21 +151,24 @@ class Interface(Plugin):
 
             # Save the list of selected files as an attribute of the class
             self.files = files
-            self.current_file_index = 0
 
             # Connect the "Next" and "Previous" buttons to their respective callback functions
             self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
             self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
             
     def _handle_listWidget_item_clicked(self):
-        # Get the selected file name
-        self.selected_file_name = self._widget.listWidget.currentItem().text()
+        # Get the current file index from the list widget
+        self.current_file_index = self._widget.listWidget.currentRow()
+
+        # Set the current file in the list widget
+        self._widget.listWidget.setCurrentRow(self.current_file_index)
 
         # Get the full path of the selected file
         self.selected_file_path = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experimet_controller', 'interface'))
 
         # Load the file by passing the file path to load_csvfile
-        self.load_csvfile(self.selected_file_path)
+        self.load_csv_file(self.selected_file_path)
+        self.display_excel_content(self.selected_file_path)
 
 
     def _handle_nextBtn_clicked(self):
@@ -182,6 +193,38 @@ class Interface(Plugin):
 
         # Set the current file in the list widget
         self._widget.listWidget.setCurrentRow(self.current_file_index)
+
+
+    def _handle_excelListWidget_item_clicked(self):
+        # Get the current trial index from the excel list widget
+        self.current_trial_index = self._widget.excelListWidget.currentRow()
+
+        # Set the current trial in the excel list widget
+        self._widget.excelListWidget.setCurrentRow(self.current_trial_index)
+        
+
+    def _handle_nextBtn_2_clicked(self):
+        # Increment the current trial index
+        self.current_trial_index += 1
+
+         # If we've reached the end of the list, loop back to the beginning
+        if self.current_trial_index >= len(self.trials):
+            self.current_trial_index = 0
+
+        # Set the current trial in the excel list widget
+        self._widget.excelListWidget.setCurrentRow(self.current_trial_index)
+
+
+    def _handle_previousBtn_2_clicked(self):
+        # Decrement the current trial index
+        self.current_trial_index -= 1
+
+        # If we've reached the beginning of the list, loop back to the end
+        if self.current_trial_index < 0:
+            self.current_trial_index = len(self.trials) - 1
+
+        # Set the current trial in the excel list widget
+        self._widget.excelListWidget.setCurrentRow(self.current_trial_index) 
 
         
     def _handle_startBtn_clicked(self):
@@ -256,23 +299,31 @@ class Interface(Plugin):
         self.right_chamber = [2]
         self.door_pub.publish("activate walls in self.walls_list")
 
-    def load_csvfile(self, file_path):
+    def load_csv_file(self, file_path):
+        # Load the csv file into a pandas dataframe
         self.df = pd.read_excel(file_path)
-        self.trials = self.df.values.tolist()
+        self.trials = self.df.iloc[1:].values.tolist()
         self.nTrials = len(self.trials)
-    
+
+    def display_excel_content(self, file_path):
+        # Display the content in the QListWidget
+        self.excelListWidget.clear()
+        for index, row in self.df.iterrows():
+            row_list = row.tolist()  # Convert the row to a list
+            item_text = ', '.join(map(str, row_list))
+            self.listWidget.addItem(item_text)
+         
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
 
         if self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("START OF THE EXPERIMENT")
-            # Load trial file
-            # populate a list of trials
-            # populate nTrials
-            self.currentTrialNumber= -1
+
+            #self.currentTrialNumber= -1
             self.currentStartConfig = self._widget.startCellBtnGroup.checkedId()
-            self._widget.startCellBtnGroup.setEnabled(False)
+            for button in self._widget.startCellBtnGroup.buttons():
+                button.setEnabled(False)
 
             # Load starting maze config
             # Wait for experimenter signal
@@ -280,50 +331,55 @@ class Interface(Plugin):
             self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.START_TRIAL:
-            self.currentTrialNumber = self.currentTrialNumber+1
-            self.currentTrial = self.trials[self.currentTrialNumber]
+            #self.currentTrialNumber = self.currentTrialNumber+1
+            self.currentTrialNumber = self.current_trial_index 
+            if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                self.currentTrial = self.trials[self.currentTrialNumber]
+            else:
+                # Handle the case where trials is empty or currentTrialNumber is out of range
+                self.currentTrial = None
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-            if self.currentTrial >= self.nTrials:
+            if self.currentTrial is not None and self.currentTrial >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
             # Load maze config according to animal location
             # Project cues
 
             # Play sound cue
-            self.sound_cue = self.currentTrial[2]
-            self.play_sound_cue(self.sound_cue)
+            if self.currentTrial is not None:
+                self.sound_cue = self.currentTrial[2]
+                self.play_sound_cue(self.sound_cue)
 
-            self.left_visual_cue = self.currentTrial[0]
-            self.right_visual_cue = self.currentTrial[1]
-            self.project_left_cue(self.left_visual_cue)
-            self.project_right_cue(self.right_visual_cue)
+                self.left_visual_cue = self.currentTrial[0]
+                self.right_visual_cue = self.currentTrial[1]
+                self.project_left_cue(self.left_visual_cue)
+                self.project_right_cue(self.right_visual_cue)
 
-            self.start_chamber = self._widget.startCellBtnGroup.checkedId()
-            
-            if self.sound_cue == "white_noise":
-                if self.left_visual_cue == "triangle":
-                    self.success_chamber = self.left_chamber
-                    self.error_chamber = self.right_chamber
+                self.start_chamber = self._widget.startCellBtnGroup.checkedId()
+                
+                if self.sound_cue == "white_noise":
+                    if self.left_visual_cue == "triangle":
+                        self.success_chamber = self.left_chamber
+                        self.error_chamber = self.right_chamber
+                    else:
+                        self.success_chamber = self.right_chamber
+                        self.error_chamber = self.left_chamber
                 else:
-                    self.success_chamber = self.right_chamber
-                    self.error_chamber = self.left_chamber
-            else:
-                if self.left_visual_cue == "square":
-                    self.success_chamber = self.left_chamber
-                    self.error_chamber = self.right_chamber
-                else:
-                    self.success_chamber = self.right_chamber
-                    self.error_chamber = self.left_chamber
-            
-            # Define self.rat_chamber
-        
+                    if self.left_visual_cue == "square":
+                        self.success_chamber = self.left_chamber
+                        self.error_chamber = self.right_chamber
+                    else:
+                        self.success_chamber = self.right_chamber
+                        self.error_chamber = self.left_chamber
+                
+                # Define self.rat_chamber    
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_START_CHAMBER
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
-            if (self.current_time - self.mode_start_time) >= self.start_sound_duration.to_sec():
+            if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
 
@@ -335,10 +391,10 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.door_deactivate("close_start_door")
+            self.door_deactivate()
 
-            if (self.current_time - self.mode_start_time) >= self.choice_wait_duration.to_sec():
-                self.door_activate("open_chosen_door")
+            if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
+                self.door_activate()
                 self.stop_sound_cue()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_TO_GOAL
@@ -346,16 +402,25 @@ class Interface(Plugin):
         elif self.mode == Mode.CHOICE_TO_GOAL:
             rospy.loginfo("CHOICE TO GOAL")
             if rat_made_right_choice:
-                self.door_deactivate("close_goal_door")
-                self.reward_dispense()
-                if (self.current_time - self.start_time) == self.reward_duration.to_sec():
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.END_TRIAL
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.SUCCESS
             else:
-                self.door_deactivate("close_goal_door")
-                if (self.current_time - self.start_time) == self.wrong_choice_duration.to_sec():
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.END_TRIAL
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR
+
+        elif self.mode == Mode.SUCCESS:
+            rospy.loginfo("SUCCESS")
+            self.door_deactivate()
+            self.reward_dispense()
+            if (self.current_time - self.start_time).to_sec() == self.reward_duration.to_sec():
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.END_TRIAL
+                
+        elif self.mode == Mode.ERROR:
+            self.door_deactivate()
+            if (self.current_time - self.start_time).to_sec() == self.wrong_choice_duration.to_sec():
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.END_TRIAL
 
         elif self.mode == Mode.PAUSE_EXPERIMENT:
             rospy.loginfo("PAUSE_EXPERIMENT")
@@ -403,6 +468,6 @@ class Interface(Plugin):
 
 
 if __name__ == '__main__':
-    rospy.init_node('maze_experiment_controller')
+    rospy.init_node('experiment_controller')
     Interface()
     rospy.spin()
