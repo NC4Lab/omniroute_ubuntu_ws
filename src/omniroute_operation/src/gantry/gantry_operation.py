@@ -143,7 +143,7 @@ class GantryFeeder:
 
 # @brief Main code
 if __name__ == '__main__':
-    # Initialize the ROS node with name 'wall_controller'
+    # Initialize the ROS node with name 'gantry_operation'
     rospy.init_node('gantry_operation')
     GantryFeeder()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown

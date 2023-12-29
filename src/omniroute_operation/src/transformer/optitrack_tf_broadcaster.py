@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 
 class OptitrackTransformer:
-    # @brief Initialize the GantryFeeder class
+    # @brief Initialize the OptitrackTransformer class
     def __init__(self):
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
