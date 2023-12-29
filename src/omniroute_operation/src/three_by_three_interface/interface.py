@@ -56,6 +56,27 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # ======================== GLOBAL CLASSES ========================
 
+class ProjectionOperation:
+    def __init__(self):
+        # Initialize the node (if not already initialized)
+        if not rospy.core.is_initialized():
+            rospy.init_node('projection_opperation', anonymous=True)
+
+        # Create the publisher for 'projection_cmd' topic
+        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
+        
+        # Rate for publishing, adjust as needed
+        self.rate = rospy.Rate(10) # 10hz
+
+    def publish_projection_cmd(self, number):
+        # Ensure the number is a single digit
+        if 0 <= number <= 9:
+            # Publish the number
+            self.projection_pub.publish(number)
+            rospy.loginfo(f"Published {number} to projection_cmd topic")
+        else:
+            rospy.loginfo("Number is not a single digit")
+
 
 class EsmacatCom:
     """ 
@@ -1186,8 +1207,6 @@ class Interface(Plugin):
     # Define signals
     signal_Esmacat_read_maze_ard0_ease = Signal()
 
-    # ------------------------ NESTED CLASSES ------------------------
-
     def __init__(self, context):
         super(Interface, self).__init__(context)
 
@@ -1270,9 +1289,6 @@ class Interface(Plugin):
             self._widget.sysSettingEdit_4,  # PWM duty cycle for wall motors
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
         ]
-        
-        # ROS Publishers
-        self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
 
         # ................ Maze Setup ................
 
@@ -1353,12 +1369,19 @@ class Interface(Plugin):
         self._widget.fileListWidget.itemClicked.connect(
             self.qt_callback_fileListWidget_item_clicked)
         
+        # Gantry ui callbacks
         self._widget.runGantryBtn.clicked.connect(
             self.qt_callback_runGantryBtn_clicked)
         self._widget.homeGantryBtn.clicked.connect(
             self.qt_callback_homeGantryBtn_clicked)
         self._widget.pumpGantryBtn.clicked.connect(
             self.qt_callback_pumpGantryBtn_clicked)
+        
+        # Projector ui callbacks
+        for i in range(9):  # 0 through 8 for your 9 buttons
+            button_name = f'showProjectionBtn_{i}'
+            button = getattr(self._widget, button_name)
+            button.clicked.connect(lambda _, b=i: self.qt_callback_sendProjCmdBtn_clicked(b))
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
@@ -1390,6 +1413,12 @@ class Interface(Plugin):
 
         # @obsolete ROS Sublisher: @obsolete
         # wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
+
+        # Gantry command publisher
+        self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        
+        # Projection command publisher
+        self.projection_op_pub = ProjectionOperation()
 
         # ROS Subscriber: Esmacat arduino maze ard0 ease
         rospy.Subscriber(
@@ -1817,6 +1846,15 @@ class Interface(Plugin):
         # Run pump for 1 second
         self.gantry_cmd_pub.publish("PUMP", [1.0])
 
+    def qt_callback_sendProjCmdBtn_clicked(self, button_number):
+        """ Callback function to send projector command from button press."""
+        
+        # Use the button_number to send the corresponding ROS command
+        self.projection_op_pub.publish_projection_cmd(button_number)
+
+        # Log the command
+        MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent!", button_number)
+    
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
 

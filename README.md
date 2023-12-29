@@ -118,10 +118,13 @@ echo $ROS_MASTER_URI
 
 ```
 
-## Simple topic test
+## Running the 3x3 with gantry and optitrack
 ```
 
 roslaunch omniroute_operation three_by_three_interface.launch 
-rosrun omniroute_operation gantry_feeder.py 
+rosrun omniroute_operation gantry_operation.py
+rosrun omniroute_operation maze_tf_broadcaster.py
+
+rosrun omniroute_operation experiment_controller
 
 ```
