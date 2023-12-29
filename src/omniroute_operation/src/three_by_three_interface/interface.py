@@ -1694,7 +1694,7 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             self.terminate_ros_node("/Esmacat_application_node")
-            self.terminate_ros_node("/interface_test_node")
+            self.terminate_ros_node("/three_by_three_interface_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:

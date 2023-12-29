@@ -19,8 +19,9 @@
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
      <!-- Omniroute three_by_three_interface interface -->
-    <node name = "interface_test_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
+    <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
 
-    <node name = "gantry_test_node" pkg = "omniroute_operation" type = "gantry_feeder.py" output = "screen"/>
+    <!-- Omniroute feeder cantry node -->
+    <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
 
 </launch>
