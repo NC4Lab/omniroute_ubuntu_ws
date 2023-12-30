@@ -1386,8 +1386,8 @@ class Interface(Plugin):
             self.qt_callback_projWinTogPosBtn_clicked)
         self._widget.projWinTogSizeBtn.clicked.connect(
             self.qt_callback_projWinTogSizeBtn_clicked)
-        self._widget.projWinSetStackBtn.clicked.connect(
-            self.qt_callback_projWinSetStackBtn_clicked)
+        self._widget.projWinForceFucusBtn.clicked.connect(
+            self.qt_callback_projWinForceFucusBtn_clicked)
         for i in range(9):  
             button_name = f'projImgCfgBtn_{i}'
             button = getattr(self._widget, button_name)
@@ -1865,12 +1865,12 @@ class Interface(Plugin):
         self.projection_op_pub.publish_window_mode_cmd(-1)
         MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
 
-    def qt_callback_projWinSetStackBtn_clicked(self):
+    def qt_callback_projWinForceFucusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
         
         # Code -2
         self.projection_op_pub.publish_window_mode_cmd(-2)
-        MazeDB.printMsg('DEBUG', "Command for projWinSetStackBtn sent")
+        MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projWinTogSizeBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
