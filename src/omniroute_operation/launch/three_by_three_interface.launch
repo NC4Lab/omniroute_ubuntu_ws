@@ -22,6 +22,6 @@
     <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
 
     <!-- Omniroute feeder cantry node -->
-    <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
+    <!-- <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/> -->
 
 </launch>

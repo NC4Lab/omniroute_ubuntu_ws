@@ -60,7 +60,7 @@ class ProjectionOperation:
     def __init__(self):
         # Initialize the node (if not already initialized)
         if not rospy.core.is_initialized():
-            rospy.init_node('projection_opperation', anonymous=True)
+            rospy.init_node('projection_opperation_node', anonymous=True)
 
         # Create the publisher for 'projection_cmd' topic
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
@@ -68,14 +68,18 @@ class ProjectionOperation:
         # Rate for publishing, adjust as needed
         self.rate = rospy.Rate(10) # 10hz
 
-    def publish_projection_cmd(self, number):
-        # Ensure the number is a single digit
-        if 0 <= number <= 9:
-            # Publish the number
+    def publish_image_cfg_cmd(self, number):
+        # Publish the number if it is a single digit between 0 and 9
+        if 0 <= number <= 8:
             self.projection_pub.publish(number)
-            rospy.loginfo(f"Published {number} to projection_cmd topic")
+            MazeDB.printMsg('INFO', "Published image config code[%d] to projection_cmd topic", number)
         else:
-            rospy.loginfo("Number is not a single digit")
+            MazeDB.printMsg('ERROR', "Image config[%d] is not valid", number)
+
+    def publish_window_mode_cmd(self, number):
+        # Can send any number
+        self.projection_pub.publish(number)
+        MazeDB.printMsg('INFO', "Published window mode code[%d] to projection_cmd topic", number)
 
 
 class EsmacatCom:
@@ -1378,10 +1382,16 @@ class Interface(Plugin):
             self.qt_callback_pumpGantryBtn_clicked)
         
         # Projector ui callbacks
-        for i in range(9):  # 0 through 8 for your 9 buttons
-            button_name = f'showProjectionBtn_{i}'
+        self._widget.projWinTogPosBtn.clicked.connect(
+            self.qt_callback_projWinTogPosBtn_clicked)
+        self._widget.projWinTogSizeBtn.clicked.connect(
+            self.qt_callback_projWinTogSizeBtn_clicked)
+        self._widget.projWinSetStackBtn.clicked.connect(
+            self.qt_callback_projWinSetStackBtn_clicked)
+        for i in range(9):  
+            button_name = f'projImgCfgBtn_{i}'
             button = getattr(self._widget, button_name)
-            button.clicked.connect(lambda _, b=i: self.qt_callback_sendProjCmdBtn_clicked(b))
+            button.clicked.connect(lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b))
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
@@ -1693,6 +1703,8 @@ class Interface(Plugin):
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
+            #self.terminate_ros_node("/gantry_operation_node")
+            self.terminate_ros_node("/projection_opperation_node")
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/three_by_three_interface_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
@@ -1846,14 +1858,33 @@ class Interface(Plugin):
         # Run pump for 1 second
         self.gantry_cmd_pub.publish("PUMP", [1.0])
 
-    def qt_callback_sendProjCmdBtn_clicked(self, button_number):
+    def qt_callback_projWinTogPosBtn_clicked(self):
+        """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
+        
+        # Code -1
+        self.projection_op_pub.publish_window_mode_cmd(-1)
+        MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
+
+    def qt_callback_projWinSetStackBtn_clicked(self):
+        """ Callback function to force windows to the top of the display stack from button press."""
+        
+        # Code -2
+        self.projection_op_pub.publish_window_mode_cmd(-2)
+        MazeDB.printMsg('DEBUG', "Command for projWinSetStackBtn sent")
+
+    def qt_callback_projWinTogSizeBtn_clicked(self):
+        """ Callback function to change projector widnows position from button press."""
+        
+        # Code -3
+        self.projection_op_pub.publish_window_mode_cmd(-3)
+        MazeDB.printMsg('DEBUG', "Command for projWinTogSizeBtn sent")
+
+    def qt_callback_projImgCfgBtn_clicked(self, button_number):
         """ Callback function to send projector command from button press."""
         
         # Use the button_number to send the corresponding ROS command
-        self.projection_op_pub.publish_projection_cmd(button_number)
-
-        # Log the command
-        MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent!", button_number)
+        self.projection_op_pub.publish_image_cfg_cmd(button_number)
+        MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent", button_number)
     
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
