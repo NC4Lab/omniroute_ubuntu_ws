@@ -1381,21 +1381,25 @@ class Interface(Plugin):
         self._widget.pumpGantryBtn.clicked.connect(
             self.qt_callback_pumpGantryBtn_clicked)
         
-        # Projector ui callbacks
+        # Projector mode ui callbacks
         self._widget.projWinTogPosBtn.clicked.connect(
             self.qt_callback_projWinTogPosBtn_clicked)
-        self._widget.projWinTogSizeBtn.clicked.connect(
-            self.qt_callback_projWinTogSizeBtn_clicked)
+        self._widget.projWinTogFullScrBtn.clicked.connect(
+            self.qt_callback_projWinTogFullScrBtn_clicked)
         self._widget.projWinForceFucusBtn.clicked.connect(
             self.qt_callback_projWinForceFucusBtn_clicked)
+        
+        # Projected image ui callbacks
+        self.proj_img_cfg_btn_vec = [] # Initalize vector for buttons
         for i in range(9):  
             button_name = f'projImgCfgBtn_{i}'
             button = getattr(self._widget, button_name)
-            button.clicked.connect(lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b))
+            button.clicked.connect( # Use lambda pass button index tor callback
+                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b)) 
+            self.proj_img_cfg_btn_vec.append(button)  # Store the button
 
         # Disable all but start and quit buttons
         self._widget.sysReinitBtn.setEnabled(False)
-        self._widget.fileBrowseBtn.setEnabled(False) 
         self._widget.filePreviousBtn.setEnabled(False)
         self._widget.fileNextBtn.setEnabled(False)
         self._widget.plotClearBtn.setEnabled(False)
@@ -1531,7 +1535,6 @@ class Interface(Plugin):
 
             # Enable buttons
             self._widget.sysReinitBtn.setEnabled(True)
-            self._widget.fileBrowseBtn.setEnabled(True)
             self._widget.filePreviousBtn.setEnabled(True)
             self._widget.fileNextBtn.setEnabled(True)
             self._widget.plotClearBtn.setEnabled(True)
@@ -1865,23 +1868,31 @@ class Interface(Plugin):
         self.projection_op_pub.publish_window_mode_cmd(-1)
         MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
 
-    def qt_callback_projWinForceFucusBtn_clicked(self):
-        """ Callback function to force windows to the top of the display stack from button press."""
+    def qt_callback_projWinTogFullScrBtn_clicked(self):
+        """ Callback function to change projector widnows position from button press."""
         
         # Code -2
         self.projection_op_pub.publish_window_mode_cmd(-2)
-        MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
+        MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
-    def qt_callback_projWinTogSizeBtn_clicked(self):
-        """ Callback function to change projector widnows position from button press."""
+    def qt_callback_projWinForceFucusBtn_clicked(self):
+        """ Callback function to force windows to the top of the display stack from button press."""
         
         # Code -3
         self.projection_op_pub.publish_window_mode_cmd(-3)
-        MazeDB.printMsg('DEBUG', "Command for projWinTogSizeBtn sent")
+        MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projImgCfgBtn_clicked(self, button_number):
         """ Callback function to send projector command from button press."""
-        
+
+        # Get the button that was clicked
+        clicked_button = self.proj_img_cfg_btn_vec[button_number]
+
+        # Uncheck all the buttons except the one that was clicked
+        for i, button in enumerate(self.proj_img_cfg_btn_vec):
+            if i != button_number:
+                button.setChecked(False)
+
         # Use the button_number to send the corresponding ROS command
         self.projection_op_pub.publish_image_cfg_cmd(button_number)
         MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent", button_number)

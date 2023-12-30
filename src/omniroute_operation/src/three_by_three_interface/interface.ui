@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>793</width>
-    <height>1065</height>
+    <height>1072</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,11 +18,11 @@
   </property>
   <property name="styleSheet">
    <string notr="true">QGroupBox {
-    background-color: #f0f0f0; /* very light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 2px; /* Optional: for slightly rounded corners */
-}
-</string>
+                background-color: #f0f0f0; /* very light gray */
+                border: 1px solid black; /* 1pt solid black border */
+                border-radius: 2px; /* Optional: for slightly rounded corners */
+                }
+            </string>
   </property>
   <widget class="QGroupBox" name="selectorGroupBox">
    <property name="geometry">
@@ -40,11 +40,11 @@
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    background-color: #f0f0f0; /* very light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 2px; /* Optional: for slightly rounded corners */
-}
-</string>
+                    background-color: #f0f0f0; /* very light gray */
+                    border: 1px solid black; /* 1pt solid black border */
+                    border-radius: 2px; /* Optional: for slightly rounded corners */
+                    }
+                </string>
    </property>
    <property name="title">
     <string/>
@@ -258,7 +258,7 @@
      <x>10</x>
      <y>660</y>
      <width>770</width>
-     <height>181</height>
+     <height>171</height>
     </rect>
    </property>
    <property name="font">
@@ -268,10 +268,10 @@
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    background-color: #cccccc; /* light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 3px; /* Optional: for slightly rounded corners */
-}</string>
+                    background-color: #cccccc; /* light gray */
+                    border: 1px solid black; /* 1pt solid black border */
+                    border-radius: 3px; /* Optional: for slightly rounded corners */
+                    }</string>
    </property>
    <property name="title">
     <string>System Options</string>
@@ -292,8 +292,26 @@
       <bold>true</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
      <string>QUIT</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="sysReinitBtn">
@@ -378,10 +396,10 @@
     </property>
     <property name="styleSheet">
      <string notr="true">QGroupBox {
-    background-color: #ffffff; /* very light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 2px; /* Optional: for slightly rounded corners */
-}
+                        background-color: #ffffff; /* very light gray */
+                        border: 1px solid black; /* 1pt solid black border */
+                        border-radius: 2px; /* Optional: for slightly rounded corners */
+                        }
                         QGroupBox::title {
                         subcontrol-origin: margin;
                         subcontrol-position: top center;
@@ -695,8 +713,26 @@
       <bold>true</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
      <string>START</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
@@ -704,9 +740,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>860</y>
+     <y>850</y>
      <width>521</width>
-     <height>191</height>
+     <height>211</height>
     </rect>
    </property>
    <property name="font">
@@ -716,11 +752,11 @@
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    background-color: #cccccc; /* light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 3px; /* Optional: for slightly rounded corners */
-}
-</string>
+                    background-color: #cccccc; /* light gray */
+                    border: 1px solid black; /* 1pt solid black border */
+                    border-radius: 3px; /* Optional: for slightly rounded corners */
+                    }
+                </string>
    </property>
    <property name="title">
     <string>Projector Opperation</string>
@@ -728,8 +764,8 @@
    <widget class="QPushButton" name="projImgCfgBtn_3">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>80</y>
+      <x>300</x>
+      <y>120</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -739,15 +775,33 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 3</string>
+     <string>South 1</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_7">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>80</y>
+      <x>440</x>
+      <y>120</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -757,15 +811,33 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 7</string>
+     <string>North 1</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_5">
     <property name="geometry">
      <rect>
-      <x>380</x>
-      <y>80</y>
+      <x>370</x>
+      <y>120</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -775,15 +847,33 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 5</string>
+     <string>West 1</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_8">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>120</y>
+      <x>440</x>
+      <y>160</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -793,15 +883,33 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 8</string>
+     <string>North 2</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_6">
     <property name="geometry">
      <rect>
-      <x>380</x>
-      <y>120</y>
+      <x>370</x>
+      <y>160</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -811,14 +919,32 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 6</string>
+     <string>West 2</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_0">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>230</x>
       <y>80</y>
       <width>60</width>
       <height>30</height>
@@ -829,15 +955,33 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 0</string>
+     <string>Blank</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_2">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>120</y>
+      <x>230</x>
+      <y>160</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -847,14 +991,68 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Cfg 2</string>
+     <string>East 2</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projImgCfgBtn_4">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>300</x>
+      <y>160</y>
+      <width>60</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>South 2</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="projImgCfgBtn_1">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
       <y>120</y>
       <width>60</width>
       <height>30</height>
@@ -865,34 +1063,34 @@
       <pointsize>12</pointsize>
      </font>
     </property>
-    <property name="text">
-     <string>Cfg 4</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="projImgCfgBtn_1">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>80</y>
-      <width>60</width>
-      <height>30</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
     </property>
     <property name="text">
-     <string>Cfg 1</string>
+     <string>East 1</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLabel" name="projImgCfgLabel">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>40</y>
-      <width>351</width>
+      <x>220</x>
+      <y>50</y>
+      <width>291</width>
       <height>21</height>
      </rect>
     </property>
@@ -903,7 +1101,9 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Wall Image Configuration by Direction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p
+                        align=&quot;center&quot;&gt;Wall Image Configuration by
+                        Direction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -912,9 +1112,9 @@
    <widget class="QLabel" name="projImgCfgLabel_2">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>121</width>
+      <x>20</x>
+      <y>50</y>
+      <width>116</width>
       <height>21</height>
      </rect>
     </property>
@@ -925,7 +1125,8 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Window Mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p
+                        align=&quot;center&quot;&gt;Window Mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -934,9 +1135,9 @@
    <widget class="QPushButton" name="projWinTogPosBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>70</y>
-      <width>131</width>
+      <x>20</x>
+      <y>80</y>
+      <width>116</width>
       <height>30</height>
      </rect>
     </property>
@@ -947,16 +1148,37 @@
       <bold>false</bold>
      </font>
     </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Toggle Position</string>
+     <string>Project Image</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPushButton" name="projWinTogSizeBtn">
+   <widget class="QPushButton" name="projWinTogFullScrBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>110</y>
-      <width>131</width>
+      <x>20</x>
+      <y>120</y>
+      <width>116</width>
       <height>30</height>
      </rect>
     </property>
@@ -967,16 +1189,34 @@
       <bold>false</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
     <property name="text">
-     <string>Toggle Fullscreen</string>
+     <string>Fullscreen</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="projWinForceFucusBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>150</y>
-      <width>131</width>
+      <x>20</x>
+      <y>160</y>
+      <width>116</width>
       <height>30</height>
      </rect>
     </property>
@@ -996,9 +1236,9 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>860</y>
+     <y>850</y>
      <width>241</width>
-     <height>191</height>
+     <height>211</height>
     </rect>
    </property>
    <property name="font">
@@ -1008,11 +1248,11 @@
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    background-color: #cccccc; /* light gray */
-    border: 1px solid black; /* 1pt solid black border */
-    border-radius: 3px; /* Optional: for slightly rounded corners */
-}
-</string>
+                    background-color: #cccccc; /* light gray */
+                    border: 1px solid black; /* 1pt solid black border */
+                    border-radius: 3px; /* Optional: for slightly rounded corners */
+                    }
+                </string>
    </property>
    <property name="title">
     <string>Feeder Gantry Opperation</string>
@@ -1020,7 +1260,7 @@
    <widget class="QLabel" name="xSpinBoxLabel">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>50</y>
       <width>31</width>
       <height>31</height>
@@ -1059,7 +1299,7 @@
    <widget class="QLabel" name="xSpinBoxLabel_2">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>120</x>
       <y>50</y>
       <width>31</width>
       <height>31</height>
@@ -1082,10 +1322,10 @@
    <widget class="QPushButton" name="runGantryBtn">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>100</y>
-      <width>111</width>
-      <height>25</height>
+      <x>40</x>
+      <y>90</y>
+      <width>151</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -1094,16 +1334,16 @@
      </font>
     </property>
     <property name="text">
-     <string>Run Gantry</string>
+     <string>Run to Position</string>
     </property>
    </widget>
    <widget class="QPushButton" name="homeGantryBtn">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>40</x>
       <y>150</y>
       <width>71</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -1134,10 +1374,10 @@
    <widget class="QPushButton" name="pumpGantryBtn">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>120</x>
       <y>150</y>
       <width>71</width>
-      <height>25</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -1150,6 +1390,10 @@
     </property>
    </widget>
   </widget>
+  <zorder>gantryOperationGroupBo</zorder>
+  <zorder>selectorGroupBox</zorder>
+  <zorder>systemGroupBox</zorder>
+  <zorder>projectionOperationGroupBox</zorder>
  </widget>
  <resources/>
  <connections/>
