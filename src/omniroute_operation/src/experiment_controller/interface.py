@@ -84,6 +84,12 @@ class Interface(Plugin):
         self._widget.startCellBtnGroup.addButton(self._widget.cellSevenBtn, id=7)
         self._widget.startCellBtnGroup.setExclusive(True)
 
+        self._widget.trainingModeBtnGroup = QButtonGroup()
+        self._widget.trainingModeBtnGroup.addButton(self._widget.forcedChoiceBtn, id=1)
+        self._widget.trainingModeBtnGroup.addButton(self._widget.choiceBtn, id=2)
+        self._widget.trainingModeBtnGroup.addButton(self._widget.automaticBtn, id=3)
+        self._widget.trainingModeBtnGroup.setExclusive(True)
+
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
@@ -94,6 +100,7 @@ class Interface(Plugin):
         self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
         self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
         self._widget.startCellBtnGroup.buttonClicked.connect(self._handle_startCellBtnGroup_clicked)
+        self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
         self._widget.listWidget.itemClicked.connect(self._handle_listWidget_item_clicked)
         self._widget.excelListWidget.itemClicked.connect(self._handle_excelListWidget_item_clicked)
 
@@ -255,69 +262,117 @@ class Interface(Plugin):
         elif self._widget.startCellBtnGroup.checkedId() == 7:
             self.setCellSevenStartConfig()
 
+    def _handle_trainingModeBtnGroup_clicked(self):
+        if self._widget.trainingModeBtnGroup.checkedId() == 1:
+            self.setForcedChoiceMode()
+        elif self._widget.trainingModeBtnGroup.checkedId() == 2:
+            self.setChoiceMode()
+
+
+    #In the following functions, we define the starting maze configuration for each chamber. 
+    #The starting maze configuration is defined by the chamber number, the walls that are present in the chamber.
+    #In doing so the following wall map from three_by_three_interface is used:
+    #    WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
+    #        0: [0, 1, 2, 3, 4, 5, 6, 7],
+    #        1: [1, 2, 3, 5, 7],
+    #        2: [0, 1, 2, 3, 4, 5, 6, 7],
+    #        3: [0, 1, 3, 5, 7],
+    #        4: [0, 1, 2, 3, 4, 5, 6, 7],
+    #        5: [1, 3, 4, 5, 7],
+    #        6: [0, 1, 2, 3, 4, 5, 6, 7],
+    #        7: [1, 3, 5, 6, 7],
+    #        8: [0, 1, 2, 3, 4, 5, 6, 7]
+    #    }
+    #The central chamber is chamber 4. The start_door, left_goal_door, right_goal_door, project_left_cue_wall, and project_right_cue_wall are defined as walls of chamber 4.
+    #For example, if the start_door is wall 2, it means chamber 4 wall 2.
+
     def setCellOneStartConfig(self):
-        self.cells_list = [1,3,4,5]
-        self.walls_list = [123, 345, 678, 789]
-        self.project_left_cue_wall = [1]
-        self.project_right_cue_wall = [2]
-        self.start_door = [1]
-        self.left_goal_door = [2]
-        self.right_goal_door = [3]
-        self.left_chamber = [1]
-        self.right_chamber = [2]
+        self.chambers_list = [1, 3, 4, 5]
+        self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.left_chamber = [5]
+        self.right_chamber = [3]
+        self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.start_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.project_left_cue_wall = [4]
+        self.project_right_cue_wall = [0]
+        self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
+        self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.wallStates = WallState()
-        self.wallStates.chamber = self.cells_list
+        self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
 
     def setCellThreeStartConfig(self):
-        self.cells_list = [1,3,4,7]
-        self.walls_list = [123, 345, 678, 789]
-        self.project_left_cue_wall = [1]
-        self.project_right_cue_wall = [2]
-        self.start_door = [1]
-        self.left_goal_door = [2]
-        self.right_goal_door = [3]
+        self.chambers_list = [1, 3, 4, 7]
+        self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.left_chamber = [1]
-        self.right_chamber = [2]
+        self.right_chamber = [7]
+        self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        self.start_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        self.project_left_cue_wall = [2]
+        self.project_right_cue_wall = [6]
+        self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.wallStates = WallState()
-        self.wallStates.chamber = self.cells_list
+        self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
 
     def setCellFiveStartConfig(self):
-        self.cells_list = [1,4,5,7]
-        self.walls_list = [123, 345, 678, 789]
-        self.project_left_cue_wall = [1]
+        self.chambers_list = [1, 4, 5, 7]
+        self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.left_chamber = [7]
+        self.right_chamber = [1]
+        self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.start_door_close = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.project_left_cue_wall = [6]
         self.project_right_cue_wall = [2]
-        self.start_door = [1]
-        self.left_goal_door = [2]
-        self.right_goal_door = [3]
-        self.left_chamber = [1]
-        self.right_chamber = [2]
+        self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.wallStates = WallState()
-        self.wallStates.chamber = self.cells_list
+        self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
 
     def setCellSevenStartConfig(self):
-        self.cells_list = [3,4,5,7]
-        self.walls_list = [123, 345, 678, 789]
+        self.chambers_list = [3, 4, 5, 7]
+        self.walls_list = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.left_chamber = [3]
+        self.right_chamber = [5]
+        self.start_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.start_door_close = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.project_left_cue_wall = [1]
         self.project_right_cue_wall = [2]
-        self.start_door = [1]
-        self.left_goal_door = [2]
-        self.right_goal_door = [3]
-        self.left_chamber = [1]
-        self.right_chamber = [2]
+        self.left_goal_door_open = [[0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.left_goal_door_close = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        self.right_goal_door_close = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.wallStates = WallState()
-        self.wallStates.chamber = self.cells_list
+        self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
+
+
+    def setForcedChoiceMode(self):
+        if self._widget.startCellBtnGroup.checkedId() == 1:
+
+        
+
+    def setChoiceMode(self):
+
+
+    def setAutomaticMode(self):
+
 
     def load_csv_file(self, file_path):
         # Load the csv file into a pandas dataframe
@@ -376,6 +431,8 @@ class Interface(Plugin):
                 self.project_left_cue(self.left_visual_cue)
                 self.project_right_cue(self.right_visual_cue)
 
+                self.training_mode = self.currentTrial[3]
+
                 self.start_chamber = self._widget.startCellBtnGroup.checkedId()
                 
                 if self.sound_cue == "white_noise":
@@ -400,6 +457,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
+                self.wallStates.wall = self.start_door_open
+                self.door_pub.publish(self.wallStates)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
 
@@ -411,7 +470,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.door_deactivate()
+            self.wallStates.wall = self.start_door_close
+            self.door_pub.publish(self.wallStates)
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
                 self.door_activate()

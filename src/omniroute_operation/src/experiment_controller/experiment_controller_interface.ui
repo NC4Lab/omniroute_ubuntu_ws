@@ -113,8 +113,8 @@
    <widget class="QRadioButton" name="cellThreeBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>670</y>
+      <x>110</x>
+      <y>700</y>
       <width>112</width>
       <height>23</height>
      </rect>
@@ -126,8 +126,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>640</y>
+      <x>20</x>
+      <y>650</y>
       <width>761</width>
       <height>31</height>
      </rect>
@@ -139,8 +139,8 @@
    <widget class="QRadioButton" name="cellFiveBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>840</y>
+      <x>110</x>
+      <y>820</y>
       <width>151</width>
       <height>23</height>
      </rect>
@@ -152,7 +152,7 @@
    <widget class="QRadioButton" name="cellSevenBtn">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>20</x>
       <y>760</y>
       <width>112</width>
       <height>23</height>
@@ -165,7 +165,7 @@
    <widget class="QRadioButton" name="cellOneBtn">
     <property name="geometry">
      <rect>
-      <x>470</x>
+      <x>210</x>
       <y>760</y>
       <width>112</width>
       <height>23</height>
@@ -248,6 +248,122 @@
     </property>
     <property name="text">
      <string>Next</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>650</y>
+      <width>761</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Training Mode</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="forcedChoiceBtn">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>700</y>
+      <width>131</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Forced Choice</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="choiceBtn">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>740</y>
+      <width>112</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Choice</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>650</y>
+      <width>391</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>650</y>
+      <width>361</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_4">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>680</y>
+      <width>391</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>680</y>
+      <width>361</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="automaticBtn">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>780</y>
+      <width>112</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Automatic</string>
     </property>
    </widget>
   </widget>
