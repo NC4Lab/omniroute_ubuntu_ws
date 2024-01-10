@@ -2,6 +2,8 @@
 import os,time
 import rospy
 from std_msgs.msg import String
+from omniroute_operation.msg import *
+
 import pandas as pd
 from enum import Enum
 from python_qt_binding.QtCore import *
@@ -70,6 +72,8 @@ class Interface(Plugin):
         # Add widget to the user interface
         context.add_widget(self._widget)
 
+        self.scene = QGraphicsScene()
+
         self._widget.pauseBtn.setEnabled(True)
         self._widget.resumeBtn.setEnabled(False)
 
@@ -80,7 +84,6 @@ class Interface(Plugin):
         self._widget.startCellBtnGroup.addButton(self._widget.cellSevenBtn, id=7)
         self._widget.startCellBtnGroup.setExclusive(True)
 
-        self.scene = QGraphicsScene()
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
@@ -98,9 +101,10 @@ class Interface(Plugin):
             os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
 
         #rospy.init_node('experiment_controller', anonymous=True)
-        self.sound_pub = rospy.Publisher('sound_command', String, queue_size=1)
-        self.door_pub = rospy.Publisher('door_command', String, queue_size=1)
-        self.projector_pub = rospy.Publisher('projector_command', String, queue_size=1)
+        self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
+        self.door_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
+        self.projector_pub = rospy.Publisher('projector_cmd', String, queue_size=1)
+        self.reward_pub = rospy.Publisher('reward_cmd', String, queue_size=1)
 
         # Experiment parameters
         self.start_wait_duration = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
@@ -261,7 +265,11 @@ class Interface(Plugin):
         self.right_goal_door = [3]
         self.left_chamber = [1]
         self.right_chamber = [2]
-        self.door_pub.publish("activate walls in self.walls_list")
+        self.wallStates = WallState()
+        self.wallStates.chamber = self.cells_list
+        self.wallStates.wall = self.walls_list
+        self.wallStates.state = True
+        self.door_pub.publish(self.wallStates)
 
     def setCellThreeStartConfig(self):
         self.cells_list = [1,3,4,7]
@@ -273,7 +281,11 @@ class Interface(Plugin):
         self.right_goal_door = [3]
         self.left_chamber = [1]
         self.right_chamber = [2]
-        self.door_pub.publish("activate walls in self.walls_list")
+        self.wallStates = WallState()
+        self.wallStates.chamber = self.cells_list
+        self.wallStates.wall = self.walls_list
+        self.wallStates.state = True
+        self.door_pub.publish(self.wallStates)
 
     def setCellFiveStartConfig(self):
         self.cells_list = [1,4,5,7]
@@ -285,7 +297,11 @@ class Interface(Plugin):
         self.right_goal_door = [3]
         self.left_chamber = [1]
         self.right_chamber = [2]
-        self.door_pub.publish("activate walls in self.walls_list")
+        self.wallStates = WallState()
+        self.wallStates.chamber = self.cells_list
+        self.wallStates.wall = self.walls_list
+        self.wallStates.state = True
+        self.door_pub.publish(self.wallStates)
 
     def setCellSevenStartConfig(self):
         self.cells_list = [3,4,5,7]
@@ -297,7 +313,11 @@ class Interface(Plugin):
         self.right_goal_door = [3]
         self.left_chamber = [1]
         self.right_chamber = [2]
-        self.door_pub.publish("activate walls in self.walls_list")
+        self.wallStates = WallState()
+        self.wallStates.chamber = self.cells_list
+        self.wallStates.wall = self.walls_list
+        self.wallStates.state = True
+        self.door_pub.publish(self.wallStates)
 
     def load_csv_file(self, file_path):
         # Load the csv file into a pandas dataframe
@@ -465,6 +485,9 @@ class Interface(Plugin):
 
     def door_deactivate(self):
         self.door_pub.publish("close_start_door")
+
+    def reward_dispense(self):
+        self.reward_pub.publish("dispense_reward", [])
 
 
 if __name__ == '__main__':
