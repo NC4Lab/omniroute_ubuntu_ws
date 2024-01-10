@@ -52,6 +52,9 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     6: [0, 1, 2, 3, 4, 5, 6, 7],
     7: [1, 3, 5, 6, 7],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
+
+
+
 }
 
 # ======================== GLOBAL CLASSES ========================
@@ -182,9 +185,8 @@ class EsmacatCom:
         # Initialize message handler instance for receiving messages
         self.rcvEM = self.EcatMessageStruct()
 
-        # ROS Publisher: Initialize ethercat message handler instances
-        self.maze_ard0_pub = rospy.Publisher(
-            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
+
+
 
     # ------------------------ PRIVATE METHODS ------------------------
 
@@ -1428,6 +1430,8 @@ class Interface(Plugin):
         # @obsolete ROS Sublisher: @obsolete
         # wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
 
+        self.wall_clicked_sub = rospy.Subscriber('/wall_state', WallState, self.ros_callback_wall_config, tcp_nodelay=True)
+
         # Gantry command publisher
         self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
@@ -1836,6 +1840,18 @@ class Interface(Plugin):
     def qt_callback_plotSendBtn_clicked(self):
         """ Callback function for the "Send" button."""
 
+        # Sort entries
+        WallConfig._sort_entries()
+
+        # Send MOVE_WALLS message with wall byte array
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+        
+    def ros_callback_wall_config(self, data):
+        """ Callback function for subscribing to experiment controller command."""
+        
+        rospy.loginfo("Received: %s, %s, %s", data.chamber, data.wall, data.status) 
+        
         # Sort entries
         WallConfig._sort_entries()
 
