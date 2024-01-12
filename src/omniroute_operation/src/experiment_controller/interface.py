@@ -133,6 +133,7 @@ class Interface(Plugin):
         self.current_file_index = 0
         self.current_trial_index = 0
         
+        self.id = 0
 
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
@@ -180,6 +181,13 @@ class Interface(Plugin):
         # Load the file by passing the file path to load_csvfile
         self.load_csv_file(self.selected_file_path)
         self.display_excel_content(self.selected_file_path)
+
+
+    def load_csv_file(self, file_path):
+        # Load the csv file into a pandas dataframe
+        self.df = pd.read_excel(file_path)
+        self.trials = self.df.iloc[1:].values.tolist()
+        self.nTrials = len(self.trials)
 
 
     def _handle_nextBtn_clicked(self):
@@ -254,12 +262,16 @@ class Interface(Plugin):
     
     def _handle_startCellBtnGroup_clicked(self):
         if self._widget.startCellBtnGroup.checkedId() == 1:
+            self.id = 1
             self.setCellOneStartConfig()
         elif self._widget.startCellBtnGroup.checkedId() == 3:
+            self.id = 3
             self.setCellThreeStartConfig()
         elif self._widget.startCellBtnGroup.checkedId() == 5:
+            self.id = 5
             self.setCellFiveStartConfig()
         elif self._widget.startCellBtnGroup.checkedId() == 7:
+            self.id = 7
             self.setCellSevenStartConfig()
 
     def _handle_trainingModeBtnGroup_clicked(self):
@@ -364,21 +376,84 @@ class Interface(Plugin):
 
 
     def setForcedChoiceMode(self):
-        if self._widget.startCellBtnGroup.checkedId() == 1:
-
-        
+        if self.id == 1:
+            self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+            self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        elif self.id == 3:
+            self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+            self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
+        elif self.id == 5:
+            self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.left_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_close = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+        elif self.id == 7:
+            self.left_goal_door_open = [[0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.left_goal_door_close = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
+            self.right_goal_door_close = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
 
     def setChoiceMode(self):
-
+        if self.id == 1:
+            self.door_map_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            self.door_map_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            
+        elif self.id == 3:
+            self.door_map_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            self.door_map_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            
+        elif self.id == 5:
+            self.door_map_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            self.door_map_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            
+        elif self.id == 7:
+            self.door_map_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
+            self.door_map_close = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7]]
 
     def setAutomaticMode(self):
+        self.currentTrialNumber = self.current_trial_index 
+        if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+            self.currentTrial = self.trials[self.currentTrialNumber]
+        else:
+            # Handle the case where trials is empty or currentTrialNumber is out of range
+            self.currentTrial = None
 
+        if self.currentTrial is not None:
+            self.sound_cue = self.currentTrial[2]
+            self.left_visual_cue = self.currentTrial[0]
+            self.right_visual_cue = self.currentTrial[1]
 
-    def load_csv_file(self, file_path):
-        # Load the csv file into a pandas dataframe
-        self.df = pd.read_excel(file_path)
-        self.trials = self.df.iloc[1:].values.tolist()
-        self.nTrials = len(self.trials)
+            self.training_mode = self.currentTrial[3]
+
+            self.start_chamber = self._widget.startCellBtnGroup.checkedId()
+                
+        if self.sound_cue == "white_noise":
+            if self.left_visual_cue == "triangle":
+                self.success_chamber = self.left_chamber
+                self.error_chamber = self.right_chamber
+            else:
+                self.success_chamber = self.right_chamber
+                self.error_chamber = self.left_chamber
+        else:
+            if self.left_visual_cue == "square":
+                self.success_chamber = self.left_chamber
+                self.error_chamber = self.right_chamber
+            else:
+                self.success_chamber = self.right_chamber
+                self.error_chamber = self.left_chamber
+
+        if self.training_mode == "forced_choice":          
+            if self.success_chamber == self.left_chamber:
+                self.wallStates.wall = self.door_map_open
+            else:
+                self.wallStates.wall = self.right_goal_door_open
+                self.door_pub.publish(self.wallStates)
+        elif self.training_mode == "choice":
+            self.wallStates.wall = self.door_map_open
 
     def display_excel_content(self, file_path):
         # Display the content in the QListWidget
@@ -449,6 +524,7 @@ class Interface(Plugin):
                     else:
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
+                 
                 
                 # Define self.rat_chamber    
 
@@ -457,7 +533,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
-                self.wallStates.wall = self.start_door_open
+                self.wallStates.wall = self.start_door_open      #open start doors
                 self.door_pub.publish(self.wallStates)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
@@ -470,11 +546,21 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.wallStates.wall = self.start_door_close
+            self.wallStates.wall = self.start_door_close    #close start doors
             self.door_pub.publish(self.wallStates)
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
-                self.door_activate()
+                if self.training_mode == "forced_choice":          #open choice doors
+                    if self.success_chamber == self.left_chamber:
+                        self.wallStates.wall = self.left_goal_door_open
+                        self.door_pub.publish(self.wallStates)
+                    else:
+                        self.wallStates.wall = self.right_goal_door_open
+                        self.door_pub.publish(self.wallStates)
+                elif self.training_mode == "choice":
+                    self.wallStates.wall = self.both_doors_open
+                    self.door_pub.publish(self.wallStates)
+    
                 self.stop_sound_cue()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_TO_GOAL
