@@ -186,6 +186,10 @@ class EsmacatCom:
         self.rcvEM = self.EcatMessageStruct()
 
 
+    # ROS Publisher: Initialize ethercat message handler instances
+        self.maze_ard0_pub = rospy.Publisher(
+            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
+
 
 
     # ------------------------ PRIVATE METHODS ------------------------
