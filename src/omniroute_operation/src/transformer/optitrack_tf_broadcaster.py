@@ -23,29 +23,39 @@ class OptitrackTransformer:
         self.optitrack_marker2 = np.zeros(3, dtype=np.float32)
         self.optitrack_marker3 = np.zeros(3, dtype=np.float32)
 
-        self.maze_marker0 = np.array([0.9, 0.0, 0.0], dtype=np.float32)
-        self.maze_marker1 = np.array([0.9, 0.9, 0.0], dtype=np.float32)
-        self.maze_marker2 = np.array([0.0, 0.9, 0.0], dtype=np.float32)
-        self.maze_marker3 = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.maze_marker0 = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.maze_marker1 = np.array([0.0, 90.0, 0.0], dtype=np.float32)
+        self.maze_marker2 = np.array([90.0, 0.0, 0.0], dtype=np.float32)
+        self.maze_marker3 = np.array([0.0, 90.0, 90.0], dtype=np.float32)
 
         self.optitrack_br = tf.TransformBroadcaster()
 
-        r = rospy.Rate(10)
+
+        r = rospy.Rate(1)
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
         
     def loop(self):
-        optitrack_tf = cv2.estimateAffine3D(np.concatenate((self.optitrack_marker0, self.optitrack_marker1, self.optitrack_marker2, self.optitrack_marker3), axis=0).reshape(4, 3),
-                               np.concatenate((self.maze_marker0, self.maze_marker1, self.maze_marker2, self.maze_marker3), axis=0).reshape(4, 3),
-                               ransacThreshold=0.1)
-        
-        rospy.loginfo(optitrack_tf)
-        # self.optitrack_br.sendTransform(optitrack_tf[0][:, 3],
-        #                                     tf.transformations.quaternion_from_matrix(optitrack_tf[0]),
-        #                                     rospy.Time.now(),
-        #                                     "optitrack",
-        #                                     "maze")
+        xhat = self.optitrack_marker2 - self.optitrack_marker0
+        yhat = self.optitrack_marker1 - self.optitrack_marker0
+        zhat = np.cross(xhat, yhat)
+
+        xhat = xhat / np.linalg.norm(xhat)
+        yhat = yhat / np.linalg.norm(yhat)
+        zhat = zhat / np.linalg.norm(zhat)
+
+        R = np.array([xhat, yhat, zhat])
+        R = np.concatenate((R, np.zeros((3,1))), axis=1)
+        R = np.concatenate((R, np.zeros((1,4))), axis=0)
+        R[3,3] = 1.0
+
+        t = self.optitrack_marker0
+
+        self.optitrack_br.sendTransform(t, tf.transformations.quaternion_from_matrix(R), rospy.Time.now(), "maze", "world")
+
+
+
                         
         
     def mazeboundary_marker0_callback(self, msg):
