@@ -74,7 +74,7 @@
    <widget class="QPushButton" name="startBtn">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>10</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -87,7 +87,7 @@
    <widget class="QPushButton" name="pauseBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>240</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -100,7 +100,7 @@
    <widget class="QPushButton" name="resumeBtn">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>460</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -364,6 +364,19 @@
     </property>
     <property name="text">
      <string>Automatic</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pumpGantryBtn">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>890</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reward</string>
     </property>
    </widget>
   </widget>

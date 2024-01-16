@@ -1,0 +1,27 @@
+<launch> 
+    <!-- Parameters Used -->
+    <!-- name is any custom name -->
+    <!-- pkg is the name of the ROS Package -->
+    <!-- type is the name of the node(executable) defined prior -->
+    <!-- output = screen displays the output on the terminal Default is ROS_LOG -->
+    <!-- launch-prefix gives instructions as to how to launch the node -->
+
+    <!-- Esmacat ethernet addapter address (STOUT) -->
+    <!-- <param name="ethercat_adapter_name" type="str" value="enp4s0f1" /> -->
+    
+    <!-- Esmacat ethernet addapter address (GINGER_BEER) -->
+    <param name="ethercat_adapter_name" type="str" value="enp7s0" /> 
+    
+    <!-- Esmacat parameter -->
+    <param name="maze_ard0_ease_slave_index" type="int" value="0" />
+
+    <!-- Esmacat Node -->
+    <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
+
+     <!-- Omniroute three_by_three_interface interface -->
+    <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
+
+    <!-- Omniroute feeder cantry node -->
+    <!-- <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/> -->
+
+</launch>
