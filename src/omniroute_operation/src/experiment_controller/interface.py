@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import os,time
 import rospy
+import numpy as np
+import math
 from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 
 import pandas as pd
@@ -103,6 +106,7 @@ class Interface(Plugin):
         self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
         self._widget.listWidget.itemClicked.connect(self._handle_listWidget_item_clicked)
         self._widget.excelListWidget.itemClicked.connect(self._handle_excelListWidget_item_clicked)
+        self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
 
         self._widget.pathDirEdit.setText(
             os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
@@ -111,7 +115,21 @@ class Interface(Plugin):
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
         self.door_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
         self.projector_pub = rospy.Publisher('projector_cmd', String, queue_size=1)
-        self.reward_pub = rospy.Publisher('reward_cmd', String, queue_size=1)
+        self.reward_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        
+        #Initialize the subsrciber for reading from harness and maze boundary markers posistions
+        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker2/pose', PointStamped, self.mazeboundary_marker2_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/MazeBoundary/marker3/pose', PointStamped, self.mazeboundary_marker3_callback, queue_size=1, tcp_nodelay=True)
+
+        self.harness_pose = PoseStamped()
+
+        self.mazeboundary_marker0 = np.zeros(3)
+        self.mazeboundary_marker1 = np.zeros(3)
+        self.mazeboundary_marker2 = np.zeros(3)
+        self.mazeboundary_marker3 = np.zeros(3)
 
         # Experiment parameters
         self.start_wait_duration = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
@@ -136,7 +154,31 @@ class Interface(Plugin):
         self.id = 0
         self.training_mode = None
 
+        self.chamber_wd = 300
+        self.n_chambers = 9
+        self.chamber_center_list = []
 
+        self.x_pos_chambers_center = np.linspace(int(self.mazeboundary_marker0[0]), int(self.mazeboundary_marker3[0]), int(math.sqrt(self.n_chambers)))
+        self.y_pos_chambers_center = np.linspace(int(self.mazeboundary_marker1[1]), int(self.mazeboundary_marker0[1]), int(math.sqrt(self.n_chambers)))
+
+        for i in range (0, int(math.sqrt(self.n_chambers))):
+            for j in range (0, int(math.sqrt(self.n_chambers))):
+                self.chamber_center = np.array([self.x_pos_chambers_center[j], self.y_pos_chambers_center[i], 0])
+                self.chamber_center_list.append(self.chamber_center)
+
+
+        self.chamber_centers = {
+            6: self.chamber_center_list[0],
+            3: self.chamber_center_list[1],
+            0: self.chamber_center_list[2],
+            7: self.chamber_center_list[3],
+            4: self.chamber_center_list[4],
+            1: self.chamber_center_list[5],
+            8: self.chamber_center_list[6],
+            5: self.chamber_center_list[7],
+            2: self.chamber_center_list[8]
+        }
+   
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
             self.run_experiment()
@@ -305,8 +347,8 @@ class Interface(Plugin):
     def setCellOneStartConfig(self):
         self.chambers_list = [1, 3, 4, 5]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
-        self.left_chamber = [5]
-        self.right_chamber = [3]
+        self.left_chamber = 5
+        self.right_chamber = 3
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.project_left_cue_wall = [4]
         self.project_right_cue_wall = [0]
@@ -322,8 +364,8 @@ class Interface(Plugin):
     def setCellThreeStartConfig(self):
         self.chambers_list = [1, 3, 4, 7]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
-        self.left_chamber = [1]
-        self.right_chamber = [7]
+        self.left_chamber = 1
+        self.right_chamber = 7
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.project_left_cue_wall = [2]
         self.project_right_cue_wall = [6]
@@ -339,8 +381,8 @@ class Interface(Plugin):
     def setCellFiveStartConfig(self):
         self.chambers_list = [1, 4, 5, 7]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.left_chamber = [7]
-        self.right_chamber = [1]
+        self.left_chamber = 7
+        self.right_chamber = 1
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.project_left_cue_wall = [6]
         self.project_right_cue_wall = [2]
@@ -356,8 +398,8 @@ class Interface(Plugin):
     def setCellSevenStartConfig(self):
         self.chambers_list = [3, 4, 5, 7]
         self.walls_list = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.left_chamber = [3]
-        self.right_chamber = [5]
+        self.left_chamber = 3
+        self.right_chamber = 5
         self.start_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.project_left_cue_wall = [1]
         self.project_right_cue_wall = [2]
@@ -390,8 +432,41 @@ class Interface(Plugin):
             row_list = row.tolist()  # Convert the row to a list
             item_text = ', '.join(map(str, row_list))
             self.listWidget.addItem(item_text)
-         
 
+
+    def mazeboundary_marker0_callback(self, msg):
+        self.mazeboundary_marker0 = np.array([msg.point.x, msg.point.y, msg.point.z])
+
+    def mazeboundary_marker1_callback(self, msg):
+        self.mazeboundary_marker1 = np.array([msg.point.x, msg.point.y, msg.point.z])
+    
+    def mazeboundary_marker2_callback(self, msg):
+        self.mazeboundary_marker2 = np.array([msg.point.x, msg.point.y, msg.point.z])
+    
+    def mazeboundary_marker3_callback(self, msg):
+        self.mazeboundary_marker3 = np.array([msg.point.x, msg.point.y, msg.point.z])
+    
+    def harness_pose_callback(self, msg):
+        self.harness_pose = msg
+        # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+
+    def harness_pos_in_maze_coor(self, harness_pose):
+        #calculate the harness position in the maze coordinate system
+        self.xhat = self.mazeboundary_marker0 - self.mazeboundary_marker3
+        self.yhat = self.mazeboundary_marker1 - self.mazeboundary_marker0
+
+        self.marker0_harness = np.array([self.harness_pose.pose.position.x - self.mazeboundary_marker0[0], 
+                                               self.harness_pose.pose.position.y - self.mazeboundary_marker0[1], 
+                                               self.harness_pose.pose.position.z - self.mazeboundary_marker0[2]])
+        
+        # X component of the harness position 
+        x = np.dot(self.marker0_harness, self.xhat) + self.mazeboundary_marker0[0]
+        # Y component of the harness position
+        y = np.dot(self.marker0_harness, self.yhat) + self.mazeboundary_marker0[1]
+
+        return x, y
+
+         
     def run_experiment(self):
         self.current_time = rospy.Time.now()
 
@@ -450,8 +525,12 @@ class Interface(Plugin):
                     else:
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
-                 
-                
+
+                self.success_chamber_center_xy = self.chamber_centers[self.success_chamber]
+                #self.error_chamber_center_xy = self.chamber_centers[self.error_chamber]
+
+                self.threshold = 100
+                  
                 # Define self.rat_chamber    
 
             self.mode_start_time = rospy.Time.now()
@@ -493,7 +572,9 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             rospy.loginfo("CHOICE TO GOAL")
-            if rat_made_right_choice:
+            self.x = self.harness_pos_in_maze_coor(self.harness_pose)[0]
+            self.y = self.harness_pos_in_maze_coor(self.harness_pose)[1]
+            if (self.x >= self.success_chamber_center_xy[0] - self.threshold) and (self.x <= self.success_chamber_center_xy[0] + self.threshold) and (self.y >= self.success_chamber_center_xy[1] - self.threshold) and (self.y <= self.success_chamber_center_xy[1] + self.threshold):
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.SUCCESS
             else:
@@ -521,7 +602,6 @@ class Interface(Plugin):
             self.mode_start_time = rospy.Time.now()
             self._widget.pauseBtn.setEnabled(False)
             self._widget.resumeBtn.setEnabled(True)
-
 
             #sender_button = self.sender()
             #if sender_button == self._widget.resumeBtn:
@@ -554,14 +634,14 @@ class Interface(Plugin):
     def project_right_cue(self):
         self.projector_pub.publish("project_right_cue on the wall number ?")
 
-    def door_activate(self):
-        self.door_pub.publish("open_start_door")
+    #def door_activate(self):
+        #self.door_pub.publish("open_start_door")
 
-    def door_deactivate(self):
-        self.door_pub.publish("close_start_door")
+    #def door_deactivate(self):
+       #self.door_pub.publish("close_start_door")
 
     def reward_dispense(self):
-        self.reward_pub.publish("dispense_reward", [])
+        self.reward_pub.publish("PUMP", [1.0])
 
 
 if __name__ == '__main__':
