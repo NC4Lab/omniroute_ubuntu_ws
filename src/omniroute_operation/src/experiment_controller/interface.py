@@ -3,7 +3,7 @@ import os,time
 import rospy
 import numpy as np
 import math
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 
@@ -21,6 +21,7 @@ from qt_gui.plugin import Plugin
 
 
 class Mode(Enum):
+    START = -1
     START_EXPERIMENT = 0
     START_TRIAL = 1
     RAT_IN_START_CHAMBER = 2
@@ -66,7 +67,7 @@ class Interface(Plugin):
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
         
-        rospy.logerr('Test Interface started')
+        rospy.loginfo('Test Interface started')
 
         self._widget.setObjectName('InterfacePluginUi')
         if context.serial_number() > 1:
@@ -80,12 +81,14 @@ class Interface(Plugin):
         self._widget.pauseBtn.setEnabled(True)
         self._widget.resumeBtn.setEnabled(False)
 
-        self._widget.startCellBtnGroup = QButtonGroup()
-        self._widget.startCellBtnGroup.addButton(self._widget.cellOneBtn, id=1)
-        self._widget.startCellBtnGroup.addButton(self._widget.cellThreeBtn, id=3)
-        self._widget.startCellBtnGroup.addButton(self._widget.cellFiveBtn, id=5)
-        self._widget.startCellBtnGroup.addButton(self._widget.cellSevenBtn, id=7)
-        self._widget.startCellBtnGroup.setExclusive(True)
+        self._widget.startChamberBtnGroup = QButtonGroup()
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberOneBtn, id=1)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberThreeBtn, id=3)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberFiveBtn, id=5)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberSevenBtn, id=7)
+        self._widget.startChamberBtnGroup.setExclusive(True)
+        for button in self._widget.startChamberBtnGroup.buttons():
+            button.setEnabled(True)
 
         self._widget.trainingModeBtnGroup = QButtonGroup()
         self._widget.trainingModeBtnGroup.addButton(self._widget.forcedChoiceBtn, id=1)
@@ -96,16 +99,15 @@ class Interface(Plugin):
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
-        self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.nextBtn_2.clicked.connect(self._handle_nextBtn_2_clicked)
         self._widget.previousBtn_2.clicked.connect(self._handle_previousBtn_2_clicked)
         self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
         self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
         self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
-        self._widget.startCellBtnGroup.buttonClicked.connect(self._handle_startCellBtnGroup_clicked)
+        self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
         self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
-        self._widget.listWidget.itemClicked.connect(self._handle_listWidget_item_clicked)
-        self._widget.excelListWidget.itemClicked.connect(self._handle_excelListWidget_item_clicked)
+        self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
+        self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
         self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
 
         self._widget.pathDirEdit.setText(
@@ -114,7 +116,7 @@ class Interface(Plugin):
         #rospy.init_node('experiment_controller', anonymous=True)
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
         self.door_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
-        self.projector_pub = rospy.Publisher('projector_cmd', String, queue_size=1)
+        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.reward_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
@@ -137,7 +139,7 @@ class Interface(Plugin):
         self.reward_duration = rospy.Duration(20.0)  # Duration to dispense reward if the rat made the right choice
         self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
 
-        self.mode = Mode.START_EXPERIMENT
+        self.mode = Mode.START
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
@@ -157,6 +159,14 @@ class Interface(Plugin):
         self.chamber_wd = 300
         self.n_chambers = 9
         self.chamber_center_list = []
+
+        self.wallStates = WallState() 
+        self.start_door_open = []
+        self.walls_list = []
+        self.success_chamber_center_xy = []
+
+        self.project_left_cue_triangle = 0
+        self.project_right_cue_triangle = 0
 
         self.x_pos_chambers_center = np.linspace(int(self.mazeboundary_marker0[0]), int(self.mazeboundary_marker3[0]), int(math.sqrt(self.n_chambers)))
         self.y_pos_chambers_center = np.linspace(int(self.mazeboundary_marker1[1]), int(self.mazeboundary_marker0[1]), int(math.sqrt(self.n_chambers)))
@@ -179,23 +189,25 @@ class Interface(Plugin):
             2: self.chamber_center_list[8]
         }
    
-        r = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            self.run_experiment()
-            r.sleep()
-
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.run_experiment)
+        self.timer.start(10)
 
     def _handle_browseBtn_clicked(self):
-        pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'experimet_controller', 'interface'))
+        pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller'))
         filter = "Text Files (*.xlsx)"  
-        files, _ = QFileDialog.getOpenFileNames(None, "Select files to add", pathDir, filter)
+        files,_ = QFileDialog.getOpenFileNames(None, "Select files to add", pathDir, filter)
+
+        self.xlsxFiles = [os.path.basename(f) for f in files]
+        self.xlsxDir = os.path.dirname(files[0])
+        self._widget.pathDirEdit.setText(self.xlsxDir)
 
         if files:
             # Clear the list widget to remove any previous selections
-            self._widget.listWidget.clear()
+            self._widget.xlsxFileListWidget.clear()
 
             # Add the selected files to the list widget
-            self._widget.listWidget.addItems(files)
+            self._widget.xlsxFileListWidget.addItems(self.xlsxFiles)
 
             # Enable the "Next" and "Previous" buttons if there is more than one file
             if len(files) > 1:
@@ -212,15 +224,15 @@ class Interface(Plugin):
             self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
             self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
             
-    def _handle_listWidget_item_clicked(self):
+    def _handle_xlsxFileListWidget_item_clicked(self):
         # Get the current file index from the list widget
-        self.current_file_index = self._widget.listWidget.currentRow()
+        self.current_file_index = self._widget.xlsxFileListWidget.currentRow()
 
         # Set the current file in the list widget
-        self._widget.listWidget.setCurrentRow(self.current_file_index)
+        # self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
         # Get the full path of the selected file
-        self.selected_file_path = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experimet_controller', 'interface'))
+        self.selected_file_path = os.path.join(self.xlsxDir, self.xlsxFiles[self.current_file_index])
 
         # Load the file by passing the file path to load_csvfile
         self.load_csv_file(self.selected_file_path)
@@ -243,7 +255,7 @@ class Interface(Plugin):
             self.current_file_index = 0
 
         # Set the current file in the list widget
-        self._widget.listWidget.setCurrentRow(self.current_file_index)
+        self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
 
     def _handle_previousBtn_clicked(self):
@@ -255,15 +267,15 @@ class Interface(Plugin):
             self.current_file_index = len(self.files) - 1
 
         # Set the current file in the list widget
-        self._widget.listWidget.setCurrentRow(self.current_file_index)
+        self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
 
-    def _handle_excelListWidget_item_clicked(self):
-        # Get the current trial index from the excel list widget
-        self.current_trial_index = self._widget.excelListWidget.currentRow()
+    def _handle_trialListWidget_item_clicked(self):
+        # Get the current trial index from the trial list widget
+        self.current_trial_index = self._widget.trialListWidget.currentRow()
 
-        # Set the current trial in the excel list widget
-        self._widget.excelListWidget.setCurrentRow(self.current_trial_index)
+        # Set the current trial in the trial list widget
+        self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
         
 
     def _handle_nextBtn_2_clicked(self):
@@ -274,8 +286,8 @@ class Interface(Plugin):
         if self.current_trial_index >= len(self.trials):
             self.current_trial_index = 0
 
-        # Set the current trial in the excel list widget
-        self._widget.excelListWidget.setCurrentRow(self.current_trial_index)
+        # Set the current trial in the trial list widget
+        self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
 
 
     def _handle_previousBtn_2_clicked(self):
@@ -286,37 +298,36 @@ class Interface(Plugin):
         if self.current_trial_index < 0:
             self.current_trial_index = len(self.trials) - 1
 
-        # Set the current trial in the excel list widget
-        self._widget.excelListWidget.setCurrentRow(self.current_trial_index) 
+        # Set the current trial in the trial list widget
+        self._widget.trialListWidget.setCurrentRow(self.current_trial_index) 
 
         
     def _handle_startBtn_clicked(self):
         self.mode = Mode.START_EXPERIMENT
-        self.nTrials = self._widget.nTrialsEdit.text()
         
 
     def _handle_pauseBtn_clicked(self):
-        rospy.loginfo("Experiment paused")
+        # rospy.loginfo("Experiment paused")
         self.mode_before_pause = self.mode
         self.mode = Mode.PAUSE_EXPERIMENT
 
     def _handle_resumeBtn_clicked(self):
-        rospy.loginfo("Experiment resumed")
+        # rospy.loginfo("Experiment resumed")
         self.mode = Mode.RESUME_EXPERIMENT
     
-    def _handle_startCellBtnGroup_clicked(self):
-        if self._widget.startCellBtnGroup.checkedId() == 1:
+    def _handle_startChamberBtnGroup_clicked(self):
+        if self._widget.startChamberBtnGroup.checkedId() == 1:
             self.id = 1
-            self.setCellOneStartConfig()
-        elif self._widget.startCellBtnGroup.checkedId() == 3:
+            self.setChamberOneStartConfig()
+        elif self._widget.startChamberBtnGroup.checkedId() == 3:
             self.id = 3
-            self.setCellThreeStartConfig()
-        elif self._widget.startCellBtnGroup.checkedId() == 5:
+            self.setChamberThreeStartConfig()
+        elif self._widget.startChamberBtnGroup.checkedId() == 5:
             self.id = 5
-            self.setCellFiveStartConfig()
-        elif self._widget.startCellBtnGroup.checkedId() == 7:
+            self.setChamberFiveStartConfig()
+        elif self._widget.startChamberBtnGroup.checkedId() == 7:
             self.id = 7
-            self.setCellSevenStartConfig()
+            self.setChamberSevenStartConfig()
 
     def _handle_trainingModeBtnGroup_clicked(self):
         if self._widget.trainingModeBtnGroup.checkedId() == 1:
@@ -344,69 +355,65 @@ class Interface(Plugin):
     #The central chamber is chamber 4. The start_door, left_goal_door, right_goal_door, project_left_cue_wall, and project_right_cue_wall are defined as walls of chamber 4.
     #For example, if the start_door is wall 2, it means chamber 4 wall 2.
 
-    def setCellOneStartConfig(self):
+    def setChamberOneStartConfig(self):
         self.chambers_list = [1, 3, 4, 5]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.left_chamber = 5
         self.right_chamber = 3
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
-        self.project_left_cue_wall = [4]
-        self.project_right_cue_wall = [0]
+        self.project_left_cue_triangle = 4
+        self.project_right_cue_triangle = 3
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
-        self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7]]
-        self.wallStates = WallState()
+        self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7]] 
         self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
-
-    def setCellThreeStartConfig(self):
+        
+    def setChamberThreeStartConfig(self):
         self.chambers_list = [1, 3, 4, 7]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.left_chamber = 1
         self.right_chamber = 7
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
-        self.project_left_cue_wall = [2]
-        self.project_right_cue_wall = [6]
+        self.project_left_cue_triangle = 2
+        self.project_right_cue_traingle = 1
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates = WallState()
         self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
 
-    def setCellFiveStartConfig(self):
+    def setChamberFiveStartConfig(self):
         self.chambers_list = [1, 4, 5, 7]
         self.walls_list = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.left_chamber = 7
         self.right_chamber = 1
         self.start_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.project_left_cue_wall = [6]
-        self.project_right_cue_wall = [2]
+        self.project_left_cue_triangle = 6
+        self.project_right_cue_triangle = 5
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4, 5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates = WallState()
         self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
         self.door_pub.publish(self.wallStates)
 
-    def setCellSevenStartConfig(self):
+    def setChamberSevenStartConfig(self):
         self.chambers_list = [3, 4, 5, 7]
         self.walls_list = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.left_chamber = 3
         self.right_chamber = 5
         self.start_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.project_left_cue_wall = [1]
-        self.project_right_cue_wall = [2]
+        self.project_left_cue_triangle = 8
+        self.project_right_cue_triangle = 7
         self.left_goal_door_open = [[0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[0, 1, 3, 5, 7], [1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates = WallState()
         self.wallStates.chamber = self.chambers_list
         self.wallStates.wall = self.walls_list
         self.wallStates.state = True
@@ -427,11 +434,11 @@ class Interface(Plugin):
 
     def display_excel_content(self, file_path):
         # Display the content in the QListWidget
-        self.excelListWidget.clear()
+        self._widget.trialListWidget.clear()
         for index, row in self.df.iterrows():
             row_list = row.tolist()  # Convert the row to a list
             item_text = ', '.join(map(str, row_list))
-            self.listWidget.addItem(item_text)
+            self._widget.trialListWidget.addItem(item_text)
 
 
     def mazeboundary_marker0_callback(self, msg):
@@ -459,6 +466,9 @@ class Interface(Plugin):
                                                self.harness_pose.pose.position.y - self.mazeboundary_marker0[1], 
                                                self.harness_pose.pose.position.z - self.mazeboundary_marker0[2]])
         
+        self.xhat = self.xhat / np.linalg.norm(self.xhat)
+        self.yhat = self.yhat / np.linalg.norm(self.yhat)
+        
         # X component of the harness position 
         x = np.dot(self.marker0_harness, self.xhat) + self.mazeboundary_marker0[0]
         # Y component of the harness position
@@ -474,8 +484,8 @@ class Interface(Plugin):
             rospy.loginfo("START OF THE EXPERIMENT")
 
             #self.currentTrialNumber= -1
-            self.currentStartConfig = self._widget.startCellBtnGroup.checkedId()
-            for button in self._widget.startCellBtnGroup.buttons():
+            self.currentStartConfig = self._widget.startChamberBtnGroup.checkedId()
+            for button in self._widget.startChamberBtnGroup.buttons():
                 button.setEnabled(False)
 
             # Load starting maze config
@@ -493,7 +503,7 @@ class Interface(Plugin):
                 self.currentTrial = None
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-            if self.currentTrial is not None and self.currentTrial >= self.nTrials:
+            if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
             # Load maze config according to animal location
@@ -506,23 +516,26 @@ class Interface(Plugin):
 
                 self.left_visual_cue = self.currentTrial[0]
                 self.right_visual_cue = self.currentTrial[1]
-                self.project_left_cue(self.left_visual_cue)
-                self.project_right_cue(self.right_visual_cue)
-
-                self.start_chamber = self._widget.startCellBtnGroup.checkedId()
                 
-                if self.sound_cue == "white_noise":
-                    if self.left_visual_cue == "triangle":
+
+                self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
+                
+                if self.sound_cue == "White_Noise":
+                    if self.left_visual_cue == "Triangle":
+                        self.projection_pub.publish(self.project_left_cue_triangle)
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
+                        self.projection_pub.publish(self.project_right_cue_triangle)
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
                 else:
-                    if self.left_visual_cue == "square":
+                    if self.left_visual_cue == "Square":
+                        self.projection_pub.publish(self.project_right_cue_triangle)
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
+                        self.projection_pub.publish(self.project_left_cue_triangle)
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
 
@@ -555,14 +568,14 @@ class Interface(Plugin):
             self.door_pub.publish(self.wallStates)
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
-                if self.training_mode in ["forced_choice", "user_defined_forced_choice"]:                    #open choice doors
+                if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: #open choice doors
                     if self.success_chamber == self.left_chamber:
                         self.wallStates.wall = self.left_goal_door_open
                         self.door_pub.publish(self.wallStates)
                     else:
                         self.wallStates.wall = self.right_goal_door_open
                         self.door_pub.publish(self.wallStates)
-                elif self.training_mode ["choice", "user_defined_choice"]:
+                elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
                     self.wallStates.wall = self.both_doors_open
                     self.door_pub.publish(self.wallStates)
     
@@ -574,16 +587,18 @@ class Interface(Plugin):
             rospy.loginfo("CHOICE TO GOAL")
             self.x = self.harness_pos_in_maze_coor(self.harness_pose)[0]
             self.y = self.harness_pos_in_maze_coor(self.harness_pose)[1]
-            if (self.x >= self.success_chamber_center_xy[0] - self.threshold) and (self.x <= self.success_chamber_center_xy[0] + self.threshold) and (self.y >= self.success_chamber_center_xy[1] - self.threshold) and (self.y <= self.success_chamber_center_xy[1] + self.threshold):
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.SUCCESS
-            else:
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.ERROR
+            if any(self.success_chamber_center_xy):
+                # if (self.x >= self.success_chamber_center_xy[0] - self.threshold) and (self.x <= self.success_chamber_center_xy[0] + self.threshold) and (self.y >= self.success_chamber_center_xy[1] - self.threshold) and (self.y <= self.success_chamber_center_xy[1] + self.threshold):
+                if (self.x-self.success_chamber_center_xy[0])**2 + (self.y-self.success_chamber_center_xy[1])**2 <= self.threshold**2:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.SUCCESS
+                else:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.ERROR
 
         elif self.mode == Mode.SUCCESS:
             rospy.loginfo("SUCCESS")
-            self.wallStates.wall = self.walls_list                                     #close choice doors
+            self.wallStates.wall = self.walls_list  #close choice doors
             self.door_pub.publish(self.wallStates)
             self.reward_dispense()
             if (self.current_time - self.start_time).to_sec() == self.reward_duration.to_sec():
@@ -591,7 +606,7 @@ class Interface(Plugin):
                 self.mode = Mode.END_TRIAL
                 
         elif self.mode == Mode.ERROR:
-            self.wallStates.wall = self.walls_list                                       #close choice doors
+            self.wallStates.wall = self.walls_list  #close choice doors
             self.door_pub.publish(self.wallStates)
             if (self.current_time - self.start_time).to_sec() == self.wrong_choice_duration.to_sec():
                 self.mode_start_time = rospy.Time.now()
@@ -619,20 +634,20 @@ class Interface(Plugin):
             self.mode_start_time = rospy.Time.now()
             self.mode == Mode.START_TRIAL
 
-    def play_sound_cue(self):
-        if self.sound_cue == "white_noise":
-            self.sound_pub.publish("white_noise")
-        elif self.sound_cue == "5khz_tone":
-            self.sound_pub.publish("5khz_tone")
+    def play_sound_cue(self, sound_cue):
+        if self.sound_cue == "White_Noise":
+            self.sound_pub.publish("White_Noise")
+        elif self.sound_cue == "5KHz":
+            self.sound_pub.publish("5KHz")
 
     def stop_sound_cue(self):
         self.sound_pub.publish("stop_sound")
 
-    def project_left_cue(self):
-        self.projector_pub.publish("project_left_cue on the wall number ?")
+    #def project_left_cue(self):
+        #self.projector_pub.publish("project_left_cue on the wall number ?")
 
-    def project_right_cue(self):
-        self.projector_pub.publish("project_right_cue on the wall number ?")
+    #def project_right_cue(self):
+        #self.projector_pub.publish("project_right_cue on the wall number ?")
 
     #def door_activate(self):
         #self.door_pub.publish("open_start_door")
