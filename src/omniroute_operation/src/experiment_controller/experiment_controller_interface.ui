@@ -61,7 +61,7 @@
      <string>Browse</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="listWidget">
+   <widget class="QListWidget" name="xlsxFileListWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -110,7 +110,7 @@
      <string>Resume</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="cellThreeBtn">
+   <widget class="QRadioButton" name="chamberThreeBtn">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -120,7 +120,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Cell  3 </string>
+     <string>Chamber  3 </string>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
@@ -128,15 +128,15 @@
      <rect>
       <x>20</x>
       <y>650</y>
-      <width>761</width>
+      <width>351</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>Pick the starting Cell</string>
+     <string>Pick the starting Chamber</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="cellFiveBtn">
+   <widget class="QRadioButton" name="chamberFiveBtn">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -146,10 +146,10 @@
      </rect>
     </property>
     <property name="text">
-     <string>Cell  5 </string>
+     <string>Chamber  5 </string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="cellSevenBtn">
+   <widget class="QRadioButton" name="chamberSevenBtn">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -159,10 +159,10 @@
      </rect>
     </property>
     <property name="text">
-     <string>Cell  7 </string>
+     <string>Chamber 7 </string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="cellOneBtn">
+   <widget class="QRadioButton" name="chamberOneBtn">
     <property name="geometry">
      <rect>
       <x>210</x>
@@ -172,7 +172,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Cell  1 </string>
+     <string>Chamber 1 </string>
     </property>
    </widget>
    <widget class="QPushButton" name="previousBtn">
@@ -201,7 +201,7 @@
      <string>Next</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="excelListWidget">
+   <widget class="QListWidget" name="trialListWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -379,6 +379,33 @@
      <string>Reward</string>
     </property>
    </widget>
+   <zorder>frame_5</zorder>
+   <zorder>frame_2</zorder>
+   <zorder>label</zorder>
+   <zorder>pathDirEdit</zorder>
+   <zorder>browseBtn</zorder>
+   <zorder>xlsxFileListWidget</zorder>
+   <zorder>startBtn</zorder>
+   <zorder>pauseBtn</zorder>
+   <zorder>resumeBtn</zorder>
+   <zorder>chamberThreeBtn</zorder>
+   <zorder>label_2</zorder>
+   <zorder>chamberFiveBtn</zorder>
+   <zorder>chamberSevenBtn</zorder>
+   <zorder>chamberOneBtn</zorder>
+   <zorder>previousBtn</zorder>
+   <zorder>nextBtn</zorder>
+   <zorder>trialListWidget</zorder>
+   <zorder>label_3</zorder>
+   <zorder>previousBtn_2</zorder>
+   <zorder>nextBtn_2</zorder>
+   <zorder>label_4</zorder>
+   <zorder>forcedChoiceBtn</zorder>
+   <zorder>choiceBtn</zorder>
+   <zorder>frame</zorder>
+   <zorder>frame_4</zorder>
+   <zorder>automaticBtn</zorder>
+   <zorder>pumpGantryBtn</zorder>
   </widget>
  </widget>
  <resources/>
