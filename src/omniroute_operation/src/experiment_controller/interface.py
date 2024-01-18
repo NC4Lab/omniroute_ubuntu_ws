@@ -153,7 +153,6 @@ class Interface(Plugin):
         self.current_file_index = 0
         self.current_trial_index = 0
         
-        self.id = 0
         self.training_mode = None
 
         self.chamber_wd = 300
@@ -163,6 +162,8 @@ class Interface(Plugin):
         self.wallStates = WallState() 
         self.start_door_open = []
         self.walls_list = []
+        self.chambers_list = []
+        self.wallStates.state = None
         self.success_chamber_center_xy = []
 
         self.project_left_cue_triangle = 0
@@ -317,22 +318,19 @@ class Interface(Plugin):
     
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
-            self.id = 1
             self.setChamberOneStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 3:
-            self.id = 3
             self.setChamberThreeStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 5:
-            self.id = 5
             self.setChamberFiveStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 7:
-            self.id = 7
             self.setChamberSevenStartConfig()
 
     def _handle_trainingModeBtnGroup_clicked(self):
         if self._widget.trainingModeBtnGroup.checkedId() == 1:
-            self.training_mode = "user_defined_forced_choice"
+            self.setForcedChoiceMode()
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
+            self.setChoiceMode()
             self.training_mode = "user_defined_choice"
         elif self._widget.trainingModeBtnGroup.checkedId() == 3:
             self.setAutomaticMode()
@@ -430,6 +428,14 @@ class Interface(Plugin):
 
         if self.currentTrial is not None:
             self.training_mode = self.currentTrial[3]
+
+
+    def setForcedChoiceMode(self):
+        self.training_mode = "user_defined_forced_choice"
+
+
+    def setChoiceMode(self):
+        self.training_mode = "user_defined_choice"
            
 
     def display_excel_content(self, file_path):
@@ -551,7 +557,9 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
-                self.wallStates.wall = self.start_door_open                                                #open start doors
+                self.wallStates.chamber = self.chambers_list
+                self.wallStates.wall = self.start_door_open
+                self.wallStates.state = True                                                #open start doors
                 self.door_pub.publish(self.wallStates)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
@@ -564,19 +572,27 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.wallStates.wall = self.walls_list                                                   #close start doors
+            self.wallStates.chamber = self.chambers_list
+            self.wallStates.wall = self.walls_list
+            self.wallStates.state = True                                                   #close start doors
             self.door_pub.publish(self.wallStates)
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
                 if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: #open choice doors
                     if self.success_chamber == self.left_chamber:
+                        self.wallStates.chamber = self.chambers_list
                         self.wallStates.wall = self.left_goal_door_open
+                        self.wallStates.state = True
                         self.door_pub.publish(self.wallStates)
                     else:
+                        self.wallStates.chamber = self.chambers_list
                         self.wallStates.wall = self.right_goal_door_open
+                        self.wallStates.state = True
                         self.door_pub.publish(self.wallStates)
                 elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
+                    self.wallStates.chamber = self.chambers_list
                     self.wallStates.wall = self.both_doors_open
+                    self.wallStates.state = True
                     self.door_pub.publish(self.wallStates)
     
                 self.stop_sound_cue()
@@ -598,7 +614,9 @@ class Interface(Plugin):
 
         elif self.mode == Mode.SUCCESS:
             rospy.loginfo("SUCCESS")
-            self.wallStates.wall = self.walls_list  #close choice doors
+            self.wallStates.chamber = self.chambers_list
+            self.wallStates.wall = self.walls_list
+            self.wallStates.state = True  #close choice doors
             self.door_pub.publish(self.wallStates)
             self.reward_dispense()
             if (self.current_time - self.start_time).to_sec() == self.reward_duration.to_sec():
@@ -606,7 +624,9 @@ class Interface(Plugin):
                 self.mode = Mode.END_TRIAL
                 
         elif self.mode == Mode.ERROR:
+            self.wallStates.chamber = self.chambers_list
             self.wallStates.wall = self.walls_list  #close choice doors
+            self.wallStates.state = True
             self.door_pub.publish(self.wallStates)
             if (self.current_time - self.start_time).to_sec() == self.wrong_choice_duration.to_sec():
                 self.mode_start_time = rospy.Time.now()
