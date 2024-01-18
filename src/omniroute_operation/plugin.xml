@@ -33,7 +33,7 @@
       <group>
         <label>omniroute_operation</label>
       </group>
-      <label>Omniroute Interface</label>
+      <label>Experiment Controller</label>
       <icon type="theme">system-help</icon>
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
