@@ -820,6 +820,7 @@ class WallConfig:
                     # Set the corresponding bit to 1 using bitwise OR
                     byte_value |= (1 << wall_i)
             cls.cw_wall_byte_list.append([chamber_num, byte_value])
+        
 
         return cls.cw_wall_byte_list
 
@@ -832,8 +833,9 @@ class WallConfig:
         Returns: 
             1D list with byte values for all chambers
         """
-
+        print(cls)
         cls.cw_wall_byte_list = cls.make_num2byte_cw_list()
+        print(cls.cw_wall_byte_list)
 
         # Update U_arr with corresponding chamber and wall byte
         _wall_byte_list = [0] * len(WALL_MAP)
@@ -1305,7 +1307,7 @@ class Interface(Plugin):
         # Default system settings [default][min][max]
         self.sysDefaults = [
             [9, 1, 9],          # Num chamb init
-            [3, 1, 9],          # Max chamb to move per block
+            [9, 1, 9],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
             [255, 0, 255],      # PWM duty
             [1000, 500, 2000]   # Move timeout (ms)

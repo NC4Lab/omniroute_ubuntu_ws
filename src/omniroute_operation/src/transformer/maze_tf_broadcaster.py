@@ -59,15 +59,16 @@ class OptitrackTransformer:
 
     
     def harness_pose_callback(self, msg):
-        self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time.now(), timeout=rospy.Duration(1.0))
+        # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time.now()-rospy.Duration(0.1), timeout=rospy.Duration(1.0))
+        msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
         transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
         self.harness_pose_in_maze_pub.publish(transformed_pose)
     
     def gantry_pose_callback(self, msg):
-        self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time.now(), timeout=rospy.Duration(1.0))
-        transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
-        self.gantry_pose_in_maze_pub.publish(transformed_pose)
-
+        # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time(0), timeout=rospy.Duration(1.0))
+        # transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+        # self.gantry_pose_in_maze_pub.publish(transformed_pose)
+        pass
 
     def mazeboundary_marker0_callback(self, msg):
         self.optitrack_marker0  = np.array([msg.point.x, msg.point.y, msg.point.z], dtype=np.float32)
