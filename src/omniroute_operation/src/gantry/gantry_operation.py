@@ -55,11 +55,15 @@ class GantryFeeder:
                                                       self.natnet_harness_pose.pose.position.z - self.natnet_gantry_pose.pose.position.z])
             
             gh_dist = np.linalg.norm(self.gantry_to_harness)
+            gh_dist_natnet = np.linalg.norm(self.natnet_gantry_to_harness)
 
             k = 10.0
 
             rospy.loginfo("Gantry to Harness Distance: {}".format(gh_dist))
             rospy.loginfo("Gantry to Harness Vector: {}".format(self.gantry_to_harness))
+
+            rospy.loginfo("Natnet Gantry to Harness Distance: {}".format(gh_dist_natnet))
+            rospy.loginfo("Natnet Gantry to Harness Vector: {}".format(self.natnet_gantry_to_harness))
 
             # # X component of the harness movement vector
             # x = k*np.dot(self.gantry_to_harness, self.xhat)
