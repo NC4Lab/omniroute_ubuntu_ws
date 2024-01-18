@@ -126,7 +126,7 @@ class GantryFeeder:
             self.track_harness = False
             # Move the gantry to the specified location
             self.move_gantry_abs(msg.args[0], msg.args[1])
-        elif msg.cmd == "FEED":
+        elif msg.cmd == "PUMP":
             self.track_harness = False
             self.run_pump(msg.args[0])
         elif msg.cmd == "TRACK_HARNESS":
