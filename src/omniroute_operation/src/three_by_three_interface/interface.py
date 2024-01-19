@@ -1861,6 +1861,8 @@ class Interface(Plugin):
         
         rospy.loginfo("Received: %s, %s, %s", data.chamber, data.wall, data.state) 
         
+        WallConfig.add_wall(data.chamber, data.wall)
+        
         # Sort entries
         WallConfig._sort_entries()
 
