@@ -368,6 +368,7 @@ class Interface(Plugin):
                 self.wallStates.wall = self.walls_list[i][j]
                 self.wallStates.state = True
                 self.door_pub.publish(self.wallStates)
+                
         
     def setChamberThreeStartConfig(self):
         self.chambers_list = [1, 3, 4, 7]
@@ -382,9 +383,12 @@ class Interface(Plugin):
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         for i in range(len(self.chambers_list)):
             self.wallStates.chamber = self.chambers_list[i]
-            self.wallStates.wall = self.walls_list[i]
-            self.wallStates.state = True
-            self.door_pub.publish(self.wallStates)
+            for j in range(len(self.walls_list[i])):
+                self.wallStates.wall = self.walls_list[i][j]
+                self.wallStates.state = True
+                self.door_pub.publish(self.wallStates)
+                    
+    
 
     def setChamberFiveStartConfig(self):
         self.chambers_list = [1, 4, 5, 7]
