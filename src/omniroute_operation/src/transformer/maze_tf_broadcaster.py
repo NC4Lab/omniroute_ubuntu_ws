@@ -9,7 +9,7 @@ from omniroute_operation.msg import *
 from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 
-class OptitrackTransformer:
+class MazeTransformer:
     # @brief Initialize the OptitrackTransformer class
     def __init__(self):
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
@@ -85,5 +85,5 @@ class OptitrackTransformer:
 # @brief Main code
 if __name__ == '__main__':
     rospy.init_node('maze_tf_broadcaster')
-    OptitrackTransformer()  # Create an instance of the class
+    MazeTransformer()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown
