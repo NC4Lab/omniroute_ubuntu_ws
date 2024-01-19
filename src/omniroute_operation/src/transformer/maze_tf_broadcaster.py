@@ -40,8 +40,8 @@ class MazeTransformer:
             r.sleep()
         
     def loop(self):
-        yhat = self.optitrack_marker1 - self.optitrack_marker0
-        xhat = self.optitrack_marker2 - self.optitrack_marker0
+        xhat = self.optitrack_marker1 - self.optitrack_marker0
+        yhat = self.optitrack_marker2 - self.optitrack_marker0
         zhat = np.cross(xhat, yhat)
 
         xhat = xhat / np.linalg.norm(xhat)
@@ -66,9 +66,9 @@ class MazeTransformer:
     
     def gantry_pose_callback(self, msg):
         # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time(0), timeout=rospy.Duration(1.0))
-        # transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
-        # self.gantry_pose_in_maze_pub.publish(transformed_pose)
-        pass
+        msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
+        transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+        self.gantry_pose_in_maze_pub.publish(transformed_pose)
 
     def mazeboundary_marker0_callback(self, msg):
         self.optitrack_marker0  = np.array([msg.point.x, msg.point.y, msg.point.z], dtype=np.float32)
