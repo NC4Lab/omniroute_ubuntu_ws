@@ -1,3 +1,4 @@
 uint8 chamber
-uint8 wall
+uint8[] wall
 bool state
+bool send

@@ -1433,10 +1433,7 @@ class Interface(Plugin):
 
         # ................ ROS Setup ................
 
-        # @obsolete ROS Sublisher: @obsolete
-        # wall_clicked_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
-
-        self.wall_clicked_sub = rospy.Subscriber('/wall_state', WallState, self.ros_callback_wall_config, tcp_nodelay=True)
+        self.wall_clicked_sub = rospy.Subscriber('/wall_state_cmd', WallState, self.ros_callback_wall_config, tcp_nodelay=True)
 
         # Gantry command publisher
         self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
@@ -1848,27 +1845,40 @@ class Interface(Plugin):
 
         # Sort entries
         WallConfig._sort_entries()
-        print("wallconfig:", WallConfig)
-        print("wallconfig.sort: ", WallConfig._sort_entries())
-        print("wall config.get_wall: ", WallConfig.get_wall_byte_list())
 
         # Send MOVE_WALLS message with wall byte array
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
         
-    def ros_callback_wall_config(self, data):
+    def ros_callback_wall_config(self, msg):
         """ Callback function for subscribing to experiment controller command."""
         
-        rospy.loginfo("Received: %s, %s, %s", data.chamber, data.wall, data.state) 
+        # Validate chamber and wall numbers
+        if msg.chamber < -1 or msg.chamber >= self.MP.num_rows_cols**2:
+            rospy.logerr('Invalid chamber number: %d', msg.chamber)
+            return
+        for wall in msg.walls:
+            if wall < 0 or wall >= 8:
+                rospy.logerr('Invalid wall number: %d', msg.wall)
+                return
         
-        WallConfig.add_wall(data.chamber, data.wall)
+        if msg.chamber != -1:
+            for wall in msg.walls:
+                if msg.state:
+                    WallConfig.add_wall(msg.chamber, wall)
+                else:
+                    WallConfig.remove_wall(msg.chamber, wall)
         
-        # Sort entries
-        WallConfig._sort_entries()
+        if msg.send:
+            # Sort entries
+            WallConfig._sort_entries()
 
-        # Send MOVE_WALLS message with wall byte array
-        self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+            # Send MOVE_WALLS message with wall byte array
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+        
+        # Update walls
+        self.MP.updatePlotFromWallConfig()
 
     def qt_callback_runGantryBtn_clicked(self):
         """ Callback function for the "Run Gantry" button."""
