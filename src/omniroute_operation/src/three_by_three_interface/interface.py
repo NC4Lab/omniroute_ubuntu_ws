@@ -812,6 +812,7 @@ class WallConfig:
         for row in cls.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
             wall_arr = row[1]
+            print("wall_arr: ", wall_arr)
             # Initialize the byte value
             byte_value = 0
             # Iterate over the array of values
@@ -832,8 +833,9 @@ class WallConfig:
         Returns: 
             1D list with byte values for all chambers
         """
-
+        print("cls: ", cls)
         cls.cw_wall_byte_list = cls.make_num2byte_cw_list()
+        print("cls.cw_wall_byte_list: ", cls.cw_wall_byte_list)
 
         # Update U_arr with corresponding chamber and wall byte
         _wall_byte_list = [0] * len(WALL_MAP)
@@ -1846,6 +1848,9 @@ class Interface(Plugin):
 
         # Sort entries
         WallConfig._sort_entries()
+        print("wallconfig:", WallConfig)
+        print("wallconfig.sort: ", WallConfig._sort_entries())
+        print("wall config.get_wall: ", WallConfig.get_wall_byte_list())
 
         # Send MOVE_WALLS message with wall byte array
         self.EsmaCom.writeEcatMessage(
@@ -1854,7 +1859,7 @@ class Interface(Plugin):
     def ros_callback_wall_config(self, data):
         """ Callback function for subscribing to experiment controller command."""
         
-        rospy.loginfo("Received: %s, %s, %s", data.chamber, data.wall, data.status) 
+        rospy.loginfo("Received: %s, %s, %s", data.chamber, data.wall, data.state) 
         
         # Sort entries
         WallConfig._sort_entries()

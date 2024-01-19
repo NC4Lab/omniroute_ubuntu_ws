@@ -331,7 +331,6 @@ class Interface(Plugin):
             self.setForcedChoiceMode()
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
             self.setChoiceMode()
-            self.training_mode = "user_defined_choice"
         elif self._widget.trainingModeBtnGroup.checkedId() == 3:
             self.setAutomaticMode()
 
@@ -351,7 +350,6 @@ class Interface(Plugin):
     #        8: [0, 1, 2, 3, 4, 5, 6, 7]
     #    }
     #The central chamber is chamber 4. The start_door, left_goal_door, right_goal_door, project_left_cue_wall, and project_right_cue_wall are defined as walls of chamber 4.
-    #For example, if the start_door is wall 2, it means chamber 4 wall 2.
 
     def setChamberOneStartConfig(self):
         self.chambers_list = [1, 3, 4, 5]
@@ -364,10 +362,12 @@ class Interface(Plugin):
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7]]
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7]] 
-        self.wallStates.chamber = self.chambers_list
-        self.wallStates.wall = self.walls_list
-        self.wallStates.state = True
-        self.door_pub.publish(self.wallStates)
+        for i in range(len(self.chambers_list)):
+            self.wallStates.chamber = self.chambers_list[i]
+            for j in range(len(self.walls_list[i])):
+                self.wallStates.wall = self.walls_list[i][j]
+                self.wallStates.state = True
+                self.door_pub.publish(self.wallStates)
         
     def setChamberThreeStartConfig(self):
         self.chambers_list = [1, 3, 4, 7]
@@ -380,10 +380,11 @@ class Interface(Plugin):
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 5, 7], [1, 2, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates.chamber = self.chambers_list
-        self.wallStates.wall = self.walls_list
-        self.wallStates.state = True
-        self.door_pub.publish(self.wallStates)
+        for i in range(len(self.chambers_list)):
+            self.wallStates.chamber = self.chambers_list[i]
+            self.wallStates.wall = self.walls_list[i]
+            self.wallStates.state = True
+            self.door_pub.publish(self.wallStates)
 
     def setChamberFiveStartConfig(self):
         self.chambers_list = [1, 4, 5, 7]
@@ -396,10 +397,12 @@ class Interface(Plugin):
         self.left_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 2, 3, 4 ,5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[1, 2, 3, 5, 7], [0, 1, 3, 4, 5, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates.chamber = self.chambers_list
-        self.wallStates.wall = self.walls_list
-        self.wallStates.state = True
-        self.door_pub.publish(self.wallStates)
+        for i in range(len(self.chambers_list)):
+            self.wallStates.chamber = self.chambers_list[i]
+            for j in range(len(self.walls_list[i])):
+                self.wallStates.wall = self.walls_list[i][j]
+                self.wallStates.state = True
+                self.door_pub.publish(self.wallStates)
 
     def setChamberSevenStartConfig(self):
         self.chambers_list = [3, 4, 5, 7]
@@ -412,10 +415,12 @@ class Interface(Plugin):
         self.left_goal_door_open = [[0, 1, 3, 5, 7], [1, 2, 3, 4 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.right_goal_door_open = [[0, 1, 3, 5, 7], [0, 1, 2, 3 ,5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
         self.both_doors_open = [[0, 1, 3, 5, 7], [1, 2, 3, 5, 6, 7], [1, 3, 4, 5, 7], [1, 3, 5, 6, 7]]
-        self.wallStates.chamber = self.chambers_list
-        self.wallStates.wall = self.walls_list
-        self.wallStates.state = True
-        self.door_pub.publish(self.wallStates)
+        for i in range(len(self.chambers_list)):
+            self.wallStates.chamber = self.chambers_list[i]
+            for j in range(len(self.walls_list[i])):
+                self.wallStates.wall = self.walls_list[i][j]
+                self.wallStates.state = True
+                self.door_pub.publish(self.wallStates)
 
 
     def setAutomaticMode(self):
@@ -557,10 +562,12 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
-                self.wallStates.chamber = self.chambers_list
-                self.wallStates.wall = self.start_door_open
-                self.wallStates.state = True                                                #open start doors
-                self.door_pub.publish(self.wallStates)
+                for i in range(len(self.chambers_list)):                      #open start doors
+                    self.wallStates.chamber = self.chambers_list[i]
+                    for j in range(len(self.start_door_open[i])):
+                        self.wallStates.wall = self.start_door_open[i][j]
+                        self.wallStates.state = True
+                        self.door_pub.publish(self.wallStates)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
 
@@ -572,28 +579,37 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             rospy.loginfo("CHOICE")
-            self.wallStates.chamber = self.chambers_list
-            self.wallStates.wall = self.walls_list
-            self.wallStates.state = True                                                   #close start doors
-            self.door_pub.publish(self.wallStates)
+            for i in range(len(self.chambers_list)):                      #close start doors
+                    self.wallStates.chamber = self.chambers_list[i]
+                    for j in range(len(self.walls_list[i])):
+                        self.wallStates.wall = self.walls_list[i][j]
+                        self.wallStates.state = True
+                        self.door_pub.publish(self.wallStates)
+             
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
-                if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: #open choice doors
+                if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
                     if self.success_chamber == self.left_chamber:
-                        self.wallStates.chamber = self.chambers_list
-                        self.wallStates.wall = self.left_goal_door_open
-                        self.wallStates.state = True
-                        self.door_pub.publish(self.wallStates)
+                        for i in range(len(self.chambers_list)):        #open choice doors                   
+                            self.wallStates.chamber = self.chambers_list[i]
+                            for j in range(len(self.left_goal_door_open[i])):
+                                self.wallStates.wall = self.left_goal_door_open[i][j]
+                                self.wallStates.state = True
+                                self.door_pub.publish(self.wallStates)   
                     else:
-                        self.wallStates.chamber = self.chambers_list
-                        self.wallStates.wall = self.right_goal_door_open
-                        self.wallStates.state = True
-                        self.door_pub.publish(self.wallStates)
+                        for i in range(len(self.chambers_list)):        #open choice doors                   
+                            self.wallStates.chamber = self.chambers_list[i]
+                            for j in range(len(self.right_goal_door_open[i])):
+                                self.wallStates.wall = self.right_goal_door_open[i][j]
+                                self.wallStates.state = True
+                                self.door_pub.publish(self.wallStates)
                 elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
-                    self.wallStates.chamber = self.chambers_list
-                    self.wallStates.wall = self.both_doors_open
-                    self.wallStates.state = True
-                    self.door_pub.publish(self.wallStates)
+                    for i in range(len(self.chambers_list)):        #open choice doors                   
+                            self.wallStates.chamber = self.chambers_list[i]
+                            for j in range(len(self.both_doors_open[i])):
+                                self.wallStates.wall = self.both_doors_open[i][j]
+                                self.wallStates.state = True
+                                self.door_pub.publish(self.wallStates)
     
                 self.stop_sound_cue()
                 self.mode_start_time = rospy.Time.now()
@@ -614,20 +630,24 @@ class Interface(Plugin):
 
         elif self.mode == Mode.SUCCESS:
             rospy.loginfo("SUCCESS")
-            self.wallStates.chamber = self.chambers_list
-            self.wallStates.wall = self.walls_list
-            self.wallStates.state = True  #close choice doors
-            self.door_pub.publish(self.wallStates)
+            for i in range(len(self.chambers_list)):                      #close choice doors
+                    self.wallStates.chamber = self.chambers_list[i]
+                    for j in range(len(self.walls_list[i])):
+                        self.wallStates.wall = self.walls_list[i][j]
+                        self.wallStates.state = True
+                        self.door_pub.publish(self.wallStates)
             self.reward_dispense()
             if (self.current_time - self.start_time).to_sec() == self.reward_duration.to_sec():
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.END_TRIAL
                 
         elif self.mode == Mode.ERROR:
-            self.wallStates.chamber = self.chambers_list
-            self.wallStates.wall = self.walls_list  #close choice doors
-            self.wallStates.state = True
-            self.door_pub.publish(self.wallStates)
+            for i in range(len(self.chambers_list)):                      #close choice doors
+                    self.wallStates.chamber = self.chambers_list[i]
+                    for j in range(len(self.walls_list[i])):
+                        self.wallStates.wall = self.walls_list[i][j]
+                        self.wallStates.state = True
+                        self.door_pub.publish(self.wallStates)
             if (self.current_time - self.start_time).to_sec() == self.wrong_choice_duration.to_sec():
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.END_TRIAL
