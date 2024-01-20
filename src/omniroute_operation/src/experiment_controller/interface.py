@@ -46,6 +46,7 @@ class Mode(Enum):
 
 class Wall:
     def __init__(self, chamber_num, wall_num):
+
         
         # Create equivalence between walls
         if chamber_num==1:
@@ -90,7 +91,10 @@ class Wall:
                 wall_num = 0            
 
         self.chamber_num = chamber_num
-        self.wall_num = wall_num      
+        self.wall_num = wall_num  
+
+    def __repr__(self):
+            return f'Wall({self.chamber_num}, {self.wall_num})'    
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -143,6 +147,8 @@ class Interface(Plugin):
         self._widget.trainingModeBtnGroup.addButton(self._widget.choiceBtn, id=2)
         self._widget.trainingModeBtnGroup.addButton(self._widget.automaticBtn, id=3)
         self._widget.trainingModeBtnGroup.setExclusive(True)
+        for button in self._widget.trainingModeBtnGroup.buttons():
+            button.setEnabled(True)
 
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
@@ -163,7 +169,7 @@ class Interface(Plugin):
 
         #rospy.init_node('experiment_controller', anonymous=True)
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
-        self.door_pub = rospy.Publisher('/wall_state', WallState, queue_size=1)
+        self.door_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=100)
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.reward_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
@@ -401,7 +407,7 @@ class Interface(Plugin):
 
     def activateWalls(self):
         self.wallStates.chamber = -1
-        self.wallStates.wall = 0
+        self.wallStates.wall = [0]
         self.wallStates.state = True
         self.wallStates.send = True
         self.door_pub.publish(self.wallStates)
@@ -424,9 +430,12 @@ class Interface(Plugin):
         self.right_chamber = 3
         
         self.chambers_list = [self.start_chamber, self.left_chamber, self.right_chamber, self.central_chamber]
-        self.walls_list = [Wall(c, w) for c, w in zip(self.chambers_list, range(8))]
+        self.walls_list = []
+        for c in self.chambers_list:
+            for w in range(8):
+                self.walls_list.append(Wall(c, w))
         
-        self.project_left_cue_triangle = 4
+        self.project_left_cue_triangle = 4 
         self.project_right_cue_triangle = 3
         
         self.start_wall = Wall(1, 6)
@@ -443,7 +452,10 @@ class Interface(Plugin):
         self.right_chamber = 7
 
         self.chambers_list = [self.start_chamber, self.left_chamber, self.right_chamber, self.central_chamber]
-        self.walls_list = [Wall(c, w) for c, w in zip(self.chambers_list, range(8))]
+        self.walls_list = []
+        for c in self.chambers_list:
+            for w in range(8):
+                self.walls_list.append(Wall(c, w))
 
         self.project_left_cue_triangle = 2
         self.project_right_cue_triangle = 1
@@ -461,7 +473,10 @@ class Interface(Plugin):
         self.right_chamber = 1
 
         self.chambers_list = [self.start_chamber, self.left_chamber, self.right_chamber, self.central_chamber]
-        self.walls_list = [Wall(c, w) for c, w in zip(self.chambers_list, range(8))]
+        self.walls_list = []
+        for c in self.chambers_list:
+            for w in range(8):
+                self.walls_list.append(Wall(c, w))
 
         self.project_left_cue_triangle = 6
         self.project_right_cue_triangle = 5
@@ -478,8 +493,11 @@ class Interface(Plugin):
         self.right_chamber = 5
 
         self.chambers_list = [self.start_chamber, self.left_chamber, self.right_chamber, self.central_chamber]
-        self.walls_list = [Wall(c, w) for c, w in zip(self.chambers_list, range(8))]
-
+        self.walls_list = []
+        for c in self.chambers_list:
+            for w in range(8):
+                self.walls_list.append(Wall(c, w))
+                
         self.project_left_cue_triangle = 8
         self.project_right_cue_triangle = 7
 
@@ -487,7 +505,6 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
         self.setStartConfig()
-
 
 
     def setAutomaticMode(self):
@@ -736,18 +753,19 @@ class Interface(Plugin):
 
     
     def raise_wall(self, wall, send):
+        rospy.loginfo(f"Raise wall {wall}")
         self.wallStates.chamber = wall.chamber_num
-        self.wallStates.wall = wall.wall_num
+        self.wallStates.wall = [wall.wall_num]
         self.wallStates.state = True
         self.wallStates.send = send
         self.door_pub.publish(self.wallStates)
 
     def lower_wall(self, wall, send):
         self.wallStates.chamber = wall.chamber_num
-        self.wallStates.wall = wall.wall_num
+        self.wallStates.wall = [wall.wall_num]
         self.wallStates.state = False
         self.wallStates.send = send
-        self.door_pub.publish(self.wallStates)  
+        self.door_pub.publish(self.wallStates)
 
     #def project_left_cue(self):
         #self.projector_pub.publish("project_left_cue on the wall number ?")

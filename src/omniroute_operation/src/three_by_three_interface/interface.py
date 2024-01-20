@@ -752,8 +752,10 @@ class WallConfig:
             if item[0] == chamber_num:
                 if wall_num not in item[1]:
                     item[1].append(wall_num)
-                    return
+                return
         cls.cw_wall_num_list.append([chamber_num, [wall_num]])
+
+        print("cls.cw_wall_num_list: ", cls.cw_wall_num_list)
 
     @classmethod
     def remove_wall(cls, chamber_num, wall_num):
@@ -1433,7 +1435,7 @@ class Interface(Plugin):
 
         # ................ ROS Setup ................
 
-        self.wall_clicked_sub = rospy.Subscriber('/wall_state_cmd', WallState, self.ros_callback_wall_config, tcp_nodelay=True)
+        self.wall_clicked_sub = rospy.Subscriber('/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
 
         # Gantry command publisher
         self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
@@ -1443,7 +1445,7 @@ class Interface(Plugin):
 
         # ROS Subscriber: Esmacat arduino maze ard0 ease
         rospy.Subscriber(
-            'Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, tcp_nodelay=True)
+            'Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, queue_size=1, tcp_nodelay=True)
 
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(
@@ -1852,18 +1854,19 @@ class Interface(Plugin):
         
     def ros_callback_wall_config(self, msg):
         """ Callback function for subscribing to experiment controller command."""
-        
+
         # Validate chamber and wall numbers
         if msg.chamber < -1 or msg.chamber >= self.MP.num_rows_cols**2:
             rospy.logerr('Invalid chamber number: %d', msg.chamber)
             return
-        for wall in msg.walls:
+        for wall in msg.wall:
             if wall < 0 or wall >= 8:
                 rospy.logerr('Invalid wall number: %d', msg.wall)
                 return
         
+        
         if msg.chamber != -1:
-            for wall in msg.walls:
+            for wall in msg.wall:
                 if msg.state:
                     WallConfig.add_wall(msg.chamber, wall)
                 else:
