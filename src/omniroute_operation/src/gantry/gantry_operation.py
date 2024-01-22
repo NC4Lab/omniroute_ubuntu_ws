@@ -21,11 +21,6 @@ class GantryFeeder:
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
-        self.natnet_gantry_pose = PoseStamped()
-        self.natnet_harness_pose = PoseStamped()
-        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.natnet_harness_pose_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.natnet_gantry_pose_callback, queue_size=1, tcp_nodelay=True)
-
         self.track_harness = True
 
         # ................ GCode Client Setup ................
@@ -34,7 +29,7 @@ class GantryFeeder:
 
         # Wait for a few secs
         # time.sleep(1)
-        # self.home()
+        self.home()
 
         time.sleep(1)
 
@@ -50,20 +45,13 @@ class GantryFeeder:
                                                self.harness_pose.pose.position.y - self.gantry_pose.pose.position.y, 
                                                self.harness_pose.pose.position.z - self.gantry_pose.pose.position.z])
             
-            self.natnet_gantry_to_harness = np.array([self.natnet_harness_pose.pose.position.x - self.natnet_gantry_pose.pose.position.x, 
-                                                      self.natnet_harness_pose.pose.position.y - self.natnet_gantry_pose.pose.position.y, 
-                                                      self.natnet_harness_pose.pose.position.z - self.natnet_gantry_pose.pose.position.z])
             
             gh_dist = np.linalg.norm(self.gantry_to_harness)
-            gh_dist_natnet = np.linalg.norm(self.natnet_gantry_to_harness)
 
             k = 10.0
 
-            rospy.loginfo("Gantry to Harness Distance: {}".format(gh_dist))
-            rospy.loginfo("Gantry to Harness Vector: {}".format(self.gantry_to_harness))
-
-            rospy.loginfo("Natnet Gantry to Harness Distance: {}".format(gh_dist_natnet))
-            rospy.loginfo("Natnet Gantry to Harness Vector: {}".format(self.natnet_gantry_to_harness))
+            # rospy.loginfo("Gantry to Harness Distance: {}".format(gh_dist))
+            # rospy.loginfo("Gantry to Harness Vector: {}".format(self.gantry_to_harness))
 
             # # X component of the harness movement vector
             # x = k*np.dot(self.gantry_to_harness, self.xhat)
@@ -106,19 +94,12 @@ class GantryFeeder:
             self.track_harness = False
             # Move the gantry to the specified location
             self.move_gantry_abs(msg.args[0], msg.args[1])
+            rospy.loginfo("Gantry Move: {}, {}".format(msg.args[0], msg.args[1]))
         elif msg.cmd == "PUMP":
             self.track_harness = False
             self.run_pump(msg.args[0])
         elif msg.cmd == "TRACK_HARNESS":
             self.track_harness = True
-
-    def natnet_gantry_pose_callback(self, msg):
-        self.natnet_gantry_pose = msg
-        # print("Natnet Gantry Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
-    
-    def natnet_harness_pose_callback(self, msg):
-        self.natnet_harness_pose = msg
-        # print("Natnet Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
     def gantry_pose_callback(self, msg):
         self.gantry_pose = msg
