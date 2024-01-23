@@ -149,6 +149,7 @@ class Interface(Plugin):
         self._widget.trainingModeBtnGroup.setExclusive(True)
         for button in self._widget.trainingModeBtnGroup.buttons():
             button.setEnabled(True)
+        self._widget.automaticBtn.setChecked(True)  # Default to automatic mode
 
         self._widget.browseBtn.clicked.connect(self._handle_browseBtn_clicked)
         self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
@@ -174,24 +175,16 @@ class Interface(Plugin):
         self.reward_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
-        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/natnet_ros/MazeBoundary/marker2/pose', PointStamped, self.mazeboundary_marker2_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/natnet_ros/MazeBoundary/marker3/pose', PointStamped, self.mazeboundary_marker3_callback, queue_size=1, tcp_nodelay=True)
-
+        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         self.harness_pose = PoseStamped()
-
-        self.mazeboundary_marker0 = np.zeros(3)
-        self.mazeboundary_marker1 = np.zeros(3)
-        self.mazeboundary_marker2 = np.zeros(3)
-        self.mazeboundary_marker3 = np.zeros(3)
+        self.harness_x = 0.0
+        self.harness_y = 0.0
 
         # Experiment parameters
         self.start_wait_duration = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
-        self.choice_wait_duration = rospy.Duration(15.0)  # Duration to wait for rat to move to the choice point
-        self.reward_duration = rospy.Duration(20.0)  # Duration to dispense reward if the rat made the right choice
-        self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
+        self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
+        self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
+        self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
 
         self.mode = Mode.START
         self.mode_start_time = rospy.Time.now()
@@ -209,41 +202,28 @@ class Interface(Plugin):
         
         self.training_mode = None
 
-        self.chamber_wd = 300
-        self.n_chambers = 9
-        self.chamber_center_list = []
+        self.chamber_wd = 0.3
+        self.n_chamber_side = 3
+        self.chamber_centers = []
+        self.threshold = 0.1    #m
 
         self.wallStates = WallState() 
         self.start_door_open = []
         self.walls_list = []
         self.chambers_list = []
         self.wallStates.state = None
-        self.success_chamber_center_xy = []
 
         self.project_left_cue_triangle = 0
         self.project_right_cue_triangle = 0
 
-        self.x_pos_chambers_center = np.linspace(int(self.mazeboundary_marker0[0]), int(self.mazeboundary_marker3[0]), int(math.sqrt(self.n_chambers)))
-        self.y_pos_chambers_center = np.linspace(int(self.mazeboundary_marker1[1]), int(self.mazeboundary_marker0[1]), int(math.sqrt(self.n_chambers)))
+        for i in range(0, self.n_chamber_side**2):
+            row = i//self.n_chamber_side
+            col = i%self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            self.chamber_centers.append(chamber_center)
 
-        for i in range (0, int(math.sqrt(self.n_chambers))):
-            for j in range (0, int(math.sqrt(self.n_chambers))):
-                self.chamber_center = np.array([self.x_pos_chambers_center[j], self.y_pos_chambers_center[i], 0])
-                self.chamber_center_list.append(self.chamber_center)
-
-
-        self.chamber_centers = {
-            6: self.chamber_center_list[0],
-            3: self.chamber_center_list[1],
-            0: self.chamber_center_list[2],
-            7: self.chamber_center_list[3],
-            4: self.chamber_center_list[4],
-            1: self.chamber_center_list[5],
-            8: self.chamber_center_list[6],
-            5: self.chamber_center_list[7],
-            2: self.chamber_center_list[8]
-        }
-   
+        rospy.loginfo("Chamber Centers: {}".format(self.chamber_centers))
+        
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10)
@@ -289,15 +269,15 @@ class Interface(Plugin):
         # Get the full path of the selected file
         self.selected_file_path = os.path.join(self.xlsxDir, self.xlsxFiles[self.current_file_index])
 
-        # Load the file by passing the file path to load_csvfile
-        self.load_csv_file(self.selected_file_path)
+        # Load the file by passing the file path to load_xlsxfile
+        self.load_xlsx_file(self.selected_file_path)
         self.display_excel_content(self.selected_file_path)
 
 
-    def load_csv_file(self, file_path):
-        # Load the csv file into a pandas dataframe
+    def load_xlsx_file(self, file_path):
+        # Load the xlsx file into a pandas dataframe
         self.df = pd.read_excel(file_path)
-        self.trials = self.df.iloc[1:].values.tolist()
+        self.trials = self.df.values.tolist()
         self.nTrials = len(self.trials)
 
 
@@ -385,8 +365,6 @@ class Interface(Plugin):
             self.setForcedChoiceMode()
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
             self.setChoiceMode()
-        elif self._widget.trainingModeBtnGroup.checkedId() == 3:
-            self.setAutomaticMode()
 
 
     #In the following functions, we define the starting maze configuration for each chamber. 
@@ -497,7 +475,7 @@ class Interface(Plugin):
         for c in self.chambers_list:
             for w in range(8):
                 self.walls_list.append(Wall(c, w))
-                
+
         self.project_left_cue_triangle = 8
         self.project_right_cue_triangle = 7
 
@@ -505,18 +483,6 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
         self.setStartConfig()
-
-
-    def setAutomaticMode(self):
-        self.currentTrialNumber = self.current_trial_index 
-        if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
-            self.currentTrial = self.trials[self.currentTrialNumber]
-        else:
-            # Handle the case where trials is empty or currentTrialNumber is out of range
-            self.currentTrial = None
-
-        if self.currentTrial is not None:
-            self.training_mode = self.currentTrial[3]
 
 
     def setForcedChoiceMode(self):
@@ -549,29 +515,21 @@ class Interface(Plugin):
         self.mazeboundary_marker3 = np.array([msg.point.x, msg.point.y, msg.point.z])
     
     def harness_pose_callback(self, msg):
-        self.harness_pose = msg
-        # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+        self.harness_x = msg.pose.position.x
+        self.harness_y = msg.pose.position.y
+    # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
-    def harness_pos_in_maze_coor(self, harness_pose):
-        #calculate the harness position in the maze coordinate system
-        self.xhat = self.mazeboundary_marker0 - self.mazeboundary_marker3
-        self.yhat = self.mazeboundary_marker1 - self.mazeboundary_marker0
+    def rat_chamber(self):
+        for i in range(9):
+            if self.is_rat_in_chamber(i):
+                return i
+        return -1
 
-        self.marker0_harness = np.array([self.harness_pose.pose.position.x - self.mazeboundary_marker0[0], 
-                                               self.harness_pose.pose.position.y - self.mazeboundary_marker0[1], 
-                                               self.harness_pose.pose.position.z - self.mazeboundary_marker0[2]])
-        
-        self.xhat = self.xhat / np.linalg.norm(self.xhat)
-        self.yhat = self.yhat / np.linalg.norm(self.yhat)
-        
-        # X component of the harness position 
-        x = np.dot(self.marker0_harness, self.xhat) + self.mazeboundary_marker0[0]
-        # Y component of the harness position
-        y = np.dot(self.marker0_harness, self.yhat) + self.mazeboundary_marker0[1]
+    def is_rat_in_chamber(self, chamber_num):
+        dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2 
+        # rospy.loginfo(f"Distance from center: {dist_from_center}")
+        return dist_from_center <= self.threshold**2
 
-        return x, y
-
-         
     def run_experiment(self):
         self.current_time = rospy.Time.now()
 
@@ -583,19 +541,21 @@ class Interface(Plugin):
             for button in self._widget.startChamberBtnGroup.buttons():
                 button.setEnabled(False)
 
+            self.currentTrialNumber = self.current_trial_index-1
+
             # Load starting maze config
             # Wait for experimenter signal
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.START_TRIAL:
-            #self.currentTrialNumber = self.currentTrialNumber+1
-            self.currentTrialNumber = self.current_trial_index 
+            self.currentTrialNumber = self.currentTrialNumber+1
             if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                 self.currentTrial = self.trials[self.currentTrialNumber]
             else:
                 # Handle the case where trials is empty or currentTrialNumber is out of range
                 self.currentTrial = None
+            
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
             if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
@@ -606,6 +566,10 @@ class Interface(Plugin):
 
             # Play sound cue
             if self.currentTrial is not None:
+                # Set training mode from file if the automatic mode is selected
+                if self._widget.trainingModeBtnGroup.checkedId() == 3:
+                    self.training_mode = self.currentTrial[3]
+
                 self.sound_cue = self.currentTrial[2]
                 self.play_sound_cue(self.sound_cue)
 
@@ -634,32 +598,29 @@ class Interface(Plugin):
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
 
-                self.success_chamber_center_xy = self.chamber_centers[self.success_chamber]
-                #self.error_chamber_center_xy = self.chamber_centers[self.error_chamber]
-
-                self.threshold = 100
                   
                 # Define self.rat_chamber    
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_START_CHAMBER
+            rospy.loginfo("RAT_IN_START_CHAMBER")
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
                 self.lower_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
+                rospy.loginfo("START TO CHOICE")
 
         elif self.mode == Mode.START_TO_CHOICE:
-            rospy.loginfo("START TO CHOICE")
             # Wait for the rat to move to the choice point
-            self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.CHOICE
+            if self.is_rat_in_chamber(self.central_chamber):
+                self.raise_wall(self.start_wall, send=True) 
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE
+                rospy.loginfo("CHOICE")
 
         elif self.mode == Mode.CHOICE:
-            rospy.loginfo("CHOICE")
-            self.raise_wall(self.start_wall, send=True) 
-
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
                 if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
                     if self.success_chamber == self.left_chamber:
@@ -670,30 +631,34 @@ class Interface(Plugin):
                     self.lower_wall(self.left_goal_wall, send=False)
                     self.lower_wall(self.right_goal_wall, send=True)
     
-                self.stop_sound_cue()
+                # self.stop_sound_cue()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_TO_GOAL
+                rospy.loginfo("CHOICE TO GOAL")
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
-            rospy.loginfo("CHOICE TO GOAL")
-            self.x = self.harness_pos_in_maze_coor(self.harness_pose)[0]
-            self.y = self.harness_pos_in_maze_coor(self.harness_pose)[1]
-            if any(self.success_chamber_center_xy):
-                # if (self.x >= self.success_chamber_center_xy[0] - self.threshold) and (self.x <= self.success_chamber_center_xy[0] + self.threshold) and (self.y >= self.success_chamber_center_xy[1] - self.threshold) and (self.y <= self.success_chamber_center_xy[1] + self.threshold):
-                if (self.x-self.success_chamber_center_xy[0])**2 + (self.y-self.success_chamber_center_xy[1])**2 <= self.threshold**2:
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.SUCCESS
-                else:
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.ERROR
+            if self.is_rat_in_chamber(self.success_chamber):
+                self.raise_wall(self.left_goal_wall, send=False)
+                self.raise_wall(self.right_goal_wall, send=True)
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.SUCCESS
+                rospy.loginfo("SUCCESS")
+
+            elif self.is_rat_in_chamber(self.error_chamber):
+                self.raise_wall(self.left_goal_wall, send=False)
+                self.raise_wall(self.right_goal_wall, send=True)
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR
+                rospy.loginfo("ERROR")
 
         elif self.mode == Mode.SUCCESS:
-            rospy.loginfo("SUCCESS")
-            self.raise_wall(self.left_goal_wall, send=False)
-            self.raise_wall(self.right_goal_wall, send=True)
-            self.reward_dispense()
-            if (self.current_time - self.start_time).to_sec() == self.reward_duration.to_sec():
-                self.mode_start_time = rospy.Time.now()
+            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_duration.to_sec():
+                self.reward_dispense()
+                
+                rospy.loginfo("Reward dispensed")
+
                 if self.success_chamber == 1:
                     self.setChamberOneStartConfig()
                 elif self.success_chamber == 3:
@@ -702,14 +667,15 @@ class Interface(Plugin):
                     self.setChamberFiveStartConfig()
                 elif self.success_chamber  == 7:
                     self.setChamberSevenStartConfig()
+                
+                self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.END_TRIAL
+                rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
-            self.raise_wall(self.left_goal_wall, send=False)
-            self.raise_wall(self.right_goal_wall, send=True)
             
-            if (self.current_time - self.start_time).to_sec() == self.wrong_choice_duration.to_sec():
-                self.mode_start_time = rospy.Time.now()
+            
+            if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_duration.to_sec():
                 if self.error_chamber == 1:
                     self.setChamberOneStartConfig()
                 elif self.error_chamber == 3:
@@ -718,7 +684,10 @@ class Interface(Plugin):
                     self.setChamberFiveStartConfig()
                 elif self.error_chamber  == 7:
                     self.setChamberSevenStartConfig()
+                
+                self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.END_TRIAL
+                rospy.loginfo("END TRIAL")
 
         elif self.mode == Mode.PAUSE_EXPERIMENT:
             rospy.loginfo("PAUSE_EXPERIMENT")
@@ -740,20 +709,20 @@ class Interface(Plugin):
         elif self.mode == Mode.END_TRIAL:
             rospy.loginfo("END TRIAL")
             self.mode_start_time = rospy.Time.now()
-            self.mode == Mode.START_TRIAL
+            self.mode = Mode.START_TRIAL
 
     def play_sound_cue(self, sound_cue):
+        rospy.loginfo(f"Play sound cue {sound_cue}")    
         if self.sound_cue == "White_Noise":
             self.sound_pub.publish("White_Noise")
         elif self.sound_cue == "5KHz":
             self.sound_pub.publish("5KHz")
 
-    def stop_sound_cue(self):
-        self.sound_pub.publish("stop_sound")
+    # def stop_sound_cue(self):
+    #     self.sound_pub.publish("stop_sound")
 
     
     def raise_wall(self, wall, send):
-        rospy.loginfo(f"Raise wall {wall}")
         self.wallStates.chamber = wall.chamber_num
         self.wallStates.wall = [wall.wall_num]
         self.wallStates.state = True
