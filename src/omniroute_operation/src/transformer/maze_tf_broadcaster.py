@@ -48,6 +48,13 @@ class MazeTransformer:
         yhat = yhat / np.linalg.norm(yhat)
         zhat = zhat / np.linalg.norm(zhat)
 
+    #     R = np.array([xhat, yhat, zhat])
+
+    #    # Check for NaN values in the transformation matrix
+    #     if np.isnan(R).any():
+    #         rospy.logwarn("NaN values encountered in transformation matrix. Skipping transformation.")
+    #         return
+
         R = np.array([xhat, yhat, zhat])
         R = np.concatenate((R, np.zeros((3,1))), axis=1)
         R = np.concatenate((R, np.zeros((1,4))), axis=0)

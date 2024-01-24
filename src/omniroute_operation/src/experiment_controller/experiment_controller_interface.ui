@@ -379,6 +379,7 @@
      <string>Reward</string>
     </property>
    </widget>
+   <zorder>frame_4</zorder>
    <zorder>frame_5</zorder>
    <zorder>frame_2</zorder>
    <zorder>label</zorder>
@@ -403,7 +404,6 @@
    <zorder>forcedChoiceBtn</zorder>
    <zorder>choiceBtn</zorder>
    <zorder>frame</zorder>
-   <zorder>frame_4</zorder>
    <zorder>automaticBtn</zorder>
    <zorder>pumpGantryBtn</zorder>
   </widget>

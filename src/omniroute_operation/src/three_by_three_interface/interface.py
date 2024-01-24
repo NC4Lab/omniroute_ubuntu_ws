@@ -755,8 +755,6 @@ class WallConfig:
                 return
         cls.cw_wall_num_list.append([chamber_num, [wall_num]])
 
-        print("cls.cw_wall_num_list: ", cls.cw_wall_num_list)
-
     @classmethod
     def remove_wall(cls, chamber_num, wall_num):
         """Removes a wall from the wall configuration list"""
@@ -814,7 +812,7 @@ class WallConfig:
         for row in cls.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
             wall_arr = row[1]
-            print("wall_arr: ", wall_arr)
+            
             # Initialize the byte value
             byte_value = 0
             # Iterate over the array of values
