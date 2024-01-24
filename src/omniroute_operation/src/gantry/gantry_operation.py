@@ -13,8 +13,11 @@ from gantry.gcodeclient import Client as GcodeClient
 class GantryFeeder:
     # @brief Initialize the GantryFeeder class
     def __init__(self):
-        self.gantry_pose = PoseStamped()
-        self.harness_pose = PoseStamped()
+        self.gantry_x = 0.0
+        self.gantry_y = 0.0
+        self.harness_x = 0.0
+        self.harness_y = 0.0
+        self.gantry_marker_to_gantry_center = np.array([-0.254, -0.254])
 
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
         rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
@@ -41,30 +44,28 @@ class GantryFeeder:
     def loop(self):
         if self.track_harness:
             # Vector from gantry to harness
-            self.gantry_to_harness = np.array([self.harness_pose.pose.position.x - self.gantry_pose.pose.position.x, 
-                                               self.harness_pose.pose.position.y - self.gantry_pose.pose.position.y, 
-                                               self.harness_pose.pose.position.z - self.gantry_pose.pose.position.z])
-            
-            
-            gh_dist = np.linalg.norm(self.gantry_to_harness)
+
+            self.gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
+
+            # rospy.loginfo("Gantry to Harness: {}, {}".format(self.gantry_to_harness[0], self.gantry_to_harness[1]))
+
 
             k = 10.0
 
-            # rospy.loginfo("Gantry to Harness Distance: {}".format(gh_dist))
-            # rospy.loginfo("Gantry to Harness Vector: {}".format(self.gantry_to_harness))
+            # X component of the harness movement vector
+            y = k*self.gantry_to_harness[0]
+            # # # Y component of the harness movement vector
+            x = k*self.gantry_to_harness[1]
 
-            # # X component of the harness movement vector
-            # x = k*np.dot(self.gantry_to_harness, self.xhat)
-            # # Y component of the harness movement vector
-            # y = k*np.dot(self.gantry_to_harness, self.yhat)
+            rospy.loginfo("Gantry Move: {}, {}".format(x, y))
 
-            # # print("X: ", x, "Y: ", y)
-            # # Move the gantry to the specified location
-            # # TODO: Check if the gantry is within the maze boundary
-            # if ~np.isnan(x) and ~np.isnan(y):
-            #     self.move_gantry_rel(x, y)
+            # # # Move the gantry to the specified location
+            # # # TODO: Check if the gantry is within the maze boundary
+            if ~np.isnan(x) and ~np.isnan(y):
+                self.move_gantry_rel(x, y)
     
     def home(self):
+        # self.gcode_client.raw_command("$X")
         self.gcode_client.raw_command("$25=5000")
         self.gcode_client.raw_command("$H")
         self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
@@ -102,12 +103,12 @@ class GantryFeeder:
             self.track_harness = True
 
     def gantry_pose_callback(self, msg):
-        self.gantry_pose = msg
-        # print("Gantry Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+        self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
+        self.gantry_y = msg.pose.position.y + self.gantry_marker_to_gantry_center[1]
 
     def harness_pose_callback(self, msg):
-        self.harness_pose = msg
-        # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+        self.harness_x = msg.pose.position.x
+        self.harness_y = msg.pose.position.y
 
 # @brief Main code
 if __name__ == '__main__':
