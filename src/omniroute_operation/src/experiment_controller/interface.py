@@ -160,17 +160,25 @@ class Interface(Plugin):
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
-        self._widget.pathDirEdit.setText(
-            os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
+        #self._widget.pathDirEdit.setText(
+            #os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
+        
+        self.curDir = os.path.dirname(__file__)
+
+        self._widget.pathDirEdit.setText(self.curDir)
+
+        self.dataDir = os.path.join(self.curDir, 'Data')
+
+        self._widget.recordDataDir.setText(self.dataDir)
         
         self.isRecording = self.is_recording_on()
 
         if self.isRecording:
-            self._widget.bagRecordBtn.setStyleSheet("background-color: red; color: yellow")
-            self._widget.bagRecordBtn.setText("Stop")
+            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
+            self._widget.recordBtn.setText("Stop")
         else:
-            self._widget.bagRecordBtn.setStyleSheet("background-color: green; color: yellow")
-            self._widget.bagRecordBtn.setText("Record")
+            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
+            self._widget.recordBtn.setText("Record")
 
         #rospy.init_node('experiment_controller', anonymous=True)
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
@@ -241,7 +249,8 @@ class Interface(Plugin):
         self.timer.start(10)
 
     def _handle_browseBtn_clicked(self):
-        pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller'))
+        #pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller'))
+        pathDir = os.path.dirname((__file__))
         filter = "Text Files (*.xlsx)"  
         files,_ = QFileDialog.getOpenFileNames(None, "Select files to add", pathDir, filter)
 
@@ -280,6 +289,8 @@ class Interface(Plugin):
 
         # Get the full path of the selected file
         self.selected_file_path = os.path.join(self.xlsxDir, self.xlsxFiles[self.current_file_index])
+
+        rospy.loginfo(f"Selected file: {self.xlsxFiles[self.current_file_index]}")
 
         # Load the file by passing the file path to load_xlsxfile
         self.load_xlsx_file(self.selected_file_path)
@@ -366,7 +377,9 @@ class Interface(Plugin):
         #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
         if not self.isRecording:
             if not os.path.isdir(self._widget.recordDataDir.text()):
-                self._widget.recordDataDir.setText(os.path.expanduser('~/experiment_controller/data'))
+                relative_path = os.path.join('omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller', 'Data')
+                self._widget.recordDataDir.setText(relative_path)
+                #self._widget.recordDataDir.setText(os.path.expanduser('~/omniroute_ubuntu_ws/src/omniroute_operation/src/experiment_controller/Data'))
 
             data_dir = self._widget.recordDataDir.text()
 
@@ -375,7 +388,7 @@ class Interface(Plugin):
             self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=data_dir)
 
             rospy.sleep(3)
-
+            
             self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
             self._widget.recordBtn.setText("Stop")
             rospy.loginfo('Recording data files')
@@ -391,10 +404,31 @@ class Interface(Plugin):
             self.isRecording = 0
 
     def _handle_browseBtn_2_clicked(self):
-        bagDir = os.path.expanduser(os.path.join('~','experiment_controller','data'))
+        #bagDir = os.path.expanduser(os.path.join('~','experiment_controller','data'))
+        bagDir = self.dataDir
         res = QFileDialog.getExistingDirectory(None,"Select directory for recording",bagDir,QFileDialog.ShowDirsOnly)
         self._widget.recordDataDir.setText(res)
-        rospy.loginfo('Selected %s',res)
+        #rospy.loginfo('Selected %s',res)
+
+    def is_recording_on(self):
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        ret = 0
+        for str in list_output.decode().split("\n"):
+            if (str.startswith("/record")):
+                ret = 1
+        return ret
+    
+    def terminate_ros_node(self,s):
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        for str in list_output.decode().split("\n"):
+            if (str.startswith(s)):
+                os.system("rosnode kill " + str)
     
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
@@ -679,6 +713,7 @@ class Interface(Plugin):
                 rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
+            self.projection_pub.publish("Error")
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_duration.to_sec():
                 if self.error_chamber == 1:
                     self.setChamberOneStartConfig()
