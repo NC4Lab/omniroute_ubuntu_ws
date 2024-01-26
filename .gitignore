@@ -7,3 +7,4 @@ src/plog/build/
 src/CMakeLists.txt
 /.vscode/
 **/settings.json
+*.bag

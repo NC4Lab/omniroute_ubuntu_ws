@@ -79,7 +79,7 @@
     <node name = "experiment_controller" pkg = "omniroute_operation" type = "experiment_controller" output = "screen"/>
      
     <!-- Omniroute experiment controller interface -->
-    <node name = "maze_tf_broadcaster" pkg = "omniroute_operation" type = "maze_tf_broadcaster" output = "screen"/>
+    <node name = "maze_tf_broadcaster" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 <!--  -->
     <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->
 <!--  -->

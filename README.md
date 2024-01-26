@@ -51,7 +51,7 @@ catkin_init_workspace src
 sudo nano ~/.bashrc 
 source ~/.bashrc
 
-
+ on Windows computer
 catkin_make
 ```
 
@@ -119,12 +119,16 @@ echo $ROS_MASTER_URI
 ```
 
 ## Running the 3x3 with gantry and optitrack
+
+Windows computer:
+```
+Start Motive
+
+Run projection code
 ```
 
-roslaunch omniroute_operation three_by_three_interface.launch 
-rosrun omniroute_operation gantry_operation.py
-rosrun omniroute_operation maze_tf_broadcaster.py
-
-rosrun omniroute_operation experiment_controller
+Ubuntu computer:
+```
+roslaunch omniroute_operation experiment_controller.launch
 
 ```
