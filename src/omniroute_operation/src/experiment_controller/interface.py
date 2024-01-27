@@ -184,7 +184,7 @@ class Interface(Plugin):
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
         self.door_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=200)
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
-        self.reward_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -217,11 +217,12 @@ class Interface(Plugin):
         self.current_trial_index = 0
         
         self.training_mode = None
+        self.previous_rat_chamber = 0
 
         self.chamber_wd = 0.3
         self.n_chamber_side = 3
         self.chamber_centers = []
-        self.threshold = 0.1    #m
+        self.threshold = 0.08    #m
 
         self.wallStates = WallState() 
         # self.walls_list = []
@@ -230,6 +231,8 @@ class Interface(Plugin):
 
         self.project_left_cue_triangle = 0
         self.project_right_cue_triangle = 0
+
+        self.error_cue = "Error"
 
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
@@ -247,6 +250,8 @@ class Interface(Plugin):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10)
+
+        self.rat_position = 0
 
     def _handle_browseBtn_clicked(self):
         #pathDir = os.path.expanduser(os.path.join('~','omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller'))
@@ -432,12 +437,16 @@ class Interface(Plugin):
     
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
+            self.previous_rat_chamber = 1
             self.setChamberOneStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 3:
+            self.previous_rat_chamber = 3
             self.setChamberThreeStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 5:
+            self.previous_rat_chamber = 5
             self.setChamberFiveStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 7:
+            self.previous_rat_chamber = 7
             self.setChamberSevenStartConfig()
 
     def _handle_trainingModeBtnGroup_clicked(self):
@@ -582,6 +591,16 @@ class Interface(Plugin):
     def run_experiment(self):
         self.current_time = rospy.Time.now()
 
+        current_rat_chamber = self.rat_chamber()
+
+        # Check if the rat has moved to a different chamber
+        if current_rat_chamber != self.previous_rat_chamber:
+            # The rat has moved to a different chamber, update the gantry position
+            self.move_gantry_to_chamber(current_rat_chamber)
+
+        # Update the previous_rat_chamber for the next iteration
+        self.previous_rat_chamber = current_rat_chamber
+
         if self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("START OF THE EXPERIMENT")
 
@@ -713,7 +732,7 @@ class Interface(Plugin):
                 rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
-            self.projection_pub.publish("Error")
+            self.play_sound_cue(self.error_cue)
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_duration.to_sec():
                 if self.error_chamber == 1:
                     self.setChamberOneStartConfig()
@@ -752,6 +771,8 @@ class Interface(Plugin):
             self.sound_pub.publish("White_Noise")
         elif self.sound_cue == "5KHz":
             self.sound_pub.publish("5KHz")
+        elif self.sound_cue == "Error":
+            self.sound_pub.publish("Error")
 
     def raise_wall(self, wall, send):
         self.wallStates.chamber = wall.chamber_num
@@ -768,7 +789,12 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.reward_pub.publish("PUMP", [1.0])
+        self.gantry_pub.publish("PUMP", [1.0])
+
+    def move_gantry_to_chamber(self, chamber_num):
+        x = self.chamber_centers[chamber_num][0]
+        y = self.chamber_centers[chamber_num][1]
+        self.gantry_pub.publish("MOVE", [x, y])
 
 
 if __name__ == '__main__':
