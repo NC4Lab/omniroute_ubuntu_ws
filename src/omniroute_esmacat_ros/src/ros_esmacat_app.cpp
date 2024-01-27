@@ -27,8 +27,12 @@
  * @brief Identifies the actual Esmacat slave sequence in the EtherCAT communication chain.
  */
 void ros_esmacat_app::assign_slave_sequence(){
+    int sync_ease_slave_index;
+    ros::param::param<int>("/sync_ease_slave_index", sync_ease_slave_index, 0); // Use the ROS parameter when available
+    assign_esmacat_slave_index(&sync_ease_ecat_as, sync_ease_slave_index); // Assign the slave object to a position in the chain
+    
     int maze_ard0_ease_slave_index;
-    ros::param::param<int>("/maze_ard0_ease_slave_index", maze_ard0_ease_slave_index, 0); // Use the ROS parameter when available
+    ros::param::param<int>("/maze_ard0_ease_slave_index", maze_ard0_ease_slave_index, 1); // Use the ROS parameter when available
     assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index); // Assign the slave object to a position in the chain
 }
 
@@ -70,6 +74,13 @@ void ros_esmacat_app::init()
  * @brief Executes functions at the defined loop rate
  */
 void ros_esmacat_app::loop(){
+
+    // The newly modified write registers from the ROS Communication is returned from the shared memory 
+    sync_ease_ros_message = sync_ease.get_write_registers();
+
+    // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the 
+    //    updated values received from ROS Nodes.
+    sync_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(sync_ease_ros_message.INT0);
 
 //     // The ROS object created is used to read the current state of registers from the Esmacat slave object
 //     //      and store it in a shared memory location
