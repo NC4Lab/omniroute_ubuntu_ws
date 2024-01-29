@@ -40,8 +40,8 @@ class MazeTransformer:
             r.sleep()
         
     def loop(self):
-        xhat = self.optitrack_marker1 - self.optitrack_marker0
-        yhat = self.optitrack_marker2 - self.optitrack_marker0
+        yhat = self.optitrack_marker1 - self.optitrack_marker0
+        xhat = self.optitrack_marker2 - self.optitrack_marker0
         zhat = np.cross(xhat, yhat)
 
         xhat = xhat / np.linalg.norm(xhat)
@@ -58,17 +58,64 @@ class MazeTransformer:
         self.maze_br.sendTransform(t, tf.transformations.quaternion_from_matrix(R), rospy.Time.now(), "maze", "world")
 
     
+    # def harness_pose_callback(self, msg):
+    #     # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time.now()-rospy.Duration(0.1), timeout=rospy.Duration(1.0))
+    #     msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
+    #     transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+    #     self.harness_pose_in_maze_pub.publish(transformed_pose)
+
+    # def harness_pose_callback(self, msg):
+    #     try:
+    #         # Adjust the timestamp slightly to the past to ensure the transform is available
+    #         msg.header.stamp = rospy.Time.now() - rospy.Duration(0.01)
+
+    #         # Wait for the transform to be available
+    #         self.tf_listener.waitForTransform(target_frame="maze", source_frame=msg.header.frame_id, 
+    #                                         time=msg.header.stamp, timeout=rospy.Duration(1.0))
+
+    #         # Perform the transformation
+    #         transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+    #         self.harness_pose_in_maze_pub.publish(transformed_pose)
+
+    #     except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
+    #         rospy.logwarn("TF exception in harness_pose_callback: {}".format(e))
+
     def harness_pose_callback(self, msg):
-        # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time.now()-rospy.Duration(0.1), timeout=rospy.Duration(1.0))
-        msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
-        transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
-        self.harness_pose_in_maze_pub.publish(transformed_pose)
+        try:
+            # Get the latest time for which the TF listener has the transform
+            latest_time = self.tf_listener.getLatestCommonTime("maze", msg.header.frame_id)
+
+            # Set the timestamp of the message to this latest available time
+            msg.header.stamp = latest_time
+
+            # Perform the transformation
+            transformed_pose = self.tf_listener.transformPose("maze", msg)
+            self.harness_pose_in_maze_pub.publish(transformed_pose)
+
+        except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
+            rospy.logwarn("TF exception in harness_pose_callback: {}".format(e))
     
+    # def gantry_pose_callback(self, msg):
+    #     # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time(0), timeout=rospy.Duration(1.0))
+    #     msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
+    #     transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+    #     self.gantry_pose_in_maze_pub.publish(transformed_pose)
+            
     def gantry_pose_callback(self, msg):
-        # self.tf_listener.waitForTransform(target_frame="maze", source_frame="world", time=rospy.Time(0), timeout=rospy.Duration(1.0))
-        msg.header.stamp = msg.header.stamp - rospy.Duration(0.01)
-        transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
-        self.gantry_pose_in_maze_pub.publish(transformed_pose)
+        try:
+            # Adjust the timestamp slightly to the past to ensure the transform is available
+            msg.header.stamp = rospy.Time.now() - rospy.Duration(0.01)
+
+            # Wait for the transform to be available
+            self.tf_listener.waitForTransform(target_frame="maze", source_frame=msg.header.frame_id, 
+                                            time=msg.header.stamp, timeout=rospy.Duration(1.0))
+
+            # Perform the transformation
+            transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+            self.gantry_pose_in_maze_pub.publish(transformed_pose)
+
+        except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
+            rospy.logwarn("TF exception in gantry_pose_callback: {}".format(e))
 
     def mazeboundary_marker0_callback(self, msg):
         self.optitrack_marker0  = np.array([msg.point.x, msg.point.y, msg.point.z], dtype=np.float32)

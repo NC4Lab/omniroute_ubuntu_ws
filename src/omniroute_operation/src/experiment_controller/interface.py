@@ -232,8 +232,6 @@ class Interface(Plugin):
         self.project_left_cue_triangle = 0
         self.project_right_cue_triangle = 0
 
-        self.error_cue = "Error"
-
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
             col = i%self.n_chamber_side
@@ -541,6 +539,7 @@ class Interface(Plugin):
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
+        self.right_goal_wall = Wall(4, 4)
 
 
     def setForcedChoiceMode(self):
@@ -639,6 +638,7 @@ class Interface(Plugin):
                     self.training_mode = self.currentTrial[3]
 
                 self.sound_cue = self.currentTrial[2]
+                #self.error_cue = 'Error'
                 self.play_sound_cue(self.sound_cue)
 
                 self.left_visual_cue = self.currentTrial[0]
@@ -709,6 +709,7 @@ class Interface(Plugin):
                 rospy.loginfo("SUCCESS")
 
             elif self.is_rat_in_chamber(self.error_chamber):
+                self.sound_pub.publish("Error")
                 self.raise_wall(self.left_goal_wall, send=False)
                 self.raise_wall(self.right_goal_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
@@ -732,7 +733,6 @@ class Interface(Plugin):
                 rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
-            self.play_sound_cue(self.error_cue)
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_duration.to_sec():
                 if self.error_chamber == 1:
                     self.setChamberOneStartConfig()
