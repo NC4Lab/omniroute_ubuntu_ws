@@ -89,6 +89,6 @@
     <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
     
     <!-- Omniroute feeder cantry node -->
-    <!--<node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/> -->
+    <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
     
   </launch>
