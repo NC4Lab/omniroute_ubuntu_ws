@@ -40,8 +40,8 @@ class MazeTransformer:
             r.sleep()
         
     def loop(self):
-        yhat = self.optitrack_marker1 - self.optitrack_marker0
-        xhat = self.optitrack_marker2 - self.optitrack_marker0
+        xhat = self.optitrack_marker1 - self.optitrack_marker0
+        yhat = self.optitrack_marker2 - self.optitrack_marker0 # TEMP changing maker to deal with bug
         zhat = np.cross(xhat, yhat)
 
         xhat = xhat / np.linalg.norm(xhat)
