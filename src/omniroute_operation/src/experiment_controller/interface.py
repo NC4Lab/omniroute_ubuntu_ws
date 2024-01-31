@@ -217,7 +217,7 @@ class Interface(Plugin):
         self.current_trial_index = 0
         
         self.training_mode = None
-        self.previous_rat_chamber = 0
+        self.previous_rat_chamber = -1
 
         self.chamber_wd = 0.3
         self.n_chamber_side = 3
@@ -435,16 +435,16 @@ class Interface(Plugin):
     
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
-            self.previous_rat_chamber = 1
+            # self.previous_rat_chamber = 1
             self.setChamberOneStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 3:
-            self.previous_rat_chamber = 3
+            # self.previous_rat_chamber = 3
             self.setChamberThreeStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 5:
-            self.previous_rat_chamber = 5
+            # self.previous_rat_chamber = 5
             self.setChamberFiveStartConfig()
         elif self._widget.startChamberBtnGroup.checkedId() == 7:
-            self.previous_rat_chamber = 7
+            # self.previous_rat_chamber = 7
             self.setChamberSevenStartConfig()
 
     def _handle_trainingModeBtnGroup_clicked(self):
@@ -593,12 +593,12 @@ class Interface(Plugin):
         current_rat_chamber = self.rat_chamber()
 
         # Check if the rat has moved to a different chamber
-        if current_rat_chamber != self.previous_rat_chamber:
+        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
             # The rat has moved to a different chamber, update the gantry position
             self.move_gantry_to_chamber(current_rat_chamber)
 
-        # Update the previous_rat_chamber for the next iteration
-        self.previous_rat_chamber = current_rat_chamber
+            # Update the previous_rat_chamber for the next iteration
+            self.previous_rat_chamber = current_rat_chamber
 
         if self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("START OF THE EXPERIMENT")

@@ -17,14 +17,17 @@ class GantryFeeder:
         self.gantry_y = 0.0
         self.harness_x = 0.0
         self.harness_y = 0.0
-        self.gantry_marker_to_gantry_center = np.array([-0.254, -0.254])
+        self.target_x = 0.0
+        self.target_y = 0.0
+
+        self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
 
         # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
         rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
-        self.track_harness = True
+        self.track_mode = 'NONE'
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
@@ -42,21 +45,35 @@ class GantryFeeder:
             r.sleep()
         
     def loop(self):
-        if self.track_harness:
+        if self.track_mode == 'TARGET':
+            gantry_to_target = np.array([self.target_x - self.gantry_x, self.target_y - self.gantry_y])
+
+            k = 15.0
+
+            # X component of the harness movement vector
+            y = k*gantry_to_target[0]
+            # # # Y component of the harness movement vector
+            x = k*gantry_to_target[1]
+
+            move_flag = True
+
+        elif self.track_mode == 'HARNESS':
             # Vector from gantry to harness
-
-            self.gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
-
-            # rospy.loginfo("Gantry to Harness: {}, {}".format(self.gantry_to_harness[0], self.gantry_to_harness[1]))
-
+            gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
 
             k = 10.0
 
             # X component of the harness movement vector
-            y = k*self.gantry_to_harness[0]
+            y = k*gantry_to_harness[0]
             # # # Y component of the harness movement vector
-            x = k*self.gantry_to_harness[1]
+            x = k*gantry_to_harness[1]
+            
+            move_flag = True
+        else:
+            move_flag = False
 
+
+        if move_flag:
             rospy.loginfo("Gantry Move: {}, {}".format(x, y))
 
             # # # Move the gantry to the specified location
@@ -89,18 +106,21 @@ class GantryFeeder:
 
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
-            self.track_harness = False
+            self.track_mode = 'NONE'
             self.home()
+
         elif msg.cmd == "MOVE":
-            self.track_harness = False
+            self.track_mode = 'TARGET'
             # Move the gantry to the specified location
-            self.move_gantry_abs(msg.args[0], msg.args[1])
-            rospy.loginfo("Gantry Move: {}, {}".format(msg.args[0], msg.args[1]))
+            self.target_x = msg.args[0]
+            self.target_y = msg.args[1]
+
         elif msg.cmd == "PUMP":
-            self.track_harness = False
+            self.track_mode = 'NONE'
             self.run_pump(msg.args[0])
+
         elif msg.cmd == "TRACK_HARNESS":
-            self.track_harness = True
+            self.track_mode = 'HARNESS'
 
     def gantry_pose_callback(self, msg):
         self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
