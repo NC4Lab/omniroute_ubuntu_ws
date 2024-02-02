@@ -27,11 +27,15 @@ class GantryFeeder:
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
-        self.track_mode = 'NONE'
+        self.track_mode = 'HARNESS'
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
         ## TODO: Automatically determine the port
+
+
+        self.run_pump(1.0)
+
 
         # Wait for a few secs
         # time.sleep(1)
@@ -39,7 +43,8 @@ class GantryFeeder:
 
         time.sleep(1)
 
-        r = rospy.Rate(50)
+
+        r = rospy.Rate(60)
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
@@ -61,21 +66,26 @@ class GantryFeeder:
             # Vector from gantry to harness
             gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
 
-            k = 10.0
+            distance = np.linalg.norm(gantry_to_harness)
 
-            # X component of the harness movement vector
-            y = k*gantry_to_harness[0]
-            # # # Y component of the harness movement vector
-            x = k*gantry_to_harness[1]
-            
-            move_flag = True
+            gantry_to_harness = gantry_to_harness / distance
+
+            if distance > 0.04:
+                k = 3.0
+
+                # X component of the harness movement vector
+                y = k*gantry_to_harness[0]
+                # # # Y component of the harness movement vector
+                x = k*gantry_to_harness[1]
+                
+                move_flag = True
+            else:
+                move_flag = False
         else:
             move_flag = False
 
 
         if move_flag:
-            rospy.loginfo("Gantry Move: {}, {}".format(x, y))
-
             # # # Move the gantry to the specified location
             # # # TODO: Check if the gantry is within the maze boundary
             if ~np.isnan(x) and ~np.isnan(y):
@@ -89,8 +99,6 @@ class GantryFeeder:
         
     def move_gantry_rel(self, x, y):
         cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F25000".format(x,y)
-    
-        print(cmd)
         self.gcode_client.raw_command(cmd)
 
     def move_gantry_abs(self, x, y):

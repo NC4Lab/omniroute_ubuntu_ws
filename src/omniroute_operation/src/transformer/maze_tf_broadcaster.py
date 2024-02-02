@@ -28,7 +28,7 @@ class MazeTransformer:
 
         self.maze_br.sendTransform([0,0,0], [0,0,0,1], rospy.Time.now(), "maze", "world")
 
-        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/Testing/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         self.harness_pose_in_maze_pub = rospy.Publisher('/harness_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
