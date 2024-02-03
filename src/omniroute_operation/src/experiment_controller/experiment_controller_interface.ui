@@ -87,7 +87,7 @@
    <widget class="QPushButton" name="pauseBtn">
     <property name="geometry">
      <rect>
-      <x>240</x>
+      <x>170</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -100,7 +100,7 @@
    <widget class="QPushButton" name="resumeBtn">
     <property name="geometry">
      <rect>
-      <x>460</x>
+      <x>340</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -369,7 +369,7 @@
    <widget class="QPushButton" name="pumpGantryBtn">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>500</x>
       <y>890</y>
       <width>91</width>
       <height>41</height>
@@ -435,6 +435,19 @@ color: rgb(255, 255, 0);</string>
      <string>Record</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pumpInitBtn">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>890</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Pump Init</string>
+    </property>
+   </widget>
    <zorder>frame_4</zorder>
    <zorder>frame_5</zorder>
    <zorder>frame_2</zorder>
@@ -466,6 +479,7 @@ color: rgb(255, 255, 0);</string>
    <zorder>browseBtn_2</zorder>
    <zorder>label_5</zorder>
    <zorder>recordBtn</zorder>
+   <zorder>pumpInitBtn</zorder>
   </widget>
  </widget>
  <resources/>

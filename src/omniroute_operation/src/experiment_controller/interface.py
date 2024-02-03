@@ -7,6 +7,7 @@ import subprocess
 from std_msgs.msg import String, Int32
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
+from omniroute_esmacat_ros.msg import *
 
 import pandas as pd
 from enum import Enum
@@ -157,6 +158,7 @@ class Interface(Plugin):
         self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
         self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
         self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
+        self._widget.pumpInitBtn.clicked.connect(self._handle_pumpInitBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
@@ -185,6 +187,8 @@ class Interface(Plugin):
         self.door_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=200)
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
+        self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -194,6 +198,10 @@ class Interface(Plugin):
         
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
+
+        reg = [0]*8
+        reg[0] = 0
+        self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
         self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
@@ -387,10 +395,16 @@ class Interface(Plugin):
             data_dir = self._widget.recordDataDir.text()
 
             # Record all ROS topics to domeExperimentData.bag
-            command_data = f"rosbag record -a -o plusMAzeExperimentData"
+            command_data = f"rosbag record -a -o plusMazeExperimentData"
             self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=data_dir)
 
             rospy.sleep(3)
+
+            # Send message to send positive TTL output to Optitrack eSync2
+            reg = [0]*8
+            reg[0] = 1
+            self.write_sync_ease_pub.publish(*reg)
+            self.event_pub.publish("start_optitrack_recording", rospy.Time.now())
             
             self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
             self._widget.recordBtn.setText("Stop")
@@ -398,6 +412,14 @@ class Interface(Plugin):
             self.isRecording = 1
 
         else:
+            # Send message to send negative TTL output to Optitrack eSync2
+            reg = [0]*8
+            reg[0] = 0
+            self.write_sync_ease_pub.publish(*reg)
+            self.event_pub.publish("stop_optitrack_recording", rospy.Time.now())
+
+            rospy.sleep(1)
+
             self.terminate_ros_node("/record")
 
             self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
@@ -412,6 +434,9 @@ class Interface(Plugin):
         res = QFileDialog.getExistingDirectory(None,"Select directory for recording",bagDir,QFileDialog.ShowDirsOnly)
         self._widget.recordDataDir.setText(res)
         #rospy.loginfo('Selected %s',res)
+
+    def _handle_pumpInitBtn_clicked(self):
+        self.gantry_pub.publish("PUMP", [5.0])
 
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -789,7 +814,7 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("PUMP", [60.0])
+        self.gantry_pub.publish("PUMP", [1.0])
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
