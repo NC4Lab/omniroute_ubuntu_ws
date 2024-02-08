@@ -26,9 +26,12 @@ class MazeTransformer:
         self.tf_listener = tf.TransformListener()
         self.transformer = tf.TransformerROS()
 
+        self.maze_t = np.array([0,0,0], dtype=np.float32)
+        self.maze_R = np.eye(4, dtype=np.float32)
+
         self.maze_br.sendTransform([0,0,0], [0,0,0,1], rospy.Time.now(), "maze", "world")
 
-        rospy.Subscriber('/natnet_ros/Testing/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         self.harness_pose_in_maze_pub = rospy.Publisher('/harness_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
@@ -41,12 +44,14 @@ class MazeTransformer:
         
     def loop(self):
         xhat = self.optitrack_marker1 - self.optitrack_marker0
-        yhat = self.optitrack_marker2 - self.optitrack_marker0 # TEMP changing maker to deal with bug
-        zhat = np.cross(xhat, yhat)
+        yhat = self.optitrack_marker2 - self.optitrack_marker0
+
+        #rospy.loginfo("Length of xhat: {}".format(np.linalg.norm(xhat)))
+        #rospy.loginfo("Length of yhat: {}".format(np.linalg.norm(yhat)))
 
         xhat = xhat / np.linalg.norm(xhat)
         yhat = yhat / np.linalg.norm(yhat)
-        zhat = zhat / np.linalg.norm(zhat)
+        zhat = np.cross(xhat, yhat)
 
         R = np.array([xhat, yhat, zhat])
         R = np.concatenate((R, np.zeros((3,1))), axis=1)
@@ -54,6 +59,9 @@ class MazeTransformer:
         R[3,3] = 1.0
 
         t = self.optitrack_marker0
+        
+        self.maze_t = t
+        self.maze_R = R
 
         self.maze_br.sendTransform(t, tf.transformations.quaternion_from_matrix(R), rospy.Time.now(), "maze", "world")
 
@@ -80,7 +88,7 @@ class MazeTransformer:
     #     except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
     #         rospy.logwarn("TF exception in harness_pose_callback: {}".format(e))
 
-    def harness_pose_callback(self, msg):
+    def harness_pose_callback(self, msg):    
         try:
             # Get the latest time for which the TF listener has the transform
             latest_time = self.tf_listener.getLatestCommonTime("maze", msg.header.frame_id)
@@ -90,6 +98,9 @@ class MazeTransformer:
 
             # Perform the transformation
             transformed_pose = self.tf_listener.transformPose("maze", msg)
+            # HACK: This is a temporary fix to the issue of the harness pose being mirrored
+            transformed_pose.pose.position.x = abs(transformed_pose.pose.position.x)
+            transformed_pose.pose.position.y = abs(transformed_pose.pose.position.y)
             self.harness_pose_in_maze_pub.publish(transformed_pose)
 
         except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
@@ -112,6 +123,9 @@ class MazeTransformer:
 
             # Perform the transformation
             transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+            # HACK: This is a temporary fix to the issue of the gantry pose being mirrored
+            transformed_pose.pose.position.x = abs(transformed_pose.pose.position.x)
+            transformed_pose.pose.position.y = abs(transformed_pose.pose.position.y)
             self.gantry_pose_in_maze_pub.publish(transformed_pose)
 
         except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:

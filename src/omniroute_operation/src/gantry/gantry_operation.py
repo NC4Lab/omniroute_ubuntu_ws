@@ -139,6 +139,9 @@ class GantryFeeder:
         elif msg.cmd == "TRACK_HARNESS":
             self.track_mode = 'HARNESS'
 
+        elif msg.cmd == "STOP_TRACKING_HARNESS":
+            self.track_mode = 'NONE'
+
     def gantry_pose_callback(self, msg):
         self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
         self.gantry_y = msg.pose.position.y + self.gantry_marker_to_gantry_center[1]

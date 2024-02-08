@@ -159,6 +159,9 @@ class Interface(Plugin):
         self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
         self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
         self._widget.pumpInitBtn.clicked.connect(self._handle_pumpInitBtn_clicked)
+        self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
+        self._widget.homeBtn.clicked.connect(self._handle_homeBtn_clicked)
+        self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
@@ -249,9 +252,9 @@ class Interface(Plugin):
         rospy.loginfo("Chamber Centers: {}".format(self.chamber_centers))
 
         # Set the starting maze configuration
-        self.setPlusConfig()
+        #self.setPlusConfig()
 
-        rospy.loginfo("Setting plus config")
+        #rospy.loginfo("Setting plus config")
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
@@ -438,6 +441,15 @@ class Interface(Plugin):
     def _handle_pumpInitBtn_clicked(self):
         self.gantry_pub.publish("PUMP", [5.0])
 
+    def _handle_plusMazeBtn_clicked(self):
+        self.setPlusConfig()
+
+    def _handle_stopTrackingBtn_clicked(self):
+        self.gantry_cmd_pub.publish("STOP_TARCKING_HOME")
+    
+    def _handle_homeBtn_clicked(self):
+        self.gantry_cmd_pub.publish("HOME",[])
+    
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
         list_output = list_cmd.stdout.read()

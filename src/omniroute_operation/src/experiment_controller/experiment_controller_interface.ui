@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>788</width>
+    <width>806</width>
     <height>1131</height>
    </rect>
   </property>
@@ -18,32 +18,19 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>771</width>
+     <width>781</width>
      <height>1111</height>
     </rect>
    </property>
    <property name="title">
     <string>GUI</string>
    </property>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>761</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Trials Files</string>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="pathDirEdit">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>641</width>
+      <width>651</width>
       <height>41</height>
      </rect>
     </property>
@@ -51,7 +38,7 @@
    <widget class="QPushButton" name="browseBtn">
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>660</x>
       <y>60</y>
       <width>111</width>
       <height>41</height>
@@ -66,7 +53,7 @@
      <rect>
       <x>10</x>
       <y>110</y>
-      <width>751</width>
+      <width>761</width>
       <height>141</height>
      </rect>
     </property>
@@ -75,7 +62,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>890</y>
+      <y>880</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -87,8 +74,8 @@
    <widget class="QPushButton" name="pauseBtn">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>890</y>
+      <x>350</x>
+      <y>880</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -100,8 +87,8 @@
    <widget class="QPushButton" name="resumeBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>890</y>
+      <x>680</x>
+      <y>880</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -121,19 +108,6 @@
     </property>
     <property name="text">
      <string>Chamber  3 </string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>650</y>
-      <width>351</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Pick the starting Chamber</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="chamberFiveBtn">
@@ -191,7 +165,7 @@
    <widget class="QPushButton" name="nextBtn">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>680</x>
       <y>260</y>
       <width>91</width>
       <height>41</height>
@@ -206,22 +180,9 @@
      <rect>
       <x>10</x>
       <y>340</y>
-      <width>751</width>
+      <width>761</width>
       <height>241</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>310</y>
-      <width>761</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Trials</string>
     </property>
    </widget>
    <widget class="QPushButton" name="previousBtn_2">
@@ -240,7 +201,7 @@
    <widget class="QPushButton" name="nextBtn_2">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>680</x>
       <y>590</y>
       <width>91</width>
       <height>41</height>
@@ -253,7 +214,7 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>330</x>
       <y>650</y>
       <width>761</width>
       <height>31</height>
@@ -266,7 +227,7 @@
    <widget class="QRadioButton" name="forcedChoiceBtn">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>340</x>
       <y>700</y>
       <width>131</width>
       <height>23</height>
@@ -279,7 +240,7 @@
    <widget class="QRadioButton" name="choiceBtn">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>340</x>
       <y>740</y>
       <width>112</width>
       <height>23</height>
@@ -289,28 +250,12 @@
      <string>Choice</string>
     </property>
    </widget>
-   <widget class="QFrame" name="frame">
-    <property name="geometry">
-     <rect>
-      <x>370</x>
-      <y>650</y>
-      <width>391</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-   </widget>
    <widget class="QFrame" name="frame_2">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>650</y>
-      <width>361</width>
+      <width>311</width>
       <height>31</height>
      </rect>
     </property>
@@ -320,13 +265,26 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>301</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pick the starting Chamber</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_4">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>320</x>
       <y>680</y>
-      <width>391</width>
+      <width>201</width>
       <height>181</height>
      </rect>
     </property>
@@ -342,7 +300,7 @@
      <rect>
       <x>10</x>
       <y>680</y>
-      <width>361</width>
+      <width>311</width>
       <height>181</height>
      </rect>
     </property>
@@ -356,7 +314,7 @@
    <widget class="QRadioButton" name="automaticBtn">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>340</x>
       <y>780</y>
       <width>112</width>
       <height>23</height>
@@ -369,8 +327,8 @@
    <widget class="QPushButton" name="pumpGantryBtn">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>890</y>
+      <x>660</x>
+      <y>800</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -382,37 +340,11 @@
    <widget class="QLineEdit" name="recordDataDir">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>1060</y>
-      <width>641</width>
+      <x>20</x>
+      <y>1040</y>
+      <width>651</width>
       <height>41</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="browseBtn_2">
-    <property name="geometry">
-     <rect>
-      <x>650</x>
-      <y>1060</y>
-      <width>111</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Browse</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_5">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>950</y>
-      <width>761</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Recording Experiment Data</string>
     </property>
    </widget>
    <widget class="QPushButton" name="recordBtn">
@@ -421,9 +353,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>990</y>
-      <width>751</width>
+      <x>20</x>
+      <y>980</y>
+      <width>741</width>
       <height>51</height>
      </rect>
     </property>
@@ -438,8 +370,8 @@ color: rgb(255, 255, 0);</string>
    <widget class="QPushButton" name="pumpInitBtn">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>890</y>
+      <x>540</x>
+      <y>700</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -448,10 +380,228 @@ color: rgb(255, 255, 0);</string>
      <string>Pump Init</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="plusMazeBtn">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>700</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Plus Maze </string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_6">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>970</y>
+      <width>761</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QPushButton" name="browseBtn_2">
+     <property name="geometry">
+      <rect>
+       <x>660</x>
+       <y>70</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Browse</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="homeBtn">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>800</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Home</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_7">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>680</y>
+      <width>251</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_8">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>650</y>
+      <width>251</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>301</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Maze and Gantry Buttons</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame_9">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>650</y>
+      <width>201</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>310</y>
+      <width>761</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>761</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Trials</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame_10">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>761</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>761</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Trials Files</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame_11">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>940</y>
+      <width>761</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="label_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>761</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Recording Experiment Data</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="stopTrackingBtn">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>750</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Tracking</string>
+    </property>
+   </widget>
+   <zorder>frame_3</zorder>
+   <zorder>frame_7</zorder>
+   <zorder>frame_6</zorder>
    <zorder>frame_4</zorder>
    <zorder>frame_5</zorder>
    <zorder>frame_2</zorder>
-   <zorder>label</zorder>
    <zorder>pathDirEdit</zorder>
    <zorder>browseBtn</zorder>
    <zorder>xlsxFileListWidget</zorder>
@@ -459,27 +609,29 @@ color: rgb(255, 255, 0);</string>
    <zorder>pauseBtn</zorder>
    <zorder>resumeBtn</zorder>
    <zorder>chamberThreeBtn</zorder>
-   <zorder>label_2</zorder>
    <zorder>chamberFiveBtn</zorder>
    <zorder>chamberSevenBtn</zorder>
    <zorder>chamberOneBtn</zorder>
    <zorder>previousBtn</zorder>
    <zorder>nextBtn</zorder>
    <zorder>trialListWidget</zorder>
-   <zorder>label_3</zorder>
    <zorder>previousBtn_2</zorder>
    <zorder>nextBtn_2</zorder>
-   <zorder>label_4</zorder>
    <zorder>forcedChoiceBtn</zorder>
    <zorder>choiceBtn</zorder>
-   <zorder>frame</zorder>
    <zorder>automaticBtn</zorder>
    <zorder>pumpGantryBtn</zorder>
    <zorder>recordDataDir</zorder>
-   <zorder>browseBtn_2</zorder>
-   <zorder>label_5</zorder>
    <zorder>recordBtn</zorder>
    <zorder>pumpInitBtn</zorder>
+   <zorder>plusMazeBtn</zorder>
+   <zorder>homeBtn</zorder>
+   <zorder>label_4</zorder>
+   <zorder>frame_8</zorder>
+   <zorder>frame_9</zorder>
+   <zorder>frame_10</zorder>
+   <zorder>frame_11</zorder>
+   <zorder>stopTrackingBtn</zorder>
   </widget>
  </widget>
  <resources/>
