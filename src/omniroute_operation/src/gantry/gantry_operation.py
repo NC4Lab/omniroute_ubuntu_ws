@@ -20,7 +20,8 @@ class GantryFeeder:
         self.target_x = 0.0
         self.target_y = 0.0
         
-        #self.mode_start_time = rospy.Time.now()
+        self.mode_start_time = rospy.Time.now()
+        self.current_time = rospy.Time.now()
         self.pump_wait_duration = rospy.Duration(2.0)
 
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
@@ -52,6 +53,7 @@ class GantryFeeder:
             r.sleep()
         
     def loop(self):
+        self.current_time = rospy.Time.now()
         if self.track_mode == 'TARGET':
             gantry_to_target = np.array([self.target_x - self.gantry_x, self.target_y - self.gantry_y])
 
@@ -85,8 +87,6 @@ class GantryFeeder:
         else:
             move_flag = False
 
-        self.current_time = rospy.Time.now()
-
         if move_flag:
             # # # Move the gantry to the specified location
             # # # TODO: Check if the gantry is within the maze boundary
@@ -114,9 +114,7 @@ class GantryFeeder:
         self.gcode_client.raw_command("0x85")
 
     def run_pump(self, duration):
-        self.gcode_client.raw_command("M3 S127")
-        self.mode_start_time = rospy.Time.now()  # Update start time when pump is started
-        self.current_time = rospy.Time.now()  
+        self.gcode_client.raw_command("M3 S127") 
         if (self.current_time - self.mode_start_time).to_sec() >= self.pump_wait_duration.to_sec():
             self.gcode_client.raw_command("M5")
 
@@ -133,7 +131,7 @@ class GantryFeeder:
 
         elif msg.cmd == "PUMP":
             self.track_mode = 'NONE'
-            #self.mode_start_time = rospy.Time.now()
+            self.mode_start_time = rospy.Time.now()
             self.run_pump(msg.args[0])
 
         elif msg.cmd == "TRACK_HARNESS":

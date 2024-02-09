@@ -162,6 +162,7 @@ class Interface(Plugin):
         self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
         self._widget.homeBtn.clicked.connect(self._handle_homeBtn_clicked)
         self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
+        self._widget.startTrackingBtn.clicked.connect(self._handle_startTrackingBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
@@ -445,10 +446,13 @@ class Interface(Plugin):
         self.setPlusConfig()
 
     def _handle_stopTrackingBtn_clicked(self):
-        self.gantry_cmd_pub.publish("STOP_TARCKING_HOME")
+        self.gantry_pub.publish("STOP_TRACKING_HARNESS", [])
+
+    def _handle_startTrackingBtn_clicked(self):
+        self.gantry_pub.publish("TRACK_HARNESS", [])
     
     def _handle_homeBtn_clicked(self):
-        self.gantry_cmd_pub.publish("HOME",[])
+        self.gantry_pub.publish("HOME",[])
     
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)

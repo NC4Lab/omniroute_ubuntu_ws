@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>806</width>
+    <width>941</width>
     <height>1131</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>781</width>
+     <width>921</width>
      <height>1111</height>
     </rect>
    </property>
@@ -30,7 +30,7 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>651</width>
+      <width>791</width>
       <height>41</height>
      </rect>
     </property>
@@ -38,7 +38,7 @@
    <widget class="QPushButton" name="browseBtn">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>800</x>
       <y>60</y>
       <width>111</width>
       <height>41</height>
@@ -53,7 +53,7 @@
      <rect>
       <x>10</x>
       <y>110</y>
-      <width>761</width>
+      <width>901</width>
       <height>141</height>
      </rect>
     </property>
@@ -74,7 +74,7 @@
    <widget class="QPushButton" name="pauseBtn">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>410</x>
       <y>880</y>
       <width>91</width>
       <height>41</height>
@@ -87,7 +87,7 @@
    <widget class="QPushButton" name="resumeBtn">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>820</x>
       <y>880</y>
       <width>91</width>
       <height>41</height>
@@ -165,7 +165,7 @@
    <widget class="QPushButton" name="nextBtn">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>820</x>
       <y>260</y>
       <width>91</width>
       <height>41</height>
@@ -180,7 +180,7 @@
      <rect>
       <x>10</x>
       <y>340</y>
-      <width>761</width>
+      <width>901</width>
       <height>241</height>
      </rect>
     </property>
@@ -201,7 +201,7 @@
    <widget class="QPushButton" name="nextBtn_2">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>820</x>
       <y>590</y>
       <width>91</width>
       <height>41</height>
@@ -241,7 +241,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>740</y>
+      <y>760</y>
       <width>112</width>
       <height>23</height>
      </rect>
@@ -315,7 +315,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>780</y>
+      <y>820</y>
       <width>112</width>
       <height>23</height>
      </rect>
@@ -328,7 +328,7 @@
     <property name="geometry">
      <rect>
       <x>660</x>
-      <y>800</y>
+      <y>790</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -342,7 +342,7 @@
      <rect>
       <x>20</x>
       <y>1040</y>
-      <width>651</width>
+      <width>781</width>
       <height>41</height>
      </rect>
     </property>
@@ -355,7 +355,7 @@
      <rect>
       <x>20</x>
       <y>980</y>
-      <width>741</width>
+      <width>881</width>
       <height>51</height>
      </rect>
     </property>
@@ -371,7 +371,7 @@ color: rgb(255, 255, 0);</string>
     <property name="geometry">
      <rect>
       <x>540</x>
-      <y>700</y>
+      <y>710</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -384,7 +384,7 @@ color: rgb(255, 255, 0);</string>
     <property name="geometry">
      <rect>
       <x>660</x>
-      <y>700</y>
+      <y>710</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -398,7 +398,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>10</x>
       <y>970</y>
-      <width>761</width>
+      <width>901</width>
       <height>121</height>
      </rect>
     </property>
@@ -411,9 +411,9 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="browseBtn_2">
      <property name="geometry">
       <rect>
-       <x>660</x>
+       <x>790</x>
        <y>70</y>
-       <width>91</width>
+       <width>101</width>
        <height>41</height>
       </rect>
      </property>
@@ -426,7 +426,7 @@ color: rgb(255, 255, 0);</string>
     <property name="geometry">
      <rect>
       <x>540</x>
-      <y>800</y>
+      <y>790</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -440,7 +440,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>520</x>
       <y>680</y>
-      <width>251</width>
+      <width>391</width>
       <height>181</height>
      </rect>
     </property>
@@ -456,7 +456,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>520</x>
       <y>650</y>
-      <width>251</width>
+      <width>391</width>
       <height>31</height>
      </rect>
     </property>
@@ -471,7 +471,7 @@ color: rgb(255, 255, 0);</string>
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>301</width>
+       <width>231</width>
        <height>31</height>
       </rect>
      </property>
@@ -501,7 +501,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>10</x>
       <y>310</y>
-      <width>761</width>
+      <width>901</width>
       <height>31</height>
      </rect>
     </property>
@@ -516,7 +516,7 @@ color: rgb(255, 255, 0);</string>
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>761</width>
+       <width>711</width>
        <height>31</height>
       </rect>
      </property>
@@ -530,7 +530,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>761</width>
+      <width>901</width>
       <height>31</height>
      </rect>
     </property>
@@ -545,7 +545,7 @@ color: rgb(255, 255, 0);</string>
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>761</width>
+       <width>691</width>
        <height>31</height>
       </rect>
      </property>
@@ -559,7 +559,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>10</x>
       <y>940</y>
-      <width>761</width>
+      <width>901</width>
       <height>31</height>
      </rect>
     </property>
@@ -574,7 +574,7 @@ color: rgb(255, 255, 0);</string>
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>761</width>
+       <width>701</width>
        <height>31</height>
       </rect>
      </property>
@@ -586,14 +586,27 @@ color: rgb(255, 255, 0);</string>
    <widget class="QPushButton" name="stopTrackingBtn">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>750</y>
+      <x>780</x>
+      <y>790</y>
       <width>111</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
      <string>Stop Tracking</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="startTrackingBtn">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>710</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start Tracking</string>
     </property>
    </widget>
    <zorder>frame_3</zorder>
@@ -632,6 +645,7 @@ color: rgb(255, 255, 0);</string>
    <zorder>frame_10</zorder>
    <zorder>frame_11</zorder>
    <zorder>stopTrackingBtn</zorder>
+   <zorder>startTrackingBtn</zorder>
   </widget>
  </widget>
  <resources/>
