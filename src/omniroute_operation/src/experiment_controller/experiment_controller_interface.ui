@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>941</width>
+    <width>1075</width>
     <height>1131</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>921</width>
+     <width>1051</width>
      <height>1111</height>
     </rect>
    </property>
@@ -28,9 +28,9 @@
    <widget class="QLineEdit" name="pathDirEdit">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>60</y>
-      <width>791</width>
+      <width>901</width>
       <height>41</height>
      </rect>
     </property>
@@ -38,7 +38,7 @@
    <widget class="QPushButton" name="browseBtn">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>920</x>
       <y>60</y>
       <width>111</width>
       <height>41</height>
@@ -51,9 +51,9 @@
    <widget class="QListWidget" name="xlsxFileListWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>110</y>
-      <width>901</width>
+      <width>1011</width>
       <height>141</height>
      </rect>
     </property>
@@ -61,7 +61,7 @@
    <widget class="QPushButton" name="startBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>880</y>
       <width>91</width>
       <height>41</height>
@@ -74,7 +74,7 @@
    <widget class="QPushButton" name="pauseBtn">
     <property name="geometry">
      <rect>
-      <x>410</x>
+      <x>480</x>
       <y>880</y>
       <width>91</width>
       <height>41</height>
@@ -87,7 +87,7 @@
    <widget class="QPushButton" name="resumeBtn">
     <property name="geometry">
      <rect>
-      <x>820</x>
+      <x>940</x>
       <y>880</y>
       <width>91</width>
       <height>41</height>
@@ -126,7 +126,7 @@
    <widget class="QRadioButton" name="chamberSevenBtn">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>40</x>
       <y>760</y>
       <width>112</width>
       <height>23</height>
@@ -152,7 +152,7 @@
    <widget class="QPushButton" name="previousBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>260</y>
       <width>91</width>
       <height>41</height>
@@ -165,7 +165,7 @@
    <widget class="QPushButton" name="nextBtn">
     <property name="geometry">
      <rect>
-      <x>820</x>
+      <x>940</x>
       <y>260</y>
       <width>91</width>
       <height>41</height>
@@ -178,9 +178,9 @@
    <widget class="QListWidget" name="trialListWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>340</y>
-      <width>901</width>
+      <width>1011</width>
       <height>241</height>
      </rect>
     </property>
@@ -188,7 +188,7 @@
    <widget class="QPushButton" name="previousBtn_2">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>590</y>
       <width>91</width>
       <height>41</height>
@@ -201,7 +201,7 @@
    <widget class="QPushButton" name="nextBtn_2">
     <property name="geometry">
      <rect>
-      <x>820</x>
+      <x>940</x>
       <y>590</y>
       <width>91</width>
       <height>41</height>
@@ -253,9 +253,9 @@
    <widget class="QFrame" name="frame_2">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>650</y>
-      <width>311</width>
+      <width>301</width>
       <height>31</height>
      </rect>
     </property>
@@ -298,9 +298,9 @@
    <widget class="QFrame" name="frame_5">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>680</y>
-      <width>311</width>
+      <width>301</width>
       <height>181</height>
      </rect>
     </property>
@@ -324,25 +324,12 @@
      <string>Automatic</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pumpGantryBtn">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>790</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Reward</string>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="recordDataDir">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>40</x>
       <y>1040</y>
-      <width>781</width>
+      <width>871</width>
       <height>41</height>
      </rect>
     </property>
@@ -353,9 +340,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>40</x>
       <y>980</y>
-      <width>881</width>
+      <width>971</width>
       <height>51</height>
      </rect>
     </property>
@@ -377,28 +364,15 @@ color: rgb(255, 255, 0);</string>
      </rect>
     </property>
     <property name="text">
-     <string>Pump Init</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="plusMazeBtn">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>710</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Plus Maze </string>
+     <string>Start Pump </string>
     </property>
    </widget>
    <widget class="QFrame" name="frame_6">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>970</y>
-      <width>901</width>
+      <width>1011</width>
       <height>121</height>
      </rect>
     </property>
@@ -411,7 +385,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="browseBtn_2">
      <property name="geometry">
       <rect>
-       <x>790</x>
+       <x>890</x>
        <y>70</y>
        <width>101</width>
        <height>41</height>
@@ -422,25 +396,12 @@ color: rgb(255, 255, 0);</string>
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="homeBtn">
-    <property name="geometry">
-     <rect>
-      <x>540</x>
-      <y>790</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Home</string>
-    </property>
-   </widget>
    <widget class="QFrame" name="frame_7">
     <property name="geometry">
      <rect>
       <x>520</x>
       <y>680</y>
-      <width>391</width>
+      <width>511</width>
       <height>181</height>
      </rect>
     </property>
@@ -450,13 +411,65 @@ color: rgb(255, 255, 0);</string>
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
+    <widget class="QPushButton" name="homeBtn">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>30</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Home</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="plusMazeBtn">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>110</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Plus Maze </string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="stopPumpBtn">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>110</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop Pump</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pumpGantryBtn">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>30</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reward</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_8">
     <property name="geometry">
      <rect>
       <x>520</x>
       <y>650</y>
-      <width>391</width>
+      <width>511</width>
       <height>31</height>
      </rect>
     </property>
@@ -499,9 +512,9 @@ color: rgb(255, 255, 0);</string>
    <widget class="QFrame" name="frame_3">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>310</y>
-      <width>901</width>
+      <width>1011</width>
       <height>31</height>
      </rect>
     </property>
@@ -514,7 +527,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QLabel" name="label_3">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>20</x>
        <y>0</y>
        <width>711</width>
        <height>31</height>
@@ -528,9 +541,9 @@ color: rgb(255, 255, 0);</string>
    <widget class="QFrame" name="frame_10">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>30</y>
-      <width>901</width>
+      <width>1011</width>
       <height>31</height>
      </rect>
     </property>
@@ -543,7 +556,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>20</x>
        <y>0</y>
        <width>691</width>
        <height>31</height>
@@ -557,9 +570,9 @@ color: rgb(255, 255, 0);</string>
    <widget class="QFrame" name="frame_11">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>940</y>
-      <width>901</width>
+      <width>1011</width>
       <height>31</height>
      </rect>
     </property>
@@ -572,7 +585,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QLabel" name="label_5">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>20</x>
        <y>0</y>
        <width>701</width>
        <height>31</height>
@@ -633,12 +646,9 @@ color: rgb(255, 255, 0);</string>
    <zorder>forcedChoiceBtn</zorder>
    <zorder>choiceBtn</zorder>
    <zorder>automaticBtn</zorder>
-   <zorder>pumpGantryBtn</zorder>
    <zorder>recordDataDir</zorder>
    <zorder>recordBtn</zorder>
    <zorder>pumpInitBtn</zorder>
-   <zorder>plusMazeBtn</zorder>
-   <zorder>homeBtn</zorder>
    <zorder>label_4</zorder>
    <zorder>frame_8</zorder>
    <zorder>frame_9</zorder>

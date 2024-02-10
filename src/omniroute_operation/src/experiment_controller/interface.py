@@ -163,6 +163,7 @@ class Interface(Plugin):
         self._widget.homeBtn.clicked.connect(self._handle_homeBtn_clicked)
         self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
         self._widget.startTrackingBtn.clicked.connect(self._handle_startTrackingBtn_clicked)
+        self._widget.stopPumpBtn.clicked.connect(self._handle_stopPumpBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
@@ -249,8 +250,6 @@ class Interface(Plugin):
             col = i%self.n_chamber_side
             chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
-
-        rospy.loginfo("Chamber Centers: {}".format(self.chamber_centers))
 
         # Set the starting maze configuration
         #self.setPlusConfig()
@@ -453,6 +452,9 @@ class Interface(Plugin):
     
     def _handle_homeBtn_clicked(self):
         self.gantry_pub.publish("HOME",[])
+
+    def _handle_stopPumpBtn_clicked(self):
+        self.gantry_pub.publish("STOP_PUMP",[])
     
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
