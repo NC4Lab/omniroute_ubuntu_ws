@@ -654,7 +654,8 @@ class Interface(Plugin):
                 button.setEnabled(False)
 
             self.currentTrialNumber = self.current_trial_index-1
-
+            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+            
             # Load starting maze config
             # Wait for experimenter signal
             self.mode_start_time = rospy.Time.now()
@@ -766,6 +767,7 @@ class Interface(Plugin):
                 self.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD
+                rospy.loginfo("REWARD")
    
         elif self.mode == Mode.REWARD:
            if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_duration.to_sec():
