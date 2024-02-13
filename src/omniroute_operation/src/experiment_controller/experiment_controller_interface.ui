@@ -354,7 +354,7 @@ color: rgb(255, 255, 0);</string>
      <string>Record</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pumpInitBtn">
+   <widget class="QPushButton" name="pumpStartBtn">
     <property name="geometry">
      <rect>
       <x>540</x>
@@ -648,7 +648,7 @@ color: rgb(255, 255, 0);</string>
    <zorder>automaticBtn</zorder>
    <zorder>recordDataDir</zorder>
    <zorder>recordBtn</zorder>
-   <zorder>pumpInitBtn</zorder>
+   <zorder>pumpStartBtn</zorder>
    <zorder>label_4</zorder>
    <zorder>frame_8</zorder>
    <zorder>frame_9</zorder>

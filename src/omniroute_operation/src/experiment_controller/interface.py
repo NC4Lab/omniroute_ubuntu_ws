@@ -31,11 +31,12 @@ class Mode(Enum):
     CHOICE = 4
     CHOICE_TO_GOAL = 5
     SUCCESS = 6
-    ERROR = 7
-    END_TRIAL = 8
-    END_EXPERIMENT = 9
-    PAUSE_EXPERIMENT = 10
-    RESUME_EXPERIMENT = 11
+    REWARD =7
+    ERROR = 8
+    END_TRIAL = 9
+    END_EXPERIMENT = 10
+    PAUSE_EXPERIMENT = 11
+    RESUME_EXPERIMENT = 12
 
 
 class Wall:
@@ -158,7 +159,7 @@ class Interface(Plugin):
         self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
         self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
         self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
-        self._widget.pumpInitBtn.clicked.connect(self._handle_pumpInitBtn_clicked)
+        self._widget.pumpStartBtn.clicked.connect(self._handle_pumpStartBtn_clicked)
         self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
         self._widget.homeBtn.clicked.connect(self._handle_homeBtn_clicked)
         self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
@@ -210,8 +211,9 @@ class Interface(Plugin):
 
         # Experiment parameters
         self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        self.choice_wait_duration = rospy.Duration(15.0)  # Duration to wait for rat to move to the choice point
-        self.reward_duration = rospy.Duration(20.0)  # Duration to dispense reward if the rat made the right choice
+        self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
+        self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
+        self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
         self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
         self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
@@ -438,7 +440,7 @@ class Interface(Plugin):
         self._widget.recordDataDir.setText(res)
         #rospy.loginfo('Selected %s',res)
 
-    def _handle_pumpInitBtn_clicked(self):
+    def _handle_pumpStartBtn_clicked(self):
         self.gantry_pub.publish("PUMP", [5.0])
 
     def _handle_plusMazeBtn_clicked(self):
@@ -762,6 +764,11 @@ class Interface(Plugin):
         elif self.mode == Mode.SUCCESS:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_duration.to_sec():
                 self.reward_dispense()
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.REWARD
+   
+        elif self.mode == Mode.REWARD:
+           if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_duration.to_sec():
                 if self.success_chamber == 1:
                     self.setChamberOneStartConfig()
                 elif self.success_chamber == 3:
@@ -770,7 +777,7 @@ class Interface(Plugin):
                     self.setChamberFiveStartConfig()
                 elif self.success_chamber  == 7:
                     self.setChamberSevenStartConfig()
-                
+                    
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.END_TRIAL
                 rospy.loginfo("END TRIAL")
@@ -832,7 +839,7 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("PUMP", [1.0])
+        self.gantry_pub.publish("PUMP", [2.0])
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]

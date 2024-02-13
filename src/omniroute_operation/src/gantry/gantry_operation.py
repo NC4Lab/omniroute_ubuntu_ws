@@ -20,9 +20,9 @@ class GantryFeeder:
         self.target_x = 0.0
         self.target_y = 0.0
         
-        #self.mode_start_time = rospy.Time.now()
-        #self.current_time = rospy.Time.now()
-        self.pump_wait_duration = rospy.Duration(7.0)
+        self.pump_start_time = rospy.Time.now()
+        self.current_time = rospy.Time.now()
+        #self.pump_wait_duration = rospy.Duration(5.0)
 
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
 
@@ -32,13 +32,13 @@ class GantryFeeder:
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         self.track_mode = 'HARNESS'
+        self.pump_state = 'OFF'
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
         ## TODO: Automatically determine the port
 
-
-        self.run_pump(1.0)
+        self.stop_pump()
 
  
         # Wait for a few secs
@@ -87,13 +87,19 @@ class GantryFeeder:
         else:
             move_flag = False
         
-        self.current_time = rospy.Time.now() 
-        
         if move_flag:
             # # # Move the gantry to the specified location
             # # # TODO: Check if the gantry is within the maze boundary
             if ~np.isnan(x) and ~np.isnan(y):
                 self.move_gantry_rel(x, y)
+
+        if self.pump_state == 'ON':
+            if (self.current_time - self.pump_start_time).to_sec() >= self.pump_time:
+                rospy.loginfo("Stoping Pump")
+                self.gcode_client.raw_command("M5")
+                self.pump_state = 'OFF'
+                self.track_mode = 'HARNESS'
+            
     
     def home(self):
         # self.gcode_client.raw_command("$X")
@@ -114,13 +120,15 @@ class GantryFeeder:
     
     def cancel_jog(self):
         self.gcode_client.raw_command("0x85")
+    
+    def stop_pump(self):
+        self.gcode_client.raw_command("M5")
 
     def run_pump(self, duration):
+        self.pump_time = duration
         self.gcode_client.raw_command("M3 S127")
-        self.mode_start_time = rospy.Time.now()
-        self.current_time = rospy.Time.now()
-        if (self.current_time - self.mode_start_time).to_sec() >= self.pump_wait_duration.to_sec():
-            self.gcode_client.raw_command("M5")
+        self.pump_start_time = rospy.Time.now()
+        self.pump_state = 'ON'
 
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
@@ -135,11 +143,11 @@ class GantryFeeder:
 
         elif msg.cmd == "PUMP":
             self.track_mode = 'NONE'
-            #self.mode_start_time = rospy.Time.now()
             self.run_pump(msg.args[0])
 
+
         elif msg.cmd == "STOP_PUMP":
-            self.gcode_client.raw_command("M5")
+            self.stop_pump()
 
         elif msg.cmd == "TRACK_HARNESS":
             self.track_mode = 'HARNESS'
