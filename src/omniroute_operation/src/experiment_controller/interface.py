@@ -210,11 +210,18 @@ class Interface(Plugin):
         self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
+        # self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        # self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
+        # self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
+        # self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
+        # self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
+        # self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
+
         self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
-        self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
-        self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
-        self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
+        self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
+        self.reward_duration = rospy.Duration(1.0)  # Duration to dispense reward if the rat made the right choice
+        self.right_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
+        self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
         self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
         self.mode = Mode.START
@@ -312,13 +319,11 @@ class Interface(Plugin):
         self.load_xlsx_file(self.selected_file_path)
         self.display_excel_content(self.selected_file_path)
 
-
     def load_xlsx_file(self, file_path):
         # Load the xlsx file into a pandas dataframe
         self.df = pd.read_excel(file_path)
         self.trials = self.df.values.tolist()
         self.nTrials = len(self.trials)
-
 
     def _handle_nextBtn_clicked(self):
         # Increment the current file index
@@ -331,7 +336,6 @@ class Interface(Plugin):
         # Set the current file in the list widget
         self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
-
     def _handle_previousBtn_clicked(self):
         # Decrement the current file index
         self.current_file_index -= 1
@@ -343,7 +347,6 @@ class Interface(Plugin):
         # Set the current file in the list widget
         self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
-
     def _handle_trialListWidget_item_clicked(self):
         # Get the current trial index from the trial list widget
         self.current_trial_index = self._widget.trialListWidget.currentRow()
@@ -351,7 +354,6 @@ class Interface(Plugin):
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
         
-
     def _handle_nextBtn_2_clicked(self):
         # Increment the current trial index
         self.current_trial_index += 1
@@ -363,7 +365,6 @@ class Interface(Plugin):
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
 
-
     def _handle_previousBtn_2_clicked(self):
         # Decrement the current trial index
         self.current_trial_index -= 1
@@ -374,12 +375,10 @@ class Interface(Plugin):
 
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index) 
-
-        
+    
     def _handle_startBtn_clicked(self):
         self.mode = Mode.START_EXPERIMENT
         
-
     def _handle_pauseBtn_clicked(self):
         # rospy.loginfo("Experiment paused")
         self.mode_before_pause = self.mode
@@ -586,10 +585,8 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
 
-
     def setForcedChoiceMode(self):
         self.training_mode = "user_defined_forced_choice"
-
 
     def setChoiceMode(self):
         self.training_mode = "user_defined_choice"
@@ -654,15 +651,14 @@ class Interface(Plugin):
                 button.setEnabled(False)
 
             self.currentTrialNumber = self.current_trial_index-1
-            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+            #rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             
-            # Load starting maze config
-            # Wait for experimenter signal
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.START_TRIAL:
             self.currentTrialNumber = self.currentTrialNumber+1
+            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                 self.currentTrial = self.trials[self.currentTrialNumber]
             else:
@@ -674,23 +670,17 @@ class Interface(Plugin):
             if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
-            # Load maze config according to animal location
-            # Project cues
-
-            # Play sound cue
             if self.currentTrial is not None:
                 # Set training mode from file if the automatic mode is selected
                 if self._widget.trainingModeBtnGroup.checkedId() == 3:
                     self.training_mode = self.currentTrial[3]
 
                 self.sound_cue = self.currentTrial[2]
-                #self.error_cue = 'Error'
                 self.play_sound_cue(self.sound_cue)
 
                 self.left_visual_cue = self.currentTrial[0]
                 self.right_visual_cue = self.currentTrial[1]
                 
-
                 self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
                 
                 if self.sound_cue == "White_Noise":
@@ -846,7 +836,6 @@ class Interface(Plugin):
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
         y = self.chamber_centers[chamber_num][1]
-        # self.gantry_pub.publish("MOVE", [x, y])
 
 
 if __name__ == '__main__':
