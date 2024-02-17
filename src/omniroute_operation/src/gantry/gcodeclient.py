@@ -47,18 +47,49 @@ class Client:
         Interfaces the Gcode commands to GRBL
         :param cmd:  A Gcode String.
         '''
+
         try:
             cmd = cmd.upper()
             cmd = cmd + "\r\n"
             self.ser.write(str.encode(cmd))
-            # time.sleep(1)
-            while True:
-                feedback = self.ser.readline()
-                if feedback == b'ok\r\n':
-                    # print(feedback)
-                    break
+            time.sleep(0.01)
+
+            feedback = self.ser.readline()
+            if feedback == b'ok\r\n':
+                print(f'[gcodeclient] Command: {cmd}')
+                print(f'[gcodeclient] Feedback: {feedback}')
+
+                return True 
+            else:
+                print(f'[gcodeclient] Command: {cmd}')
+                print(f'[gcodeclient] Feedback: {feedback}')
+                return False
+
         except TypeError:
             print("Gcode commands must be a string")
+
+
+        # def raw_command(self, cmd):
+        # '''
+        # Interfaces the Gcode commands to GRBL
+        # :param cmd:  A Gcode String.
+        # '''
+        # try:
+        #     cmd = cmd.upper()
+        #     cmd = cmd + "\r\n"
+        #     self.ser.write(str.encode(cmd))
+        #     # time.sleep(1)
+
+        #     while True:
+        #         feedback = self.ser.readline()
+        #         if feedback == b'ok\r\n':
+        #             break
+        #         else:
+        #             print(f'[gcodeclient] Command: {cmd}')
+        #             print(f'[gcodeclient] Feedback: {feedback}')
+
+        # except TypeError:
+        #     print("Gcode commands must be a string")
 
     def command(self, cmd):
         '''
