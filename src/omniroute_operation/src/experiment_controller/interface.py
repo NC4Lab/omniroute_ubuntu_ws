@@ -32,11 +32,12 @@ class Mode(Enum):
     CHOICE_TO_GOAL = 5
     SUCCESS = 6
     REWARD =7
-    ERROR = 8
-    END_TRIAL = 9
-    END_EXPERIMENT = 10
-    PAUSE_EXPERIMENT = 11
-    RESUME_EXPERIMENT = 12
+    POST_REWARD = 8
+    ERROR = 9
+    END_TRIAL = 10
+    END_EXPERIMENT = 11
+    PAUSE_EXPERIMENT = 12
+    RESUME_EXPERIMENT = 13
 
 
 class Wall:
@@ -219,7 +220,7 @@ class Interface(Plugin):
 
         self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
         self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
-        self.reward_duration = rospy.Duration(1.0)  # Duration to dispense reward if the rat made the right choice
+        self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
         self.right_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
         self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
         self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
@@ -753,13 +754,21 @@ class Interface(Plugin):
                 rospy.loginfo("ERROR")
 
         elif self.mode == Mode.SUCCESS:
+            self.success_center_x = self.chamber_centers[self.success_chamber][0]
+            self.success_center_y = self.chamber_centers[self.success_chamber][1]
+            self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.REWARD
+            rospy.loginfo("REWARD")
+
+        elif self.mode == Mode.REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_duration.to_sec():
                 self.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.REWARD
-                rospy.loginfo("REWARD")
+                self.mode = Mode.POST_REWARD
+                rospy.loginfo("POST REWARD")
    
-        elif self.mode == Mode.REWARD:
+        elif self.mode == Mode.POST_REWARD:
            if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_duration.to_sec():
                 if self.success_chamber == 1:
                     self.setChamberOneStartConfig()
@@ -831,7 +840,7 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("PUMP", [2.0])
+        self.gantry_pub.publish("PUMP", [5.0])
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
