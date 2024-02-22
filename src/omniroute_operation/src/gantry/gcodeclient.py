@@ -42,6 +42,15 @@ class Client:
         #Feed Rate
         self.__initialise("F25000\r\n")
 
+    def realtime_command(self, cmd):
+        '''
+        Interfaces the Gcode commands to GRBL
+        :param cmd:  A Gcode String.
+        '''  
+        self.ser.write(str.encode(cmd))
+        time.sleep(0.01)
+
+
     def raw_command(self, cmd):
         '''
         Interfaces the Gcode commands to GRBL
@@ -56,9 +65,6 @@ class Client:
 
             feedback = self.ser.readline()
             if feedback == b'ok\r\n':
-                print(f'[gcodeclient] Command: {cmd}')
-                print(f'[gcodeclient] Feedback: {feedback}')
-
                 return True 
             else:
                 print(f'[gcodeclient] Command: {cmd}')
