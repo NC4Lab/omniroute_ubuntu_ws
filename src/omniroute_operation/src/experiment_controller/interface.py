@@ -28,16 +28,17 @@ class Mode(Enum):
     START_TRIAL = 1
     RAT_IN_START_CHAMBER = 2
     START_TO_CHOICE = 3
-    CHOICE = 4
-    CHOICE_TO_GOAL = 5
-    SUCCESS = 6
-    REWARD =7
-    POST_REWARD = 8
-    ERROR = 9
-    END_TRIAL = 10
-    END_EXPERIMENT = 11
-    PAUSE_EXPERIMENT = 12
-    RESUME_EXPERIMENT = 13
+    RAT_IN_CHOICE_CHAMBER = 4
+    CHOICE = 5
+    CHOICE_TO_GOAL = 6
+    SUCCESS = 7
+    REWARD =8
+    POST_REWARD = 9
+    ERROR = 10
+    END_TRIAL = 11
+    END_EXPERIMENT = 12
+    PAUSE_EXPERIMENT = 13
+    RESUME_EXPERIMENT = 14
 
 
 class Wall:
@@ -211,19 +212,19 @@ class Interface(Plugin):
         self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
-        # self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        # self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
-        # self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
-        # self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
-        # self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
-        # self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
-
         self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
+        self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
         self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
-        self.right_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
-        self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
+        self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
+        self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
         self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
+
+        # self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        # self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
+        # self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
+        # self.right_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
+        # self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
+        # self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
         self.mode = Mode.START
         self.mode_start_time = rospy.Time.now()
@@ -245,7 +246,7 @@ class Interface(Plugin):
         self.chamber_wd = 0.3
         self.n_chamber_side = 3
         self.chamber_centers = []
-        self.threshold = 0.08    #m
+        self.threshold = 0.04    #m
 
         self.wallStates = WallState() 
         # self.walls_list = []
@@ -300,7 +301,7 @@ class Interface(Plugin):
             # Save the list of selected files as an attribute of the class
             self.files = files
 
-            # Connect the "Next" and "Previous" buttons to their respective callback functions
+            # Connect the "Next" and "Previous" buttons tof their respective callback functions
             self._widget.previousBtn.clicked.connect(self._handle_previousBtn_clicked)
             self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
             
@@ -331,10 +332,7 @@ class Interface(Plugin):
         self.current_file_index += 1
 
          # If we've reached the end of the list, loop back to the beginning
-        if self.current_file_index >= len(self.files):
-            self.current_file_index = 0
-
-        # Set the current file in the list widget
+        if self.current_file_index >= len(self.files):f
         self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
 
     def _handle_previousBtn_clicked(self):
@@ -717,7 +715,13 @@ class Interface(Plugin):
         elif self.mode == Mode.START_TO_CHOICE:
             # Wait for the rat to move to the choice point
             if self.is_rat_in_chamber(self.central_chamber):
-                self.raise_wall(self.start_wall, send=True) 
+                self.raise_wall(self.start_wall, send=True)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.RAT_IN_CHOICE_CHAMBER
+                rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
+
+        elif self.mode == Mode.RAT_IN_CHOICE_CHAMBER:
+                self.play_sound_cue(self.sound_cue) 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE
                 rospy.loginfo("CHOICE")
@@ -840,7 +844,7 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("PUMP", [5.0])
+        self.gantry_pub.publish("PUMP", [4.0])
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
