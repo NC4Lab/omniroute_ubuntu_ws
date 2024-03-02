@@ -246,7 +246,7 @@ class Interface(Plugin):
         self.chamber_wd = 0.3
         self.n_chamber_side = 3
         self.chamber_centers = []
-        self.threshold = 0.04    #m
+        self.threshold = 0.06    #m
 
         self.wallStates = WallState() 
         # self.walls_list = []
@@ -439,7 +439,7 @@ class Interface(Plugin):
         #rospy.loginfo('Selected %s',res)
 
     def _handle_pumpStartBtn_clicked(self):
-        self.gantry_pub.publish("PUMP", [5.0])
+        self.gantry_pub.publish("PUMP", [20.0])
 
     def _handle_plusMazeBtn_clicked(self):
         self.setPlusConfig()
@@ -627,6 +627,26 @@ class Interface(Plugin):
         dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2 
         # rospy.loginfo(f"Distance from center: {dist_from_center}")
         return dist_from_center <= self.threshold**2
+    
+    def is_rat_in_chamber_walls(self, chamber_seq, chamber_num):
+        if chamber_seq == 0:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1]-0.075)**2 
+        elif chamber_seq == 1:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1]+0.075)**2
+        elif chamber_seq == 2:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0]-0.075)**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2
+        elif chamber_seq == 3:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0]+0.075)**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2
+        elif chamber_seq == 4:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0]+0.075)**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2 
+        elif chamber_seq == 5:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0]-0.075)**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2
+        elif chamber_seq == 6:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1]+0.075)**2
+        elif chamber_seq == 7:
+            dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1]-0.075)**2
+        # rospy.loginfo(f"Distance from center: {dist_from_center}")
+        return dist_from_center <= 0.07**2
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
@@ -681,25 +701,50 @@ class Interface(Plugin):
                 self.right_visual_cue = self.currentTrial[1]
                 
                 self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
+
+                if self.start_chamber == 1:
+                    self.start_chamber_seq = 0
+                    self.left_chamber_seq = 5
+                    self.right_chamber_seq = 3
+                elif self.start_chamber == 3:
+                    self.start_chamber_seq = 2
+                    self.left_chamber_seq = 1
+                    self.right_chamber_seq = 7
+                elif self.start_chamber == 5:
+                    self.start_chamber_seq = 4
+                    self.left_chamber_seq = 7
+                    self.right_chamber_seq = 1
+                elif self.start_chamber == 7:
+                    self.start_chamber_seq = 6
+                    self.left_chamber_seq = 3
+                    self.right_chamber_seq = 5
                 
                 if self.sound_cue == "White_Noise":
                     if self.left_visual_cue == "Triangle":
                         self.projection_pub.publish(self.project_left_cue_triangle)
                         self.success_chamber = self.left_chamber
+                        self.success_chamber_seq = self.left_chamber_seq
                         self.error_chamber = self.right_chamber
+                        self.error_chamber_seq = self.right_chamber_seq
                     else:
                         self.projection_pub.publish(self.project_right_cue_triangle)
                         self.success_chamber = self.right_chamber
+                        self.success_chamber_seq = self.right_chamber_seq
                         self.error_chamber = self.left_chamber
+                        self.error_chamber_seq = self.left_chamber_seq
                 else:
                     if self.left_visual_cue == "Square":
                         self.projection_pub.publish(self.project_right_cue_triangle)
                         self.success_chamber = self.left_chamber
+                        self.success_chamber_seq = self.left_chamber_seq
                         self.error_chamber = self.right_chamber
+                        self.error_chamber_seq = self.right_chamber_seq
                     else:
                         self.projection_pub.publish(self.project_left_cue_triangle)
                         self.success_chamber = self.right_chamber
-                        self.error_chamber = self.left_chamber   
+                        self.success_chamber_seq = self.right_chamber_seq
+                        self.error_chamber = self.left_chamber
+                        self.error_chamber_seq = self.left_chamber_seq  
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_START_CHAMBER
@@ -714,6 +759,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.START_TO_CHOICE:
             # Wait for the rat to move to the choice point
+            #if self.is_rat_in_chamber_walls(self.start_chamber_seq, self.central_chamber):
             if self.is_rat_in_chamber(self.central_chamber):
                 self.raise_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
@@ -742,6 +788,7 @@ class Interface(Plugin):
                 rospy.loginfo("CHOICE TO GOAL")
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
+            #if self.is_rat_in_chamber_walls(self.success_chamber_seq, self.success_chamber):
             if self.is_rat_in_chamber(self.success_chamber):
                 self.raise_wall(self.left_goal_wall, send=False)
                 self.raise_wall(self.right_goal_wall, send=True)
@@ -749,8 +796,10 @@ class Interface(Plugin):
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
 
+            #elif self.is_rat_in_chamber_walls(self.error_chamber_seq, self.error_chamber):\
             elif self.is_rat_in_chamber(self.error_chamber):
                 self.sound_pub.publish("Error")
+                self.mode_start_time = rospy.Time.now()
                 self.raise_wall(self.left_goal_wall, send=False)
                 self.raise_wall(self.right_goal_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
