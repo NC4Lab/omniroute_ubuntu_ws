@@ -52,13 +52,21 @@ public:
     void loop(); /** control loop */
 
 private:
-    esmacat_ethercat_arduino_shield_by_esmacat sync_ease_ecat_as; /**< create your Esmacat slave object */
-    ros_ethercat_arduino_shield_by_esmacat sync_ease;
-    ros_ethercat_arduino_shield_by_esmacat :: write sync_ease_ros_message;
 
-    esmacat_ethercat_arduino_shield_by_esmacat maze_ard0_ease_ecat_as; /**< create your Esmacat slave object */
+    // Declare slave objects for syncing arduino
+    esmacat_ethercat_arduino_shield_by_esmacat sync_ease_ecat_as; // Esmacat slave object
+    ros_ethercat_arduino_shield_by_esmacat sync_ease; // ROS object for Esmacat slave
+    ros_ethercat_arduino_shield_by_esmacat :: write sync_ease_ros_message; // ROS message object for Esmacat slave
+
+    // Declare slave objects for maze wall conroller arduino
+    esmacat_ethercat_arduino_shield_by_esmacat maze_ard0_ease_ecat_as; 
     ros_ethercat_arduino_shield_by_esmacat maze_ard0_ease;
     ros_ethercat_arduino_shield_by_esmacat :: write maze_ard0_ease_ros_message;
+
+    // Declare slave objects for feeder servos
+    esmacat_ethercat_arduino_shield_by_esmacat feeder_servo_ease_ecat_as; 
+    ros_ethercat_arduino_shield_by_esmacat feeder_servo_ease;
+    ros_ethercat_arduino_shield_by_esmacat :: write feeder_servo_ease_ros_message;
 };
 
 #endif // ROS_ESMACAT_APP_H
