@@ -1309,7 +1309,7 @@ class Interface(Plugin):
             [9, 1, 9],          # Num chamb init
             [9, 1, 9],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
-            [255, 0, 255],      # PWM duty
+            [150, 0, 255],      # PWM duty
             [1000, 500, 2000]   # Move timeout (ms)
         ]
 
