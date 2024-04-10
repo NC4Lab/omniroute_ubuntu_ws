@@ -35,7 +35,7 @@ void setup()
 
   // Initialize servos
   FdSrv.initServo();
-  delay(100);
+  delay(1000);
 
   // Print setup complete
   Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
