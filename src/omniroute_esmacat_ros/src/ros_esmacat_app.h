@@ -64,9 +64,9 @@ private:
     ros_ethercat_arduino_shield_by_esmacat :: write maze_ard0_ease_ros_message;
 
     // Declare slave objects for feeder servos
-    esmacat_ethercat_arduino_shield_by_esmacat feeder_servo_ease_ecat_as; 
-    ros_ethercat_arduino_shield_by_esmacat feeder_servo_ease;
-    ros_ethercat_arduino_shield_by_esmacat :: write feeder_servo_ease_ros_message;
+    esmacat_ethercat_arduino_shield_by_esmacat feeder_ease_ease_ecat_as; 
+    ros_ethercat_arduino_shield_by_esmacat feeder_ease_ease;
+    ros_ethercat_arduino_shield_by_esmacat :: write feeder_ease_ease_ros_message;
 };
 
 #endif // ROS_ESMACAT_APP_H

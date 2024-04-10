@@ -36,9 +36,9 @@ void ros_esmacat_app::assign_slave_sequence()
     assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index);
 
     // Assign the feeder servos slave object to the actual slave in the EtherCAT communication chain
-    int feeder_servo_slave_index;
-    ros::param::param<int>("/feeder_servos_slave_index", feeder_servo_slave_index, 2);
-    assign_esmacat_slave_index(&feeder_servo_ease_ecat_as, feeder_servos_slave_index);
+    int feeder_ease_slave_index;
+    ros::param::param<int>("/feeder_servos_slave_index", feeder_ease_slave_index, 2);
+    assign_esmacat_slave_index(&feeder_ease_ease_ecat_as, feeder_servos_slave_index);
 }
 
 /**
@@ -112,15 +112,15 @@ void ros_esmacat_app::loop()
 
     // The ROS object created is used to read the current state of registers from the Esmacat slave object
     // and store it in a shared memory location
-    feeder_servo_ease.set_read_registers(&feeder_servo_ease_ecat_as);
+    feeder_ease_ease.set_read_registers(&feeder_ease_ease_ecat_as);
 
     // The newly modified write registers from the ROS Communication is returned from the shared memory
-    feeder_servo_ease_ros_message = feeder_servo_ease.get_write_registers();
+    feeder_ease_ease_ros_message = feeder_ease_ease.get_write_registers();
 
     // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
     // updated values received from ROS Nodes.
-    feeder_servo_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(feeder_servo_ease_ros_message.INT0);
+    feeder_ease_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(feeder_ease_ease_ros_message.INT0);
 
     //     // // The updated value is logged onto the terminal
-    // cout <<"Sync EASE Register 0 = " << feeder_servo_ease_ros_message.INT0 << std :: endl;
+    // cout <<"Sync EASE Register 0 = " << feeder_ease_ease_ros_message.INT0 << std :: endl;
 }
