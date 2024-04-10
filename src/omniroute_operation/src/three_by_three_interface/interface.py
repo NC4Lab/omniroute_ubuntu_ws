@@ -1898,6 +1898,7 @@ class Interface(Plugin):
     def qt_callback_pumpGantryBtn_clicked(self):
         # Run pump for 1 second
         self.gantry_cmd_pub.publish("PUMP", [1.0])
+        MazeDB.printMsg('DEBUG', "Command for pumpGantryBtn sent")
 
     def qt_callback_projWinTogPosBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""

@@ -69,6 +69,7 @@
     <!-- Esmacat parameter -->
     <param name="sync_ease_slave_index" type="int" value="0" />
     <param name="maze_ard0_ease_slave_index" type="int" value="1" />
+    <param name="feeder_servo_slave_index" type="int" value="2" />
 
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>

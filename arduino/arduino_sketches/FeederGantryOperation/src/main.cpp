@@ -49,17 +49,5 @@ void loop()
   // Test the servos
   FdSrv.runFeeder(2000);
 
-  // // Lower the feeder
-  // FdSrv.lowerFeeder();
-  // delay(1000);
-
-  // // Run the pump
-  // FdSrv.startPump();
-  // delay(1000);
-  // FdSrv.stopPump();
-
-  // // Raise the feeder
-  // FdSrv.raiseFeeder();
-
   delay(5000);
 }
