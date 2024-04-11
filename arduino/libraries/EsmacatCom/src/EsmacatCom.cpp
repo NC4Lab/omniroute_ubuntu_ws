@@ -461,12 +461,14 @@ void EsmacatCom::initEcat(bool do_connect)
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
-void EsmacatCom::readEcatMessage()
+///
+/// @return True if new message is read, false if not.
+bool EsmacatCom::readEcatMessage()
 {
 
     // Bail if previous message not processed
     if (rcvEM.isNew)
-        return;
+        return false;
 
     // Read esmacat buffer to get register data
     int reg_arr[8];
@@ -474,32 +476,35 @@ void EsmacatCom::readEcatMessage()
 
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))
-        return;
+        return false;
 
     // Get message id and check for out of sequence messages
     if (!_uGetMsgID(rcvEM))
-        return; // skip message processing if error returned
+        return false; // skip message processing if error returned
 
     // Skip redundant messages
     if (rcvEM.msgID == rcvEM.msgID_last)
-        return;
+        return false;
 
     // Get message type and check if valid
     if (!_uGetMsgType(rcvEM))
-        return; // skip message processing if error returned
+        return false; // skip message processing if error returned
 
     // Get argument length and argument data
     _uGetArgData8(rcvEM);
 
     // Get footer and flag if not found
     if (!_uGetFooter(rcvEM))
-        return; // skip message processing if error returned
+        return false; // skip message processing if error returned
 
     // Set new message flag
     rcvEM.isNew = true;
 
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+
+    // Return message status
+    return true;
 }
 
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.

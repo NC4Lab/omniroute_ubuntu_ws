@@ -37,8 +37,8 @@ void ros_esmacat_app::assign_slave_sequence()
 
     // Assign the feeder servos slave object to the actual slave in the EtherCAT communication chain
     int feeder_ease_slave_index;
-    ros::param::param<int>("/feeder_servos_slave_index", feeder_ease_slave_index, 2);
-    assign_esmacat_slave_index(&feeder_ease_ease_ecat_as, feeder_servos_slave_index);
+    ros::param::param<int>("/feeder_ease_slave_index", feeder_ease_slave_index, 2);
+    assign_esmacat_slave_index(&feeder_ease_ease_ecat_as, feeder_ease_slave_index);
 }
 
 /**

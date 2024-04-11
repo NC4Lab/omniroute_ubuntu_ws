@@ -1322,9 +1322,9 @@ QPushButton:pressed {
    <widget class="QPushButton" name="runGantryBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>90</y>
-      <width>151</width>
+      <x>130</x>
+      <y>80</y>
+      <width>81</width>
       <height>30</height>
      </rect>
     </property>
@@ -1334,15 +1334,15 @@ QPushButton:pressed {
      </font>
     </property>
     <property name="text">
-     <string>Run to Position</string>
+     <string>Move to</string>
     </property>
    </widget>
    <widget class="QPushButton" name="homeGantryBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>150</y>
-      <width>71</width>
+      <x>30</x>
+      <y>80</y>
+      <width>81</width>
       <height>30</height>
      </rect>
     </property>
@@ -1371,12 +1371,12 @@ QPushButton:pressed {
      <double>100.000000000000000</double>
     </property>
    </widget>
-   <widget class="QPushButton" name="pumpGantryBtn">
+   <widget class="QPushButton" name="feedBtn">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>30</x>
       <y>150</y>
-      <width>71</width>
+      <width>61</width>
       <height>30</height>
      </rect>
     </property>
@@ -1387,6 +1387,88 @@ QPushButton:pressed {
     </property>
     <property name="text">
      <string>Feed</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="runPumpTogPosBtn">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>170</y>
+      <width>111</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Run Pump</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="lowerFeederTogPosBtn">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>130</y>
+      <width>111</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Lower Feeder</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

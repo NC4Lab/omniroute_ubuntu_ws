@@ -19,9 +19,14 @@
 
 //============ VARIABLES ===============
 
+// Global variables
+bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
+
 // Initialize class instances for local libraries
 MazeDebug Dbg;
 FeederServo FdSrv;
+EsmacatCom EsmaCom;
 
 //=============== SETUP =================
 void setup()
@@ -44,10 +49,10 @@ void setup()
 //=============== LOOP ==================
 void loop()
 {
-  return;
+  // Check ethercat coms
+  if (!EsmaCom.readEcatMessage())
+    return;
 
   // Test the servos
-  FdSrv.runFeeder(2000);
-
-  delay(5000);
+  //FdSrv.runFeeder(2000);
 }

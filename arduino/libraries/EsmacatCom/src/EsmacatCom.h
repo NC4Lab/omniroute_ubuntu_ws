@@ -9,7 +9,7 @@
 //============= INCLUDE ================
 #include "Arduino.h"
 #include "MazeDebug.h"
-//#include "CypressCom.h"
+// #include "CypressCom.h"
 #include "SPI.h"
 
 //============= GLOBALS ================
@@ -91,6 +91,10 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
+        START_PUMP = 7,
+        STOP_PUMP = 8,
+        LOWER_FEEDER = 9,
+        RAISE_FEEDER = 10,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
@@ -160,7 +164,7 @@ public:
     EcatMessageStruct rcvEM; //  initialize message handler instance for receiving messages
 
 private:
-    static MazeDebug _Dbg;      // local instance of MazeDebug class
+    static MazeDebug _Dbg;       // local instance of MazeDebug class
     int ecatPinCS;               // chip select pin for ethercat shield
     SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 
@@ -219,7 +223,7 @@ public:
     void initEcat(bool);
 
 public:
-    void readEcatMessage();
+    bool readEcatMessage();
 
 public:
     void writeEcatAck(uint8_t[] = nullptr, uint8_t = 0);
