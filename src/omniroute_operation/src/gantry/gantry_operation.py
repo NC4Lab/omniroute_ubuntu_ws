@@ -22,7 +22,7 @@ class GantryState(Enum):
 
 
 class GantryFeeder:
-    # @brief Initialize the GantryFeeder class
+    # Initialize the GantryFeeder class
     def __init__(self):
         self.gantry_x = 0.0
         self.gantry_y = 0.0
@@ -37,8 +37,9 @@ class GantryFeeder:
 
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
 
-        # @brief Initialize the subsrciber for reading from '/csv_file_name' topic
+        # Initialize the subsrciber for reading in the gantry commands
         rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
+        # Initialize the subsrciber for reading in the tracker position data
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 

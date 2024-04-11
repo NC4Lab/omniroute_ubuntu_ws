@@ -26,8 +26,6 @@ class MazeTransformer:
         self.maze_t = np.array([0,0,0], dtype=np.float32)
         self.maze_R = np.eye(4, dtype=np.float32)
 
-        # self.maze_br.sendTransform([0,0,0], [0,0,0,1], rospy.Time.now(), "maze", "world")
-
         rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 

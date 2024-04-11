@@ -186,7 +186,7 @@ class EsmacatCom:
         self.rcvEM = self.EcatMessageStruct()
 
 
-    # ROS Publisher: Initialize ethercat message handler instances
+        # ROS Publisher: Initialize ethercat message handler instances
         self.maze_ard0_pub = rospy.Publisher(
             '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
 
@@ -1302,6 +1302,22 @@ class Interface(Plugin):
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
         ]
 
+        # Disable all but start and quit buttons
+        self._widget.sysReinitBtn.setEnabled(False)
+        self._widget.filePreviousBtn.setEnabled(False)
+        self._widget.fileNextBtn.setEnabled(False)
+        self._widget.plotClearBtn.setEnabled(False)
+        self._widget.plotSaveBtn.setEnabled(False)
+        self._widget.plotSendBtn.setEnabled(False)
+
+        # Store the time the interface was initialized
+        self.ts_interface_init = rospy.get_time()  # (sec)
+
+        # Counter to incrementally shut down opperations
+        self.cnt_shutdown_step = 0  # tracks the current step
+        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
+        self.dt_shutdown_step = 0.25  # (sec)
+
         # ................ Maze Setup ................
 
         # Default system settings [default][min][max]
@@ -1345,17 +1361,11 @@ class Interface(Plugin):
         # Create EsmacatCom object
         self.EsmaCom = EsmacatCom()
 
-        # Store the time the interface was initialized
-        self.ts_interface_init = rospy.get_time()  # (sec)
-
         # Specify delay to start and check reading/writing Esmacat data
         self.dt_ecat_start = 1  # (sec)
         self.dt_ecat_check = 0.5  # (sec)
 
-        # Couter to incrementally shut down opperations
-        self.cnt_shutdown_step = 0  # tracks the current step
-        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
-        self.dt_shutdown_step = 0.25  # (sec)
+        # ................ Callback Setup ................
 
         # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
@@ -1396,23 +1406,6 @@ class Interface(Plugin):
             self.qt_callback_projWinTogFullScrBtn_clicked)
         self._widget.projWinForceFucusBtn.clicked.connect(
             self.qt_callback_projWinForceFucusBtn_clicked)
-        
-        # Projected image ui callbacks
-        self.proj_img_cfg_btn_vec = [] # Initalize vector for buttons
-        for i in range(9):  
-            button_name = f'projImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect( # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b)) 
-            self.proj_img_cfg_btn_vec.append(button)  # Store the button
-
-        # Disable all but start and quit buttons
-        self._widget.sysReinitBtn.setEnabled(False)
-        self._widget.filePreviousBtn.setEnabled(False)
-        self._widget.fileNextBtn.setEnabled(False)
-        self._widget.plotClearBtn.setEnabled(False)
-        self._widget.plotSaveBtn.setEnabled(False)
-        self._widget.plotSendBtn.setEnabled(False)
 
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
@@ -1431,6 +1424,15 @@ class Interface(Plugin):
             self.timer_callback_endSession_once)
         self.timer_endSession.setSingleShot(True)  # Run only once
 
+        # Projected image ui callbacks
+        self.proj_img_cfg_btn_vec = [] # Initalize vector for buttons
+        for i in range(9):  
+            button_name = f'projImgCfgBtn_{i}'
+            button = getattr(self._widget, button_name)
+            button.clicked.connect( # Use lambda pass button index tor callback
+                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b)) 
+            self.proj_img_cfg_btn_vec.append(button)  # Store the button
+
         # ................ ROS Setup ................
 
         self.wall_clicked_sub = rospy.Subscriber('/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
@@ -1439,7 +1441,7 @@ class Interface(Plugin):
         self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         
         # Projection command publisher
-        self.projection_op_pub = ProjectionOperation()
+        self.ProjOpp = ProjectionOperation()
 
         # ROS Subscriber: Esmacat arduino maze ard0 ease
         rospy.Subscriber(
@@ -1453,7 +1455,7 @@ class Interface(Plugin):
  
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
-    def procEcatMessage(self):
+    def procWallEcatMessage(self):
         """ Used to parse new incoming ROS ethercat msg data. """
 
         # Print confirmation message
@@ -1464,7 +1466,7 @@ class Interface(Plugin):
 
         if self.EsmaCom.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
 
-            MazeDB.printMsg(
+            MazeDB.printMsg(sig_callback_Esmacat_read_maze_ard0_ease
                 'ERROR', "(%d)ECAT ERROR: %s", self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.errTp.name)
 
             # I2C_FAILED
@@ -1640,10 +1642,13 @@ class Interface(Plugin):
             self.signal_Esmacat_read_maze_ard0_ease.emit()
 
     def sig_callback_Esmacat_read_maze_ard0_ease(self):
-        """ Signal callback for Esmacat_read_maze_ard0_ease topic """
+        """ 
+            Signal callback for Esmacat_read_maze_ard0_ease topic
+            Needs to be triggered from ROS callback to be run in a seperate thread 
+        """
 
         # Process new message arguments
-        self.procEcatMessage()
+        self.procWallEcatMessage()
 
     # ------------------------ CALLBACKS: Timers ------------------------
 
@@ -1904,21 +1909,21 @@ class Interface(Plugin):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
         
         # Code -1
-        self.projection_op_pub.publish_window_mode_cmd(-1)
+        self.ProjOpp.publish_window_mode_cmd(-1)
         MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
         
         # Code -2
-        self.projection_op_pub.publish_window_mode_cmd(-2)
+        self.ProjOpp.publish_window_mode_cmd(-2)
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
     def qt_callback_projWinForceFucusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
         
         # Code -3
-        self.projection_op_pub.publish_window_mode_cmd(-3)
+        self.ProjOpp.publish_window_mode_cmd(-3)
         MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projImgCfgBtn_clicked(self, button_number):
@@ -1933,7 +1938,7 @@ class Interface(Plugin):
                 button.setChecked(False)
 
         # Use the button_number to send the corresponding ROS command
-        self.projection_op_pub.publish_image_cfg_cmd(button_number)
+        self.ProjOpp.publish_image_cfg_cmd(button_number)
         MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent", button_number)
     
     def qt_callback_sysStartBtn_clicked(self):
