@@ -1310,14 +1310,6 @@ class Interface(Plugin):
         self._widget.plotSaveBtn.setEnabled(False)
         self._widget.plotSendBtn.setEnabled(False)
 
-        # Store the time the interface was initialized
-        self.ts_interface_init = rospy.get_time()  # (sec)
-
-        # Counter to incrementally shut down opperations
-        self.cnt_shutdown_step = 0  # tracks the current step
-        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
-        self.dt_shutdown_step = 0.25  # (sec)
-
         # ................ Maze Setup ................
 
         # Default system settings [default][min][max]
@@ -1450,6 +1442,14 @@ class Interface(Plugin):
         # Signal callback setup
         self.signal_Esmacat_read_maze_ard0_ease.connect(
             self.sig_callback_Esmacat_read_maze_ard0_ease)
+        
+        # Store the time the interface was initialized
+        self.ts_interface_init = rospy.get_time()  # (sec)
+
+        # Counter to incrementally shut down opperations
+        self.cnt_shutdown_step = 0  # tracks the current step
+        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
+        self.dt_shutdown_step = 0.25  # (sec)
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
  
