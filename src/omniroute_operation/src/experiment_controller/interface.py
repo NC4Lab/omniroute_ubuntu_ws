@@ -705,12 +705,14 @@ class Interface(Plugin):
                 
                 if self.left_visual_cue == "Triangle":
                     self.projection_pub.publish(self.project_left_cue_triangle)
+                    rospy.loginfo("Projecting left cue triangle")
                     self.success_chamber = self.left_chamber
                     #self.success_chamber_seq = self.left_chamber_seq
                     self.error_chamber = self.right_chamber
                     #self.error_chamber_seq = self.right_chamber_seq
                 else:  
                     self.projection_pub.publish(self.project_right_cue_triangle)
+                    rospy.loginfo("Projecting right cue triangle")
                     self.success_chamber = self.right_chamber    
                     self.error_chamber = self.left_chamber
                         
@@ -827,6 +829,11 @@ class Interface(Plugin):
             
         #     self.mode_start_time = rospy.Time.now()
         #     self.mode = Mode.START_TRIAL
+
+        #self._widget.pathDirEdit.setText(
+            #os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
+        
+        # self.curDir = os.path.dirname(__file__)
 
         # elif self.mode == Mode.START_TRIAL:
         #     self.currentTrialNumber = self.currentTrialNumber+1
