@@ -1701,8 +1701,8 @@ class Interface(Plugin):
             self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.HANDSHAKE, self.getParamTxtBox())
 
-            # Restart check/send timer
-            self.timer_sendHandshake.start(self.dt_ecat_check*1000)
+            # Restart check/send timer after 1 second
+            self.timer_sendHandshake.start(1000)
 
     def timer_callback_endSession_once(self):
         """ Timer callback to incrementally shutdown session. """

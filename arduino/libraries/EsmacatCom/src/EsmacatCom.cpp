@@ -80,7 +80,7 @@ void EsmacatCom::ecatReadRegAll(int p_out_reg[8])
 ////
 /// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
 ///
-/// @param read_addr: Esmacat address to read from [0-7]. 
+/// @param read_addr: Esmacat address to read from [0-7].
 int EsmacatCom::_ecatReadRegValue(int read_addr)
 {
     uint16_t v2, v3;
@@ -473,6 +473,13 @@ bool EsmacatCom::readEcatMessage()
     // Read esmacat buffer to get register data
     int reg_arr[8];
     ecatReadRegAll(reg_arr);
+
+    // TEMP
+    for (size_t i_16 = 0; i_16 < 8; i_16++)
+        rcvEM.RegU.si16[i_16] = reg_arr[i_16];
+    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+    delay(1000);
+    return;
 
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))

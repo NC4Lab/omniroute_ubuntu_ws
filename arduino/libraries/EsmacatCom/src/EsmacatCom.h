@@ -9,7 +9,6 @@
 //============= INCLUDE ================
 #include "Arduino.h"
 #include "MazeDebug.h"
-// #include "CypressCom.h"
 #include "SPI.h"
 
 //============= GLOBALS ================
