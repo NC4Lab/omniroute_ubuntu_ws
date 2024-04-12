@@ -44,7 +44,8 @@ class ros_esmacat_app : public esmacat_application
 public:
     /** A constructor- sets initial values for class members */
     ros_esmacat_app(): sync_ease("sync_ease"), sync_ease_ros_message(),
-    maze_ard0_ease("maze_ard0_ease"), maze_ard0_ease_ros_message() {}
+    maze_ard0_ease("maze_ard0_ease"), maze_ard0_ease_ros_message(),
+    feeder_ease("feeder_ease"), feeder_ease_ros_message() {}
 
     void assign_slave_sequence(); /** identify sequence of slaves and their types */
     void configure_slaves(); /** configure all slaves in communication chain */

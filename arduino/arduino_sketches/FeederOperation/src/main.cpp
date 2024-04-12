@@ -26,7 +26,7 @@ bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 // Initialize class instances for local libraries
 MazeDebug Dbg;
 FeederServo FdSrv;
-EsmacatCom EsmaCom;
+EsmacatCom EsmaCom(10);
 
 //=============== SETUP =================
 void setup()
@@ -49,17 +49,6 @@ void setup()
 //=============== LOOP ==================
 void loop()
 {
-
-  // // TEMP
-  // while (true)
-  // {
-  //   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
-  //   delay(1000);
-  //   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ECAT_ID_DISORDERED, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
-  //   delay(1000);
-  //   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ECAT_NO_MSG_TYPE_MATCH, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
-  //   delay(1000);
-  // }
 
   // Check ethercat coms
   if (!EsmaCom.readEcatMessage())

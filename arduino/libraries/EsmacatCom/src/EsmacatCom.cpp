@@ -474,7 +474,7 @@ bool EsmacatCom::readEcatMessage()
     int reg_arr[8];
     ecatReadRegAll(reg_arr);
 
-    // TEMP
+    //TEMP
     for (size_t i_16 = 0; i_16 < 8; i_16++)
         rcvEM.RegU.si16[i_16] = reg_arr[i_16];
     _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP

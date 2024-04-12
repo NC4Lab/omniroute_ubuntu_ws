@@ -27,15 +27,15 @@ class FeederServo
 public:
 	// Feeder port servo parameters
 	Servo portServo;		// Servo object
-	int portServoPin = 11;	// Servo pwm pin
-	int portUpAngle = 180;	// Servo up angle
-	int portDownAngle = 90; // Servo down angle
+	const int portServoPin = 8;	// Servo pwm pin
+	const int portUpAngle = 180;	// Servo up angle
+	const int portDownAngle = 90; // Servo down angle
 
 	// Pump servo parameters
 	Servo pumpServo;		  // Servo object
-	int pumpServoPin = 12;	  // Servo pwm pin
-	int pumpRunSpeed = 500;	  // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
-	int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
+	const int pumpServoPin = 9;	  // Servo pwm pin
+	const int pumpRunSpeed = 500;	  // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
+	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 
 private:
 	MazeDebug _Dbg; /// unique instance of MazeDebug class
