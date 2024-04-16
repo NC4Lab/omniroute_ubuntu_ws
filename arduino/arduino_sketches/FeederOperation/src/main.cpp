@@ -42,6 +42,9 @@ void setup()
   FdSrv.initServo();
   delay(1000);
 
+  // Initialize ethercat coms
+  EsmaCom.initEcat(true);
+
   // Print setup complete
   Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
 }
@@ -53,18 +56,6 @@ void loop()
   // Check ethercat coms
   if (!EsmaCom.readEcatMessage())
     return;
-
-  // Start pump
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_PUMP)
-	{
-		FdSrv.startPump();
-	}
-
-  // Stop pump
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::STOP_PUMP)
-  {
-    FdSrv.stopPump();
-  }
 
   // Lower feeder
   if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::LOWER_FEEDER)
@@ -78,9 +69,28 @@ void loop()
     FdSrv.raiseFeeder();
   }
 
+  // Start pump
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_PUMP)
+  {
+    FdSrv.startPump();
+  }
+
+  // Stop pump
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::STOP_PUMP)
+  {
+    FdSrv.stopPump();
+  }
+
+  // Run full feeder opperation
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::FEED)
+  {
+    FdSrv.runFeeder(2000);
+  }
+
   // Send back recieved message arguments
   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 
-  // Test the servos
+  // // Test the servos
   // FdSrv.runFeeder(2000);
+  // delay(2000);
 }

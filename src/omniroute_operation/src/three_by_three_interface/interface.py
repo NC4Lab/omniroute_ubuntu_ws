@@ -40,7 +40,7 @@ from qt_gui.plugin import Plugin
 # ======================== GLOBAL VARS ========================
 
 # Maze configuration variables
-DB_VERBOSE = True  # debug verbose flag
+DB_VERBOSE = False  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     0: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -115,10 +115,11 @@ class EsmacatCom:
         REINITIALIZE_SYSTEM = 4
         RESET_SYSTEM = 5
         MOVE_WALLS = 6
-        START_PUMP = 7
-        STOP_PUMP = 8
-        LOWER_FEEDER = 9
-        RAISE_FEEDER = 10
+        LOWER_FEEDER = 7
+        RAISE_FEEDER = 8
+        START_PUMP = 9
+        STOP_PUMP = 10
+        FEED = 11
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
@@ -280,7 +281,7 @@ class EsmacatCom:
         # Print message
         MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
                         self.rcvEM.msgID, self.rcvEM.msgTp.name)
-        # self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
+        self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
 
         return True
 
@@ -722,8 +723,8 @@ class MazeDB(QGraphicsView):
     def printMsg(cls, level, msg, *args):
         """ Log to ROS in color """
 
-        # Exit if DB_VERBOSE is false
-        if not DB_VERBOSE:
+        # Skip debug messages if DB_VERBOSE is false
+        if not DB_VERBOSE and level == 'DEBUG':
             return
 
         # Log message by type and color to ROS
@@ -1088,9 +1089,9 @@ class MazePlot(QGraphicsView):
             # Set text color
             self.label.setDefaultTextColor(self.status.color)
 
-            # # TEMP Print chamber status change
-            # MazeDB.printMsg('DEBUG', "Chamber %d: %s", self.chamber_num,
-            #                 self.status.name)
+            # Print chamber status change
+            MazeDB.printMsg('DEBUG', "Chamber %d: %s", self.chamber_num,
+                            self.status.name)
 
             # Set chamber color
             # self.octagon.setBrush(QBrush(self.status.color))
@@ -1447,12 +1448,12 @@ class Interface(Plugin):
             self.qt_callback_homeGantryBtn_clicked)
 
         # Feeder ui callbacks
-        self._widget.feedBtn.clicked.connect(
-            self.qt_callback_feedBtn_clicked)
         self._widget.lowerFeederTogPosBtn.clicked.connect(
             self.qt_callback_lowerFeederTogPosBtn_clicked)
         self._widget.runPumpTogPosBtn.clicked.connect(
             self.qt_callback_runPumpTogPosBtn_clicked)
+        self._widget.feedBtn.clicked.connect(
+            self.qt_callback_feedBtn_clicked)
 
         # Projector mode ui callbacks
         self._widget.projWinTogPosBtn.clicked.connect(
@@ -1915,19 +1916,17 @@ class Interface(Plugin):
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
-    def qt_callback_feedBtn_clicked(self):
-        MazeDB.printMsg('DEBUG', "Command for feedBtn sent")
 
     def qt_callback_lowerFeederTogPosBtn_clicked(self):
         """ Callback function to lower or raise the feeder from button press."""
         if self._widget.lowerFeederTogPosBtn.isChecked():
             self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.START_PUMP, 1)
+                EsmacatCom.MessageType.LOWER_FEEDER, 1)
             MazeDB.printMsg(
                 'DEBUG', "Command for lowerFeederTogPosBtn sent - Button is active (checked)")
         else:
             self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.STOP_PUMP, 1)
+                EsmacatCom.MessageType.RAISE_FEEDER, 1)
             MazeDB.printMsg(
                 'DEBUG', "Command for lowerFeederTogPosBtn sent - Button is not active (unchecked)")
 
@@ -1935,14 +1934,21 @@ class Interface(Plugin):
         """ Callback function to run or stop the pump from button press."""
         if self._widget.runPumpTogPosBtn.isChecked():
             self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.LOWER_FEEDER, 1)
+                EsmacatCom.MessageType.START_PUMP, 1)
             MazeDB.printMsg(
                 'DEBUG', "Command for runPumpTogPosBtn sent - Button is active (checked)")
         else:
             self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.RAISE_FEEDER, 1)
+                EsmacatCom.MessageType.STOP_PUMP, 1)
             MazeDB.printMsg(
                 'DEBUG', "Command for runPumpTogPosBtn sent - Button is not active (unchecked)")
+            
+    def qt_callback_feedBtn_clicked(self):
+        """ Callback function to run the full feeder opperation from button press."""
+        self.EsmaComFeeder.writeEcatMessage(
+                EsmacatCom.MessageType.FEED, 1)
+        MazeDB.printMsg(
+                'DEBUG', "Command for feedBtn sent")
 
     def qt_callback_projWinTogPosBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
