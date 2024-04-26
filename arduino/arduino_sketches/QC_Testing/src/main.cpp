@@ -13,32 +13,24 @@
 #include <LiquidCrystal.h> // include the LiquidCrystal library
 
 // CUSTOM
-#include <Safe_Vector.h>
-#include <Maze_Debug.h>
-#include <Cypress_Com.h>
-#include <Wall_Operation.h>
+#include <EsmacatCom.h>
+#include <MazeDebug.h>
+#include <CypressCom.h>
+#include <WallOperation.h>
 
 //============ VARIABLES ===============
 
+// Global variables
+bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose]
+bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
+
 // Local
-uint8_t resp = 0;      // capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
-uint8_t r_bit_out = 1; // I/O value
-int pwmDuty = 0;       // track PWM duty for all walls [0-255]
-uint8_t mtrDir = 0;    // track motor direction [0:backward/down, 1:forward/up]
-int UswitchVal[8];     // track up switch states
-int DswitchVal[8];     // track down switch states
-
-// Initialize struct and class instances
-Maze_Debug DB;
-Cypress_Com C_COM;
-Wall_Operation W_OPR(1, 0);
-const int rs = 52, en = 50, d4 = 46, d5 = 44, d6 = 42, d7 = 48;
-// const int rs = 53, en = 51, d4 = 47, d5 = 45, d6 = 43, d7 = 49;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
-// LiquidCrystal lcd(52, 50, 46, 44, 42, 48); // initialize the LCD display with the appropriate pins
-
-// Global
-extern bool DB_VERBOSE = 0;                       //<set to control debugging behavior [0:silent, 1:verbose]
+uint8_t resp = 0;                                 // capture I2C comm flags from Wire::method calls [0:success, 1-4:errors]
+uint8_t r_bit_out = 1;                            // I/O value
+int pwmDuty = 0;                                  // track PWM duty for all walls [0-255]
+uint8_t mtrDir = 0;                               // track motor direction [0:backward/down, 1:forward/up]
+int UswitchVal[8];                                // track up switch states
+int DswitchVal[8];                                // track down switch states
 int potPin = A15;                                 // potentiometer pin
 int LED_DOWN = 37;                                // LED for down switch pin
 int LED_UP = 39;                                  // LED for up switch pin
@@ -48,6 +40,15 @@ uint8_t AddBin = 0;                               // Address binary value
 uint8_t add_expect = 0x00;                        // address from DIP switches
 uint8_t add_measure = 0x00;                       // address from I2C scanner
 
+// Initialize struct and class instances
+MazeDebug Dbg;
+CypressCom CypCom;
+WallOperation WallOper(1, 1, 1, 255, 1000);
+const int rs = 52, en = 50, d4 = 46, d5 = 44, d6 = 42, d7 = 48;
+// const int rs = 53, en = 51, d4 = 47, d5 = 45, d6 = 43, d7 = 49;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+// LiquidCrystal lcd(52, 50, 46, 44, 42, 48); // initialize the LCD display with the appropriate pins
+
 //=============== SETUP =================
 void setup()
 {
@@ -55,7 +56,7 @@ void setup()
   Serial.begin(115200);
   Serial1.begin(115200);
   Serial.print('\n');
-  DB.printMsgTime("SETUP START");
+  Dbg.printMsg(Dbg.MT::INFO, "SETUP START");
 
   Wire.begin();     // join I2C bus
   lcd.begin(16, 2); // initialize the LCD display with 16 columns and 2 rows
@@ -63,13 +64,13 @@ void setup()
 
   // Print which microcontroller is active
 #ifdef ARDUINO_AVR_UNO
-  DB.printMsgTime("Uploading to Arduino Uno");
+  DB.printMsg("Uploading to Arduino Uno");
 #endif
 #ifdef __AVR_ATmega2560__
-  DB.printMsgTime("Uploading to Arduino Mega");
+  Dbg.printMsg(Dbg.MT::INFO, "Uploading to Arduino Mega");
 #endif
 #ifdef ARDUINO_SAM_DUE
-  DB.printMsgTime("Uploading to Arduino Due");
+  DB.printMsg("Uploading to Arduino Due");
 #endif
 
   // Read I2C scanner
@@ -104,27 +105,15 @@ void setup()
   {
     lcd.print("0x");
     lcd.print(add_measure, HEX); // print expected address (from I2C scanner) to the LCD display
-    DB.printMsgTime("I2C error code: %d", errorI2C);
-    DB.printMsgTime("Measured address: %s", DB.hexStr(add_measure));
+    Dbg.printMsg(Dbg.MT::INFO, "I2C error code: %d", errorI2C);
+    Dbg.printMsg(Dbg.MT::INFO, "Measured address: %s", Dbg.hexStr(add_measure));
   }
 
   // Manually set address for Wall_Opperation methods
-  W_OPR.C[0].addr = add_measure;
+  WallOper.C[0].addr = add_measure;
 
-  // Setup cypress chips
-  resp = C_COM.setupCypress(add_measure);
-  if (resp != 0)
-    DB.printMsgTime("!!Failed Cypress setup: address=%s!!", DB.hexStr(add_measure));
-  else
-  { // print success for last itteration
-    DB.printMsgTime("Finished Cypress setup: address=%s", DB.hexStr(add_measure));
-  }
-
-  // Setup IO pins
-  resp = W_OPR.setupWallIO();
-
-  // Setup PWM pins
-  resp = W_OPR.setupWallPWM(pwmDuty);
+  // Initialize I2C for Cypress chips
+  CypCom.i2cInit();
 
   // Read DIP switch address
   for (int i = 0; i < 7; i++)
@@ -138,10 +127,10 @@ void setup()
   lcd.setCursor(0, 1); // set the cursor to the first column of the first row
   lcd.print("Expected: 0x");
   lcd.print(add_expect, HEX); // print expected address (from DIP switch) to the LCD display
-  DB.printMsgTime("Expected address: %s", DB.hexStr(add_expect));
+  Dbg.printMsg(Dbg.MT::INFO, "Expected address: %s", Dbg.hexStr(add_expect));
 
   // Print done
-  DB.printMsgTime("SETUP DONE");
+  Dbg.printMsg(Dbg.MT::INFO, "SETUP DONE");
 }
 
 //=============== LOOP ==================
@@ -153,7 +142,7 @@ void loop()
   bool is_d_switch_closed = false;
   for (int i = 0; i < 8; i++)
   {
-    C_COM.ioReadPin(add_measure, W_OPR.wms.ioDown[0][i], W_OPR.wms.ioDown[1][i], r_bit_out);
+    CypCom.ioReadPin(add_measure, WallOper.wms.ioDown[0][i], WallOper.wms.ioDown[1][i], r_bit_out);
     if (DswitchVal[i] != r_bit_out)
       do_d_switch_update = true;
     if (r_bit_out == 1)
@@ -162,7 +151,7 @@ void loop()
   }
   if (do_d_switch_update)
   {
-    DB.printMsgTime("Down switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", DswitchVal[0], DswitchVal[1], DswitchVal[2], DswitchVal[3], DswitchVal[4], DswitchVal[5], DswitchVal[6], DswitchVal[7]);
+    Dbg.printMsg(Dbg.MT::INFO, "Down switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", DswitchVal[0], DswitchVal[1], DswitchVal[2], DswitchVal[3], DswitchVal[4], DswitchVal[5], DswitchVal[6], DswitchVal[7]);
     if (is_d_switch_closed)
       digitalWrite(LED_DOWN, HIGH);
     else
@@ -174,7 +163,7 @@ void loop()
   bool is_u_switch_closed = false;
   for (int i = 0; i < 8; i++)
   {
-    C_COM.ioReadPin(add_measure, W_OPR.wms.ioUp[0][i], W_OPR.wms.ioUp[1][i], r_bit_out);
+    CypCom.ioReadPin(add_measure, WallOper.wms.ioUp[0][i], WallOper.wms.ioUp[1][i], r_bit_out);
     if (UswitchVal[i] != r_bit_out)
       do_u_switch_update = true;
     if (r_bit_out == 1)
@@ -183,12 +172,11 @@ void loop()
   }
   if (do_u_switch_update)
   {
-    DB.printMsgTime("Up switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", UswitchVal[0], UswitchVal[1], UswitchVal[2], UswitchVal[3], UswitchVal[4], UswitchVal[5], UswitchVal[6], UswitchVal[7]);
+    Dbg.printMsg(Dbg.MT::INFO, "Up switch val: [%d,%d,%d,%d,%d,%d,%d,%d]", UswitchVal[0], UswitchVal[1], UswitchVal[2], UswitchVal[3], UswitchVal[4], UswitchVal[5], UswitchVal[6], UswitchVal[7]);
     if (is_u_switch_closed)
       digitalWrite(LED_UP, HIGH);
     else
       digitalWrite(LED_UP, LOW);
-
   }
 
   // Read potentiometer and set duty cycle
@@ -199,8 +187,8 @@ void loop()
     pwmDuty = pwm_duty;
     // Setup source
     for (size_t src_i = 0; src_i < 8; src_i++)
-      resp = C_COM.setupSourcePWM(add_measure, W_OPR.wms.pwmSrc[src_i], pwmDuty);
-    DB.printMsgTime("Potentiometer duty = %d", pwmDuty);
+      resp = CypCom.setupSourcePWM(add_measure, WallOper.wms.pwmSrc[src_i], pwmDuty);
+    Dbg.printMsg(Dbg.MT::INFO, "Potentiometer duty = %d", pwmDuty);
   }
 
   // Read motor direction [1= backward, 0=forward]
@@ -208,15 +196,15 @@ void loop()
   if (mtr_dir != mtrDir)
   {
     mtrDir = mtr_dir;
-    DB.printMsgTime("Motor direction = %d(%s)", mtrDir, mtrDir == 0 ? "Backward/Down" : "Forward/Up");
+    Dbg.printMsg(Dbg.MT::INFO, "Motor direction = %d(%s)", mtrDir, mtrDir == 0 ? "Backward/Down" : "Forward/Up");
 
     if (mtrDir == 0)
     {
       // WRITE TO CYPRESS to go BACKWARD/DOWN
       for (int wall_n = 0; wall_n < 8; wall_n++)
       {
-        C_COM.ioWritePin(add_measure, W_OPR.wms.pwmUp[0][wall_n], W_OPR.wms.pwmUp[1][wall_n], 0);
-        C_COM.ioWritePin(add_measure, W_OPR.wms.pwmDown[0][wall_n], W_OPR.wms.pwmDown[1][wall_n], 1);
+        CypCom.ioWritePin(add_measure, WallOper.wms.pwmUp[0][wall_n], WallOper.wms.pwmUp[1][wall_n], 0);
+        CypCom.ioWritePin(add_measure, WallOper.wms.pwmDown[0][wall_n], WallOper.wms.pwmDown[1][wall_n], 1);
       }
     }
     else
@@ -224,8 +212,8 @@ void loop()
       // WRITE TO CYPRESS to go FORWARD/UP
       for (int wall_n = 0; wall_n < 8; wall_n++)
       {
-        C_COM.ioWritePin(add_measure, W_OPR.wms.pwmUp[0][wall_n], W_OPR.wms.pwmUp[1][wall_n], 1);
-        C_COM.ioWritePin(add_measure, W_OPR.wms.pwmDown[0][wall_n], W_OPR.wms.pwmDown[1][wall_n], 0);
+        CypCom.ioWritePin(add_measure, WallOper.wms.pwmUp[0][wall_n], WallOper.wms.pwmUp[1][wall_n], 1);
+        CypCom.ioWritePin(add_measure, WallOper.wms.pwmDown[0][wall_n], WallOper.wms.pwmDown[1][wall_n], 0);
       }
     }
   }
