@@ -10,8 +10,11 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 
 class MazeTransformer:
-    # @brief Initialize the OptitrackTransformer class
+    # Initialize the OptitrackTransformer class
     def __init__(self):
+        rospy.loginfo("[MazeTransformer]: INITAILIZING...")
+
+        # Initialize the subscribers for reading in the optitrack data
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker2/pose', PointStamped, self.mazeboundary_marker2_callback, queue_size=1, tcp_nodelay=True)
@@ -38,23 +41,42 @@ class MazeTransformer:
             r.sleep()
         
     def loop(self):
+        # Compute vectors from marker0 to marker1 and marker0 to marker2
         xhat = self.optitrack_marker1 - self.optitrack_marker0
         yhat = self.optitrack_marker2 - self.optitrack_marker0
 
-        xhat = xhat / np.linalg.norm(xhat)
-        yhat = yhat / np.linalg.norm(yhat)
+        # Normalize the vectors to unit length to form the first two axes of the coordinate frame
+        # Check if normalization is possible (vector length should not be zero)
+        if np.linalg.norm(xhat) > 0:
+            xhat = xhat / np.linalg.norm(xhat)
+        else:
+            #rospy.logwarn("Zero-length vector for xhat, skipping loop iteration.")
+            return
+
+        if np.linalg.norm(yhat) > 0:
+            yhat = yhat / np.linalg.norm(yhat)
+        else:
+            #rospy.logwarn("Zero-length vector for yhat, skipping loop iteration.")
+            return
+
+        # Compute the third axis using the cross product to ensure orthogonality
         zhat = np.cross(xhat, yhat)
 
+        # Construct the rotation matrix using the three orthogonal axes
         R = np.array([xhat, yhat, zhat]).transpose()
-        self.maze_R = R
+        self.maze_R = R  # Store the rotation matrix globally if needed elsewhere
         
-        R = np.concatenate((R, np.zeros((3,1))), axis=1)
-        R = np.concatenate((R, np.zeros((1,4))), axis=0)
-        R[3,3] = 1.0
+        # Pad the rotation matrix R to a 4x4 matrix to include translation
+        R = np.concatenate((R, np.zeros((3,1))), axis=1)  # Add zero column for translation
+        R = np.concatenate((R, np.zeros((1,4))), axis=0)  # Add zero row for homogeneous coordinates
+        R[3,3] = 1.0  # Set the bottom right element to 1 for valid homogeneous transformation matrix
 
+        # Use the position of marker0 as the translation part of the transform
         t = self.optitrack_marker0
-        self.maze_t = t
+        self.maze_t = t  # Store the translation globally if needed elsewhere
 
+        # Broadcast the transformation from 'world' frame to 'maze' frame
+        # Quaternion is derived from the 4x4 transformation matrix R
         self.maze_br.sendTransform(t, tf.transformations.quaternion_from_matrix(R), rospy.Time.now(), "maze", "world")
 
     def harness_pose_callback(self, msg):    
