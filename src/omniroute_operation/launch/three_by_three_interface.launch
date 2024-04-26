@@ -20,10 +20,10 @@
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
-     <!-- Omniroute three_by_three_interface interface -->
-    <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
-
     <!-- Omniroute feeder gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
+
+     <!-- Omniroute three_by_three_interface interface -->
+    <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
 
 </launch>

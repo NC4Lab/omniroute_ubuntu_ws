@@ -1026,7 +1026,7 @@ class MazePlot(QGraphicsView):
             self.center_y = _center_y
             self.chamber_width = _chamber_width
 
-            self.gantry_cmd_pub = rospy.Publisher(
+            self.gantry_pub = rospy.Publisher(
                 '/gantry_cmd', GantryCmd, queue_size=1)
 
             # Compute chamber octogon parameters
@@ -1107,7 +1107,7 @@ class MazePlot(QGraphicsView):
             gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num % 3)
             # MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
 
-            self.gantry_cmd_pub.publish("MOVE", [gantry_x, gantry_y])
+            self.gantry_pub.publish("MOVE", [gantry_x, gantry_y])
 
             return  # TEMP
 
@@ -1412,7 +1412,7 @@ class Interface(Plugin):
             '/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
 
         # Gantry command publisher
-        self.gantry_cmd_pub = rospy.Publisher(
+        self.gantry_pub = rospy.Publisher(
             '/gantry_cmd', GantryCmd, queue_size=1)
 
         # ................ Callback Setup ................
@@ -1907,12 +1907,12 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        self.gantry_cmd_pub.publish("MOVE", [round(
+        self.gantry_pub.publish("MOVE", [round(
             self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
 
     def qt_callback_homeGantryBtn_clicked(self):
         """ Callback function for the "Home Gantry" button."""
-        self.gantry_cmd_pub.publish("HOME", [])
+        self.gantry_pub.publish("HOME", [])
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
@@ -2237,6 +2237,7 @@ class Interface(Plugin):
         assert retcode == 0, "List command returned %d" % retcode
         for str in list_output.decode().split("\n"):
             if (str.startswith(s)):
+                MazeDB.printMsg('INFO', "Killing Node: %s", str)
                 os.system("rosnode kill " + str)
 
     """ @todo: Implement this function to handle the window close event """

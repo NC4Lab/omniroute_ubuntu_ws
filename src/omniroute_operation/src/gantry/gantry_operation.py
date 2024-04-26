@@ -35,6 +35,7 @@ class GantryFeeder:
         self.current_time = rospy.Time.now()
         #self.pump_wait_duration = rospy.Duration(5.0)
 
+        # Specify the x and y offset from the gantry tracking marker to the gantry center
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
 
         # Initialize the subsrciber for reading in the gantry commands
@@ -43,26 +44,25 @@ class GantryFeeder:
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
+        # Initialize the gantry mode used for state machine
         self.gantry_mode = GantryState.TRACK_HARNESS
 
         # ................ GCode Client Setup ................
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
         ## TODO: Automatically determine the port
 
-
-        # Set max pump speed
-        # self.gcode_client.raw_command("M3 S1000")
-
         # Wait for a few secs
         time.sleep(1)
-        self.home()
+        #self.home() TEMP
         time.sleep(1)
 
+        ## TODO: What is this for???
         self.gcode_client.raw_command("M3 S1000")
 
-        self.gcode_client.realtime_command(chr(0x9B))     # Stop the pump
-
+        # Initialize the ROS rate 
         r = rospy.Rate(30)
+
+        # Loop until the node is shutdown
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
@@ -128,49 +128,6 @@ class GantryFeeder:
             self.stop_pump()
             self.gcode_client.realtime_command('~')     # Resume jogging
             self.gantry_mode = GantryState.TRACK_HARNESS
-        
-
-        ## Pump control
-        # if self.pump_state == 'START':
-        #     self.pump_start_time = self.current_time
-        #     self.gcode_client.raw_command("M3 S127")
-        #     rospy.sleep(0.1)start_pump()
-        #     self.pump_state = 'ON'
-        # elif self.pump_state == 'ON':
-        #     if (self.current_time - self.pump_start_time).to_sec() >= self.pump_duration:
-        #         self.pump_state = 'STOP'
-        # elif self.pump_state == 'STOP':
-        #     self.gcode_client.raw_command("M5")
-        #     rospy.sleep(0.1)
-        #     self.pump_state = 'OFF'
-        #     rospy.loginfo("[Gantry Operation]: Pump State OFF")
-        #     self.track_mode = 'HARNESS'
-        # elif self.pump_state == 'OFF':
-        #     pass
-                    
-        # Pump control
-        # if self.pump_state == 'PREPARE_TO_START':
-        #     self.pump_start_time = self.current_time
-        #     self.pump_state = 'START'
-        #     rospy.loginfo("[Gantry Operation]: Pump State Prepare to Start")            
-        # elif self.pump_state == 'START':
-        #     self.start_pump()
-        #     self.pump_state = 'ON'
-        #     rospy.loginfo("[Gantry Operation]: Pump State ON")
-        # elif self.pump_state == 'ON':
-        #     if (self.current_time - self.pump_start_time).to_sec() >= self.pump_duration:
-        #         self.pump_state = 'STOP'
-        #     rospy.loginfo("[Gantry Operation]: Pump State Started")
-        # elif self.pump_state == 'STOP':
-        #     self.stop_pump()
-        #     rospy.loginfo("[Gantry Operation]: Pump State Stopped")
-        #     self.pump_state = 'PUMP_STOPPED'
-        # elif self.pump_state == 'PUMP_STOPPED':
-        #     self.track_mode = 'HARNESS'
-        #     self.pump_state = 'OFF'
-        # elif self.pump_state == 'OFF':
-        #     pass
-            
             
     def home(self):
         rospy.loginfo("[Gantry Operation]: Homing")
