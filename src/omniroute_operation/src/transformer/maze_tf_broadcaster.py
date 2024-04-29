@@ -14,34 +14,42 @@ class MazeTransformer:
     def __init__(self):
         rospy.loginfo("[MazeTransformer]: INITAILIZING...")
 
-        # Initialize the subscribers for reading in the optitrack data
+        # Subscribers to obtain pose data for three boundary markers of the maze
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker1/pose', PointStamped, self.mazeboundary_marker1_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker2/pose', PointStamped, self.mazeboundary_marker2_callback, queue_size=1, tcp_nodelay=True)
 
+        # Initialize arrays to store the 3D coordinates of the maze boundary markers
         self.optitrack_marker0 = np.zeros(3, dtype=np.float32)
         self.optitrack_marker1 = np.zeros(3, dtype=np.float32)
         self.optitrack_marker2 = np.zeros(3, dtype=np.float32)
 
+        # Transform broadcaster and listener for handling transformations
         self.maze_br = tf.TransformBroadcaster()
         self.tf_listener = tf.TransformListener()
 
+        # Initialize transformation matrices for translation and rotation
         self.maze_t = np.array([0,0,0], dtype=np.float32)
         self.maze_R = np.eye(4, dtype=np.float32)
 
+        # Subscribers for additional pose data regarding harness and gantry
         rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
+        # Publishers to output transformed poses of the harness and gantry within the maze
         self.harness_pose_in_maze_pub = rospy.Publisher('/harness_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
         self.gantry_pose_in_maze_pub = rospy.Publisher('/gantry_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
 
+        # Control loop running at 100 Hz to handle data processing and transformation broadcasting
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
         
     def loop(self):
-        # Compute vectors from marker0 to marker1 and marker0 to marker2
+        ## TODO: Consider if we need to run this more than once
+
+        # Compute vectors from marker0 to marker1 and marker0 to marker2 for the maze boundary
         xhat = self.optitrack_marker1 - self.optitrack_marker0
         yhat = self.optitrack_marker2 - self.optitrack_marker0
 

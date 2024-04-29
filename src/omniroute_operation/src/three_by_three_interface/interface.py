@@ -39,7 +39,7 @@ from qt_gui.plugin import Plugin
 
 # ======================== GLOBAL VARS ========================
 
-# Maze configuration variables
+# Global variables
 DB_VERBOSE = False  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
@@ -52,13 +52,9 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     6: [0, 1, 2, 3, 4, 5, 6, 7],
     7: [1, 3, 5, 6, 7],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
-
-
-
 }
 
 # ======================== GLOBAL CLASSES ========================
-
 
 class ProjectionOperation:
     def __init__(self):
@@ -1100,14 +1096,9 @@ class MazePlot(QGraphicsView):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
             # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
-
-            gantry_offset_x = 0
-            gantry_offset_y = -150
-            gantry_x = gantry_offset_x + 400 + 300 * (2-self.chamber_num//3)
-            gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num % 3)
-            # MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
-
-            self.gantry_pub.publish("MOVE", [gantry_x, gantry_y])
+            
+            # Send command to move gantry to selected chamber
+            self.gantry_pub.publish("MOVE_TO_CHAMBER", [self.chamber_num])
 
             return  # TEMP
 
@@ -1249,7 +1240,6 @@ class MazePlot(QGraphicsView):
             current_status_enum == MazePlot.Status.UP
 
 # ======================== MAIN UI CLASS ========================
-
 
 class Interface(Plugin):
     """ Interface plugin """
@@ -1405,6 +1395,21 @@ class Interface(Plugin):
 
         # Projection command publisher
         self.ProjOpp = ProjectionOperation()
+
+        # ................ Gantry Setup ................
+
+        # Paramters for positioning gantry
+        self.chamber_wd = 0.3 # Chamber width (m)
+        self.n_chamber_side = 3 
+        self.chamber_centers = [] # List of chamber centers 
+        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
+
+        # Compute the chamber centers
+        for i in range(0, self.n_chamber_side**2):
+            row = i//self.n_chamber_side
+            col = i%self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            self.chamber_centers.append(chamber_center)
 
         # ................ ROS Setup ................
 
@@ -1916,7 +1921,6 @@ class Interface(Plugin):
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
-
     def qt_callback_lowerFeederTogPosBtn_clicked(self):
         """ Callback function to lower or raise the feeder from button press."""
         if self._widget.lowerFeederTogPosBtn.isChecked():
@@ -1942,7 +1946,12 @@ class Interface(Plugin):
                 EsmacatCom.MessageType.STOP_PUMP, 1)
             MazeDB.printMsg(
                 'DEBUG', "Command for runPumpTogPosBtn sent - Button is not active (unchecked)")
-            
+
+    def move_gantry_to_chamber(self, chamber_num):
+        x = self.chamber_centers[chamber_num][0]
+        y = self.chamber_centers[chamber_num][1]
+        self.gantry_pub.publish("MOVE", [x, y])    
+
     def qt_callback_feedBtn_clicked(self):
         """ Callback function to run the full feeder opperation from button press."""
         self.EsmaComFeeder.writeEcatMessage(
@@ -2019,8 +2028,6 @@ class Interface(Plugin):
 
         # Call timer callback to incrementally shutdown session
         self.timer_endSession.start(0)
-
-    from PyQt5.QtWidgets import QApplication
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 

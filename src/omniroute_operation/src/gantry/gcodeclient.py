@@ -67,8 +67,8 @@ class Client:
             if feedback == b'ok\r\n':
                 return True 
             else:
-                print(f'[gcodeclient] Command: {cmd}')
-                print(f'[gcodeclient] Feedback: {feedback}')
+                # print(f'[gcodeclient] Command: {cmd}')
+                # print(f'[gcodeclient] Feedback: {feedback}')
                 return False
 
         except TypeError:

@@ -40,7 +40,6 @@ class Mode(Enum):
     PAUSE_EXPERIMENT = 13
     RESUME_EXPERIMENT = 14
 
-
 class Wall:
     def __init__(self, chamber_num, wall_num):
 

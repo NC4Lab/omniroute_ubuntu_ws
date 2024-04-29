@@ -37,8 +37,21 @@ class GantryFeeder:
         self.current_time = rospy.Time.now()
         #self.pump_wait_duration = rospy.Duration(5.0)
 
-        # Specify the x and y offset from the gantry tracking marker to the gantry center
+        # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
+
+        # Paramters for positioning gantry
+        self.chamber_wd = 0.3 # Chamber width (m)
+        self.n_chamber_side = 3 
+        self.chamber_centers = [] # List of chamber centers 
+        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
+
+        # Compute the chamber centers
+        for i in range(0, self.n_chamber_side**2):
+            row = i//self.n_chamber_side
+            col = i%self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            self.chamber_centers.append(chamber_center)
 
         # Initialize the subsrciber for reading in the gantry commands
         rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
@@ -101,11 +114,13 @@ class GantryFeeder:
             # gantry_to_harness = gant            # self.pump_state = 'PREPARE_TO_START'ry_to_harness / distance
 
             if distance > 0.04:
+                
+                # Speed of gantry movement
                 k = 25.0
 
                 # X component of the harness movement vector
                 y = k*gantry_to_harness[0]
-                    # # # Y component of the harness movement vector
+                # Y component of the harness movement vector
                 x = k*gantry_to_harness[1] 
 
                 if ~np.isnan(x) and ~np.isnan(y):
@@ -149,11 +164,17 @@ class GantryFeeder:
             self.home()
 
         elif msg.cmd == "MOVE":
-            rospy.loginfo("[GantryFeeder]: Move Command Received")
             self.target_x = msg.args[0]
             self.target_y = msg.args[1]
             self.gantry_mode = GantryState.TARGET
-            rospy.loginfo("[GantryFeeder]: Target: ({:.2f}, {:.2f})".format(self.target_x, self.target_y)  )
+            rospy.loginfo("[GantryFeeder]: Move Command Received: ({:.2f}, {:.2f})".format(self.target_x, self.target_y)  )
+
+        elif msg.cmd == "MOVE_TO_CHAMBER":
+            chamber_num = int(msg.args[0])
+            self.target_x = self.chamber_centers[chamber_num][0]
+            self.target_y = self.chamber_centers[chamber_num][1]
+            self.gantry_mode = GantryState.TARGET
+            rospy.loginfo("[GantryFeeder]: Move to Chamber Command Received: Chamber({}) Target({:.2f}, {:.2f})".format(chamber_num, self.target_x, self.target_y))
 
         elif msg.cmd == "PUMP": # Move the gantry to the specified location
             rospy.loginfo("[GantryFeeder]: Pump Command Received")
