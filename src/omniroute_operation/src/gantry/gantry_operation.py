@@ -15,9 +15,6 @@ class GantryState(Enum):
     IDLE = 0
     TRACK_HARNESS = 1
     TARGET = 2
-    START_PUMP = 3
-    STOP_PUMP = 4
-    PUMPING = 5
 
 class GantryFeeder:
     # Initialize the GantryFeeder class
@@ -31,11 +28,6 @@ class GantryFeeder:
         self.harness_y = 0.0
         self.target_x = 0.0
         self.target_y = 0.0
-        
-        # Initialize the pump state variables
-        self.pump_start_time = rospy.Time.now()
-        self.current_time = rospy.Time.now()
-        #self.pump_wait_duration = rospy.Duration(5.0)
 
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
         self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
@@ -82,26 +74,26 @@ class GantryFeeder:
             self.loop()
             r.sleep()
 
-    def start_pump(self):
-        self.gcode_client.realtime_command(chr(0x99))
-    
-    def stop_pump(self):
-        for k in range(5):
-            self.gcode_client.realtime_command(chr(0x9B))
-
     def loop(self):
         self.current_time = rospy.Time.now()
 
         if self.gantry_mode == GantryState.TARGET:
             # Unit vector from gantry to target
-            gantry_to_target = np.array([self.target_x +0.04- self.gantry_x, self.target_y -0.17- self.gantry_y])
-            #distance = np.linalg.norm(gantry_to_target)
-            #gantry_to_target = gantry_to_target / distance
+            x_offset = 0.0
+            y_offset = 0.0
+            gantry_to_target = np.array([self.target_x + x_offset - self.gantry_x, self.target_y + y_offset - self.gantry_y])
+            
+            # Slow on approach
+            # distance = np.linalg.norm(gantry_to_target)
+            # gantry_to_target = gantry_to_target / distance
+
+             # Speed of gantry movement
+            k = 15.0
 
             # X component of the target movement vector
-            y = 15* gantry_to_target[0]
+            y = k* gantry_to_target[0]
             # Y component of the target movement vector
-            x = 15* gantry_to_target[1]
+            x = k* gantry_to_target[1]
                     
             # Move the gantry to the target
             if ~np.isnan(x) and ~np.isnan(y):
@@ -111,7 +103,6 @@ class GantryFeeder:
             # Unit vector from gantry to harness
             gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
-            # gantry_to_harness = gant            # self.pump_state = 'PREPARE_TO_START'ry_to_harness / distance
 
             if distance > 0.04:
                 
@@ -124,26 +115,7 @@ class GantryFeeder:
                 x = k*gantry_to_harness[1] 
 
                 if ~np.isnan(x) and ~np.isnan(y):
-                    self.move_gantry_rel(x, y)         
-
-        elif self.gantry_mode == GantryState.START_PUMP:
-            rospy.loginfo("[GantryFeeder]: Start Pumping")
-            self.pump_start_time = self.current_time
-            self.gcode_client.realtime_command('!')     # Flush the jog buffer and put into HOLD state
-            rospy.sleep(2)                              # Wait for the jog buffer to flush and gantry to stop 
-            self.start_pump()
-            self.gantry_mode = GantryState.PUMPING
-
-        elif self.gantry_mode == GantryState.PUMPING:
-            rospy.loginfo("[GantryFeeder]: Pumping for {:.2f} seconds".format((self.current_time - self.pump_start_time).to_sec()))
-            if (self.current_time - self.pump_start_time).to_sec() >= self.pump_duration:
-                self.gantry_mode = GantryState.STOP_PUMP
-
-        elif self.gantry_mode == GantryState.STOP_PUMP:
-            rospy.loginfo("[GantryFeeder]: Stop Pumping")
-            self.stop_pump()
-            self.gcode_client.realtime_command('~')     # Resume jogging
-            self.gantry_mode = GantryState.TRACK_HARNESS
+                    self.move_gantry_rel(x, y)      
             
     def home(self):
         rospy.loginfo("[GantryFeeder]: Homing...")
@@ -154,6 +126,7 @@ class GantryFeeder:
     def move_gantry_rel(self, x, y):
         cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F25000".format(x,y)
         self.gcode_client.raw_command(cmd)
+        #rospy.loginfo("[GantryFeeder]: TEMP Moving Gantry: ({:.2f}, {:.2f})".format(x, y)) 
 
     def move_gantry_abs(self, x, y):
         self.gcode_client.raw_command("$J=G90 G21 X{:.1f} Y{:.1f} F25000".format(x,y))
@@ -175,24 +148,6 @@ class GantryFeeder:
             self.target_y = self.chamber_centers[chamber_num][1]
             self.gantry_mode = GantryState.TARGET
             rospy.loginfo("[GantryFeeder]: Move to Chamber Command Received: Chamber({}) Target({:.2f}, {:.2f})".format(chamber_num, self.target_x, self.target_y))
-
-        elif msg.cmd == "PUMP": # Move the gantry to the specified location
-            rospy.loginfo("[GantryFeeder]: Pump Command Received")
-            self.pump_duration = msg.args[0] 
-            rospy.sleep(2)         
-            self.gantry_mode = GantryState.START_PUMP   
-
-        elif msg.cmd == "STOP_PUMP":
-            rospy.loginfo("[GantryFeeder]: Stop Pump Command Received")
-            # if self.gantry_mode == GantryState.PUMPING:
-            self.gantry_mode = GantryState.STOP_PUMP
-            
-        elif msg.cmd == "TRACK_HARNESS":
-            rospy.loginfo("[GantryFeeder]: Track Harness Command Received")
-            if self.gantry_mode != GantryState.PUMPING and self.gantry_mode != GantryState.START_PUMP:
-                self.gantry_mode = GantryState.TRACK_HARNESS
-            else:
-                self.gantry_mode = GantryState.STOP_PUMP
 
         elif msg.cmd == "STOP_TRACKING_HARNESS":
             rospy.loginfo("[GantryFeeder]: Stop Tracking Harness Command Received")
