@@ -1,5 +1,5 @@
 <library path="src">
-  <class name="OmnirouteInterface" type="omniroute_interface.interface.Interface" base_class_type="rqt_gui_py::Plugin">
+  <class name="OmnirouteController" type="omniroute_controller.interface.Interface" base_class_type="rqt_gui_py::Plugin">
     <description>
         An rqt-based GUI for testing the functionality of the Omniroute maze.
     </description>

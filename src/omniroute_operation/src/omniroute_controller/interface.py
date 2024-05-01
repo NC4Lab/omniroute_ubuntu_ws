@@ -1277,7 +1277,7 @@ class Interface(Plugin):
         self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
         loadUi(os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'interface.ui'), self._widget)
+            os.path.realpath(__file__)), 'omniroute_controller_interface.ui'), self._widget)
 
         self._widget.setObjectName('InterfacePluginUi')
         # Show _widget.windowTitle on left-top of each plugin (when
@@ -1743,7 +1743,7 @@ class Interface(Plugin):
             # self.terminate_ros_node("/gantry_operation_node")
             self.terminate_ros_node("/projection_opperation_node")
             self.terminate_ros_node("/Esmacat_application_node")
-            self.terminate_ros_node("/omniroute_interface_node")
+            self.terminate_ros_node("/omniroute_controller_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:

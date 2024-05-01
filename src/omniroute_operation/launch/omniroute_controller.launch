@@ -76,7 +76,7 @@
     <!-- Omniroute feeder gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
 
-     <!-- Omniroute omniroute_interface interface -->
-    <node name = "omniroute_interface_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/>
+     <!-- Omniroute omniroute_controller interface -->
+    <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen"/>
 
 </launch>
