@@ -78,13 +78,13 @@ catkin_make
 
 # Runtime
 
-## Launching the ROS three_by_three_interface
+## Launching the ROS omniroute_interface
 ```
 cd omniroute_ubuntu_ws
 
 source devel/setup.bash
 
-roslaunch omniroute_operation three_by_three_interface.launch
+roslaunch omniroute_operation omniroute_interface.launch
 ```
 ## Changing ROS environment settings in Ubuntu
 

@@ -9,7 +9,6 @@ from enum import Enum
 
 # Importing Gantry library
 from gantry.gcodeclient import Client as GcodeClient
-# from three_by_three_interface.find_port port find_port
 
 class GantryState(Enum):
     IDLE = 0

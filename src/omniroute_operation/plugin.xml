@@ -12,19 +12,6 @@
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
   </class>
-  <class name="ThreeByThreeInterface" type="three_by_three_interface.interface.Interface" base_class_type="rqt_gui_py::Plugin">
-    <description>
-        An rqt-based GUI for testing the 3x3 Omniroute maze.
-    </description>
-    <qtgui>
-      <group>
-        <label>omniroute_operation</label>
-      </group>
-      <label>ThreeByThree Interface</label>
-      <icon type="theme">system-help</icon>
-      <statustip>Use to test functioning of Omniroute</statustip>
-    </qtgui>
-  </class>
   <class name="ExperimentController" type="experiment_controller.interface.Interface" base_class_type="rqt_gui_py::Plugin">
     <description>
         An rqt-based GUI for controlling experiment phases in maze.

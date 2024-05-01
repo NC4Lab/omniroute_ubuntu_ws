@@ -74,8 +74,8 @@
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
-    <!-- Omniroute three_by_three_interface interface -->
-    <node name = "three_by_three_interface_node" pkg = "omniroute_operation" type = "three_by_three_interface" output = "screen"/>
+    <!-- Omniroute omniroute_interface interface -->
+    <node name = "omniroute_interface_node" pkg = "omniroute_operation" type = "omniroute_interface" output = "screen"/>
 
     <!-- Omniroute experiment controller interface -->
     <node name = "experiment_controller" pkg = "omniroute_operation" type = "experiment_controller" output = "screen"/>

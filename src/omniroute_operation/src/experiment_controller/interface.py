@@ -498,7 +498,7 @@ class Interface(Plugin):
 
     #In the following functions, we define the starting maze configuration for each chamber. 
     #The starting maze configuration is defined by the chamber number, the walls that are present in the chamber.
-    #In doing so the following wall map from three_by_three_interface is used:
+    #In doing so the following wall map from omniroute_interface is used:
     #    WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     #        0: [0, 1, 2, 3, 4, 5, 6, 7],
     #        1: [1, 2, 3, 5, 7],
