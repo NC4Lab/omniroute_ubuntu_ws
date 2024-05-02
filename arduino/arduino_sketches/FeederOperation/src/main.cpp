@@ -82,7 +82,7 @@ void loop()
   }
 
   // Run full feeder opperation
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::FEED)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REWARD)
   {
     FdSrv.runFeeder(2000);
   }
@@ -90,7 +90,4 @@ void loop()
   // Send back recieved message arguments
   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 
-  // // Test the servos
-  // FdSrv.runFeeder(2000);
-  // delay(2000);
 }

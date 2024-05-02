@@ -84,7 +84,7 @@ public:
         "RAISE_FEEDER",
         "START_PUMP",
         "STOP_PUMP",
-        "FEED"};
+        "REWARD"};
     enum MessageType
     {
         MSG_NONE = 0,
@@ -98,7 +98,7 @@ public:
         RAISE_FEEDER = 8,
         START_PUMP = 9,
         STOP_PUMP = 10,
-        FEED = 11,
+        REWARD = 11,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Class for managing communication with the Esmacat shields via EtherCAT
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
@@ -43,7 +44,7 @@ class EsmacatCom:
         RAISE_FEEDER = 8
         START_PUMP = 9
         STOP_PUMP = 10
-        FEED = 11
+        REWARD = 11
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """

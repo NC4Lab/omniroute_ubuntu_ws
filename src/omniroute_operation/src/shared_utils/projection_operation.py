@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Class for publishing commands to the projection system
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
@@ -17,8 +18,8 @@ class ProjectionOperation:
         self.projection_pub = rospy.Publisher(
             'projection_cmd', Int32, queue_size=10)
 
-        # Rate for publishing, adjust as needed
-        self.rate = rospy.Rate(10)  # 10hz
+        # Rate for publishing set to 30hz
+        self.rate = rospy.Rate(30) 
 
     def publish_image_cfg_cmd(self, number):
         # Publish the number if it is a single digit between 0 and 9

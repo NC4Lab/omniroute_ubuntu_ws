@@ -15,7 +15,7 @@ import numpy as np
 class MazeTransformer:
     # Initialize the OptitrackTransformer class
     def __init__(self):
-        MazeDB.printMsg('INFO', "[MazeTransformer]: maze_tf_broadcaster_node INITAILIZING...")
+        MazeDB.printMsg('INFO', "[MazeTransformer]: INITAILIZING...")
 
         # Subscribers to obtain pose data for three boundary markers of the maze
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
@@ -28,6 +28,7 @@ class MazeTransformer:
         self.optitrack_marker2 = np.zeros(3, dtype=np.float32)
 
         # Flags to track if the markers have been received and tranform has been broadcasted
+        self.markers_received = False
         self.transform_broadcasted = False
 
         # Transform broadcaster and listener for handling transformations
@@ -59,8 +60,19 @@ class MazeTransformer:
         xhat = self.optitrack_marker1 - self.optitrack_marker0
         yhat = self.optitrack_marker2 - self.optitrack_marker0
 
-              # Check if the markers have been received
+        # Check if the markers have been received
         if np.all(self.optitrack_marker0 == 0) or np.all(self.optitrack_marker1 == 0) or np.all(self.optitrack_marker2 == 0):
+            return
+        else:
+            self.markers_received = True
+
+        MazeDB.printMsg('INFO', "[MazeTransformer]: Markers[%0.2f, %0.2f, %0.2f], [%0.2f, %0.2f, %0.2f], [%0.2f, %0.2f, %0.2f]", 
+                        self.optitrack_marker0[0], self.optitrack_marker0[1], self.optitrack_marker0[2],
+                        self.optitrack_marker1[0], self.optitrack_marker1[1], self.optitrack_marker1[2],
+                        self.optitrack_marker2[0], self.optitrack_marker2[1], self.optitrack_marker2[2])
+
+        # Check if the transform has already been broadcasted
+        if self.transform_broadcasted:
             return
 
         # Normalize the vectors to unit length to form the first two axes of the coordinate frame
@@ -87,12 +99,12 @@ class MazeTransformer:
         # Quaternion is derived from the 4x4 transformation matrix R
         self.maze_br.sendTransform(t, tf.transformations.quaternion_from_matrix(R), rospy.Time.now(), "maze", "world")
 
-        # Log that the transform has been broadcasted
-        if not self.transform_broadcasted:
-            MazeDB.printMsg('INFO', "[MazeTransformer]: Optitrack Coms Established")
-            self.transform_broadcasted = True
+        # Update the flag so that the transform is not broadcasted again
+        self.transform_broadcasted = True
 
-    def transform_and_publish_pose(self, msg, publisher):
+        MazeDB.printMsg('INFO', "[MazeTransformer]: Optitrack Coms Established")
+
+    def harness_pose_callback(self, msg):   
         # Wait for the transform to be available
         if not self.transform_broadcasted:
             return
@@ -106,16 +118,31 @@ class MazeTransformer:
 
             # Perform the transformation
             transformed_pose = self.tf_listener.transformPose("maze", msg)
-            publisher.publish(transformed_pose)
+            self.harness_pose_in_maze_pub.publish(transformed_pose)
 
         except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
-            rospy.logwarn("TF exception when transforming pose: {}".format(e))
+            rospy.logwarn("TF exception in harness_pose_callback: {}".format(e))
 
-    def harness_pose_callback(self, msg):
-        self.transform_and_publish_pose(msg, self.harness_pose_in_maze_pub)
-
+            
     def gantry_pose_callback(self, msg):
-        self.transform_and_publish_pose(msg, self.gantry_pose_in_maze_pub)
+        # Wait for the transform to be available
+        if not self.transform_broadcasted:
+            return
+        
+        try:
+            # Adjust the timestamp slightly to the past to ensure the transform is available
+            msg.header.stamp = rospy.Time.now() - rospy.Duration(0.01)
+
+            # Wait for the transform to be available
+            self.tf_listener.waitForTransform(target_frame="maze", source_frame=msg.header.frame_id, 
+                                            time=msg.header.stamp, timeout=rospy.Duration(1.0))
+
+            # Perform the transformation
+            transformed_pose = self.tf_listener.transformPose(target_frame="maze", ps=msg)
+            self.gantry_pose_in_maze_pub.publish(transformed_pose)
+
+        except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
+            rospy.logwarn("TF exception in gantry_pose_callback: {}".format(e))
 
     def mazeboundary_marker0_callback(self, msg):
         self.optitrack_marker0  = np.array([msg.point.x, msg.point.y, msg.point.z], dtype=np.float32)

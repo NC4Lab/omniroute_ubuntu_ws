@@ -438,13 +438,13 @@ class Interface(Plugin):
         #rospy.loginfo('Selected %s',res)
 
     def _handle_pumpStartBtn_clicked(self):
-        self.gantry_pub.publish("PUMP", [20.0])
+        self.gantry_pub.publish("START_PUMP", [])
 
     def _handle_plusMazeBtn_clicked(self):
         self.setPlusConfig()
 
     def _handle_stopTrackingBtn_clicked(self):
-        self.gantry_pub.publish("STOP_TRACKING_HARNESS", [])
+        self.gantry_pub.publish("IDLE", [])
 
     def _handle_startTrackingBtn_clicked(self):
         self.gantry_pub.publish("TRACK_HARNESS", [])
@@ -808,7 +808,7 @@ class Interface(Plugin):
         elif self.mode == Mode.SUCCESS:
             self.success_center_x = self.chamber_centers[self.success_chamber][0]
             self.success_center_y = self.chamber_centers[self.success_chamber][1]
-            self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
+            self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.REWARD
             rospy.loginfo("REWARD")
@@ -892,7 +892,7 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("PUMP", [4.0])
+        self.gantry_pub.publish("REWARD", [4.0])
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]

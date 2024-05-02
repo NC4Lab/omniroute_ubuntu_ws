@@ -131,7 +131,7 @@ class WallConfig:
         # loop thorugh wall_byte_config_list and print each element
         if do_print:
             for row in cls.cw_wall_num_list:
-                MazeDB.logMsg('DEBUG', "[%d][%d]", row[0], row[1])
+                MazeDB.printMsg('DEBUG', "[%d][%d]", row[0], row[1])
 
         return cls.cw_wall_num_list
 
@@ -689,9 +689,6 @@ class Interface(Plugin):
         # Create EsmacatCom object for maze_ard0_ease
         self.EsmaComMaze = EsmacatCom('maze_ard0_ease')
 
-        # Create EsmacatCom object for feeder_ease
-        self.EsmaComFeeder = EsmacatCom('feeder_ease')
-
         # ................ Projection Setup ................
 
         # Projection command publisher
@@ -752,18 +749,18 @@ class Interface(Plugin):
             self.qt_callback_runGantryBtn_clicked)
         self._widget.homeGantryBtn.clicked.connect(
             self.qt_callback_homeGantryBtn_clicked)
-
-        # Feeder ui callbacks
-        self._widget.lowerFeederTogPosBtn.clicked.connect(
-            self.qt_callback_lowerFeederTogPosBtn_clicked)
-        self._widget.runPumpTogPosBtn.clicked.connect(
-            self.qt_callback_runPumpTogPosBtn_clicked)
-        self._widget.feedBtn.clicked.connect(
-            self.qt_callback_feedBtn_clicked)
+        self._widget.trackHarnessTogBtn.clicked.connect(
+            self.qt_callback_trackHarnessTogBtn_clicked)
+        self._widget.lowerFeederTogBtn.clicked.connect(
+            self.qt_callback_lowerFeederTogBtn_clicked)
+        self._widget.runPumpTogBtn.clicked.connect(
+            self.qt_callback_runPumpTogBtn_clicked)
+        self._widget.rewardBtn.clicked.connect(
+            self.qt_callback_rewardBtn_clicked)
 
         # Projector mode ui callbacks
-        self._widget.projWinTogPosBtn.clicked.connect(
-            self.qt_callback_projWinTogPosBtn_clicked)
+        self._widget.projWinTogBtn.clicked.connect(
+            self.qt_callback_projWinTogBtn_clicked)
         self._widget.projWinTogFullScrBtn.clicked.connect(
             self.qt_callback_projWinTogFullScrBtn_clicked)
         self._widget.projWinForceFucusBtn.clicked.connect(
@@ -1213,7 +1210,7 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        self.gantry_pub.publish("MOVE", [round(
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [round(
             self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
 
     def qt_callback_homeGantryBtn_clicked(self):
@@ -1222,50 +1219,42 @@ class Interface(Plugin):
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
-    def qt_callback_lowerFeederTogPosBtn_clicked(self):
-        """ Callback function to lower or raise the feeder from button press."""
-        if self._widget.lowerFeederTogPosBtn.isChecked():
-            self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.LOWER_FEEDER, 1)
-            MazeDB.printMsg(
-                'DEBUG', "Command for lowerFeederTogPosBtn sent - Button is active (checked)")
-        else:
-            self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.RAISE_FEEDER, 1)
-            MazeDB.printMsg(
-                'DEBUG', "Command for lowerFeederTogPosBtn sent - Button is not active (unchecked)")
-
-    def qt_callback_runPumpTogPosBtn_clicked(self):
-        """ Callback function to run or stop the pump from button press."""
-        if self._widget.runPumpTogPosBtn.isChecked():
-            self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.START_PUMP, 1)
-            MazeDB.printMsg(
-                'DEBUG', "Command for runPumpTogPosBtn sent - Button is active (checked)")
-        else:
-            self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.STOP_PUMP, 1)
-            MazeDB.printMsg(
-                'DEBUG', "Command for runPumpTogPosBtn sent - Button is not active (unchecked)")
-
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
         y = self.chamber_centers[chamber_num][1]
-        self.gantry_pub.publish("MOVE", [x, y])    
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
+    
+    def qt_callback_trackHarnessTogBtn_clicked(self):
+        """ Callback function to start and stop tracking the rat from button press."""
+        if self._widget.trackHarnessTogBtn.isChecked():
+            self.gantry_pub.publish("TRACK_HARNESS", [])
+        else:
+            self.gantry_pub.publish("IDLE", [])
 
-    def qt_callback_feedBtn_clicked(self):
+    def qt_callback_lowerFeederTogBtn_clicked(self):
+        """ Callback function to lower or raise the feeder from button press."""
+        if self._widget.lowerFeederTogBtn.isChecked():
+            self.gantry_pub.publish("LOWER_FEEDER", [])
+        else:
+            self.gantry_pub.publish("RAISE_FEEDER", [])
+
+    def qt_callback_runPumpTogBtn_clicked(self):
+        """ Callback function to run or stop the pump from button press."""
+        if self._widget.runPumpTogBtn.isChecked():
+            self.gantry_pub.publish("START_PUMP", [])
+        else:
+            self.gantry_pub.publish("STOP_PUMP", [])
+
+    def qt_callback_rewardBtn_clicked(self):
         """ Callback function to run the full feeder opperation from button press."""
-        self.EsmaComFeeder.writeEcatMessage(
-                EsmacatCom.MessageType.FEED, 1)
-        MazeDB.printMsg(
-                'DEBUG', "Command for feedBtn sent")
+        self.gantry_pub.publish("REWARD", [3.0])
 
-    def qt_callback_projWinTogPosBtn_clicked(self):
+    def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
 
         # Code -1
         self.ProjOpp.publish_window_mode_cmd(-1)
-        MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
+        MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
