@@ -624,7 +624,7 @@ class Interface(Plugin):
 
     def is_rat_in_chamber(self, chamber_num):
         dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1])**2 
-        # rospy.loginfo(f"Distance from center: {dist_from_center}")
+        # rospy.loginfo(f"Distance from center: {dist_from_center}") # TEMP
         return dist_from_center <= self.threshold**2
     
     def is_rat_in_chamber_walls(self, chamber_seq, chamber_num):
@@ -788,6 +788,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             #if self.is_rat_in_chamber_walls(self.success_chamber_seq, self.success_chamber):
+            rospy.loginfo(f"TEMP!!!!!!!! Success chamber: {self.success_chamber}")
+            rospy.loginfo(f"TEMP!!!!!!!! is_rat_in_chamber: {self.is_rat_in_chamber(self.success_chamber)}")
             if self.is_rat_in_chamber(self.success_chamber):
                 self.raise_wall(self.left_goal_wall, send=False)
                 self.raise_wall(self.right_goal_wall, send=True)

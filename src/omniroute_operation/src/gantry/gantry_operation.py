@@ -23,7 +23,6 @@ class GantryState(Enum):
     STOP_PUMP = 6
     REWARD = 7
 
-
 class GantryFeeder:
     # Initialize the GantryFeeder class
     def __init__(self):
@@ -72,12 +71,14 @@ class GantryFeeder:
         self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
         ## TODO: Automatically determine the port
 
-        # Wait for a few secs
+        # Wait for 1 second
         time.sleep(1)
-        self.home() 
-        time.sleep(1)
+        
+        # # Home the gantry
+        # self.home() 
+        # time.sleep(1)
 
-        ## TODO: What is this for???
+        # Initialize the gcode client
         self.gcode_client.raw_command("M3 S1000")
 
         # Initialize the ROS rate 

@@ -1225,7 +1225,7 @@ class Interface(Plugin):
         self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
     
     def qt_callback_trackHarnessTogBtn_clicked(self):
-        """ Callback function to start and stop tracking the rat from button press."""
+        """ Callback function to start and stop gantry tracking the rat from button press."""
         if self._widget.trackHarnessTogBtn.isChecked():
             self.gantry_pub.publish("TRACK_HARNESS", [])
         else:
@@ -1288,6 +1288,9 @@ class Interface(Plugin):
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
+
+        # Home the gantry
+        self.gantry_pub.publish("HOME", [])
 
         # Start handshake callback timer imidiatly
         self.timer_sendHandshake.start(0)

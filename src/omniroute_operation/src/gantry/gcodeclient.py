@@ -74,7 +74,6 @@ class Client:
         except TypeError:
             print("Gcode commands must be a string")
 
-
         # def raw_command(self, cmd):
         # '''
         # Interfaces the Gcode commands to GRBL
