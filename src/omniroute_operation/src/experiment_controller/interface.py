@@ -32,13 +32,14 @@ class Mode(Enum):
     CHOICE = 5
     CHOICE_TO_GOAL = 6
     SUCCESS = 7
-    REWARD =8
-    POST_REWARD = 9
-    ERROR = 10
-    END_TRIAL = 11
-    END_EXPERIMENT = 12
-    PAUSE_EXPERIMENT = 13
-    RESUME_EXPERIMENT = 14
+    REWARD_START =8
+    REWARD_END = 9
+    POST_REWARD = 10
+    ERROR = 11
+    END_TRIAL = 12
+    END_EXPERIMENT = 13
+    PAUSE_EXPERIMENT = 14
+    RESUME_EXPERIMENT = 15
 
 class Wall:
     def __init__(self, chamber_num, wall_num):
@@ -211,19 +212,20 @@ class Interface(Plugin):
         self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
-        self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        self.choice_wait_duration = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
-        self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
-        self.right_choice_duration = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
-        self.wrong_choice_duration = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
-        self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
+        self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        self.choice_delay = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
+        self.reward_start_delay = rospy.Duration(5)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_end_delay = rospy.Duration(2.5)  # Duration to wait to for the reward to despense
+        self.right_choice_delay = rospy.Duration(20.0)  # Duration to wait if the rat made the right choice
+        self.wrong_choice_delay = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
+        self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
-        # self.start_wait_duration = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        # self.choice_wait_duration = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
-        # self.reward_duration = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
-        # self.right_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
-        # self.wrong_choice_duration = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
-        # self.end_trial_duration = rospy.Duration(1.0)  # Duration to wait at the end of the trial
+        # self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        # self.choice_delay = rospy.Duration(5.0)  # Duration to wait for rat to move to the choice point
+        # self.reward_end_delay = rospy.Duration(5.0)  # Duration to dispense reward if the rat made the right choice
+        # self.right_choice_delay = rospy.Duration(5.0)  # Duration to wait if the rat made the right choice
+        # self.wrong_choice_delay = rospy.Duration(5.0)  # Duration to wait if the rat made the wrong choice
+        # self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
         self.mode = Mode.START
         self.mode_start_time = rospy.Time.now()
@@ -750,7 +752,7 @@ class Interface(Plugin):
             rospy.loginfo("RAT_IN_START_CHAMBER")
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
+            if (self.current_time - self.mode_start_time).to_sec() >= self.start_delay.to_sec():
                 self.lower_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
@@ -772,7 +774,7 @@ class Interface(Plugin):
                 rospy.loginfo("CHOICE")
 
         elif self.mode == Mode.CHOICE:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.choice_wait_duration.to_sec():
+            if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
                 if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
                     if self.success_chamber == self.left_chamber:
                         self.lower_wall(self.left_goal_wall, send=True)
@@ -812,18 +814,25 @@ class Interface(Plugin):
             self.success_center_y = self.chamber_centers[self.success_chamber][1]
             self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.REWARD
-            rospy.loginfo("REWARD")
+            self.mode = Mode.REWARD_START
+            rospy.loginfo("REWARD START")
 
-        elif self.mode == Mode.REWARD:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_duration.to_sec():
+        elif self.mode == Mode.REWARD_START:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
                 self.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.REWARD_END
+                rospy.loginfo("REWARD END")
+
+        elif self.mode == Mode.REWARD_END:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
+                self.gantry_pub.publish("TRACK_HARNESS", [])
+                self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.POST_REWARD
-                rospy.loginfo("POST REWARD")
+                rospy.loginfo("POST REWARD")        
    
         elif self.mode == Mode.POST_REWARD:
-           if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_duration.to_sec():
+           if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
                 if self.success_chamber == 1:
                     self.setChamberOneStartConfig()
                 elif self.success_chamber == 3:
@@ -838,7 +847,7 @@ class Interface(Plugin):
                 rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_duration.to_sec():
+            if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_delay.to_sec():
                 if self.error_chamber == 1:
                     self.setChamberOneStartConfig()
                 elif self.error_chamber == 3:
@@ -866,7 +875,7 @@ class Interface(Plugin):
             self.mode = self.mode_before_pause
 
         elif self.mode == Mode.END_TRIAL:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_duration.to_sec():
+            if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_delay.to_sec():
                 self.mode = Mode.START_TRIAL
                 rospy.loginfo("START_TRIAL")
 

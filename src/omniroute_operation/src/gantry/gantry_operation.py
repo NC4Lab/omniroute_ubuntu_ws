@@ -37,13 +37,14 @@ class GantryFeeder:
         self.target_y = 0.0
 
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
-        self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
+        #self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
+        self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])
 
         # Paramters for positioning gantry
         self.chamber_wd = 0.3 # Chamber width (m)
         self.n_chamber_side = 3 
-        self.chamber_centers = [] # List of chamber centers 
         self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
+        self.chamber_centers = [] # List of chamber centers 
 
         # Compute the chamber centers
         for i in range(0, self.n_chamber_side**2):
@@ -94,9 +95,7 @@ class GantryFeeder:
 
         if self.gantry_mode == GantryState.TARGET:
             # Unit vector from gantry to target
-            x_offset = 0.0
-            y_offset = 0.0
-            gantry_to_target = np.array([self.target_x + x_offset - self.gantry_x, self.target_y + y_offset - self.gantry_y])
+            gantry_to_target = np.array([self.target_x - self.gantry_x, self.target_y - self.gantry_y])
             
             # Slow on approach
             # distance = np.linalg.norm(gantry_to_target)
