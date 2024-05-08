@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>793</width>
-    <height>1072</height>
+    <height>1080</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -741,7 +741,7 @@ QPushButton:pressed {
     <rect>
      <x>10</x>
      <y>850</y>
-     <width>521</width>
+     <width>451</width>
      <height>211</height>
     </rect>
    </property>
@@ -764,7 +764,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_3">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>230</x>
       <y>120</y>
       <width>60</width>
       <height>30</height>
@@ -800,7 +800,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_7">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>370</x>
       <y>120</y>
       <width>60</width>
       <height>30</height>
@@ -836,7 +836,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_5">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>300</x>
       <y>120</y>
       <width>60</width>
       <height>30</height>
@@ -872,7 +872,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_8">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>370</x>
       <y>160</y>
       <width>60</width>
       <height>30</height>
@@ -908,7 +908,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_6">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>300</x>
       <y>160</y>
       <width>60</width>
       <height>30</height>
@@ -944,7 +944,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_0">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>160</x>
       <y>80</y>
       <width>60</width>
       <height>30</height>
@@ -980,7 +980,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_2">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>160</x>
       <y>160</y>
       <width>60</width>
       <height>30</height>
@@ -1016,7 +1016,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_4">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>230</x>
       <y>160</y>
       <width>60</width>
       <height>30</height>
@@ -1052,7 +1052,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projImgCfgBtn_1">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>160</x>
       <y>120</y>
       <width>60</width>
       <height>30</height>
@@ -1088,7 +1088,7 @@ QPushButton:pressed {
    <widget class="QLabel" name="projImgCfgLabel">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>150</x>
       <y>50</y>
       <width>291</width>
       <height>21</height>
@@ -1132,7 +1132,7 @@ QPushButton:pressed {
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="projWinTogPosBtn">
+   <widget class="QPushButton" name="projWinTogBtn">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -1235,9 +1235,9 @@ QPushButton:pressed {
   <widget class="QGroupBox" name="gantryOperationGroupBo">
    <property name="geometry">
     <rect>
-     <x>540</x>
+     <x>480</x>
      <y>850</y>
-     <width>241</width>
+     <width>301</width>
      <height>211</height>
     </rect>
    </property>
@@ -1260,8 +1260,8 @@ QPushButton:pressed {
    <widget class="QLabel" name="xSpinBoxLabel">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>50</y>
+      <x>100</x>
+      <y>110</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -1283,10 +1283,10 @@ QPushButton:pressed {
    <widget class="QDoubleSpinBox" name="xSpinBox">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>50</y>
+      <x>130</x>
+      <y>110</y>
       <width>69</width>
-      <height>26</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="maximum">
@@ -1299,8 +1299,8 @@ QPushButton:pressed {
    <widget class="QLabel" name="xSpinBoxLabel_2">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>50</y>
+      <x>190</x>
+      <y>110</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -1322,9 +1322,9 @@ QPushButton:pressed {
    <widget class="QPushButton" name="runGantryBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>90</y>
-      <width>151</width>
+      <x>10</x>
+      <y>110</y>
+      <width>81</width>
       <height>30</height>
      </rect>
     </property>
@@ -1334,15 +1334,15 @@ QPushButton:pressed {
      </font>
     </property>
     <property name="text">
-     <string>Run to Position</string>
+     <string>Move to</string>
     </property>
    </widget>
    <widget class="QPushButton" name="homeGantryBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>150</y>
-      <width>71</width>
+      <x>10</x>
+      <y>50</y>
+      <width>81</width>
       <height>30</height>
      </rect>
     </property>
@@ -1358,10 +1358,10 @@ QPushButton:pressed {
    <widget class="QDoubleSpinBox" name="ySpinBox">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>50</y>
+      <x>220</x>
+      <y>110</y>
       <width>69</width>
-      <height>26</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="maximum">
@@ -1371,11 +1371,11 @@ QPushButton:pressed {
      <double>100.000000000000000</double>
     </property>
    </widget>
-   <widget class="QPushButton" name="pumpGantryBtn">
+   <widget class="QPushButton" name="rewardBtn">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>150</y>
+      <x>10</x>
+      <y>160</y>
       <width>71</width>
       <height>30</height>
      </rect>
@@ -1386,7 +1386,130 @@ QPushButton:pressed {
      </font>
     </property>
     <property name="text">
-     <string>Feed</string>
+     <string>Reward</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="runPumpTogBtn">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>160</y>
+      <width>81</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Run Pump</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="lowerFeederTogBtn">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>160</y>
+      <width>111</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Lower Feeder</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="trackHarnessTogBtn">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>50</y>
+      <width>111</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Track Harness</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

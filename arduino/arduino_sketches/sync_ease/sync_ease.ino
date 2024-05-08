@@ -16,18 +16,20 @@ Esmacatshield ease(easePin);
 
 int easeRegisters[8];
 
-void setup() {
+void setup()
+{
   ease.start_spi();
 
   pinMode(syncPin, OUTPUT);
-  digitalWrite(syncPin,LOW);
+  digitalWrite(syncPin, LOW);
 }
 
-void loop() {
+void loop()
+{
   // Get registers from EASE
-    ease.get_ecat_registers(easeRegisters);
+  ease.get_ecat_registers(easeRegisters);
 
-    digitalWrite(syncPin, easeRegisters[0]);
+  digitalWrite(syncPin, easeRegisters[0]);
 
-    delay(10);
-  }
+  delay(10);
+}

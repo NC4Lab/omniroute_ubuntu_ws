@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
 # ======================== PACKAGES ========================
+
+# Custom Imports
+from shared_utils.maze_debug import MazeDB
+from shared_utils.projection_operation import ProjectionOperation
+from shared_utils.esmacat_com import EsmacatCom
+
 # Standard Library Imports
 import os
 import glob
@@ -33,14 +39,8 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 
-# It seems you have some redundant imports, especially from python_qt_binding and PyQt5. You should remove
-# the ones that are not necessary to avoid confusion and make the code cleaner.
-
-
 # ======================== GLOBAL VARS ========================
 
-# Maze configuration variables
-DB_VERBOSE = True  # debug verbose flag
 NUM_ROWS_COLS = 3  # number of rows and columns in maze
 WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     0: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -52,672 +52,9 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
     6: [0, 1, 2, 3, 4, 5, 6, 7],
     7: [1, 3, 5, 6, 7],
     8: [0, 1, 2, 3, 4, 5, 6, 7]
-
-
-
 }
 
 # ======================== GLOBAL CLASSES ========================
-
-class ProjectionOperation:
-    def __init__(self):
-        # Initialize the node (if not already initialized)
-        if not rospy.core.is_initialized():
-            rospy.init_node('projection_opperation_node', anonymous=True)
-
-        # Create the publisher for 'projection_cmd' topic
-        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
-        
-        # Rate for publishing, adjust as needed
-        self.rate = rospy.Rate(10) # 10hz
-
-    def publish_image_cfg_cmd(self, number):
-        # Publish the number if it is a single digit between 0 and 9
-        if 0 <= number <= 8:
-            self.projection_pub.publish(number)
-            MazeDB.printMsg('INFO', "Published image config code[%d] to projection_cmd topic", number)
-        else:
-            MazeDB.printMsg('ERROR', "Image config[%d] is not valid", number)
-
-    def publish_window_mode_cmd(self, number):
-        # Can send any number
-        self.projection_pub.publish(number)
-        MazeDB.printMsg('INFO', "Published window mode code[%d] to projection_cmd topic", number)
-
-
-class EsmacatCom:
-    """ 
-    This class is used to communicate with the arduino via ethercat.
-    It is used to send and receive messages from the arduino.
-    """
-
-    # ------------------------ CLASS VARIABLES ------------------------
-
-    # Handshake finished flag
-    isEcatConnected = False
-
-    # ------------------------ NESTED CLASSES ------------------------
-
-    class MessageType(Enum):
-        """ Enum for ethercat python to arduino message type ID """
-        MSG_NONE = 0
-        HANDSHAKE = 1  # handshake must equal 1
-        INITIALIZE_CYPRESS = 2
-        INITIALIZE_WALLS = 3
-        REINITIALIZE_SYSTEM = 4
-        RESET_SYSTEM = 5
-        MOVE_WALLS = 6
-
-    class ErrorType(Enum):
-        """ Enum for tracking message errors """
-        ERR_NONE = 0
-        ECAT_ID_DISORDERED = 1
-        ECAT_NO_MSG_TYPE_MATCH = 2
-        ECAT_NO_ERR_TYPE_MATCH = 3
-        ECAT_MISSING_FOOTER = 4
-        I2C_FAILED = 5
-        WALL_MOVE_FAILED = 6
-
-    class RegUnion(ctypes.Union):
-        """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
-        _fields_ = [("ui8", ctypes.c_uint8 * 16),
-                    ("ui16", ctypes.c_uint16 * 8),
-                    ("si16", ctypes.c_int16 * 8),
-                    ("ui64", ctypes.c_uint64 * 2),
-                    ("si64", ctypes.c_int64 * 2)]
-
-    class UnionIndStruct:
-        """ Struct for storing ethercat data shareable accross 8 and 16-bit data types """
-
-        def __init__(self):
-            self.ii8 = 0  # 8-bit index
-            self.ii16 = 0  # 16-bit index
-
-        def upd8(self, b_i=255):
-            """Update union 8-bit and 16-bit index and return last updated 8-bit index"""
-            b_i = b_i if b_i != 255 else self.ii8
-            self.ii8 = b_i + 1
-            self.ii16 = self.ii8 // 2
-            return b_i
-
-        def upd16(self, b_i=255):
-            """Update union 16-bit and 8-bit index and return last updated 16-bit index"""
-            b_i = b_i if b_i != 255 else self.ii16
-            self.ii16 = b_i + 1
-            self.ii8 = self.ii16 * 2
-            return b_i
-
-        def reset(self):
-            """Reset union 8-bit and 16-bit index"""
-            self.ii8 = 0
-            self.ii16 = 0
-
-    class EcatMessageStruct:
-        """ Struct for storing ethercat messages """
-
-        def __init__(self):
-            # Union for storing ethercat 8 16-bit reg entries
-            self.RegU = EsmacatCom.RegUnion()
-            # Union index handler for getting union data
-            self.getUI = EsmacatCom.UnionIndStruct()
-            # Union index handler for getting union data
-            self.setUI = EsmacatCom.UnionIndStruct()
-
-            self.msgID = 0                          # Message ID
-            self.msgID_last = 0                     # Last message ID
-            self.msgTp = EsmacatCom.MessageType.MSG_NONE  # Message type
-            self.msgFoot = [0, 0]                  # Message footer
-
-            self.argLen = 0                       # Message argument length
-            self.ArgU = EsmacatCom.RegUnion()    # Union for storing message arguments
-            # Union index handler for argument union data
-            self.argUI = EsmacatCom.UnionIndStruct()
-
-            self.isNew = False                         # New message flag
-            self.isErr = False                         # Message error flag
-            self.errTp = EsmacatCom.ErrorType.ERR_NONE  # Message error type
-
-    def __init__(self):
-
-        # Initialize ethercat message handler instances
-        # Initialize message handler instance for sending messages
-        self.sndEM = self.EcatMessageStruct()
-        # Initialize message handler instance for receiving messages
-        self.rcvEM = self.EcatMessageStruct()
-
-
-    # ROS Publisher: Initialize ethercat message handler instances
-        self.maze_ard0_pub = rospy.Publisher(
-            '/Esmacat_write_maze_ard0_ease', ease_registers, queue_size=1)  # Esmacat write maze ard0 ease publisher
-
-
-
-    # ------------------------ PRIVATE METHODS ------------------------
-
-    def _uSetCheckReg(self, r_EM, reg_arr_si16):
-        """
-        Set register values in union and check for -1 values indicating no or incomplete messages
-
-        Note: This is a workaround for the fact that the Esmacat does not clear and sometimes will be
-        read midway through writing a message. This can lead to only partial or overlapping messages being read.
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            reg_arr_si16 (list): Register array (signed int16).
-        """
-
-        # Copy data to temporary union
-        temp_u = EsmacatCom.RegUnion()
-        for i_16 in range(8):
-            temp_u.si16[i_16] = reg_arr_si16[i_16]
-
-        # Bail if registry value is 0 or max int16 value suggesting registry is cleared or garbage
-        if temp_u.ui16[0] == 0 or temp_u.ui16[0] == 65535:
-            return False
-
-        # Another check for garbage registry stuff at start of coms
-        if (self.isEcatConnected != 1 and       # check if still waiting for handshake
-            (temp_u.ui16[0] != 1 or    # directly check union id entry for first message
-             temp_u.ui8[2] != 1)):      # directly check union type entry for handshake (e.g., msg_type_enum == 1)
-            return False
-
-        # Check for footer indicating a complete write from sender
-        is_footer = False
-        for i_8 in range(15):
-            if temp_u.ui8[i_8] == 254 and temp_u.ui8[i_8 + 1] == 254:
-                is_footer = True
-                break
-        if not is_footer:
-            return False
-
-        # Copy over temp union
-        r_EM.RegU.ui64[0] = temp_u.ui64[0]
-        r_EM.RegU.ui64[1] = temp_u.ui64[1]
-
-        return True
-
-    def _uSetMsgID(self, r_EM, msg_id=255):
-        """
-        Set message ID entry in union and update associated variable
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-        """
-
-        # Get new message ID: itterate id and roll over to 1 if max 16-bit value is reached
-        msg_id = r_EM.msgID + 1 if r_EM.msgID < 65535-1 else 1
-
-        # Set message ID entry in union
-        r_EM.RegU.ui16[r_EM.setUI.upd16(0)] = msg_id
-        self._uGetMsgID(r_EM)  # copy from union to associated struct variable
-
-    def _uGetMsgID(self, r_EM):
-        """
-        Get message ID from union
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-
-        Returns:
-            bool: True if message ID is valid (in sequence with last), False if not
-        """
-
-        r_EM.msgID_last = r_EM.msgID  # store last message ID if
-        r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)]
-
-        # Check/log error skipped or out of sequence messages if not first message or id has rolled over
-        if r_EM.msgID != 1:
-            if r_EM.msgID - r_EM.msgID_last != 1 and \
-                    r_EM.msgID != r_EM.msgID_last:  # don't log errors for repeat message reads
-                self._trackParseErrors(
-                    r_EM, EsmacatCom.ErrorType.ECAT_ID_DISORDERED)
-                return False
-        return True
-
-    def _uSetMsgType(self, r_EM, msg_type_enum):
-        """
-        Set message type entry in union and update associated variable
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            msg_type_enum (EsmacatCom.MessageType): Message type enum
-        """
-
-        # Set message type entry in union
-        r_EM.RegU.ui8[r_EM.setUI.upd8(2)] = msg_type_enum.value
-        # copy from union to associated struct variable
-        self._uGetMsgType(r_EM)
-
-    def _uGetMsgType(self, r_EM):
-        """
-        Get message type from union and check if valid
-
-        Args:   
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-
-        Returns:
-            bool: True if message type is valid, False if not
-        """
-
-        # Get message type value
-        msg_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(2)]
-
-        # Check if 'msg_type_val' corresponds to any value in the 'EsmacatCom.MessageType' Enum.
-        is_found = msg_type_val in [e.value for e in EsmacatCom.MessageType]
-        r_EM.isErr = not is_found  # Update struct error flag
-
-        # Log error and set message type to none if not found
-        if r_EM.isErr:
-            msg_type_val = EsmacatCom.MessageType.MSG_NONE
-            self._trackParseErrors(
-                r_EM, EsmacatCom.ErrorType.ECAT_NO_MSG_TYPE_MATCH)
-        else:
-            r_EM.msgTp = EsmacatCom.MessageType(msg_type_val)
-
-        return is_found
-
-    def _uSetErrType(self, r_EM, err_type_enum):
-        """
-        Set message type entry in union and update associated variable
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            err_type_enum (EsmacatCom.ErrorType): Error type enum  
-        """
-
-        # Set message type entry in union
-        r_EM.RegU.ui8[r_EM.setUI.upd8(3)] = err_type_enum.value
-        # copy from union to associated struct variable
-        self._uGetErrType(r_EM)
-
-    def _uGetErrType(self, r_EM):
-        """
-        Get message type from union and check if valid
-
-        Args:   
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-
-        Returns:
-            bool: True if error type is valid, False if not
-        """
-
-        # Get message type value
-        err_type_val = r_EM.RegU.ui8[r_EM.getUI.upd8(3)]
-
-        # Check if 'err_type_val' corresponds to any value in the 'EsmacatCom.ErrorType' Enum.
-        is_found = err_type_val in [e.value for e in EsmacatCom.ErrorType]
-        r_EM.isErr = not is_found  # Update struct error flag
-
-        # Log error and set error type to none if not found
-        if r_EM.isErr:
-            err_type_val = EsmacatCom.ErrorType.ERR_NONE
-            self._trackParseErrors(
-                r_EM, EsmacatCom.ErrorType.ECAT_NO_ERR_TYPE_MATCH)
-        else:
-            r_EM.errTp = EsmacatCom.ErrorType(err_type_val)
-
-        return is_found
-
-    def _uSetArgLength(self, r_EM, msg_arg_len):
-        """
-        Set message argument length entry in union and update associated variable
-
-        Args:   
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct 
-            msg_arg_len (int): Message argument length (unsigned int8)
-        """
-
-        # Set argument length union entry
-        r_EM.RegU.ui8[r_EM.setUI.upd8(4)] = msg_arg_len
-        # copy from union to associated struct variable
-        self._uGetArgLength(r_EM)
-
-    def _uGetArgLength(self, r_EM):
-        """
-        Get message argument length
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-        """
-
-        # Get argument length union entry
-        r_EM.argLen = r_EM.RegU.ui8[r_EM.getUI.upd8(4)]
-
-    def _uSetArgData8(self, r_EM, msg_arg_data8):
-        """
-        Set message 8-bit argument data entry in union
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            msg_arg_data8 (unsigned int8): Message argument data (unsigned int8)
-        """
-
-        if isinstance(msg_arg_data8, int) and msg_arg_data8 <= 255:  # check for 8-bit int data
-
-            # Increment argument union index
-            r_EM.argUI.upd8()
-
-            # Update message argument length from argument union 8-bit index
-            self._uSetArgLength(r_EM, r_EM.argUI.ii8)
-
-            # Get 8-bit union index and set 8-bit argument data entry in union
-            regu8_i = r_EM.argUI.ii8 + 4
-
-            # Set message argument data in reg union
-            r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
-            # copy from union to associated struct variable
-            self._uGetArgData8(r_EM)
-
-    def _uSetArgData16(self, r_EM, msg_arg_data16):
-        """
-        Set message 16-bit argument data entry in union
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            msg_arg_data16 (unsigned int16): Message argument data (unsigned int16)
-        """
-
-        if isinstance(msg_arg_data16, int) and msg_arg_data16 > 255:  # check for 16-bit int data
-
-            # Increment argument union index
-            r_EM.argUI.upd16()
-
-            # Update message argument length from argument union 8-bit index
-            self._uSetArgLength(r_EM, r_EM.argUI.ii8)
-
-            # Get 16-bit union index and set 16-bit argument data entry in union
-            regu16_i = (r_EM.argUI.ii8 + 4) // 2
-
-            # Set message argument data in reg union
-            r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
-            # copy from union to associated struct variable
-            self._uGetArgData8(r_EM)
-
-    def _uGetArgData8(self, r_EM):
-        """
-        Get reg union 8-bit message argument data and copy to arg union
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-        """
-
-        self._uGetArgLength(r_EM)  # get argument length from union
-        for i in range(r_EM.argLen):
-            # copy to 8-bit argument Union
-            r_EM.ArgU.ui8[i] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
-
-    def _uSetFooter(self, r_EM):
-        """
-        Set message footer entry in union and update associated variable
-
-        Args:  
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-        """
-
-        r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
-        r_EM.RegU.ui8[r_EM.setUI.upd8()] = 254
-        self._uGetFooter(r_EM)  # copy from union to associated struct variable
-
-    def _uGetFooter(self, r_EM):
-        """
-        Get message footer from union
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-
-        Returns:
-            bool: True if footer is valid, False if not
-        """
-
-        # copy first footer byte
-        r_EM.msgFoot[0] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
-        # copy second footer byte
-        r_EM.msgFoot[1] = r_EM.RegU.ui8[r_EM.getUI.upd8()]
-
-        # Log missing footer error
-        if r_EM.msgFoot[0] != 254 or r_EM.msgFoot[1] != 254:  # check if footer is valid
-            self._trackParseErrors(
-                r_EM, EsmacatCom.ErrorType.ECAT_MISSING_FOOTER)
-            return False
-        return True
-
-    def _uReset(self, r_EM):
-        """Reset union data and indices"""
-
-        # Reset union data to 0
-        r_EM.RegU.ui64[0] = 0
-        r_EM.RegU.ui64[1] = 0
-
-        # Reset union indices
-        r_EM.setUI.reset()
-        r_EM.getUI.reset()
-        r_EM.argUI.reset()
-
-    def _resetReg(self):
-        """
-        Reset EtherCAT register data by setting all values to -1
-
-        Note: This is a workaround for the fact that the Esmacat does not clear
-        this can lead to only partial or overlapping messages being read
-        """
-
-        reg_arr = [-1] * 8
-        self.maze_ard0_pub.publish(*reg_arr)
-
-    def _trackParseErrors(self, r_EM, err_tp, do_reset=False):
-        """
-        Check for and log any Ecat message parsing errors
-
-        Args:
-            r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
-            err_tp (EsmacatCom.ErrorType): Error type enum
-            do_reset (bool): Reset error type flag if true (Optional)
-        """
-
-        # Check for error
-        if not do_reset:
-
-            # Run only once
-            if r_EM.errTp != err_tp:
-
-                # Set error type and flag
-                r_EM.errTp = err_tp
-                r_EM.isErr = True
-
-                # Print message as warning
-                MazeDB.printMsg(
-                    'WARNING', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
-                self._printEcatReg('WARNING', r_EM.RegU)
-
-        # Unset error type
-        elif r_EM.errTp == err_tp:
-            r_EM.errTp = EsmacatCom.ErrorType.ERR_NONE
-            r_EM.isErr = False
-
-    def _printEcatReg(self, level, reg_u):
-        """
-        Print EtherCAT register data
-
-        Args:
-            level (str): ROS log level
-            reg_u (EsmacatCom.RegUnion): EtherCAT register union
-        """
-
-        # Print message data
-        MazeDB.printMsg(level, "\t Ecat 16-Bit Register:")
-        for i in range(8):
-            MazeDB.printMsg(level, "\t\t ui16[%d] [%d]", i, reg_u.ui16[i])
-        MazeDB.printMsg(level, "\t Ecat 8-Bit Register:")
-        for i in range(8):
-            if i < 5:
-                MazeDB.printMsg(level, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i,
-                                2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
-            else:
-                MazeDB.printMsg(level, "\t\t ui8[%d][%d] [%d][%d]", 2 * i,
-                                2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
-
-    # ------------------------ PUBLIC METHODS ------------------------
-
-    def resetEcat(self):
-        """Reset all message structs."""
-
-        # Reset EtherCAT register data
-        self._resetReg()
-
-        # Reset message union data and indeces
-        self._uReset(self.sndEM)
-        self._uReset(self.rcvEM)
-
-        # Reset message counters
-        self.sndEM.msgID = 0
-        self.rcvEM.msgID = 0
-
-        # Setup Ethercat handshake flag
-        self.isEcatConnected = False
-
-    def readEcatMessage(self, reg_arr_si16):
-        """
-        Used to parse new incoming ROS ethercat msg data.
-
-        Args:
-            reg_arr_si16 (list): Register array (signed int16).
-
-        Returns:
-            int: new message flag [0:no message, 1:new message].
-        """
-
-        # Bail if previous message not processed
-        if self.rcvEM.isNew:
-            return False
-
-        # Check register for garbage or incomplete data and copy register data into union
-        if not self._uSetCheckReg(self.rcvEM, reg_arr_si16):
-            return False
-
-        # Get message id and check for out of sequence messages
-        if not self._uGetMsgID(self.rcvEM):
-            return False
-
-        # Skip redundant messages
-        if self.rcvEM.msgID == self.rcvEM.msgID_last:
-            return False
-
-        # Get message type and check if not valid
-        if not self._uGetMsgType(self.rcvEM):
-            return False
-
-        # Get error type and flag if not valid
-        self._uGetErrType(self.rcvEM)
-
-        # Get argument length and arguments
-        self._uGetArgData8(self.rcvEM)
-
-        # Get footer and check if not found
-        if not self._uGetFooter(self.rcvEM):
-            return False
-
-        # Set new message flag
-        self.rcvEM.isNew = True
-
-        # Print message
-        MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
-                        self.rcvEM.msgID, self.rcvEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
-
-        return True
-
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data=None):
-        """
-        Used to send outgoing ROS ethercat msg data.
-
-        Args:
-            msg_type_enum (EsmacatCom.MessageType): Message type enum.
-            msg_arg_data_arr (list or scalar): Message argument data array.
-
-        Returns:
-            int: Success/error codes [0:no message, 1:new message, 2:error]
-        """
-
-        # Set all register values to -1 to clear buffer
-        self._resetReg()
-
-        # Reset union variables
-        self._uReset(self.sndEM)
-
-        # Store new message id
-        self._uSetMsgID(self.sndEM)
-
-        # Store new message type
-        self._uSetMsgType(self.sndEM, msg_type_enum)
-
-        # 	------------- Store arguments -------------
-
-        # Convert scalar value to list if it's not already a list
-        if msg_arg_data is not None and not isinstance(msg_arg_data, list):
-            msg_arg_data = [msg_arg_data]
-
-        if msg_arg_data is not None:  # store message arguments if provided
-            for i in range(len(msg_arg_data)):
-                self._uSetArgData8(self.sndEM, msg_arg_data[i])
-        else:
-            self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
-
-        # 	------------- Finish setup and write -------------
-
-        # Store footer
-        self._uSetFooter(self.sndEM)
-
-        # Publish to union uint16 type data to ease_registers topic
-        self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)
-
-        # Print message
-        MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
-                        self.sndEM.msgID, self.sndEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.sndEM.RegU)
-
-
-class MazeDB(QGraphicsView):
-    """ MazeDebug class to plot the maze """
-
-    @classmethod
-    def printMsg(cls, level, msg, *args):
-        """ Log to ROS in color """
-
-        # Exit if DB_VERBOSE is false
-        if not DB_VERBOSE:
-            return
-
-        # Log message by type and color to ROS
-        if level == 'ATTN':
-            # Add '=' header and footer for ATTN condition
-            f_msg = cls._frmt_msg(Fore.BLUE, msg, *args)
-            n = max(0, 30 - len(f_msg) // 2)
-            f_msg = '=' * n + " " + f_msg + " " + '=' * n
-            rospy.loginfo(f_msg)
-        elif level == 'INFO':
-            rospy.loginfo(cls._frmt_msg(Fore.BLUE, msg, *args))
-        elif level == 'ERROR':
-            rospy.logerr(cls._frmt_msg(Fore.RED, msg, *args))
-        elif level == 'WARNING':
-            rospy.logwarn(cls._frmt_msg(Fore.YELLOW, msg, *args))
-        elif level == 'DEBUG':
-            rospy.loginfo(cls._frmt_msg(Fore.GREEN, msg, *args))
-        else:
-            rospy.loginfo(cls._frmt_msg(Fore.BLACK, msg, *args))
-
-    @classmethod
-    def _frmt_msg(cls, color, msg, *args):
-        """ Format message with color """
-
-        colored_message = f"{color}{msg}{Style.RESET_ALL}"
-        return colored_message % args
-
-    def arrStr(input_list):
-        """Converts a list/array to a string"""
-
-        result = "[" + ",".join(map(str, input_list)) + "]"
-        return result
-
 
 class WallConfig:
     """ 
@@ -794,7 +131,7 @@ class WallConfig:
         # loop thorugh wall_byte_config_list and print each element
         if do_print:
             for row in cls.cw_wall_num_list:
-                MazeDB.logMsg('DEBUG', "[%d][%d]", row[0], row[1])
+                MazeDB.printMsg('DEBUG', "[%d][%d]", row[0], row[1])
 
         return cls.cw_wall_num_list
 
@@ -812,7 +149,7 @@ class WallConfig:
         for row in cls.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
             chamber_num = row[0]
             wall_arr = row[1]
-            
+
             # Initialize the byte value
             byte_value = 0
             # Iterate over the array of values
@@ -821,7 +158,6 @@ class WallConfig:
                     # Set the corresponding bit to 1 using bitwise OR
                     byte_value |= (1 << wall_i)
             cls.cw_wall_byte_list.append([chamber_num, byte_value])
-        
 
         return cls.cw_wall_byte_list
 
@@ -986,8 +322,9 @@ class MazePlot(QGraphicsView):
             self.center_x = _center_x
             self.center_y = _center_y
             self.chamber_width = _chamber_width
-            
-            self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+
+            self.gantry_pub = rospy.Publisher(
+                '/gantry_cmd', GantryCmd, queue_size=1)
 
             # Compute chamber octogon parameters
             octagon_vertices = self.getOctagonVertices(
@@ -1049,9 +386,9 @@ class MazePlot(QGraphicsView):
             # Set text color
             self.label.setDefaultTextColor(self.status.color)
 
-            # # TEMP Print chamber status change
-            # MazeDB.printMsg('DEBUG', "Chamber %d: %s", self.chamber_num,
-            #                 self.status.name)
+            # Print chamber status change
+            MazeDB.printMsg('DEBUG', "Chamber %d: %s", self.chamber_num,
+                            self.status.name)
 
             # Set chamber color
             # self.octagon.setBrush(QBrush(self.status.color))
@@ -1060,14 +397,9 @@ class MazePlot(QGraphicsView):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
             # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
-
-            gantry_offset_x = 0
-            gantry_offset_y = -150
-            gantry_x = gantry_offset_x + 400 + 300 * (2-self.chamber_num//3)
-            gantry_y = gantry_offset_y + 300 + 300 * (self.chamber_num%3)
-            # MazeDB.printMsg('DEBUG', "Gantry %d %d", gantry_x, gantry_y)
-
-            self.gantry_cmd_pub.publish("MOVE", [gantry_x, gantry_y])
+            
+            # Send command to move gantry to selected chamber
+            self.gantry_pub.publish("MOVE_TO_CHAMBER", [self.chamber_num])
 
             return  # TEMP
 
@@ -1210,7 +542,6 @@ class MazePlot(QGraphicsView):
 
 # ======================== MAIN UI CLASS ========================
 
-
 class Interface(Plugin):
     """ Interface plugin """
 
@@ -1245,7 +576,7 @@ class Interface(Plugin):
         self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
         loadUi(os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'interface.ui'), self._widget)
+            os.path.realpath(__file__)), 'omniroute_controller_interface.ui'), self._widget)
 
         self._widget.setObjectName('InterfacePluginUi')
         # Show _widget.windowTitle on left-top of each plugin (when
@@ -1302,14 +633,27 @@ class Interface(Plugin):
             self._widget.sysSettingEdit_5,  # Timeout for wall movement (ms)
         ]
 
+        # Disable all but start and quit buttons
+        self._widget.sysReinitBtn.setEnabled(False)
+        self._widget.filePreviousBtn.setEnabled(False)
+        self._widget.fileNextBtn.setEnabled(False)
+        self._widget.plotClearBtn.setEnabled(False)
+        self._widget.plotSaveBtn.setEnabled(False)
+        self._widget.plotSendBtn.setEnabled(False)
+
+        # Counter to incrementally shut down opperations
+        self.cnt_shutdown_step = 0  # tracks the current step
+        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
+        self.dt_shutdown_step = 0.25  # (sec)
+
         # ................ Maze Setup ................
 
         # Default system settings [default][min][max]
         self.sysDefaults = [
             [9, 1, 9],          # Num chamb init
-            [9, 1, 9],          # Max chamb to move per block
+            [3, 1, 9],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
-            [150, 0, 255],      # PWM duty
+            [210, 0, 255],      # PWM duty
             [1000, 500, 2000]   # Move timeout (ms)
         ]
 
@@ -1342,20 +686,40 @@ class Interface(Plugin):
 
         # ................ Ecat Setup ................
 
-        # Create EsmacatCom object
-        self.EsmaCom = EsmacatCom()
+        # Create EsmacatCom object for maze_ard0_ease
+        self.EsmaComMaze = EsmacatCom('maze_ard0_ease')
 
-        # Store the time the interface was initialized
-        self.ts_interface_init = rospy.get_time()  # (sec)
+        # ................ Projection Setup ................
 
-        # Specify delay to start and check reading/writing Esmacat data
-        self.dt_ecat_start = 1  # (sec)
-        self.dt_ecat_check = 0.5  # (sec)
+        # Projection command publisher
+        self.ProjOpp = ProjectionOperation()
 
-        # Couter to incrementally shut down opperations
-        self.cnt_shutdown_step = 0  # tracks the current step
-        self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
-        self.dt_shutdown_step = 0.25  # (sec)
+        # ................ Gantry Setup ................
+
+        # Paramters for positioning gantry
+        self.chamber_wd = 0.3 # Chamber width (m)
+        self.n_chamber_side = 3 
+        self.chamber_centers = [] # List of chamber centers 
+        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
+
+        # Compute the chamber centers
+        for i in range(0, self.n_chamber_side**2):
+            row = i//self.n_chamber_side
+            col = i%self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            self.chamber_centers.append(chamber_center)
+
+        # ................ ROS Setup ................
+
+        # Wall state subscriber used to set walls from other interfaces
+        self.wall_clicked_sub = rospy.Subscriber(
+            '/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
+
+        # Gantry command publisher
+        self.gantry_pub = rospy.Publisher(
+            '/gantry_cmd', GantryCmd, queue_size=1)
+
+        # ................ Callback Setup ................
 
         # QT UI wall config button callback setup
         self._widget.fileBrowseBtn.clicked.connect(
@@ -1380,43 +744,37 @@ class Interface(Plugin):
         # Other object callbacks
         self._widget.fileListWidget.itemClicked.connect(
             self.qt_callback_fileListWidget_item_clicked)
-        
+
         # Gantry ui callbacks
         self._widget.runGantryBtn.clicked.connect(
             self.qt_callback_runGantryBtn_clicked)
         self._widget.homeGantryBtn.clicked.connect(
             self.qt_callback_homeGantryBtn_clicked)
-        self._widget.pumpGantryBtn.clicked.connect(
-            self.qt_callback_pumpGantryBtn_clicked)
-        
+        self._widget.trackHarnessTogBtn.clicked.connect(
+            self.qt_callback_trackHarnessTogBtn_clicked)
+        self._widget.lowerFeederTogBtn.clicked.connect(
+            self.qt_callback_lowerFeederTogBtn_clicked)
+        self._widget.runPumpTogBtn.clicked.connect(
+            self.qt_callback_runPumpTogBtn_clicked)
+        self._widget.rewardBtn.clicked.connect(
+            self.qt_callback_rewardBtn_clicked)
+
         # Projector mode ui callbacks
-        self._widget.projWinTogPosBtn.clicked.connect(
-            self.qt_callback_projWinTogPosBtn_clicked)
+        self._widget.projWinTogBtn.clicked.connect(
+            self.qt_callback_projWinTogBtn_clicked)
         self._widget.projWinTogFullScrBtn.clicked.connect(
             self.qt_callback_projWinTogFullScrBtn_clicked)
         self._widget.projWinForceFucusBtn.clicked.connect(
             self.qt_callback_projWinForceFucusBtn_clicked)
-        
-        # Projected image ui callbacks
-        self.proj_img_cfg_btn_vec = [] # Initalize vector for buttons
-        for i in range(9):  
-            button_name = f'projImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect( # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b)) 
-            self.proj_img_cfg_btn_vec.append(button)  # Store the button
-
-        # Disable all but start and quit buttons
-        self._widget.sysReinitBtn.setEnabled(False)
-        self._widget.filePreviousBtn.setEnabled(False)
-        self._widget.fileNextBtn.setEnabled(False)
-        self._widget.plotClearBtn.setEnabled(False)
-        self._widget.plotSaveBtn.setEnabled(False)
-        self._widget.plotSendBtn.setEnabled(False)
 
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
         self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
+        self.timer_updateUI.start(20)  # set incriment (ms)
+
+        # QT timer setup for checking ROS ECAT messages
+        self.timer_updateUI = QTimer()
+        self.timer_updateUI.timeout.connect(self.timer_callback_checkECAT_loop)
         self.timer_updateUI.start(20)  # set incriment (ms)
 
         # QT timer to send and check handshake confirmation after a delay
@@ -1431,59 +789,50 @@ class Interface(Plugin):
             self.timer_callback_endSession_once)
         self.timer_endSession.setSingleShot(True)  # Run only once
 
-        # ................ ROS Setup ................
-
-        self.wall_clicked_sub = rospy.Subscriber('/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
-
-        # Gantry command publisher
-        self.gantry_cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
-        
-        # Projection command publisher
-        self.projection_op_pub = ProjectionOperation()
-
-        # ROS Subscriber: Esmacat arduino maze ard0 ease
-        rospy.Subscriber(
-            'Esmacat_read_maze_ard0_ease', ease_registers, self.ros_callback_Esmacat_read_maze_ard0_ease, queue_size=1, tcp_nodelay=True)
-
-        # Signal callback setup
-        self.signal_Esmacat_read_maze_ard0_ease.connect(
-            self.sig_callback_Esmacat_read_maze_ard0_ease)
+        # Projected image ui callbacks
+        self.proj_img_cfg_btn_vec = []  # Initalize vector for buttons
+        for i in range(9):
+            button_name = f'projImgCfgBtn_{i}'
+            button = getattr(self._widget, button_name)
+            button.clicked.connect(  # Use lambda pass button index tor callback
+                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b))
+            self.proj_img_cfg_btn_vec.append(button)  # Store the button
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
- 
+
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
-    def procEcatMessage(self):
+    def procWallEcatMessage(self):
         """ Used to parse new incoming ROS ethercat msg data. """
 
         # Print confirmation message
         MazeDB.printMsg('INFO', "(%d)ECAT PROCESSING ACK: %s",
-                        self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.msgTp.name)
+                        self.EsmaComMaze.rcvEM.msgID, self.EsmaComMaze.rcvEM.msgTp.name)
 
         # ................ Process Ack Error First ................
 
-        if self.EsmaCom.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
+        if self.EsmaComMaze.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
 
-            MazeDB.printMsg(
-                'ERROR', "(%d)ECAT ERROR: %s", self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.errTp.name)
+            MazeDB.printMsg('ERROR', "(%d)ECAT ERROR: %s",
+                            self.EsmaComMaze.rcvEM.msgID, self.EsmaComMaze.rcvEM.errTp.name)
 
             # I2C_FAILED
-            if self.EsmaCom.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
+            if self.EsmaComMaze.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
 
                 # Update number of init chambers setting based on chambers i2c status
                 cham_cnt = sum(1 for i in range(
-                    self.EsmaCom.rcvEM.argLen) if self.EsmaCom.rcvEM.ArgU.ui8[i] == 0)
+                    self.EsmaComMaze.rcvEM.argLen) if self.EsmaComMaze.rcvEM.ArgU.ui8[i] == 0)
                 self.setParamTxtBox(param_ind=0, arg_val=cham_cnt)
 
                 # Loop through chambers and set enable flag for chamber and wall
                 for cham_i, chamber in enumerate(self.MP.Chambers):
 
                     # Skip chambers not acknowldged
-                    if cham_i >= self.EsmaCom.rcvEM.argLen:
+                    if cham_i >= self.EsmaComMaze.rcvEM.argLen:
                         continue
 
                     # Store i2c status from arguments
-                    i2c_status = self.EsmaCom.rcvEM.ArgU.ui8[cham_i]
+                    i2c_status = self.EsmaComMaze.rcvEM.ArgU.ui8[cham_i]
 
                     # Check if status not equal to 0 and set corresponding chamber to error
                     if i2c_status != 0:
@@ -1496,17 +845,17 @@ class Interface(Plugin):
                             'ERROR', "\t chamber[%d] i2c_status[%d]", cham_i, i2c_status)
 
             # WALL_MOVE_FAILED
-            if self.EsmaCom.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
+            if self.EsmaComMaze.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
 
                 # Loop through arguments
                 for cham_i, chamber in enumerate(self.MP.Chambers):
 
                     # Skip chambers not acknowldged
-                    if cham_i >= self.EsmaCom.rcvEM.argLen:
+                    if cham_i >= self.EsmaComMaze.rcvEM.argLen:
                         continue
 
                     # Store wall error byte from arguments
-                    wall_err_byte = self.EsmaCom.rcvEM.ArgU.ui8[cham_i]
+                    wall_err_byte = self.EsmaComMaze.rcvEM.ArgU.ui8[cham_i]
 
                     # Check if status not equal to 0
                     if wall_err_byte != 0:
@@ -1527,17 +876,17 @@ class Interface(Plugin):
         # ................ Process Ack Message ................
 
         # HANDSHAKE
-        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
+        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
             MazeDB.printMsg('ATTN', "SYSTEM INITIALIZED")
 
             # Set the handshake flag
-            self.EsmaCom.isEcatConnected = True
+            self.EsmaComMaze.isEcatConnected = True
 
             # Set maze hardware status to initialized
             self.MP.setStatus(MazePlot.Status.INITIALIZED)
 
             # Send INITIALIZE_CYPRESS message
-            self.EsmaCom.writeEcatMessage(
+            self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_CYPRESS)
 
             # Enable buttons
@@ -1549,14 +898,14 @@ class Interface(Plugin):
             self._widget.plotSendBtn.setEnabled(True)
 
         # INITIALIZE_CYPRESS
-        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
             MazeDB.printMsg('ATTN', "CYPRESS I2C INITIALIZED")
 
             # Loop through chambers and set enable flag for chamber and wall
             for cham_i, chamber in enumerate(self.MP.Chambers):
 
                 # Set chambers not acknowldged to excluded and skip
-                if cham_i >= self.EsmaCom.rcvEM.argLen:
+                if cham_i >= self.EsmaComMaze.rcvEM.argLen:
                     chamber.setStatus(MazePlot.Status.EXCLUDED)
                     continue
 
@@ -1571,11 +920,11 @@ class Interface(Plugin):
             self.sys_widgets[0].setEnabled(False)
 
             # Send INITIALIZE_WALLS message
-            self.EsmaCom.writeEcatMessage(
+            self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # INITIALIZE_WALLS
-        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
+        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
             MazeDB.printMsg('ATTN', "WALLS INITIALIZED")
 
             # Loop through chambers and set enable flag for walls
@@ -1596,54 +945,22 @@ class Interface(Plugin):
                     wall.setStatus(MazePlot.Status.INITIALIZED)
 
         # REINITIALIZE_SYSTEM
-        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
+        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             MazeDB.printMsg('ATTN', "SYSTEM REINITIALIZED")
 
             # Send INITIALIZE_WALLS message again
-            self.EsmaCom.writeEcatMessage(
+            self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # RESET_SYSTEM
-        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
+        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
             MazeDB.printMsg('ATTN', "ECAT COMMS DISCONNECTED")
 
             # Reset the handshake flag
-            self.EsmaCom.isEcatConnected = False
+            self.EsmaComMaze.isEcatConnected = False
 
         # Reset new message flag
-        self.EsmaCom.rcvEM.isNew = False
-
-    # ------------------------ CALLBACKS: ROS ------------------------
-
-    def ros_callback_Esmacat_read_maze_ard0_ease(self, msg):
-        """ ROS callback for Esmacat_read_maze_ard0_ease topic """
-
-        # Wait for interface to initialize
-        current_time = rospy.get_time()
-        if (current_time - self.ts_interface_init) < self.dt_ecat_start:  # Less than 100ms
-            return
-
-        # Store ethercat message in class variable
-        reg_arr_si16 = [0]*8
-        reg_arr_si16[0] = msg.INT0
-        reg_arr_si16[1] = msg.INT1
-        reg_arr_si16[2] = msg.INT2
-        reg_arr_si16[3] = msg.INT3
-        reg_arr_si16[4] = msg.INT4
-        reg_arr_si16[5] = msg.INT5
-        reg_arr_si16[6] = msg.INT6
-        reg_arr_si16[7] = msg.INT7
-
-        # Parse the message and check if it is new
-        if self.EsmaCom.readEcatMessage(reg_arr_si16):
-            # Emit signal to process new message and update UI as UI should not be updated from a non-main thread
-            self.signal_Esmacat_read_maze_ard0_ease.emit()
-
-    def sig_callback_Esmacat_read_maze_ard0_ease(self):
-        """ Signal callback for Esmacat_read_maze_ard0_ease topic """
-
-        # Process new message arguments
-        self.procEcatMessage()
+        self.EsmaComMaze.rcvEM.isNew = False
 
     # ------------------------ CALLBACKS: Timers ------------------------
 
@@ -1654,16 +971,23 @@ class Interface(Plugin):
         self.scene.update()
         self._widget.plotMazeView.update()
 
+    def timer_callback_checkECAT_loop(self):
+        """ Timer callback to check for new ECAT messages. """
+
+        # Check for new message
+        if self.EsmaComMaze.rcvEM.isNew:
+            self.procWallEcatMessage()
+
     def timer_callback_sendHandshake_once(self):
         """ Timer callback to send handshake message once resend till confirmation. """
 
         # Check for HANDSHAKE message confirm recieved flag
-        if self.EsmaCom.isEcatConnected == False:
+        if self.EsmaComMaze.isEcatConnected == False:
 
             # Give up after 3 attempts based on message ID
-            if self.EsmaCom.sndEM.msgID > 2:
+            if self.EsmaComMaze.sndEM.msgID > 2:
                 MazeDB.printMsg(
-                    'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaCom.sndEM.msgID)
+                    'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaComMaze.sndEM.msgID)
 
                 # Set maze hardware status to error
                 self.MP.setStatus(MazePlot.Status.ERROR)
@@ -1674,31 +998,31 @@ class Interface(Plugin):
                 return
 
             # Print warning if more than 1 message has been sent
-            elif self.EsmaCom.sndEM.msgID > 0:
+            elif self.EsmaComMaze.sndEM.msgID > 0:
                 MazeDB.printMsg(
-                    'WARNING', "SHUTDOWN: Handshake Failure [%d]", self.EsmaCom.sndEM.msgID)
+                    'WARNING', "SHUTDOWN: Handshake Failure [%d]", self.EsmaComMaze.sndEM.msgID)
 
             # Send HANDSHAKE message with current system settings
-            self.EsmaCom.writeEcatMessage(
+            self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.HANDSHAKE, self.getParamTxtBox())
 
-            # Restart check/send timer
-            self.timer_sendHandshake.start(self.dt_ecat_check*1000)
+            # Restart check/send timer after 1 second
+            self.timer_sendHandshake.start(1000)
 
     def timer_callback_endSession_once(self):
         """ Timer callback to incrementally shutdown session. """
 
         if self.cnt_shutdown_step == 0:
             # Send RESET_SYSTEM message if connected
-            if self.EsmaCom.isEcatConnected:
-                self.EsmaCom.writeEcatMessage(
+            if self.EsmaComMaze.isEcatConnected:
+                self.EsmaComMaze.writeEcatMessage(
                     EsmacatCom.MessageType.RESET_SYSTEM)
 
-        elif self.EsmaCom.isEcatConnected == True:
+        elif self.EsmaComMaze.isEcatConnected == True:
             if self.cnt_shutdown_ack_check > int(30/self.dt_shutdown_step):
                 MazeDB.printMsg(
                     'ERROR', "FAILED: SHUTDOWN: RESET_SYSTEM CONFIRMATION AFTER 30 SECONDS")
-                self.EsmaCom.isEcatConnected = False
+                self.EsmaComMaze.isEcatConnected = False
             else:
                 self.cnt_shutdown_ack_check += 1
                 # Wait for RESET_SYSTEM message confirmation and restart timer
@@ -1713,10 +1037,10 @@ class Interface(Plugin):
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
-            #self.terminate_ros_node("/gantry_operation_node")
+            # self.terminate_ros_node("/gantry_operation_node")
             self.terminate_ros_node("/projection_opperation_node")
             self.terminate_ros_node("/Esmacat_application_node")
-            self.terminate_ros_node("/three_by_three_interface_node")
+            self.terminate_ros_node("/omniroute_controller_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
 
         elif self.cnt_shutdown_step == 3:
@@ -1847,9 +1171,9 @@ class Interface(Plugin):
         WallConfig._sort_entries()
 
         # Send MOVE_WALLS message with wall byte array
-        self.EsmaCom.writeEcatMessage(
+        self.EsmaComMaze.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
-        
+
     def ros_callback_wall_config(self, msg):
         """ Callback function for subscribing to experiment controller command."""
 
@@ -1861,23 +1185,22 @@ class Interface(Plugin):
             if wall < 0 or wall >= 8:
                 rospy.logerr('Invalid wall number: %d', msg.wall)
                 return
-        
-        
+
         if msg.chamber != -1:
             for wall in msg.wall:
                 if msg.state:
                     WallConfig.add_wall(msg.chamber, wall)
                 else:
                     WallConfig.remove_wall(msg.chamber, wall)
-        
+
         if msg.send:
             # Sort entries
             WallConfig._sort_entries()
 
             # Send MOVE_WALLS message with wall byte array
-            self.EsmaCom.writeEcatMessage(
+            self.EsmaComMaze.writeEcatMessage(
                 EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
-        
+
         # Update walls
         self.MP.updatePlotFromWallConfig()
 
@@ -1888,36 +1211,64 @@ class Interface(Plugin):
         MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
         MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
 
-        self.gantry_cmd_pub.publish("MOVE",[round(self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
-    
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [round(
+            self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
+
     def qt_callback_homeGantryBtn_clicked(self):
-        self.gantry_cmd_pub.publish("HOME",[])
+        """ Callback function for the "Home Gantry" button."""
+        self.gantry_pub.publish("HOME", [])
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
-    def qt_callback_pumpGantryBtn_clicked(self):
-        # Run pump for 1 second
-        self.gantry_cmd_pub.publish("PUMP", [1.0])
+    def move_gantry_to_chamber(self, chamber_num):
+        x = self.chamber_centers[chamber_num][0]
+        y = self.chamber_centers[chamber_num][1]
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
+    
+    def qt_callback_trackHarnessTogBtn_clicked(self):
+        """ Callback function to start and stop gantry tracking the rat from button press."""
+        if self._widget.trackHarnessTogBtn.isChecked():
+            self.gantry_pub.publish("TRACK_HARNESS", [])
+        else:
+            self.gantry_pub.publish("IDLE", [])
 
-    def qt_callback_projWinTogPosBtn_clicked(self):
+    def qt_callback_lowerFeederTogBtn_clicked(self):
+        """ Callback function to lower or raise the feeder from button press."""
+        if self._widget.lowerFeederTogBtn.isChecked():
+            self.gantry_pub.publish("LOWER_FEEDER", [])
+        else:
+            self.gantry_pub.publish("RAISE_FEEDER", [])
+
+    def qt_callback_runPumpTogBtn_clicked(self):
+        """ Callback function to run or stop the pump from button press."""
+        if self._widget.runPumpTogBtn.isChecked():
+            self.gantry_pub.publish("START_PUMP", [])
+        else:
+            self.gantry_pub.publish("STOP_PUMP", [])
+
+    def qt_callback_rewardBtn_clicked(self):
+        """ Callback function to run the full feeder opperation from button press."""
+        self.gantry_pub.publish("REWARD", [3.0])
+
+    def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
-        
+
         # Code -1
-        self.projection_op_pub.publish_window_mode_cmd(-1)
-        MazeDB.printMsg('DEBUG', "Command for projWinTogPosBtn sent")
+        self.ProjOpp.publish_window_mode_cmd(-1)
+        MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
-        
+
         # Code -2
-        self.projection_op_pub.publish_window_mode_cmd(-2)
+        self.ProjOpp.publish_window_mode_cmd(-2)
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
     def qt_callback_projWinForceFucusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
-        
+
         # Code -3
-        self.projection_op_pub.publish_window_mode_cmd(-3)
+        self.ProjOpp.publish_window_mode_cmd(-3)
         MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projImgCfgBtn_clicked(self, button_number):
@@ -1932,11 +1283,15 @@ class Interface(Plugin):
                 button.setChecked(False)
 
         # Use the button_number to send the corresponding ROS command
-        self.projection_op_pub.publish_image_cfg_cmd(button_number)
-        MazeDB.printMsg('DEBUG', "Command for Projector Image Configuration %d sent", button_number)
-    
+        self.ProjOpp.publish_image_cfg_cmd(button_number)
+        MazeDB.printMsg(
+            'DEBUG', "Command for Projector Image Configuration %d sent", button_number)
+
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
+
+        # Home the gantry
+        self.gantry_pub.publish("HOME", [])
 
         # Start handshake callback timer imidiatly
         self.timer_sendHandshake.start(0)
@@ -1951,7 +1306,7 @@ class Interface(Plugin):
         """ Callback function for the "Reinitialize" button."""
 
         # Send REINITIALIZE_SYSTEM message with current system settings
-        self.EsmaCom.writeEcatMessage(
+        self.EsmaComMaze.writeEcatMessage(
             EsmacatCom.MessageType.REINITIALIZE_SYSTEM, self.getParamTxtBox())
 
         # Reset wall status to uninitialized
@@ -1967,8 +1322,6 @@ class Interface(Plugin):
 
         # Call timer callback to incrementally shutdown session
         self.timer_endSession.start(0)
-
-    from PyQt5.QtWidgets import QApplication
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
@@ -2185,6 +1538,7 @@ class Interface(Plugin):
         assert retcode == 0, "List command returned %d" % retcode
         for str in list_output.decode().split("\n"):
             if (str.startswith(s)):
+                MazeDB.printMsg('INFO', "Killing Node: %s", str)
                 os.system("rosnode kill " + str)
 
     """ @todo: Implement this function to handle the window close event """

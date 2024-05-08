@@ -23,6 +23,9 @@ MazeDebug::MazeDebug() {}
 /// @param ... Variable arguments related to the formatting string.
 void MazeDebug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 {
+	if (DB_VERBOSE == 0)
+		return;
+
 	const uint8_t buff_s = 125;
 	static char buff[buff_s];
 	buff[0] = '\0';
@@ -43,7 +46,7 @@ void MazeDebug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 	// Get number of attention grabbing characters to print before and after message
 	size_t n =
 		(buff_s - 30) / 2 - strlen(buff) / 2 - 1; // account for current message (strlen(buff)) and type and time string (~30) and buffer size
-	n = n < buff_sym_s && n > 0 ? n : 3;	  // ensure n is not negative and doesn't exceed buff_sym size
+	n = n < buff_sym_s && n > 0 ? n : 3;		  // ensure n is not negative and doesn't exceed buff_sym size
 
 	// Fill buffer with attention grabbing characters
 	if (is_head1_msg)

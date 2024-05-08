@@ -3,8 +3,8 @@
 import sys
 
 from rqt_gui.main import Main
-from omniroute_interface.interface import Interface
+from omniroute_controller.interface import Interface
 
-plugin = 'omniroute_interface'
+plugin = 'omniroute_controller'
 main = Main(filename=plugin)
 sys.exit(main.main(standalone=plugin))#, plugin_argument_provider=Dot.add_arguments))

@@ -2,7 +2,9 @@
 ```
 - Add instructions for port permisions for writing sketches to Arduino
 - Add instructions for setting up ROS network environment variables
-- Fix issue with incorrect indexing for Chamber mouse press
+- Change arduino code for max number of chambers to move.
+- Incorperate gantry ack for completed move commands
+- 
 ```
 # Setup
 
@@ -78,13 +80,13 @@ catkin_make
 
 # Runtime
 
-## Launching the ROS three_by_three_interface
+## Launching the ROS omniroute_controller
 ```
 cd omniroute_ubuntu_ws
 
 source devel/setup.bash
 
-roslaunch omniroute_operation three_by_three_interface.launch
+roslaunch omniroute_operation omniroute_controller.launch
 ```
 ## Changing ROS environment settings in Ubuntu
 

@@ -21,8 +21,8 @@
 //============ VARIABLES ===============
 
 // Global variables
-bool DB_VERBOSE = 1;  //< set to control debugging behavior [0:silent, 1:verbose]
-bool DO_ECAT_SPI = 1; //< set to control block SPI [0:dont start, 1:start]
+bool DB_VERBOSE = 0;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Wall opperation setup (these will be overwritten by the Ethercat message)
 uint8_t nCham = 9;			   // number of chambers being used [1-9]

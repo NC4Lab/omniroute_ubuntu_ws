@@ -1,0 +1,21 @@
+{
+  "name": "FeederServo",
+  "version": "1.0.0",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github/FeederServo"
+  },
+  "authors":
+  [
+    {
+      "name": "Adam Lester"
+    }
+  ],
+  "dependencies": {
+    "MazeDebug": ">=1.0.0 ../MazeDebug",
+    "EsmacatCom": ">=1.0.0 ../EsmacatCom"
+  },
+  "platform": "ar",
+  "framework": "*"
+}

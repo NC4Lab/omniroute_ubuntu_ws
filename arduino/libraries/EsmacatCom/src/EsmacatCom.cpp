@@ -80,7 +80,7 @@ void EsmacatCom::ecatReadRegAll(int p_out_reg[8])
 ////
 /// @note Addapted from @ref "https://bitbucket.org/harmonicbionics/ease_arduinocode/"
 ///
-/// @param read_addr: Esmacat address to read from [0-7]. 
+/// @param read_addr: Esmacat address to read from [0-7].
 int EsmacatCom::_ecatReadRegValue(int read_addr)
 {
     uint16_t v2, v3;
@@ -131,7 +131,7 @@ void EsmacatCom::UnionIndStruct::reset()
 /// read midway through writing a message. This can lead to only partial or overlapping messages being read.
 ///
 /// @param p_reg_arr: Pointer to array of 8 register values.
-/// @param do_print_reg: OPTIONAL: If true, print register values for debugging.
+/// @param do_print_reg: OPTIONAL: If true, print register values for debugging. DEFAULT: false.
 bool EsmacatCom::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do_print_reg)
 {
     // Print changing register values
@@ -152,13 +152,17 @@ bool EsmacatCom::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do
 
     // Bail if registry value is 0 or max int16 value suggesting registry is cleared or garbage
     if (temp_u.ui16[0] == 0 || temp_u.ui16[0] == 65535)
+    {
         return false;
+    }
 
     // Another check for garbage registry stuff at start of coms
     if (!isEcatConnected &&   // check if still waiting for handshake
         (p_reg_arr[0] != 1 || // directly check union id entry for first message
          p_reg_arr[1] != 1))  // directly check union type entry for handshake (e.g., ui8[1][0])
+    {
         return false;
+    }
 
     // Check for footer indicating a complete write from sender
     bool is_footer = false;
@@ -171,7 +175,9 @@ bool EsmacatCom::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do
         }
     }
     if (!is_footer)
+    {
         return false;
+    }
 
     // Copy over temp union
     r_EM.RegU.ui64[0] = temp_u.ui64[0];
@@ -461,45 +467,65 @@ void EsmacatCom::initEcat(bool do_connect)
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
-void EsmacatCom::readEcatMessage()
+///
+/// @return True if new message is read, false if not.
+bool EsmacatCom::readEcatMessage()
 {
 
     // Bail if previous message not processed
     if (rcvEM.isNew)
-        return;
+        return false;
 
     // Read esmacat buffer to get register data
     int reg_arr[8];
     ecatReadRegAll(reg_arr);
 
+    // // TEMP
+    // RegUnion U;
+    // for (size_t i_16 = 0; i_16 < 8; i_16++)
+    //     U.si16[i_16] = reg_arr[i_16];
+    // _printEcatReg(_Dbg.MT::DEBUG, U);
+    // delay(1000);
+    // return;
+
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))
-        return;
+    {
+        return false;
+    }
 
     // Get message id and check for out of sequence messages
     if (!_uGetMsgID(rcvEM))
-        return; // skip message processing if error returned
-
+    {
+        return false;
+    }
     // Skip redundant messages
     if (rcvEM.msgID == rcvEM.msgID_last)
-        return;
-
+    {
+        return false;
+    }
     // Get message type and check if valid
     if (!_uGetMsgType(rcvEM))
-        return; // skip message processing if error returned
-
+    {
+        return false;
+    }
     // Get argument length and argument data
     _uGetArgData8(rcvEM);
 
     // Get footer and flag if not found
     if (!_uGetFooter(rcvEM))
-        return; // skip message processing if error returned
+    {
+        return false;
+    }
 
     // Set new message flag
     rcvEM.isNew = true;
 
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
     _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+
+    // Return message status
+    return true;
 }
 
 /// @brief: Used to send outgoing ROS ethercat msg data signalling which walls to raise.
@@ -565,7 +591,7 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
 
     // Print ack message info with message type being acked
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
+    //_printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
 }
 
 /// @brief Used for printing curren Ethercat register values.

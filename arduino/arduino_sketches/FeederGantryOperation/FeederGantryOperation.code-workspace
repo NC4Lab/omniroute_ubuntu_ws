@@ -1,26 +1,17 @@
 {
-	"folders": [
-		{
-			"name": "FeederGantryOperation",
-			"path": "."
-		},
-		{
-			"name": "MazeDebug",
-			"path": "../../libraries/MazeDebug"
-		},
-		{
-			"name": "EsmacatCom",
-			"path": "../../libraries/EsmacatCom"
-		}
-	],
-	"settings": {
-		"python.autoComplete.extraPaths": [
-			"/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
-			"/opt/ros/noetic/lib/python3/dist-packages"
-		],
-		"python.analysis.extraPaths": [
-			"/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
-			"/opt/ros/noetic/lib/python3/dist-packages"
-		]
-	}
+    "folders": [
+        {
+            "path": "../../libraries/EsmacatCom/src"
+        }
+    ],
+    "settings": {
+        "python.autoComplete.extraPaths": [
+            "/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
+            "/opt/ros/noetic/lib/python3/dist-packages"
+        ],
+        "python.analysis.extraPaths": [
+            "/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
+            "/opt/ros/noetic/lib/python3/dist-packages"
+        ]
+    }
 }

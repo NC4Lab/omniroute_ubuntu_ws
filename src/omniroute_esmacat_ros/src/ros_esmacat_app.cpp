@@ -15,28 +15,31 @@
 // ros::Publisher chatter_pub =n.advertise<std_msgs::float>("boomAngle",1)
 // std_msgs::float msg;
 
-
-
-
 /*****************************************************************************************
- * 
+ *
  * FUNCTIONS
  ****************************************************************************************/
 
 /**
  * @brief Identifies the actual Esmacat slave sequence in the EtherCAT communication chain.
  */
-void ros_esmacat_app::assign_slave_sequence(){
-    int sync_ease_slave_index;
+void ros_esmacat_app::assign_slave_sequence()
+{
+    // Assign the syncing arduino slave object to the actual slave in the EtherCAT communication chain
+    int sync_ease_slave_index;                                                  // Slave index in the EtherCAT communication chain
     ros::param::param<int>("/sync_ease_slave_index", sync_ease_slave_index, 0); // Use the ROS parameter when available
-    assign_esmacat_slave_index(&sync_ease_ecat_as, sync_ease_slave_index); // Assign the slave object to a position in the chain
-    
+    assign_esmacat_slave_index(&sync_ease_ecat_as, sync_ease_slave_index);      // Assign the slave object to a position in the chain
+
+    // Assign the maze wall controller slave object to the actual slave in the EtherCAT communication chain
     int maze_ard0_ease_slave_index;
-    ros::param::param<int>("/maze_ard0_ease_slave_index", maze_ard0_ease_slave_index, 1); // Use the ROS parameter when available
-    assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index); // Assign the slave object to a position in the chain
+    ros::param::param<int>("/maze_ard0_ease_slave_index", maze_ard0_ease_slave_index, 1);
+    assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index);
+
+    // Assign the feeder servos slave object to the actual slave in the EtherCAT communication chain
+    int feeder_ease_slave_index;
+    ros::param::param<int>("/feeder_ease_slave_index", feeder_ease_slave_index, 2);
+    assign_esmacat_slave_index(&feeder_ease_ecat_as, feeder_ease_slave_index);
 }
-
-
 
 /**
  * @brief Configure your Esmacat slave.
@@ -60,38 +63,42 @@ void ros_esmacat_app::configure_slaves()
  */
 void ros_esmacat_app::init()
 {
-    //set gains for the proportional, derivative and integral gains for the control loop 
-    // ecat_md.set_position_control_pid_gain(3.05e-6, 0, 1.08e-4);
-    // // // // sets other important parameters for motor control
-    // ecat_md.set_max_velocity_in_position_control_qc_p_ms(1333 * 25);
-    // ecat_md.set_max_allowable_integrated_error_for_position_control(5e7);
-    // ecat_md.set_desired_position(898900);
-    // motor_driver_ease.in_that(&ecat_md);
-    // std::cout<<"Is the init running?"<<std::endl;
+    // set gains for the proportional, derivative and integral gains for the control loop
+    //  ecat_md.set_position_control_pid_gain(3.05e-6, 0, 1.08e-4);
+    //  // // // sets other important parameters for motor control
+    //  ecat_md.set_max_velocity_in_position_control_qc_p_ms(1333 * 25);
+    //  ecat_md.set_max_allowable_integrated_error_for_position_control(5e7);
+    //  ecat_md.set_desired_position(898900);
+    //  motor_driver_ease.in_that(&ecat_md);
+    //  std::cout<<"Is the init running?"<<std::endl;
 }
 
 /**
  * @brief Executes functions at the defined loop rate
  */
-void ros_esmacat_app::loop(){
+void ros_esmacat_app::loop()
+{
 
-    // The newly modified write registers from the ROS Communication is returned from the shared memory 
+    //............... Synchronize Esmacat Hardware with ROS Communication for Sync Ease ...............
+
+    // The newly modified write registers from the ROS Communication is returned from the shared memory
     sync_ease_ros_message = sync_ease.get_write_registers();
 
-    // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the 
-    //    updated values received from ROS Nodes.
+    // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
+    // updated values received from ROS Nodes.
     sync_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(sync_ease_ros_message.INT0);
 
-//     // The ROS object created is used to read the current state of registers from the Esmacat slave object
-//     //      and store it in a shared memory location
+    //............... Synchronize Esmacat Hardware with ROS Communication for Maze ARD0 ...............
+
+    // The ROS object created is used to read the current state of registers from the Esmacat slave object
+    // and store it in a shared memory location
     maze_ard0_ease.set_read_registers(&maze_ard0_ease_ecat_as);
 
-
-//     // The newly modified write registers from the ROS Communication is returned from the shared memory 
+    // The newly modified write registers from the ROS Communication is returned from the shared memory
     maze_ard0_ease_ros_message = maze_ard0_ease.get_write_registers();
 
-//     // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the 
-//     //    updated values received from ROS Nodes.
+    // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
+    // updated values received from ROS Nodes.
     maze_ard0_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(maze_ard0_ease_ros_message.INT0);
     maze_ard0_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(maze_ard0_ease_ros_message.INT1);
     maze_ard0_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(maze_ard0_ease_ros_message.INT2);
@@ -101,8 +108,26 @@ void ros_esmacat_app::loop(){
     maze_ard0_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(maze_ard0_ease_ros_message.INT6);
     maze_ard0_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(maze_ard0_ease_ros_message.INT7);
 
+    //............... Synchronize Esmacat Hardware with ROS Communication for Feeder Servo ...............
 
-//     // // The updated value is logged onto the terminal
-    // cout <<"Sync EASE Register 0 = " << maze_ard0_ease_ros_message.INT0 << std :: endl;
+    // The ROS object created is used to read the current state of registers from the Esmacat slave object
+    // and store it in a shared memory location
+    feeder_ease.set_read_registers(&feeder_ease_ecat_as);
 
+    // The newly modified write registers from the ROS Communication is returned from the shared memory
+    feeder_ease_ros_message = feeder_ease.get_write_registers();
+
+    // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
+    // updated values received from ROS Nodes.
+    feeder_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(feeder_ease_ros_message.INT0);
+    feeder_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(feeder_ease_ros_message.INT1);
+    feeder_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(feeder_ease_ros_message.INT2);
+    feeder_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(feeder_ease_ros_message.INT3);
+    feeder_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(feeder_ease_ros_message.INT4);
+    feeder_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(feeder_ease_ros_message.INT5);
+    feeder_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(feeder_ease_ros_message.INT6);
+    feeder_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(feeder_ease_ros_message.INT7);
+
+    //     // // The updated value is logged onto the terminal
+    // cout <<"Sync EASE Register 0 = " << feeder_ease_ros_message.INT0 << std :: endl;
 }

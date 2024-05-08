@@ -9,7 +9,6 @@
 //============= INCLUDE ================
 #include "Arduino.h"
 #include "MazeDebug.h"
-//#include "CypressCom.h"
 #include "SPI.h"
 
 //============= GLOBALS ================
@@ -73,7 +72,7 @@ public:
     bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[7][30] = {
+    const char message_type_str[12][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
@@ -81,7 +80,11 @@ public:
         "REINITIALIZE_SYSTEM",
         "RESET_SYSTEM",
         "MOVE_WALLS",
-    };
+        "LOWER_FEEDER",
+        "RAISE_FEEDER",
+        "START_PUMP",
+        "STOP_PUMP",
+        "REWARD"};
     enum MessageType
     {
         MSG_NONE = 0,
@@ -91,6 +94,11 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
+        LOWER_FEEDER = 7,
+        RAISE_FEEDER = 8,
+        START_PUMP = 9,
+        STOP_PUMP = 10,
+        REWARD = 11,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
@@ -160,7 +168,7 @@ public:
     EcatMessageStruct rcvEM; //  initialize message handler instance for receiving messages
 
 private:
-    static MazeDebug _Dbg;      // local instance of MazeDebug class
+    static MazeDebug _Dbg;       // local instance of MazeDebug class
     int ecatPinCS;               // chip select pin for ethercat shield
     SPISettings ecatSettingsSPI; // SPI settings for ethercat shield
 
@@ -219,7 +227,7 @@ public:
     void initEcat(bool);
 
 public:
-    void readEcatMessage();
+    bool readEcatMessage();
 
 public:
     void writeEcatAck(uint8_t[] = nullptr, uint8_t = 0);

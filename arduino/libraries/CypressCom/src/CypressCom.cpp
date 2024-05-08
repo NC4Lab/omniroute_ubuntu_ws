@@ -21,7 +21,7 @@ CypressCom::CypressCom() {}
 
 /// @brief Initialize wire coms and setup I2C.
 ///
-/// @return Output from @ref Wire::endTransmission() [0-4] or [-1=255:input argument error].
+/// @return Error status [0:success, 1:failure].
 uint8_t CypressCom::i2cInit()
 {
 	// Join I2C bus
@@ -32,7 +32,7 @@ uint8_t CypressCom::i2cInit()
 	Wire.setTimeout(5000);		   // (ms) for Stream librarary
 
 	// Scan I2C bus for Cypress chips and print found addresses
-	i2cScan();
+	return i2cScan();
 }
 
 /// @brief Lowest level function to read from a given Cypress register.
@@ -433,7 +433,7 @@ uint8_t CypressCom::_endTransmissionWrapper(bool send_stop, bool do_print_err)
 /// @note This library was designed to support the Cypress CY8C9540A and should work for the CY8C9520A
 ///	but will not support the additional registries of the CY8C9560A.
 ///
-/// @return Last address found
+/// @return Error status [0:success, 1:failure].
 uint8_t CypressCom::i2cScan()
 {
 	uint8_t address;
@@ -492,8 +492,8 @@ uint8_t CypressCom::i2cScan()
 		}
 	}
 
-	// Return last address
-	return list_addr[cnt_addr];
+	// Return status of addresses found
+	return cnt_addr > 0 ? 0 : 1;
 }
 
 /// @brief Print a single registry byte in binary format.
