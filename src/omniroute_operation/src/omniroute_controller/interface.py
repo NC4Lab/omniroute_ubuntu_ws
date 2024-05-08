@@ -653,7 +653,7 @@ class Interface(Plugin):
             [9, 1, 9],          # Num chamb init
             [3, 1, 9],          # Max chamb to move per block
             [2, 1, 3],          # Max move attempt
-            [200, 0, 255],      # PWM duty
+            [210, 0, 255],      # PWM duty
             [1000, 500, 2000]   # Move timeout (ms)
         ]
 
@@ -711,6 +711,7 @@ class Interface(Plugin):
 
         # ................ ROS Setup ................
 
+        # Wall state subscriber used to set walls from other interfaces
         self.wall_clicked_sub = rospy.Subscriber(
             '/wall_state_cmd', WallState, self.ros_callback_wall_config, queue_size=100, tcp_nodelay=True)
 

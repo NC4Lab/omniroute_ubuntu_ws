@@ -170,6 +170,10 @@ class Interface(Plugin):
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
 
+        # Button for designating if this is the phys rat
+        self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
+        self.is_ephys_rat = False
+
         #self._widget.pathDirEdit.setText(
             #os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
         
@@ -456,6 +460,12 @@ class Interface(Plugin):
 
     def _handle_stopPumpBtn_clicked(self):
         self.gantry_pub.publish("STOP_PUMP",[])
+
+    def _handle_ephysRatTogBtn_clicked(self):
+        if self._widget.ephysRatTogBtn.isChecked():
+            self.is_ephys_rat = True
+        else:
+            self.is_ephys_rat = False
     
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -790,8 +800,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             #if self.is_rat_in_chamber_walls(self.success_chamber_seq, self.success_chamber):
-            rospy.loginfo(f"TEMP!!!!!!!! Success chamber: {self.success_chamber}")
-            rospy.loginfo(f"TEMP!!!!!!!! is_rat_in_chamber: {self.is_rat_in_chamber(self.success_chamber)}")
+            # rospy.loginfo(f"TEMP!!!!!!!! Success chamber: {self.success_chamber}")
+            # rospy.loginfo(f"TEMP!!!!!!!! is_rat_in_chamber: {self.is_rat_in_chamber(self.success_chamber)}")
             if self.is_rat_in_chamber(self.success_chamber):
                 self.raise_wall(self.left_goal_wall, send=False)
                 self.raise_wall(self.right_goal_wall, send=True)
@@ -880,6 +890,8 @@ class Interface(Plugin):
                 rospy.loginfo("START_TRIAL")
 
     def play_sound_cue(self, sound_cue):
+        if self.is_ephys_rat:
+            return
         rospy.loginfo(f"Play sound cue {sound_cue}")    
         if self.sound_cue == "White_Noise":
             self.sound_pub.publish("White_Noise")
@@ -903,6 +915,8 @@ class Interface(Plugin):
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
+        if self.is_ephys_rat:
+            return
         self.gantry_pub.publish("REWARD", [4.0])
 
     def move_gantry_to_chamber(self, chamber_num):
