@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<Configuration>
+ <GlobalConfiguration realtimeMode="0" saveDisplayedChanOnly="1" filePrefix="" fileChunkSize="-1" filePath=""/>
+ <BenchmarkConfiguration spikeDetect="1003606144"/>
+ <NetworkConfiguration networkType="qsocket"/>
+ <HardwareConfiguration lfpSubsamplingInterval="20" useIntrinsics="1" numChannels="0" samplingRate="30000">
+  <Device available="1" name="Controller_DIO" numBytes="1" packetOrderPreference="10">
+   <Channel id="Controller_Din1" startByte="0" bit="0" dataType="digital" input="1"/>
+   <Channel id="Controller_Din2" startByte="0" bit="1" dataType="digital" input="1"/>
+   <Channel id="Controller_Din3" startByte="0" bit="2" dataType="digital" input="1"/>
+   <Channel id="Controller_Din4" startByte="0" bit="3" dataType="digital" input="1"/>
+   <Channel id="Controller_Din5" startByte="0" bit="4" dataType="digital" input="1"/>
+   <Channel id="Controller_Din6" startByte="0" bit="5" dataType="digital" input="1"/>
+   <Channel id="Controller_Din7" startByte="0" bit="6" dataType="digital" input="1"/>
+   <Channel id="Controller_Din8" startByte="0" bit="7" dataType="digital" input="1"/>
+  </Device>
+  <Device available="1" name="Multiplexed" numBytes="8" packetOrderPreference="30">
+   <Channel id="Headstage_AccelX" startByte="2" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="3"/>
+   <Channel id="Headstage_AccelY" startByte="4" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="3"/>
+   <Channel id="Headstage_AccelZ" startByte="6" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="3"/>
+   <Channel id="Headstage_GyroX" startByte="2" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="2"/>
+   <Channel id="Headstage_GyroY" startByte="4" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="2"/>
+   <Channel id="Headstage_GyroZ" startByte="6" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="2"/>
+   <Channel id="Headstage_MagX" startByte="2" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="1"/>
+   <Channel id="Headstage_MagY" startByte="4" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="1"/>
+   <Channel id="Headstage_MagZ" startByte="6" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="1"/>
+   <Channel id="RFsync" startByte="2" bit="0" dataType="uint32" interleavedDataIDByte="0" input="1" interleavedDataIDBit="0"/>
+   <Channel id="Headstage_Ack1" startByte="2" bit="0" dataType="uint32" interleavedDataIDByte="0" input="1" interleavedDataIDBit="4"/>
+   <Channel id="Headstage_Ack2" startByte="4" bit="0" dataType="uint32" interleavedDataIDByte="0" input="1" interleavedDataIDBit="4"/>
+   <Channel id="Headstage_Ack3" startByte="6" bit="0" dataType="uint32" interleavedDataIDByte="0" input="1" interleavedDataIDBit="4"/>
+   <Channel id="Controller_Ain1" startByte="2" bit="0" dataType="analog" interleavedDataIDByte="0" input="1" interleavedDataIDBit="5"/>
+  </Device>
+  <Device available="1" name="SysClock" numBytes="8" packetOrderPreference="10000"/>
+ </HardwareConfiguration>
+ <ModuleConfiguration/>
+ <StreamDisplay backgroundColor="#404040" pages="2" horizontal="0" columns="2" pageBreaks=""/>
+ <AuxDisplayConfiguration>
+  <DispChannel id="Controller_Din1" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Controller_Din2" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Controller_Din3" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Controller_Din4" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Controller_Din5" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Controller_Din6" color="#aaaaaa" analyze="0" maxDisp="2" device="Controller_DIO"/>
+  <DispChannel id="Headstage_AccelX" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+  <DispChannel id="Headstage_AccelY" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+  <DispChannel id="Headstage_AccelZ" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+  <DispChannel id="Headstage_GyroX" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+  <DispChannel id="Headstage_GyroY" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+  <DispChannel id="Headstage_GyroZ" color="#008000" analyze="0" maxDisp="2000" device="Multiplexed"/>
+ </AuxDisplayConfiguration>
+ <SpikeConfiguration categories="" chanPerChip="1003605888" device="intan"/>
+</Configuration>
