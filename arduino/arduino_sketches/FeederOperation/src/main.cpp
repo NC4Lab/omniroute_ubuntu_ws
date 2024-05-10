@@ -1,12 +1,12 @@
-// ######################################
+// #################################
 
-//====== FeederOperation.ino ======
+// ====== FeederOperation.ino ======
 
-// ######################################
+// #################################
 
 /**
- * @file Main Arduino INO file for running the maze.
- */
+ @file Arduino INO file for running feeeder related oppertions.
+*/
 
 // BUILT IN
 #include "Arduino.h"
