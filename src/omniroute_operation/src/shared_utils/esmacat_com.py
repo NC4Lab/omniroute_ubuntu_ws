@@ -18,6 +18,16 @@ class EsmacatCom:
     """ 
     This class is used to communicate with the arduino via ethercat.
     It is used to send and receive messages from the arduino.
+
+    Incoming/Outgoing RegUnion message structure:
+	ui16[0], ui8[0][1]		i16  [msg id]
+	ui16[1], ui8[2][3]		ui8  [msg type]      [err type]
+	ui16[2], ui8[4][5]		ui8  [arg length]    [arg 0]
+	ui16[3], ui8[6][7]		ui8  [arg 1]         [arg 2]
+	ui16[4], ui8[8][9]     	ui8  [arg 3]         [arg 4]
+	ui16[5], ui8[10][11]   	ui8  [arg 5]         [arg 6]
+	ui16[6], ui8[12][13]    ui8  [arg 7]         [arg 8]
+	ui16[7], ui8[14][15]    ui8  [footer]        [footer]
     """
 
     # ------------------------ CLASS VARIABLES ------------------------
@@ -45,6 +55,8 @@ class EsmacatCom:
         START_PUMP = 9
         STOP_PUMP = 10
         REWARD = 11
+        SET_OPTITRACK_SYNC_PIN = 12
+        SET_SPIKEGADGETS_SYNC_PIN = 13
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """

@@ -104,7 +104,7 @@ public:
 	};
 	ChamberStruct C[nChamInitMax]; // initialize with max number of chambers for 3x3
 
-	EsmacatCom EsmaCom; // instance of Esmacatshield class
+	EsmacatCom EsmaCom(10); // instance of EsmacatCom class using SPI chip select pin 10
 
 private:
 	MazeDebug _Dbg;		// local instance of MazeDebug class

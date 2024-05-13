@@ -2,7 +2,6 @@
 ```
 - Add instructions for port permisions for writing sketches to Arduino
 - Add instructions for setting up ROS network environment variables
-- Change arduino code for max number of chambers to move.
 - Incorperate gantry ack for completed move commands
 - 
 ```
@@ -76,6 +75,11 @@ src/omniroute_operation/launch/test.launch
 cd omniroute_ubuntu_ws
 
 catkin_make
+```
+
+## Make python file executable
+```
+chmod +x sync_sender.py
 ```
 
 # Runtime

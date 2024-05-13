@@ -70,13 +70,16 @@
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
-    <!-- Omniroute experiment controller interface -->
-    <node name = "maze_tf_broadcaster" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
+    <!-- Time stamp sync node -->
+    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen"/>
+
+    <!-- Omniroute experiment controller interface node -->
+    <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 
     <!-- Omniroute feeder gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
 
-     <!-- Omniroute omniroute_controller interface -->
+     <!-- Omniroute omniroute_controller interface node -->
     <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen"/>
 
 </launch>

@@ -4,18 +4,19 @@
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
 
+# ROS Imports
+import rospy
+from omniroute_operation.msg import *
+
 # Other Imports
 import time
-import rospy
 import tf
-from omniroute_operation.msg import *
 from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 
 class MazeTransformer:
     # Initialize the OptitrackTransformer class
     def __init__(self):
-        MazeDB.printMsg('INFO', "[MazeTransformer]: maze_tf_broadcaster_node INITAILIZING...")
 
         # Subscribers to obtain pose data for three boundary markers of the maze
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)
@@ -47,6 +48,7 @@ class MazeTransformer:
         self.gantry_pose_in_maze_pub = rospy.Publisher('/gantry_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
 
         # Control loop running at 100 Hz to handle data processing and transformation broadcasting
+        MazeDB.printMsg('INFO', "[MazeTransformer]: Initialzed maze_tf_broadcaster_node")
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
             self.loop()
@@ -128,6 +130,6 @@ class MazeTransformer:
     
 # @brief Main code
 if __name__ == '__main__':
-    rospy.init_node('maze_tf_broadcaster')
+    rospy.init_node('maze_tf_broadcaster') # Initialize the ROS node with name 'maze_tf_broadcaster'
     MazeTransformer()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown

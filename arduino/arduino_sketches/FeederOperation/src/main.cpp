@@ -24,9 +24,9 @@ bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
-MazeDebug Dbg;
-FeederServo FdSrv;
-EsmacatCom EsmaCom(10);
+MazeDebug Dbg; // instance of MazeDebug class for debugging messages
+FeederServo FdSrv; // instance of FeederServo class
+EsmacatCom EsmaCom(10);  // instance of EsmacatCom class using SPI chip select pin 10
 
 //=============== SETUP =================
 void setup()

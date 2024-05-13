@@ -5,10 +5,12 @@ from shared_utils.maze_debug import MazeDB
 from shared_utils.esmacat_com import EsmacatCom
 from gantry.gcodeclient import Client as GcodeClient
 
-# Other Imports
-import time
+# ROS Imports
 import rospy
 from omniroute_operation.msg import *
+
+# Other Imports
+import time
 from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 from enum import Enum
@@ -26,8 +28,7 @@ class GantryState(Enum):
 class GantryFeeder:
     # Initialize the GantryFeeder class
     def __init__(self):
-        MazeDB.printMsg('INFO', "[GantryFeeder]: gantry_operation_node INITAILIZING...")
-
+        
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
         self.gantry_y = 0.0
@@ -86,6 +87,7 @@ class GantryFeeder:
         r = rospy.Rate(30)
 
         # Loop until the node is shutdown
+        MazeDB.printMsg('INFO', "[GantryFeeder]: Initialzed gantry_operation_node")
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
@@ -213,7 +215,6 @@ class GantryFeeder:
 
 # @brief Main code
 if __name__ == '__main__':
-    # Initialize the ROS node with name 'gantry_operation'
-    rospy.init_node('gantry_operation')
+    rospy.init_node('gantry_operation') # Initialize the ROS node with name 'gantry_operation'
     GantryFeeder()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown

@@ -32,9 +32,9 @@ uint8_t pwmDuty = 255;		   // PWM duty for all walls [0-255]
 uint16_t dtMoveTimeout = 1000; // timeout for wall movement (ms)
 
 // Initialize class instances for local libraries
-MazeDebug Dbg;
-CypressCom CypCom;
-WallOperation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout);
+MazeDebug Dbg; // instance of MazeDebug class for debugging messages
+CypressCom CypCom; // instance of CypressCom class for Cypress communication
+WallOperation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout); // instance of WallOperation class for wall operations
 
 //=============== SETUP =================
 void setup()

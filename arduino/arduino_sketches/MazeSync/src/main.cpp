@@ -15,29 +15,68 @@
 // LOCAL
 #include <EsmacatCom.h>
 
+
+//============ VARIABLES ===============
+
+// Global variables
+bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
+
+// Initialize class instances for local libraries
+MazeDebug Dbg;
+EsmacatCom EsmaCom(9);
+
 // Define pins
-const int easePin = 9; // EASE SPI pin for ethercat communication
 const int optiSyncPin = 7; // Optitrack sync pin
 const int spikeGadgSyncPin = 6; // Spike Gadgets sync pin
 
-Esmacatshield ease(easePin);
-
-int easeRegisters[8];
-
 void setup()
 {
-  ease.start_spi();
+   // Setup serial coms
+  Serial.begin(115200);
+  delay(100);
 
+  // Print setup started
+  Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
+
+  // Initialize ethercat coms
+  EsmaCom.initEcat(true);
+
+  // Set pin modes
   pinMode(optiSyncPin, OUTPUT);
+
+  // Set pin states
   digitalWrite(optiSyncPin, LOW);
+
+  // Print setup complete
+  Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
 }
 
 void loop()
 {
-  // Get registers from EASE
-  ease.get_ecat_registers(easeRegisters);
+  // Check ethercat coms
+  if (!EsmaCom.readEcatMessage())
+    return;
 
-  digitalWrite(optiSyncPin, easeRegisters[0]);
+  // Get first argument
+  uint8_t arg0 = EsmaCom.rcvEM.ArgU.ui8[0];
+
+  // Set Optitrack sync pin
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_OPTITRACK_SYNC_PIN)
+  {
+    digitalWrite(optiSyncPin, arg0);
+    Dbg.printMsg(Dbg.MT::INFO, "Optitrack sync pin set to: %s", arg0==0 ? "LOW" : "HIGH");
+  }
+
+  // Set SpikeGadgets sync pin
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_SYNC_PIN)
+  {
+    digitalWrite(spikeGadgSyncPin, arg0);
+    Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0==0 ? "LOW" : "HIGH");
+  }
 
   delay(10);
+
+  // Send back recieved message arguments
+  EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 }

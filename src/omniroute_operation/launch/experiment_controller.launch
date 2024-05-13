@@ -74,6 +74,9 @@
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
+    <!-- Time stamp sync node -->
+    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen"/>
+
     <!-- Omniroute omniroute_controller interface -->
     <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen"/>
 
@@ -81,7 +84,7 @@
     <node name = "experiment_controller" pkg = "omniroute_operation" type = "experiment_controller" output = "screen"/>
      
     <!-- Omniroute experiment controller interface -->
-    <node name = "maze_tf_broadcaster" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
+    <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 <!--  -->
     <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->
 <!--  -->
@@ -90,7 +93,6 @@
     <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
     
     <!-- Omniroute feeder cantry node -->
-    
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
     
   </launch>

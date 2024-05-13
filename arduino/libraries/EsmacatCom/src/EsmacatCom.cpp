@@ -480,14 +480,6 @@ bool EsmacatCom::readEcatMessage()
     int reg_arr[8];
     ecatReadRegAll(reg_arr);
 
-    // // TEMP
-    // RegUnion U;
-    // for (size_t i_16 = 0; i_16 < 8; i_16++)
-    //     U.si16[i_16] = reg_arr[i_16];
-    // _printEcatReg(_Dbg.MT::DEBUG, U);
-    // delay(1000);
-    // return;
-
     // Check register for garbage or incomplete data and copy register data into union
     if (!_uSetCheckReg(rcvEM, reg_arr))
     {
@@ -568,7 +560,7 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
     // 	------------- Store arguments -------------
 
     // Store error arguments
-    if (msg_arg_len > 0 && p_msg_arg_data != nullptr) // store message arguments if provided
+    if (msg_arg_len > 0 && p_msg_arg_data != nullptr) 
         for (size_t i = 0; i < msg_arg_len; i++)
             _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
     else

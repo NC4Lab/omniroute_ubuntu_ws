@@ -228,9 +228,10 @@ class Interface(Plugin):
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
 
-        reg = [0]*8
-        reg[0] = 0
-        self.write_sync_ease_pub.publish(*reg)
+        # # Not needed anymore
+        # reg = [0]*8
+        # reg[0] = 0
+        # self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
         self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
@@ -412,24 +413,26 @@ class Interface(Plugin):
     def _handle_recordBtn_clicked(self, checked):
         #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
         if not self.isRecording:
-            if not os.path.isdir(self._widget.recordDataDir.text()):
-                relative_path = os.path.join('omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller', 'Data')
-                self._widget.recordDataDir.setText(relative_path)
-                #self._widget.recordDataDir.setText(os.path.expanduser('~/omniroute_ubuntu_ws/src/omniroute_operation/src/experiment_controller/Data'))
+            # if not os.path.isdir(self._widget.recordDataDir.text()):
+            #     relative_path = os.path.join('omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller', 'Data')
+            #     self._widget.recordDataDir.setText(relative_path)
+            #     #self._widget.recordDataDir.setText(os.path.expanduser('~/omniroute_ubuntu_ws/src/omniroute_operation/src/experiment_controller/Data'))
 
-            data_dir = self._widget.recordDataDir.text()
+            # data_dir = self._widget.recordDataDir.text()
 
-            # Record all ROS topics to domeExperimentData.bag
-            command_data = f"rosbag record -a -o plusMazeExperimentData"
-            self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=data_dir)
+            # # Record all ROS topics to domeExperimentData.bag
+            # command_data = f"rosbag record -a -o plusMazeExperimentData"
+            # self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=data_dir)
 
-            rospy.sleep(3)
+            # # Pause for 3 seconds to allow the bag file to be created
+            # rospy.sleep(3)
 
-            # Send message to send positive TTL output to Optitrack eSync2
-            reg = [0]*8
-            reg[0] = 1
-            self.write_sync_ease_pub.publish(*reg)
-            self.event_pub.publish("start_optitrack_recording", rospy.Time.now())
+            # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
+            self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
+            # reg = [0]*8
+            # reg[0] = 1
+            # self.write_sync_ease_pub.publish(*reg)
+            # self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
             
             self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
             self._widget.recordBtn.setText("Stop")
@@ -437,11 +440,12 @@ class Interface(Plugin):
             self.isRecording = 1
 
         else:
-            # Send message to send negative TTL output to Optitrack eSync2
-            reg = [0]*8
-            reg[0] = 0
-            self.write_sync_ease_pub.publish(*reg)
-            self.event_pub.publish("stop_optitrack_recording", rospy.Time.now())
+            # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
+            self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
+            # reg = [0]*8
+            # reg[0] = 0
+            # self.write_sync_ease_pub.publish(*reg)
+            # self.event_pub.publish("stop_optitrack_recording", rospy.Time.now())
 
             rospy.sleep(1)
 
