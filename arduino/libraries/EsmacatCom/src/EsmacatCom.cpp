@@ -514,7 +514,7 @@ bool EsmacatCom::readEcatMessage()
     rcvEM.isNew = true;
 
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+    //_printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
 
     // Return message status
     return true;

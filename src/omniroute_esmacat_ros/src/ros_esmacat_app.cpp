@@ -81,12 +81,23 @@ void ros_esmacat_app::loop()
 
     //............... Synchronize Esmacat Hardware with ROS Communication for Sync Ease ...............
 
+    // The ROS object created is used to read the current state of registers from the Esmacat slave object
+    // and store it in a shared memory location
+    sync_ease.set_read_registers(&sync_ease_ecat_as);
+
     // The newly modified write registers from the ROS Communication is returned from the shared memory
     sync_ease_ros_message = sync_ease.get_write_registers();
 
     // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
     // updated values received from ROS Nodes.
     sync_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(sync_ease_ros_message.INT0);
+    sync_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(sync_ease_ros_message.INT1);
+    sync_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(sync_ease_ros_message.INT2);
+    sync_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(sync_ease_ros_message.INT3);
+    sync_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(sync_ease_ros_message.INT4);
+    sync_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(sync_ease_ros_message.INT5);
+    sync_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(sync_ease_ros_message.INT6);
+    sync_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(sync_ease_ros_message.INT7);
 
     //............... Synchronize Esmacat Hardware with ROS Communication for Maze ARD0 ...............
 

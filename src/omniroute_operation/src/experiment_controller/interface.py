@@ -779,8 +779,6 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             #if self.is_rat_in_chamber_walls(self.success_chamber_seq, self.success_chamber):
-            # rospy.loginfo(f"TEMP!!!!!!!! Success chamber: {self.success_chamber}")
-            # rospy.loginfo(f"TEMP!!!!!!!! is_rat_in_chamber: {self.is_rat_in_chamber(self.success_chamber)}")
             if self.is_rat_in_chamber(self.success_chamber):
                 #self.raise_wall(self.left_goal_wall, send=False)
                 #self.raise_wall(self.right_goal_wall, send=True)
@@ -800,7 +798,8 @@ class Interface(Plugin):
         elif self.mode == Mode.SUCCESS:
             self.success_center_x = self.chamber_centers[self.success_chamber][0]
             self.success_center_y = self.chamber_centers[self.success_chamber][1]
-            self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
+            if not self.is_ephys_rat:
+                self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.REWARD_START
             rospy.loginfo("REWARD START")

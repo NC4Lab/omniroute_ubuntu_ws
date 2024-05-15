@@ -74,7 +74,7 @@ class GantryFeeder:
         ## TODO: Automatically determine the port
 
         # Wait for 1 second
-        time.sleep(1)
+        time.sleep(1) 
         
         # # Home the gantry
         # self.home() 

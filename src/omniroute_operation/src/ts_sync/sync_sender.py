@@ -5,6 +5,7 @@ from shared_utils.maze_debug import MazeDB
 from shared_utils.esmacat_com import EsmacatCom
 from gantry.gcodeclient import Client as GcodeClient
 from omniroute_operation.msg import *
+from omniroute_esmacat_ros.msg import *
 
 # Other Imports
 import rospy

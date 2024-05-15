@@ -75,7 +75,7 @@
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
     <!-- Time stamp sync node -->
-    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen"/>
+    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen"/> 
 
     <!-- Omniroute omniroute_controller interface -->
     <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen"/>

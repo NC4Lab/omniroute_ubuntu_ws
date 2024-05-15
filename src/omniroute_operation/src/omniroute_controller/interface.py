@@ -1550,4 +1550,3 @@ class Interface(Plugin):
         # Call function to shut down the ROS session
         self.end_ros_session()
         event.accept()  # let the window close
-        # TEMP
