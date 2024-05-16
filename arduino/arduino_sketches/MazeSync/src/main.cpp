@@ -75,8 +75,6 @@ void loop()
     Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0==0 ? "LOW" : "HIGH");
   }
 
-  delay(10);
-
   // Send back recieved message arguments
   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 }
