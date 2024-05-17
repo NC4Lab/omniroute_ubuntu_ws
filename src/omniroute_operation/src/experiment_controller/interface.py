@@ -235,7 +235,7 @@ class Interface(Plugin):
 
         # Experiment parameters
         self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
-        self.choice_delay = rospy.Duration(16.0)  # Duration to wait for rat to move to the choice point
+        self.choice_delay = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(3)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2.5)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(14.5)  # Duration to wait if the rat made the right choice
@@ -932,12 +932,14 @@ class Interface(Plugin):
                 if self.sound_cue == "White_Noise":
                     if self.left_visual_cue == "Triangle":
                         self.projection_pub.publish(self.project_left_cue_triangle)
+                        rospy.loginfo("Projecting left cue triangle")
                         self.success_chamber = self.left_chamber
                         #self.success_chamber_seq = self.left_chamber_seq
                         self.error_chamber = self.right_chamber
-                        #self.error_chamber_seq = self.right_chamber_seq
+                        #self.error_chamber_seq = self.right_chamber_seqangle)
                     else:
                         self.projection_pub.publish(self.project_right_cue_triangle)
+                        rospy.loginfo("Projecting right cue triangle")
                         self.success_chamber = self.right_chamber
                         #self.success_chamber_seq = self.right_chamber_seq
                         self.error_chamber = self.left_chamber
@@ -945,12 +947,14 @@ class Interface(Plugin):
                 else:
                     if self.left_visual_cue == "No_Cue":
                         self.projection_pub.publish(self.project_right_cue_triangle)
+                        rospy.loginfo("Projecting right cue triangle")
                         self.success_chamber = self.left_chamber
                         #self.success_chamber_seq = self.left_chamber_seq
                         self.error_chamber = self.right_chamber
                         #self.error_chamber_seq = self.right_chamber_seq
                     else:
                         self.projection_pub.publish(self.project_left_cue_triangle)
+                        rospy.loginfo("Projecting left cue triangle")
                         self.success_chamber = self.right_chamber
                         #self.success_chamber_seq = self.right_chamber_seq
                         self.error_chamber = self.left_chamber
@@ -984,12 +988,12 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
-                if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
+                if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
                     if self.success_chamber == self.left_chamber:
                         self.lower_wall(self.left_goal_wall, send=True)
                     else:
                         self.lower_wall(self.right_goal_wall, send=True)
-                elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
+                elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
                     self.lower_wall(self.left_goal_wall, send=False)
                     self.lower_wall(self.right_goal_wall, send=True)
 
