@@ -1,0 +1,246 @@
+<?xml version="1.0"?>
+<Configuration>
+ <PreferenceConfiguration>
+  <trodes>
+   <position height="800" width="756" x="10" y="28"/>
+   <spikeclusters spiketimebuffersize="10000"/>
+   <spikeviewing scatterplotmultiview="0"/>
+  </trodes>
+ </PreferenceConfiguration>
+ <GlobalConfiguration fileChunkSize="-1" filePath="" filePrefix="" realtimeMode="0" saveDisplayedChanOnly="0"/>
+ <BenchmarkConfiguration spikeDetect="10" spikeSent="691"/>
+ <NetworkConfiguration networkType="qsocket"/>
+ <HardwareConfiguration lfpSubsamplingInterval="20" numChannels="128" samplingRate="30000" useIntrinsics="1">
+  <Device available="1" name="Controller_DIO" numBytes="1" packetOrderPreference="10">
+   <Channel bit="0" dataType="digital" id="Controller_Din1" input="1" startByte="0"/>
+   <Channel bit="1" dataType="digital" id="Controller_Din2" input="1" startByte="0"/>
+   <Channel bit="2" dataType="digital" id="Controller_Din3" input="1" startByte="0"/>
+   <Channel bit="3" dataType="digital" id="Controller_Din4" input="1" startByte="0"/>
+   <Channel bit="4" dataType="digital" id="Controller_Din5" input="1" startByte="0"/>
+   <Channel bit="5" dataType="digital" id="Controller_Din6" input="1" startByte="0"/>
+   <Channel bit="6" dataType="digital" id="Controller_Din7" input="1" startByte="0"/>
+   <Channel bit="7" dataType="digital" id="Controller_Din8" input="1" startByte="0"/>
+  </Device>
+  <Device available="1" name="Multiplexed" numBytes="8" packetOrderPreference="30">
+   <Channel bit="0" dataType="analog" id="Headstage_AccelX" input="1" interleavedDataIDBit="3" interleavedDataIDByte="0" startByte="2"/>
+   <Channel bit="0" dataType="analog" id="Headstage_AccelY" input="1" interleavedDataIDBit="3" interleavedDataIDByte="0" startByte="4"/>
+   <Channel bit="0" dataType="analog" id="Headstage_AccelZ" input="1" interleavedDataIDBit="3" interleavedDataIDByte="0" startByte="6"/>
+   <Channel bit="0" dataType="analog" id="Headstage_GyroX" input="1" interleavedDataIDBit="2" interleavedDataIDByte="0" startByte="2"/>
+   <Channel bit="0" dataType="analog" id="Headstage_GyroY" input="1" interleavedDataIDBit="2" interleavedDataIDByte="0" startByte="4"/>
+   <Channel bit="0" dataType="analog" id="Headstage_GyroZ" input="1" interleavedDataIDBit="2" interleavedDataIDByte="0" startByte="6"/>
+   <Channel bit="0" dataType="analog" id="Headstage_MagX" input="1" interleavedDataIDBit="1" interleavedDataIDByte="0" startByte="2"/>
+   <Channel bit="0" dataType="analog" id="Headstage_MagY" input="1" interleavedDataIDBit="1" interleavedDataIDByte="0" startByte="4"/>
+   <Channel bit="0" dataType="analog" id="Headstage_MagZ" input="1" interleavedDataIDBit="1" interleavedDataIDByte="0" startByte="6"/>
+   <Channel bit="0" dataType="uint32" id="RFsync" input="1" interleavedDataIDBit="0" interleavedDataIDByte="0" startByte="2"/>
+   <Channel bit="0" dataType="uint32" id="Headstage_Ack1" input="1" interleavedDataIDBit="4" interleavedDataIDByte="0" startByte="2"/>
+   <Channel bit="0" dataType="uint32" id="Headstage_Ack2" input="1" interleavedDataIDBit="4" interleavedDataIDByte="0" startByte="4"/>
+   <Channel bit="0" dataType="uint32" id="Headstage_Ack3" input="1" interleavedDataIDBit="4" interleavedDataIDByte="0" startByte="6"/>
+   <Channel bit="0" dataType="analog" id="Controller_Ain1" input="1" interleavedDataIDBit="5" interleavedDataIDByte="0" startByte="2"/>
+  </Device>
+  <Device available="1" name="SysClock" numBytes="8" packetOrderPreference="10000"/>
+ </HardwareConfiguration>
+ <ModuleConfiguration/>
+ <StreamDisplay backgroundColor="#404040" columns="3" horizontal="0" pageBreaks="" pages="2"/>
+ <AuxDisplayConfiguration>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din1" maxDisp="2"/>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din2" maxDisp="2"/>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din3" maxDisp="2"/>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din4" maxDisp="2"/>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din5" maxDisp="2"/>
+  <DispChannel analyze="0" color="#aaaaaa" device="Controller_DIO" id="Controller_Din6" maxDisp="2"/>
+ </AuxDisplayConfiguration>
+ <SpikeConfiguration categories="" chanPerChip="16" device="intan">
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="1" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="111" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="2" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="118" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="3" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="126" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="4" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="124" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="5" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="97" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="6" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="102" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="7" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="99" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="8" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="115" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="9" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="106" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="10" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="104" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="11" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="110" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="12" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="105" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="13" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="103" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="14" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="123" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="15" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="101" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="16" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="100" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="17" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="107" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="18" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="114" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="19" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="108" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="20" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="120" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="21" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="122" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="22" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="117" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="23" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="98" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="24" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="127" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="25" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="109" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="26" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="121" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="27" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="119" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="28" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="112" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="29" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="113" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="30" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="30" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="31" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="116" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="32" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="96" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="33" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="11" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="34" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="26" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="35" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="5" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="36" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="125" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="37" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="27" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="38" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="1" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="39" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="18" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="40" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="28" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="41" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="24" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="42" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="3" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="43" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="14" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="44" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="0" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="45" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="6" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="46" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="7" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="47" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="20" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="48" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="12" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="49" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="17" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="50" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="22" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="51" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="23" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="52" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="16" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="53" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="29" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="54" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="9" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="55" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="31" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="56" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="21" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="57" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="10" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="58" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="19" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="59" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="13" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="60" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="25" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ff3232" filterOn="1" groupRefOn="0" highFilter="6000" id="61" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="8" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#32ff32" filterOn="1" groupRefOn="0" highFilter="6000" id="62" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="4" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#3232ff" filterOn="1" groupRefOn="0" highFilter="6000" id="63" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="2" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+  <SpikeNTrode LFPChan="1" LFPHighFilter="400" color="#ffffff" filterOn="1" groupRefOn="0" highFilter="6000" id="64" lfpFilterOn="1" lfpRefOn="0" lfpScalingToUv="0.19500000000000001" lowFilter="600" moduleDataOn="0" notchBW="10" notchFilterOn="0" notchFreq="60" rawRefOn="0" rawScalingToUv="0.19500000000000001" refChan="1" refGroup="691" refNTrodeID="1" refOn="0" spikeScalingToUv="0.19500000000000001" viewLFPBand="1" viewSpikeBand="0" viewStimBand="0">
+   <SpikeChannel coord_ap="0" coord_dv="0" coord_ml="0" hwChan="15" maxDisp="200" spikeSortingGroup="0" stimCapable="0" thresh="30" triggerOn="1"/>
+  </SpikeNTrode>
+ </SpikeConfiguration>
+</Configuration>
