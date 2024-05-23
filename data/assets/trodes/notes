@@ -1,0 +1,8 @@
+Mismatch between environmental recording /home/nc4lab/Desktop/sg_test_recordings/20240523_154602/20240523_154602.rec and logger sampling rate.
+Proceed?
+
+Mismatch between /home/nc4lab/Trodes/NC4_Workspaces/Molex64_EIB_Merge.trodesconf and logger for number of channels in recording. 128 (workspace) vs 0 (logger)
+Proceed?
+
+Mismatch between /home/nc4lab/Trodes/NC4_Workspaces/Molex64_EIB_Merge.trodesconf and logger sampling rate in recording.
+Proceed?
