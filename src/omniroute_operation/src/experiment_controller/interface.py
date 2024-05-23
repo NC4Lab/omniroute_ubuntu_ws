@@ -42,7 +42,6 @@ class Mode(Enum):
     START = -1
     START_EXPERIMENT = 0
     START_TRIAL = 1
-    STARTT =10
     RAT_IN_START_CHAMBER = 2
     START_TO_CHOICE = 3
     RAT_IN_CHOICE_CHAMBER = 4
@@ -234,7 +233,7 @@ class Interface(Plugin):
         # self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
-        self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        self.start_delay = rospy.Duration(8.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(3)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2.5)  # Duration to wait to for the reward to despense
@@ -278,6 +277,11 @@ class Interface(Plugin):
 
         self.project_left_cue_triangle = 0
         self.project_right_cue_triangle = 0
+
+        self.success_chamber = 0
+        self.error_chamber = 0
+        self.start_wall = Wall(0, 0)
+        self.central_chamber = 0
 
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
@@ -688,6 +692,14 @@ class Interface(Plugin):
 
         # Run legacy state machine for ephys rat
         if self.is_ephys_rat:
+
+            # Check if the rat has moved to a different chamber
+            if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+                # The rat has moved to a different chamber, update the gantry position
+                self.move_gantry_to_chamber(current_rat_chamber)
+
+                # Update the previous_rat_chamber for the next iteration
+                self.previous_rat_chamber = current_rat_chamber
             
             if self.mode == Mode.START_EXPERIMENT:
                 rospy.loginfo("START OF THE EXPERIMENT")
@@ -743,44 +755,41 @@ class Interface(Plugin):
                 self.mode = Mode.RAT_IN_START_CHAMBER
                 rospy.loginfo("RAT_IN_START_CHAMBER")
 
+
             elif self.mode == Mode.RAT_IN_START_CHAMBER:
+                if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
+                    if self.success_chamber == self.left_chamber:
+                        self.lower_wall(self.left_goal_wall, send=True)
+                    else:
+                        self.lower_wall(self.right_goal_wall, send=True)
+                elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
+                    self.lower_wall(self.left_goal_wall, send=True)
+                    self.lower_wall(self.right_goal_wall, send=True)
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START
+                rospy.loginfo("START")
+                    
+            elif self.mode == Mode.START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.start_delay.to_sec():
                     self.lower_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.START_TO_CHOICE
-                    rospy.loginfo("START TO CHOICE")
+                    rospy.loginfo("START_TO_CHOICE")
 
             elif self.mode == Mode.START_TO_CHOICE:
                 # Wait for the rat to move to the choice point
                 #if self.is_rat_in_chamber_walls(self.start_chamber_seq, self.central_chamber):
                 if self.is_rat_in_chamber(self.central_chamber):
-                    self.raise_wall(self.start_wall, send=True)
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.STARTT
-                    rospy.loginfo("STARTT")  
-                    
-
-            elif self.mode == Mode.STARTT:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.start_wait_duration.to_sec():
-                    self.lower_wall(self.start_wall, send=True)
+                    #self.raise_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE
                     rospy.loginfo("CHOICE")
             
             elif self.mode == Mode.CHOICE:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
-                    if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
-                        if self.success_chamber == self.left_chamber:
-                            self.lower_wall(self.left_goal_wall, send=True)
-                        else:
-                            self.lower_wall(self.right_goal_wall, send=True)
-                    elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
-                        self.lower_wall(self.left_goal_wall, send=False)
-                        self.lower_wall(self.right_goal_wall, send=True)
-        
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.CHOICE_TO_GOAL
-                    rospy.loginfo("CHOICE_TO_GOAL")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE_TO_GOAL
+                rospy.loginfo("CHOICE_TO_GOAL")
 
             elif self.mode == Mode.CHOICE_TO_GOAL:
                 #if self.is_rat_in_chamber_walls(self.success_chamber_seq, self.success_chamber):
@@ -803,22 +812,22 @@ class Interface(Plugin):
             elif self.mode == Mode.SUCCESS:
                 self.success_center_x = self.chamber_centers[self.success_chamber][0]
                 self.success_center_y = self.chamber_centers[self.success_chamber][1]
-                if not self.is_ephys_rat:
-                    self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
+                #if not self.is_ephys_rat:
+                    #self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD START")
 
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                    self.reward_dispense()
+                    #self.reward_dispense()
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    self.gantry_pub.publish("TRACK_HARNESS", [])
+                    #self.gantry_pub.publish("TRACK_HARNESS", [])
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD")        
@@ -854,7 +863,7 @@ class Interface(Plugin):
                     rospy.loginfo("END TRIAL")
 
             elif self.mode == Mode.END_TRIAL:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_duration.to_sec():
+                if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_delay.to_sec():
                     self.mode = Mode.START_TRIAL
                     rospy.loginfo("START_TRIAL")
 
@@ -906,12 +915,15 @@ class Interface(Plugin):
                     # Set training mode from file if the automatic mode is selected
                     if self._widget.trainingModeBtnGroup.checkedId() == 3:
                         self.training_mode = self.currentTrial[3]
-
-                    self.sound_cue = self.currentTrial[2]
-                    self.play_sound_cue(self.sound_cue)
+                        #self.training_mode = self.currentTrial[fourth_column_header]
 
                     self.left_visual_cue = self.currentTrial[0]
                     self.right_visual_cue = self.currentTrial[1]
+
+                    
+                    self.sound_cue = self.currentTrial[2]
+                    self.play_sound_cue(self.sound_cue)
+                    
                     
                     self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
 
@@ -999,17 +1011,6 @@ class Interface(Plugin):
                     elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
                         self.lower_wall(self.left_goal_wall, send=False)
                         self.lower_wall(self.right_goal_wall, send=True)
-
-            # elif self.mode == Mode.CHOICE:
-            #     if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
-            #         if self.training_mode is not None and self.training_mode in ["Forced_Choice", "user_defined_forced_choice"]: 
-            #             if self.success_chamber == self.left_chamber:
-            #                 self.lower_wall(self.left_goal_wall, send=True)
-            #             else:
-            #                 self.lower_wall(self.right_goal_wall, send=True)
-            #         elif self.training_mode is not None and self.training_mode in ["Choice", "user_defined_choice"]:
-            #             self.lower_wall(self.left_goal_wall, send=False)
-            #             self.lower_wall(self.right_goal_wall, send=True)
         
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_TO_GOAL
@@ -1054,13 +1055,6 @@ class Interface(Plugin):
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD") 
-
-            # elif self.mode == Mode.REWARD:
-            #     if (self.current_time - self.mode_start_time).to_sec() >= self.reward_duration.to_sec():
-            #         #self.reward_dispense()
-            #         self.mode_start_time = rospy.Time.now()
-            #         self.mode = Mode.POST_REWARD
-            #         rospy.loginfo("POST REWARD")
     
             elif self.mode == Mode.POST_REWARD:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
