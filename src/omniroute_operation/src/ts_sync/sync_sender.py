@@ -54,7 +54,7 @@ class SyncSender:
 
         # Set the spike gadgets sync signal high
         self.EsmaComSync.writeEcatMessage(EsmacatCom.MessageType.SET_SPIKEGADGETS_SYNC_PIN, 1)
-        MazeDB.printMsg('DEBUG', "[SyncSender]: SpikeGadgets sync signal sent")
+        #MazeDB.printMsg('DEBUG', "[SyncSender]: SpikeGadgets sync signal sent")
 
         # Wait for the width of the sync signal
         rospy.sleep(self.width)

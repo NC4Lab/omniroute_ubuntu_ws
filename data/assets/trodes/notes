@@ -6,3 +6,45 @@ Proceed?
 
 Mismatch between /home/nc4lab/Trodes/NC4_Workspaces/Molex64_EIB_Merge.trodesconf and logger sampling rate in recording.
 Proceed?
+
+nc4lab@gingerbeer:~/Trodes$ ./DataLoggerGUI 
+Detect: DockingStation A, SD: 1, Headstage: 0
+
+Warning: No system info detected on the drive.
+Can't open FT2232H device.
+
+
+Hello,
+
+ 
+
+Thank you for contacting us. We're happy to help!
+
+Please try the following Troubleshooting steps with us:
+
+
+	
+Swap the RX/TX connections to see if that helps.
+	
+Ensure the USB cable is unplugged.
+	
+Make sure the BlackBox is powered by a 24V source.
+	
+Connect at 115200 baud rate.
+	
+Send only newlines ("\n"); no carriage returns are needed after commands.
+	
+Review the documentation:
+	
+
+		
+BlackBox X32 AUX Serial
+		
+GRBL v1.1 Interface
+	
+	
+
+
+If the system is alarmed, pressing the RESET button on the BlackBox should trigger a [MSG:'$H'|'$X' to unlock] message in the serial log. You might not get a response if there's a lockout. Clear it by sending $X. Learn more about this in the GRBL documentation under Feedback Messages > Non Queried > Second bullet point.
+
+Pressing RESET on the BlackBox while monitoring Serial should show the firmware startup string, like "GrblHAL 1.1f ['$' or '$HELP' for help]", without anything sent over serial. This might help as a quick communication check. 

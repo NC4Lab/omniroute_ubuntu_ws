@@ -91,3 +91,30 @@ void loop()
   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 
 }
+
+// //=============== SETUP =================
+// void setup()
+// {
+//   Serial.begin(115200);
+//   delay(100);
+
+//   Serial1.begin(115200);
+//   delay(100);
+
+//   Serial.println("RUNNING SETUP");
+
+//   Serial1.println("$$");
+//   delay(100);
+
+//   Serial.println("SETUP COMPLETE");
+// }
+
+// //=============== LOOP ==================
+// void loop()
+// {
+//   while(Serial1.available())
+//   {
+//     Serial.write(Serial1.read());
+//   }
+//   delay(1000);
+// }
