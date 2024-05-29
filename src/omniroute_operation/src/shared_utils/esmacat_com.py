@@ -603,13 +603,14 @@ class EsmacatCom:
         # Setup Ethercat handshake flag
         self.isEcatConnected = False
 
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data=None):
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data=None, do_print=True):
         """
         Used to send outgoing ROS ethercat msg data.
 
         Args:
             msg_type_enum (EsmacatCom.MessageType): Message type enum.
-            msg_arg_data_arr (list or scalar): Message argument data array.
+            msg_arg_data (list or scalar): Message argument data array.
+            do_print (bool): Print message to console if true (Optional).
 
         Returns:
             int: Success/error codes [0:no message, 1:new message, 2:error]
@@ -648,6 +649,7 @@ class EsmacatCom:
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)
 
         # Print message
-        MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
-                        self.sndEM.msgID, self.sndEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.sndEM.RegU)
+        if do_print:
+            MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
+                            self.sndEM.msgID, self.sndEM.msgTp.name)
+            self._printEcatReg('DEBUG', self.sndEM.RegU)
