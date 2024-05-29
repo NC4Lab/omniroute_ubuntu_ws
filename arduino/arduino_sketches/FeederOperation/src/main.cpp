@@ -33,6 +33,7 @@ void setup()
 {
   // Setup serial coms
   Serial.begin(115200);
+  Serial1.begin(115200);
   delay(100);
 
   // Print setup started
