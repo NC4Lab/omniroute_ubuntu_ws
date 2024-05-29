@@ -190,16 +190,14 @@ class Interface(Plugin):
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         self.is_ephys_rat = False
 
-        #self._widget.pathDirEdit.setText(
-            #os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'experiment_controller', 'interface')))
-        
         self.curDir = os.path.dirname(__file__)
 
         self._widget.pathDirEdit.setText(self.curDir)
 
-        self.dataDir = os.path.join(self.curDir, 'Data')
+        self.dataDir = os.path.expanduser(os.path.join('~', 'Desktop', 'ros_data')) # Default data directory
+        self.defaultDataDir = self.dataDir
 
-        self._widget.recordDataDir.setText(self.dataDir)
+        self._widget.recordDataDir.setText(self.defaultDataDir)
         
         self.isRecording = self.is_recording_on()
 
@@ -416,40 +414,31 @@ class Interface(Plugin):
 
     def _handle_recordBtn_clicked(self, checked):
         #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
-        if not self.isRecording:
-            # if not os.path.isdir(self._widget.recordDataDir.text()):
-            #     relative_path = os.path.join('omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src', 'experiment_controller', 'Data')
-            #     self._widget.recordDataDir.setText(relative_path)
-            #     #self._widget.recordDataDir.setText(os.path.expanduser('~/omniroute_ubuntu_ws/src/omniroute_operation/src/experiment_controller/Data'))
+        if not self.isRecording:   # Start recording
+            self.dataDir = self._widget.recordDataDir.text()
+            if not os.path.isdir(self.dataDir):
+                self._widget.recordDataDir.setText(self.defaultDataDir)
+                self.dataDir = self.defaultDataDir
+                self._widget.recordDataDir.setText(self.dataDir)
 
-            # data_dir = self._widget.recordDataDir.text()
+            # Record all ROS topics to domeExperimentData.bag
+            command_data = f"rosbag record -a -o plusMazeExperimentData"
+            self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
 
-            # # Record all ROS topics to domeExperimentData.bag
-            # command_data = f"rosbag record -a -o plusMazeExperimentData"
-            # self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=data_dir)
-
-            # # Pause for 3 seconds to allow the bag file to be created
-            # rospy.sleep(3)
+            # Pause for 3 seconds to allow the bag file to be created
+            rospy.sleep(3)
 
             # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
             self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
-            # reg = [0]*8
-            # reg[0] = 1
-            # self.write_sync_ease_pub.publish(*reg)
-            # self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
             
             self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
             self._widget.recordBtn.setText("Stop")
             rospy.loginfo('Recording data files')
             self.isRecording = 1
 
-        else:
+        else:   # Stop recording
             # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
             self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
-            # reg = [0]*8
-            # reg[0] = 0
-            # self.write_sync_ease_pub.publish(*reg)
-            # self.event_pub.publish("stop_optitrack_recording", rospy.Time.now())
 
             rospy.sleep(1)
 
@@ -462,11 +451,8 @@ class Interface(Plugin):
             self.isRecording = 0
 
     def _handle_browseBtn_2_clicked(self):
-        #bagDir = os.path.expanduser(os.path.join('~','experiment_controller','data'))
-        bagDir = self.dataDir
-        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",bagDir,QFileDialog.ShowDirsOnly)
+        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
         self._widget.recordDataDir.setText(res)
-        #rospy.loginfo('Selected %s',res)
 
     def _handle_pumpStartBtn_clicked(self):
         self.gantry_pub.publish("START_PUMP", [])
