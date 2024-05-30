@@ -25,16 +25,20 @@ class FeederServo
 
 	// ---------------VARIABLES---------------
 public:
+	// Gantry position parameters
+	double value_X = 0.0;
+	double value_Y = 0.0;
+
 	// Feeder port servo parameters
-	Servo portServo;		// Servo object
-	const int portServoPin = 8;	// Servo pwm pin
-	const int portUpAngle = 180;	// Servo up angle
+	Servo portServo;			  // Servo object
+	const int portServoPin = 8;	  // Servo pwm pin
+	const int portUpAngle = 180;  // Servo up angle
 	const int portDownAngle = 90; // Servo down angle
 
 	// Pump servo parameters
-	Servo pumpServo;		  // Servo object
-	const int pumpServoPin = 9;	  // Servo pwm pin
-	const int pumpRunSpeed = 500;	  // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
+	Servo pumpServo;				// Servo object
+	const int pumpServoPin = 9;		// Servo pwm pin
+	const int pumpRunSpeed = 500;	// Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 
 private:
@@ -61,6 +65,18 @@ public:
 
 public:
 	void runFeeder(int dt_run);
+
+private:
+	void _grblInit(const std::string &cmd);
+
+public:
+	void grblSetup();
+
+public:
+	void cmdRealTime(const std::string &cmd);
+
+public:
+	void cmdRaw(const std::string &cmd);
 };
 
 #endif
