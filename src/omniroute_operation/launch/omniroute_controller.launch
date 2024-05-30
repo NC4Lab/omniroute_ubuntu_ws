@@ -13,7 +13,7 @@
   
     <!-- CONNECTION -->
     <arg name="serverIP" default="10.34.5.192"/>
-    <arg name="clientIP" default="10.34.5.184"/>
+    <arg name="clientIP" default="10.34.5.131"/>
     <!-- <arg name="serverType" default="multicast"/> -->
     <arg name="serverType" default="unicast"/>
     <!-- <arg name="multicastAddress" default="239.255.42.99"/> -->

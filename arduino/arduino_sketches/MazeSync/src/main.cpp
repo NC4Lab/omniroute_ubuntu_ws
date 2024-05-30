@@ -15,7 +15,6 @@
 // LOCAL
 #include <EsmacatCom.h>
 
-
 //============ VARIABLES ===============
 
 // Global variables
@@ -27,12 +26,12 @@ MazeDebug Dbg;
 EsmacatCom EsmaCom(10);
 
 // Define pins
-const int optiSyncPin = 7; // Optitrack sync pin
+const int optiSyncPin = 7;      // Optitrack sync pin
 const int spikeGadgSyncPin = 6; // Spike Gadgets sync pin
 
 void setup()
 {
-   // Setup serial coms
+  // Setup serial coms
   Serial.begin(115200);
   delay(100);
 
@@ -43,9 +42,11 @@ void setup()
   EsmaCom.initEcat(true);
 
   // Set pin modes
+  pinMode(spikeGadgSyncPin, OUTPUT);
   pinMode(optiSyncPin, OUTPUT);
 
   // Set pin states
+  digitalWrite(spikeGadgSyncPin, LOW);
   digitalWrite(optiSyncPin, LOW);
 
   // Print setup complete
@@ -65,14 +66,14 @@ void loop()
   if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_OPTITRACK_SYNC_PIN)
   {
     digitalWrite(optiSyncPin, arg0);
-    Dbg.printMsg(Dbg.MT::INFO, "Optitrack sync pin set to: %s", arg0==0 ? "LOW" : "HIGH");
+    Dbg.printMsg(Dbg.MT::INFO, "Optitrack sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");
   }
 
   // Set SpikeGadgets sync pin
   if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_SYNC_PIN)
   {
     digitalWrite(spikeGadgSyncPin, arg0);
-    Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0==0 ? "LOW" : "HIGH");
+    Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");
   }
 
   // Send back recieved message arguments
