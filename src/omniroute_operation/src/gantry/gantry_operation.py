@@ -66,8 +66,8 @@ class GantryFeeder:
 
         # ................ Ecat Setup ................
 
-        # Create EsmacatCom object for feeder_ease
-        self.EsmaComFeeder = EsmacatCom('feeder_ease')
+        # Create EsmacatCom object for gantry_ease
+        self.EsmaComFeeder = EsmacatCom('gantry_ease')
 
         # Wait for 1 second
         time.sleep(1) 

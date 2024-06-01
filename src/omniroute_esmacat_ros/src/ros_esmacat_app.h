@@ -45,7 +45,7 @@ public:
     /** A constructor- sets initial values for class members */
     ros_esmacat_app(): sync_ease("sync_ease"), sync_ease_ros_message(),
     maze_ard0_ease("maze_ard0_ease"), maze_ard0_ease_ros_message(),
-    feeder_ease("feeder_ease"), feeder_ease_ros_message() {}
+    gantry_ease("gantry_ease"), gantry_ease_ros_message() {}
 
     void assign_slave_sequence(); /** identify sequence of slaves and their types */
     void configure_slaves(); /** configure all slaves in communication chain */
@@ -65,9 +65,9 @@ private:
     ros_ethercat_arduino_shield_by_esmacat :: write maze_ard0_ease_ros_message;
 
     // Declare slave objects for feeder servos
-    esmacat_ethercat_arduino_shield_by_esmacat feeder_ease_ecat_as; 
-    ros_ethercat_arduino_shield_by_esmacat feeder_ease;
-    ros_ethercat_arduino_shield_by_esmacat :: write feeder_ease_ros_message;
+    esmacat_ethercat_arduino_shield_by_esmacat gantry_ease_ecat_as; 
+    ros_ethercat_arduino_shield_by_esmacat gantry_ease;
+    ros_ethercat_arduino_shield_by_esmacat :: write gantry_ease_ros_message;
 };
 
 #endif // ROS_ESMACAT_APP_H

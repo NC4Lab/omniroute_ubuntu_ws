@@ -93,6 +93,7 @@ uint8_t GantryOperation::_grblRead(String &resonse_str, unsigned long timeout)
 	return 0;
 }
 
+/// @brief Initialize the grbl settings.
 void GantryOperation::grblInit()
 {
 	// Set Units (mm)
@@ -114,6 +115,7 @@ void GantryOperation::grblInit()
 	}
 }
 
+/// @brief Home the gantry.
 void GantryOperation::gantryHome()
 {
 	// Set the homing seek speed to 5000 mm/min

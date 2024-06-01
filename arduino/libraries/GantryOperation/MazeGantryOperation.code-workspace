@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../arduino_sketches/MazeGantryOperation"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"python.autoComplete.extraPaths": [
+			"/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
+			"/opt/ros/noetic/lib/python3/dist-packages"
+		],
+		"python.analysis.extraPaths": [
+			"/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
+			"/opt/ros/noetic/lib/python3/dist-packages"
+		]
+	}
+}

@@ -400,6 +400,7 @@ class MazePlot(QGraphicsView):
             
             # Send command to move gantry to selected chamber
             self.gantry_pub.publish("MOVE_TO_CHAMBER", [self.chamber_num])
+            MazeDB.printMsg('DEBUG', "TEMP")
 
             return  # TEMP
 

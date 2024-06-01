@@ -36,9 +36,9 @@ void ros_esmacat_app::assign_slave_sequence()
     assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index);
 
     // Assign the feeder servos slave object to the actual slave in the EtherCAT communication chain
-    int feeder_ease_slave_index;
-    ros::param::param<int>("/feeder_ease_slave_index", feeder_ease_slave_index, 2);
-    assign_esmacat_slave_index(&feeder_ease_ecat_as, feeder_ease_slave_index);
+    int gantry_ease_slave_index;
+    ros::param::param<int>("/gantry_ease_slave_index", gantry_ease_slave_index, 2);
+    assign_esmacat_slave_index(&gantry_ease_ecat_as, gantry_ease_slave_index);
 }
 
 /**
@@ -123,22 +123,22 @@ void ros_esmacat_app::loop()
 
     // The ROS object created is used to read the current state of registers from the Esmacat slave object
     // and store it in a shared memory location
-    feeder_ease.set_read_registers(&feeder_ease_ecat_as);
+    gantry_ease.set_read_registers(&gantry_ease_ecat_as);
 
     // The newly modified write registers from the ROS Communication is returned from the shared memory
-    feeder_ease_ros_message = feeder_ease.get_write_registers();
+    gantry_ease_ros_message = gantry_ease.get_write_registers();
 
     // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
     // updated values received from ROS Nodes.
-    feeder_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(feeder_ease_ros_message.INT0);
-    feeder_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(feeder_ease_ros_message.INT1);
-    feeder_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(feeder_ease_ros_message.INT2);
-    feeder_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(feeder_ease_ros_message.INT3);
-    feeder_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(feeder_ease_ros_message.INT4);
-    feeder_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(feeder_ease_ros_message.INT5);
-    feeder_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(feeder_ease_ros_message.INT6);
-    feeder_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(feeder_ease_ros_message.INT7);
+    gantry_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(gantry_ease_ros_message.INT0);
+    gantry_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(gantry_ease_ros_message.INT1);
+    gantry_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(gantry_ease_ros_message.INT2);
+    gantry_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(gantry_ease_ros_message.INT3);
+    gantry_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(gantry_ease_ros_message.INT4);
+    gantry_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(gantry_ease_ros_message.INT5);
+    gantry_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(gantry_ease_ros_message.INT6);
+    gantry_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(gantry_ease_ros_message.INT7);
 
     //     // // The updated value is logged onto the terminal
-    // cout <<"Sync EASE Register 0 = " << feeder_ease_ros_message.INT0 << std :: endl;
+    // cout <<"Sync EASE Register 0 = " << gantry_ease_ros_message.INT0 << std :: endl;
 }

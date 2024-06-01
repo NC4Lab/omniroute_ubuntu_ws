@@ -59,24 +59,6 @@ private:
 public:
 	GantryOperation();
 
-public:
-	void servoInit();
-
-public:
-	void feederLower();
-
-public:
-	void feederRaise();
-
-public:
-	void pumpStart();
-
-public:
-	void pumpStop();
-
-public:
-	void reward(int dt_run);
-
 private:
 	uint8_t _grblWrite(const String &cmd, unsigned long timeout = 1000);
 
@@ -94,6 +76,24 @@ public:
 
 public:
 	void debugPrintSerialChars();
+
+public:
+	void servoInit();
+
+public:
+	void feederLower();
+
+public:
+	void feederRaise();
+
+public:
+	void pumpStart();
+
+public:
+	void pumpStop();
+
+public:
+	void reward(int dt_run);
 };
 
 #endif
