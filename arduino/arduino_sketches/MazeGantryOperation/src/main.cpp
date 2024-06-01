@@ -1,11 +1,11 @@
 // #################################
 
-// ====== FeederOperation.ino ======
+// =========== main.ino ============
 
 // #################################
 
 /**
- @file Arduino INO file for running feeeder related oppertions.
+ @file Arduino INO file for running MazeGantryOpperation.
 */
 
 // BUILT IN
@@ -14,8 +14,8 @@
 
 // LOCAL
 #include <MazeDebug.h>
-#include <FeederServo.h>
 #include <EsmacatCom.h>
+#include <GantryOperation.h>
 
 //============ VARIABLES ===============
 
@@ -25,7 +25,7 @@ bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
 MazeDebug Dbg;          // instance of MazeDebug class for debugging messages
-FeederServo FdSrv;      // instance of FeederServo class
+GantryOperation FdSrv;      // instance of GantryOperation class
 
 //=============== SETUP =================
 void setup()

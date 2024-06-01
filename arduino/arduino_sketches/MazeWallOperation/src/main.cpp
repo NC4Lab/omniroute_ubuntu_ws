@@ -1,11 +1,11 @@
-// ######################################
+// #################################
 
-// ======== MazeWallOperation.ino =======
+// =========== main.ino ============
 
-// ######################################
+// #################################
 
 /**
-* @file Main Arduino INO file for running the maze.
+* @file Main Arduino INO file for MazeWallOperation which hangles maze wall opperations.
 */
 
 // BUILT IN

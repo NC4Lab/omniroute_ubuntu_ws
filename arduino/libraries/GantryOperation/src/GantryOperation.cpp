@@ -1,20 +1,20 @@
 // ######################################
 
-//========== FeederServo.cpp ============
+//======== GantryOperation.cpp ==========
 
 // ######################################
 
 /// <file>
-/// Used for the FeederServo class
+/// Used for the GantryOperation class
 /// <file>
 
 //============= INCLUDE ================
-#include "FeederServo.h"
+#include "GantryOperation.h"
 
-//===========CLASS: FeederServo============
+//===========CLASS: GantryOperation============
 
 /// @brief Constructor
-FeederServo::FeederServo() {}
+GantryOperation::GantryOperation() {}
 
 /// @brief: Write to grbl serial buffer.
 ///
@@ -22,7 +22,7 @@ FeederServo::FeederServo() {}
 /// @param timeout: Timeout for the grbl acknoledgement.
 ///
 /// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
-uint8_t FeederServo::_grblWrite(const String &cmd_str, unsigned long timeout)
+uint8_t GantryOperation::_grblWrite(const String &cmd_str, unsigned long timeout)
 {
 	// Write the command with a new line character
 	String full_cmd = cmd_str + "\n";
@@ -48,7 +48,7 @@ uint8_t FeederServo::_grblWrite(const String &cmd_str, unsigned long timeout)
 /// @param timeout: Timeout for the grbl response.
 ///
 /// @return Status/error codes [0:response, 1:grbl error, 2:timeout].
-uint8_t FeederServo::_grblRead(String &resonse_str, unsigned long timeout)
+uint8_t GantryOperation::_grblRead(String &resonse_str, unsigned long timeout)
 {
 	// Check for new message
 	unsigned long start_time = millis(); // start time
@@ -93,7 +93,7 @@ uint8_t FeederServo::_grblRead(String &resonse_str, unsigned long timeout)
 	return 0;
 }
 
-void FeederServo::grblInit()
+void GantryOperation::grblInit()
 {
 	// Set Units (mm)
 	if (_grblWrite("G21") != 0)
@@ -114,7 +114,7 @@ void FeederServo::grblInit()
 	}
 }
 
-void FeederServo::gantryHome()
+void GantryOperation::gantryHome()
 {
 	// Set the homing seek speed to 5000 mm/min
 	if (_grblWrite("$25=5000") != 0)
@@ -123,7 +123,7 @@ void FeederServo::gantryHome()
 	}
 
 	// Start the homing cycle
-	if (_grblWrite("$H", 10000) != 0) // allow for a longer timeout
+	if (_grblWrite("$H", 60000) != 0) // allow for a longer timeout (60 sec)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error starting homing cycle");
 	}
@@ -136,7 +136,7 @@ void FeederServo::gantryHome()
 }
 
 /// @brief Used to process new ROS ethercat msg argument data.
-void FeederServo::procEcatMessage()
+void GantryOperation::procEcatMessage()
 {
 	uint8_t msg_arg_arr[9]; // store message arguments
 	uint8_t arg_len = 0;	// store argument length
@@ -211,7 +211,7 @@ void FeederServo::procEcatMessage()
 	EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
 }
 
-void FeederServo::debugPrintSerialChars()
+void GantryOperation::debugPrintSerialChars()
 {
 	while (Serial1.available() > 0)
 	{
@@ -243,7 +243,7 @@ void FeederServo::debugPrintSerialChars()
 }
 
 /// @brief Initialize the servo objects.
-void FeederServo::servoInit()
+void GantryOperation::servoInit()
 {
 	// Setup the port servo
 	portServo.attach(portServoPin); // Attach the servo object to the pwm pin
@@ -254,35 +254,35 @@ void FeederServo::servoInit()
 }
 
 /// @brief Lower the feeder.
-void FeederServo::feederLower()
+void GantryOperation::feederLower()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Lowering the feeder");
 	portServo.write(portDownAngle);
 }
 
 /// @brief Raise the feeder.
-void FeederServo::feederRaise()
+void GantryOperation::feederRaise()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Raising the feeder");
 	portServo.write(portUpAngle);
 }
 
 /// @brief Start the pump.
-void FeederServo::pumpStart()
+void GantryOperation::pumpStart()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Running the pump");
 	pumpServo.write(pumpRunSpeed);
 }
 
 /// @brief Stop the pump.
-void FeederServo::pumpStop()
+void GantryOperation::pumpStop()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Stopping the pump");
 	pumpServo.write(pumpStopSpeed);
 }
 
 /// @brief Run the feeder.
-void FeederServo::reward(int dt_run)
+void GantryOperation::reward(int dt_run)
 {
 	// Lower the feeder
 	feederLower();

@@ -1,10 +1,10 @@
 // ######################################
 
-//=========== FeederServo.h =============
+//========= GantryOperation.h ===========
 
 // ######################################
 
-/// @file Used for the FeederServo class
+/// @file Used for the GantryOperation class
 
 //============= INCLUDE ================
 
@@ -24,7 +24,7 @@ extern bool DB_VERBOSE; ///< set this variable in your INO file to control debug
 /// @brief Used for printing different types of information to the Serial Output Window.
 ///
 /// @remarks This class is used in both the CypressComm and WallOperation classes.
-class FeederServo
+class GantryOperation
 {
 
 	// ---------------VARIABLES---------------
@@ -57,7 +57,7 @@ private:
 
 	// ---------------METHODS---------------
 public:
-	FeederServo();
+	GantryOperation();
 
 public:
 	void servoInit();

@@ -1,12 +1,12 @@
 
-// ##########################
+// #################################
 
-// ====== MazeSync.ino ======
+// =========== main.ino ============
 
-// ##########################
+// #################################
 
 /**
- @file Arduino INO file for handeling time stamp syncing oppertions.
+ @file Arduino INO file for MazeSync handeling time stamp syncing oppertions.
 */
 
 // BUILT IN
