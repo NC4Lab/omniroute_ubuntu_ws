@@ -50,13 +50,16 @@ class EsmacatCom:
         REINITIALIZE_SYSTEM = 4
         RESET_SYSTEM = 5
         MOVE_WALLS = 6
-        LOWER_FEEDER = 7
-        RAISE_FEEDER = 8
-        START_PUMP = 9
-        STOP_PUMP = 10
-        REWARD = 11
-        SET_OPTITRACK_SYNC_PIN = 12
-        SET_SPIKEGADGETS_SYNC_PIN = 13
+        SET_OPTITRACK_SYNC_PIN = 7
+        SET_SPIKEGADGETS_SYNC_PIN = 8
+        GANTRY_LOWER_FEEDER = 9
+        GANTRY_RAISE_FEEDER = 10
+        GANTRY_START_PUMP = 11
+        GANTRY_STOP_PUMP = 12
+        GANTRY_REWARD = 13
+        GANTRY_INITIALIZE_GRBL = 14
+        GANTRY_HOME = 15
+        GANTRY_MOVE_REL = 16
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """

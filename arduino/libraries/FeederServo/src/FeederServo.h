@@ -7,8 +7,12 @@
 /// @file Used for the FeederServo class
 
 //============= INCLUDE ================
+
+// BUILT IN
 #include "Arduino.h"
 #include "Servo.h"
+
+// LOCAL
 #include "MazeDebug.h"
 #include "EsmacatCom.h"
 
@@ -25,6 +29,9 @@ class FeederServo
 
 	// ---------------VARIABLES---------------
 public:
+	// GRBL acknoledgement timeout
+	const unsigned long grblAckTimeout = 1000; // Timeout for grbl acknoledgement (ms)
+
 	// Gantry position parameters
 	double value_X = 0.0;
 	double value_Y = 0.0;
@@ -41,42 +48,52 @@ public:
 	const int pumpRunSpeed = 500;	// Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 
+	// Instance of EsmacatCom class using SPI chip select pin 10
+	EsmacatCom EsmaCom; 
+
 private:
-	MazeDebug _Dbg; /// unique instance of MazeDebug class
+	// Instance of MazeDebug class for debugging messages
+	MazeDebug _Dbg;
 
 	// ---------------METHODS---------------
 public:
 	FeederServo();
 
 public:
-	void initServo();
+	void servoInit();
 
 public:
-	void lowerFeeder();
+	void feederLower();
 
 public:
-	void raiseFeeder();
+	void feederRaise();
 
 public:
-	void startPump();
+	void pumpStart();
 
 public:
-	void stopPump();
+	void pumpStop();
 
 public:
-	void runFeeder(int dt_run);
+	void reward(int dt_run);
 
 private:
-	void _grblInit(const std::string &cmd);
+	uint8_t _grblWrite(const String &cmd, unsigned long timeout = 1000);
+
+private:
+	uint8_t _grblRead(String &data, unsigned long timeout = 1000);
 
 public:
-	void grblSetup();
+	void grblInit();
 
 public:
-	void cmdRealTime(const std::string &cmd);
+	void gantryHome();
 
 public:
-	void cmdRaw(const std::string &cmd);
+	void procEcatMessage();
+
+public:
+	void debugPrintSerialChars();
 };
 
 #endif

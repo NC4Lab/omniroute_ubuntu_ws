@@ -72,7 +72,7 @@ public:
     bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[14][30] = {
+    const char message_type_str[17][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
@@ -80,13 +80,16 @@ public:
         "REINITIALIZE_SYSTEM",
         "RESET_SYSTEM",
         "MOVE_WALLS",
-        "LOWER_FEEDER",
-        "RAISE_FEEDER",
-        "START_PUMP",
-        "STOP_PUMP",
-        "REWARD",
         "SET_OPTITRACK_SYNC_PIN",
-        "SET_SPIKEGADGETS_SYNC_PIN"};
+        "SET_SPIKEGADGETS_SYNC_PIN",
+        "GANTRY_LOWER_FEEDER",
+        "GANTRY_RAISE_FEEDER",
+        "GANTRY_START_PUMP",
+        "GANTRY_STOP_PUMP",
+        "GANTRY_REWARD",
+        "GANTRY_INITIALIZE_GRBL",
+        "GANTRY_HOME",
+        "GANTRY_MOVE_REL"};
     enum MessageType
     {
         MSG_NONE = 0,
@@ -96,13 +99,16 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
-        LOWER_FEEDER = 7,
-        RAISE_FEEDER = 8,
-        START_PUMP = 9,
-        STOP_PUMP = 10,
-        REWARD = 11,
-        SET_OPTITRACK_SYNC_PIN = 12,
-        SET_SPIKEGADGETS_SYNC_PIN = 13,
+        SET_OPTITRACK_SYNC_PIN = 7,
+        SET_SPIKEGADGETS_SYNC_PIN = 8,
+        GANTRY_LOWER_FEEDER = 9,
+        GANTRY_RAISE_FEEDER = 10,
+        GANTRY_START_PUMP = 11,
+        GANTRY_STOP_PUMP = 12,
+        GANTRY_REWARD = 13,
+        GANTRY_INITIALIZE_GRBL = 14,
+        GANTRY_HOME = 15,
+        GANTRY_MOVE_REL = 16,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {

@@ -69,19 +69,19 @@ class GantryFeeder:
         # Create EsmacatCom object for feeder_ease
         self.EsmaComFeeder = EsmacatCom('feeder_ease')
 
-        # ................ GCode Client Setup ................
-        self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-        ## TODO: Automatically determine the port
-
         # Wait for 1 second
         time.sleep(1) 
-        
-        # # Home the gantry
-        # self.home() 
-        # time.sleep(1)
 
-        # Initialize the gcode client
-        self.gcode_client.raw_command("M3 S1000")
+        # Send handshake command
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE)
+
+        # Wait for 1 second
+        time.sleep(2) 
+
+        # Send command to initialize GRBL for gantry
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
+
+        # ................ Run node ................
 
         # Initialize the ROS rate 
         r = rospy.Rate(30)
@@ -134,26 +134,21 @@ class GantryFeeder:
                     self.move_gantry_rel(x, y)      
             
     def home(self):
-        MazeDB.printMsg('INFO', "[GantryFeeder]: Homing gantry...")
-        self.gcode_client.raw_command("$25=5000")
-        self.gcode_client.raw_command("$H")
-        self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
+        # Send command to home gantry 
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
            
     def move_gantry_rel(self, x, y):
         cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F25000".format(x,y)
-        self.gcode_client.raw_command(cmd)
-
-    def move_gantry_abs(self, x, y):
-        self.gcode_client.raw_command("$J=G90 G21 X(%0.1f) Y(%0.1f) F25000", x, y)
+        MazeDB.printMsg('DEBUG', "[GantryFeeder]: cmd[%s]", cmd)
 
     def run_reward(self, duration):
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.LOWER_FEEDER, 1)
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_LOWER_FEEDER, 1)
         time.sleep(0.5) # Wait 0.5 seconds for the lowering to complete
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.START_PUMP, 1)
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_START_PUMP, 1)
         time.sleep(duration) # Wait for the reward duration
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.STOP_PUMP, 1)
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_STOP_PUMP, 1)
         time.sleep(0.25) # Wait 0.25 seconds for the command to complete
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.RAISE_FEEDER, 1)
+        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_RAISE_FEEDER, 1)
             
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
@@ -183,19 +178,19 @@ class GantryFeeder:
 
         elif msg.cmd == "LOWER_FEEDER":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Lower Feeder command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.LOWER_FEEDER, 1)
+            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_LOWER_FEEDER, 1)
 
         elif msg.cmd == "RAISE_FEEDER":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Raise Feeder command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.RAISE_FEEDER, 1)
+            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_RAISE_FEEDER, 1)
         
         elif msg.cmd == "START_PUMP":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Start Pump command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.START_PUMP, 1)
+            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_START_PUMP, 1)
         
         elif msg.cmd == "STOP_PUMP":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Stop Pump command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.STOP_PUMP, 1)
+            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.GANTRY_STOP_PUMP, 1)
 
         elif msg.cmd == "REWARD":
             duration = msg.args[0] # Duration in seconds

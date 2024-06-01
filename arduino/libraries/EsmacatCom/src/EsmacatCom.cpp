@@ -454,7 +454,7 @@ void EsmacatCom::initEcat(bool do_connect)
         sndEM.msgID = 0;
         rcvEM.msgID = 0;
 
-        // Reset reg one last diem after delay to allow last ack to be read before buffer is cleared
+        // Reset reg one last time after delay to allow last ack to be read before buffer is cleared
         delay(dtEcatDisconnect);
         _resetReg();
     }

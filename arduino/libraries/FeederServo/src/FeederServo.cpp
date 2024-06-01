@@ -16,8 +16,234 @@
 /// @brief Constructor
 FeederServo::FeederServo() {}
 
+/// @brief: Write to grbl serial buffer.
+///
+/// @param cmd_str: Command string to write.
+/// @param timeout: Timeout for the grbl acknoledgement.
+///
+/// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
+uint8_t FeederServo::_grblWrite(const String &cmd_str, unsigned long timeout)
+{
+	// Write the command with a new line character
+	String full_cmd = cmd_str + "\n";
+	Serial1.write(full_cmd.c_str());
+	delay(100);
+
+	// Check for acknoledgement
+	_Dbg.dtTrack(1);
+	String ack_str;
+	uint8_t status = _grblRead(ack_str, timeout);
+
+	// Print the acknoledgement
+	if (status == 0)
+		_Dbg.printMsg(_Dbg.MT::INFO, "[_grblWrite] Acknoledgement recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
+
+	// Return status from read
+	return status;
+}
+
+/// @brief: Read the grbl response from the serial buffer.
+///
+/// @param resonse: The string to store the grbl response.
+/// @param timeout: Timeout for the grbl response.
+///
+/// @return Status/error codes [0:response, 1:grbl error, 2:timeout].
+uint8_t FeederServo::_grblRead(String &resonse_str, unsigned long timeout)
+{
+	// Check for new message
+	unsigned long start_time = millis(); // start time
+
+	// Read from the Serial1 buffer
+	while (Serial1.available() > 0 || millis() - start_time < timeout)
+	{
+		// Read a byte from the Serial buffer
+		char new_bite = Serial1.read();
+
+		// Check for carriage return character
+		if (new_bite == '\r')
+		{
+			continue;
+		}
+
+		// Check for new line character
+		if (new_bite == '\n')
+		{
+			break;
+		}
+
+		// Append the byte to the String
+		resonse_str += new_bite;
+	}
+
+	// Check for timeout
+	if (millis() - start_time > timeout)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[_grblWrite] Timeout: resonse_str[%s]", resonse_str.c_str());
+		return 2;
+	}
+
+	// Check for error message
+	if (resonse_str == "error")
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[_grblRead] Error message: resonse_str[%s]", resonse_str.c_str());
+		return 1;
+	}
+
+	// Return message received
+	return 0;
+}
+
+void FeederServo::grblInit()
+{
+	// Set Units (mm)
+	if (_grblWrite("G21") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting units");
+	}
+
+	// Set Mode (G90 = Absolute, G91 = Relative)
+	if (_grblWrite("G90") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting absolute mode");
+	}
+
+	// Feed Rate (mm/min)
+	if (_grblWrite("F25000") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting feed rate");
+	}
+}
+
+void FeederServo::gantryHome()
+{
+	// Set the homing seek speed to 5000 mm/min
+	if (_grblWrite("$25=5000") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting homing seek speed");
+	}
+
+	// Start the homing cycle
+	if (_grblWrite("$H", 10000) != 0) // allow for a longer timeout
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error starting homing cycle");
+	}
+
+	// Set the current position as the origin (0,0,0) for the coordinate system
+	if (_grblWrite("G10 P0 L20 X0 Y0 Z0") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting origin");
+	}
+}
+
+/// @brief Used to process new ROS ethercat msg argument data.
+void FeederServo::procEcatMessage()
+{
+	uint8_t msg_arg_arr[9]; // store message arguments
+	uint8_t arg_len = 0;	// store argument length
+
+	// Check for new message
+	if (!EsmaCom.rcvEM.isNew)
+		return;
+
+	// Copy and send back recieved message arguments as the default response
+	arg_len = EsmaCom.rcvEM.argLen;
+	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
+		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
+
+	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
+
+	//............... Process and Execute Messages ...............
+
+	// HANDSHAKE
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
+	{
+		// Initialize ecat message variables
+		EsmaCom.initEcat(true);
+		_Dbg.printMsg(_Dbg.MT::INFO, "[HANDSHAKE] Initializing ecat message variables");
+	}
+
+	// GANTRY_INITIALIZE_GRBL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_INITIALIZE_GRBL)
+	{
+		grblInit();
+		_Dbg.printMsg(_Dbg.MT::INFO, "[GANTRY_INITIALIZE_GRBL] Initializing grbl");
+	}
+
+	// GANTRY_HOME
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_HOME)
+	{
+		gantryHome();
+	}
+
+	// GANTRY_LOWER_FEEDER
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_LOWER_FEEDER)
+	{
+		feederLower();
+	}
+
+	// GANTRY_RAISE_FEEDER
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RAISE_FEEDER)
+	{
+		feederRaise();
+	}
+
+	// GANTRY_START_PUMP
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_START_PUMP)
+	{
+		pumpStart();
+	}
+
+	// GANTRY_STOP_PUMP
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_STOP_PUMP)
+	{
+		pumpStop();
+	}
+
+	// GANTRY_REWARD
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
+	{
+		reward(2000);
+	}
+
+	//............... Send Ecat Ack ...............
+
+	// NO ERROR
+	EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
+}
+
+void FeederServo::debugPrintSerialChars()
+{
+	while (Serial1.available() > 0)
+	{
+		// Read a byte from the Serial1 buffer
+		char incomingByte = Serial1.read();
+
+		// Print the character with explicit handling for special characters
+		if (incomingByte == '\n')
+		{
+			Serial.print("[newline]");
+		}
+		else if (incomingByte == '\r')
+		{
+			Serial.print("[carriage return]");
+		}
+		else if (incomingByte == '\t')
+		{
+			Serial.print("[tab]");
+		}
+		else if (incomingByte == ' ')
+		{
+			Serial.print("[space]");
+		}
+		else
+		{
+			Serial.print(incomingByte);
+		}
+	}
+}
+
 /// @brief Initialize the servo objects.
-void FeederServo::initServo()
+void FeederServo::servoInit()
 {
 	// Setup the port servo
 	portServo.attach(portServoPin); // Attach the servo object to the pwm pin
@@ -28,156 +254,47 @@ void FeederServo::initServo()
 }
 
 /// @brief Lower the feeder.
-void FeederServo::lowerFeeder()
+void FeederServo::feederLower()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Lowering the feeder");
 	portServo.write(portDownAngle);
 }
 
 /// @brief Raise the feeder.
-void FeederServo::raiseFeeder()
+void FeederServo::feederRaise()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Raising the feeder");
 	portServo.write(portUpAngle);
 }
 
 /// @brief Start the pump.
-void FeederServo::startPump()
+void FeederServo::pumpStart()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Running the pump");
 	pumpServo.write(pumpRunSpeed);
 }
 
 /// @brief Stop the pump.
-void FeederServo::stopPump()
+void FeederServo::pumpStop()
 {
 	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Stopping the pump");
 	pumpServo.write(pumpStopSpeed);
 }
 
 /// @brief Run the feeder.
-void FeederServo::runFeeder(int dt_run)
+void FeederServo::reward(int dt_run)
 {
 	// Lower the feeder
-	lowerFeeder();
+	feederLower();
 	delay(1000);
 
 	// Run the pump
-	startPump();
+	pumpStart();
 	delay(dt_run);
-	stopPump();
+	pumpStop();
 
 	// Raise the feeder
-	raiseFeeder();
-}
-
-void FeederServo::_grblInit(const std::string &cmd)
-{
-	std::string full_cmd = cmd + "\n";
-	Serial1.write(full_cmd);
-	delay(1000);
-	while (true)
-	{
-		std::string feedback = ser.readline();
-		if (feedback == "ok\n")
-		{
-			_Dbg.printMsg(_Dbg.MT::INFO, "[_grblInit] feedback = %s", feedback.c_str());
-			break;
-		}
-	}
-}
-
-void _readSerial(std::string &data) {
-  // Clear the string to remove any old data
-  data.clear();
-  
-  while (Serial1.available() > 0) {
-    // Read a byte from the Serial1 buffer
-    char incomingByte = Serial1.read();
-    // Append the byte to the std::string
-    data += incomingByte;
-  }
-}
-
-void FeederServo::grblSetup()
-{
-
-	// Set Units (does not seem to work on ender 5)
-	_grblInit("G21"); // millimeters
-
-	// Absolute Mode
-	_grblInit("G90");
-
-	// Relative Mode
-	// _grblInit("G91");
-
-	// Feed Rate
-	_grblInit("F25000");
-}
-
-void FeederServo::cmdRealTime(const std::string &cmd)
-{
-	Serial1.write(cmd);
-	delay(100); // wait for the command to be executed
-}
-
-bool FeederServo::cmdRaw(const std::string &cmd)
-{
-	try
-	{
-		std::string full_cmd = cmd + "\n";
-		Serial1.write(full_cmd);
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-		std::string feedback = ser.readline();
-		return feedback == "ok\n";
-	}
-	catch (const std::exception &e)
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[_grblInit] Gcode commands must be a string");
-		return false;
-	}
-}
-
-// Function prototype
-void readSerial1Buffer(std::string &data);
-
-// Global variable to store serial data
-std::string serialData;
-
-void setup()
-{
-	// Initialize Serial1 at a baud rate of 9600
-	Serial1.begin(9600);
-	// Initialize Serial for debugging
-	Serial.begin(9600);
-}
-
-void loop()
-{
-	// Call the function to read data from Serial1
-	readSerial1Buffer(serialData);
-
-	// Optionally, print the data for debugging
-	if (!serialData.empty())
-	{
-		Serial.println(serialData.c_str());
-	}
-
-	// Add a small delay to avoid overwhelming the loop
-	delay(100);
-}
-
-// Function to read from Serial1 buffer and store it in an std::string
-void readSerial1Buffer(std::string &data)
-{
-	while (Serial1.available() > 0)
-	{
-		// Read a byte from the Serial1 buffer
-		char incomingByte = Serial1.read();
-		// Append the byte to the std::string
-		data += incomingByte;
-	}
+	feederRaise();
 }
 
 // void command(const std::string &cmd)
@@ -206,10 +323,10 @@ void readSerial1Buffer(std::string &data)
 // 		std::this_thread::sleep_for(std::chrono::seconds(1));
 // 		while (true)
 // 		{
-// 			std::string feedback = ser.readline();
-// 			if (feedback == "ok\n")
+// 			std::string ack_str = ser.readline();
+// 			if (ack_str == "ok\n")
 // 			{
-// 				// std::cout << feedback << std::endl;
+// 				// std::cout << ack_str << std::endl;
 // 				break;
 // 			}
 // 		}

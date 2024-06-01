@@ -72,7 +72,7 @@ void loop()
 	// Check ethercat coms
 	WallOper.EsmaCom.readEcatMessage();
 
-	// Process and exicute ethercat arguments
+	// Process and execute ethercat arguments
 	WallOper.procEcatMessage();
 
 	// //............... Standalone Setup ...............

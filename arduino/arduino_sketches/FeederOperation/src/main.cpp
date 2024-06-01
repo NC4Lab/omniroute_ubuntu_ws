@@ -20,13 +20,12 @@
 //============ VARIABLES ===============
 
 // Global variables
-bool DB_VERBOSE = 0;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
-MazeDebug Dbg; // instance of MazeDebug class for debugging messages
-FeederServo FdSrv; // instance of FeederServo class
-EsmacatCom EsmaCom(10);  // instance of EsmacatCom class using SPI chip select pin 10
+MazeDebug Dbg;          // instance of MazeDebug class for debugging messages
+FeederServo FdSrv;      // instance of FeederServo class
 
 //=============== SETUP =================
 void setup()
@@ -40,11 +39,8 @@ void setup()
   Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
 
   // Initialize servos
-  FdSrv.initServo();
+  FdSrv.servoInit();
   delay(1000);
-
-  // Initialize ethercat coms
-  EsmaCom.initEcat(true);
 
   // Print setup complete
   Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
@@ -53,69 +49,10 @@ void setup()
 //=============== LOOP ==================
 void loop()
 {
-
   // Check ethercat coms
-  if (!EsmaCom.readEcatMessage())
+  if (!FdSrv.EsmaCom.readEcatMessage())
     return;
 
-  // Lower feeder
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::LOWER_FEEDER)
-  {
-    FdSrv.lowerFeeder();
-  }
-
-  // Raise feeder
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RAISE_FEEDER)
-  {
-    FdSrv.raiseFeeder();
-  }
-
-  // Start pump
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::START_PUMP)
-  {
-    FdSrv.startPump();
-  }
-
-  // Stop pump
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::STOP_PUMP)
-  {
-    FdSrv.stopPump();
-  }
-
-  // Run full feeder opperation
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::REWARD)
-  {
-    FdSrv.runFeeder(2000);
-  }
-
-  // Send back recieved message arguments
-  EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
-
+  // Process and execute ethercat arguments
+  FdSrv.procEcatMessage();
 }
-
-// //=============== SETUP =================
-// void setup()
-// {
-//   Serial.begin(115200);
-//   delay(100);
-
-//   Serial1.begin(115200);
-//   delay(100);
-
-//   Serial.println("RUNNING SETUP");
-
-//   Serial1.println("$$");
-//   delay(100);
-
-//   Serial.println("SETUP COMPLETE");
-// }
-
-// //=============== LOOP ==================
-// void loop()
-// {
-//   while(Serial1.available())
-//   {
-//     Serial.write(Serial1.read());
-//   }
-//   delay(1000);
-// }
