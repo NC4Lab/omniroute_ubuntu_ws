@@ -72,7 +72,7 @@ public:
     bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[17][30] = {
+    const char message_type_str[14][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
@@ -80,16 +80,13 @@ public:
         "REINITIALIZE_SYSTEM",
         "RESET_SYSTEM",
         "MOVE_WALLS",
-        "SYNC_SET_OPTITRACK_SYNC_PIN",
-        "SYNC_SET_SPIKEGADGETS_SYNC_PIN",
+        "SYNC_SET_OPTITRACK_PIN",
+        "SYNC_SET_SPIKEGADGETS_PIN",
         "GANTRY_INITIALIZE_GRBL",
         "GANTRY_HOME",
         "GANTRY_MOVE_REL",
-        "GANTRY_LOWER_FEEDER",
-        "GANTRY_RAISE_FEEDER",
-        "GANTRY_START_PUMP",
-        "GANTRY_STOP_PUMP",
-        "GANTRY_REWARD"};
+        "GANTRY_SET_FEEDER",
+        "GANTRY_RUN_PUMP"};
     enum MessageType
     {
         MSG_NONE = 0,
@@ -99,16 +96,13 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
-        SYNC_SET_OPTITRACK_SYNC_PIN = 100,
-        SYNC_SET_SPIKEGADGETS_SYNC_PIN = 101,
+        SYNC_SET_OPTITRACK_PIN = 100,
+        SYNC_SET_SPIKEGADGETS_PIN = 101,
         GANTRY_INITIALIZE_GRBL = 200,
         GANTRY_HOME = 201,
         GANTRY_MOVE_REL = 202,
-        GANTRY_LOWER_FEEDER = 203,
-        GANTRY_RAISE_FEEDER = 204,
-        GANTRY_START_PUMP = 205,
-        GANTRY_STOP_PUMP = 206,
-        GANTRY_REWARD = 207,
+        GANTRY_SET_FEEDER = 203,
+        GANTRY_RUN_PUMP = 204,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
@@ -145,9 +139,9 @@ public:
         uint8_t ii8 = 0;  // 8 bit index
         uint8_t ii16 = 0; // 16 bit index
 
-        uint8_t upd8(uint8_t b_i = 255);
-        uint8_t upd16(uint8_t b_i = 255);
-        void reset();
+        uint8_t upd8(uint8_t b_i = 255);  // update 8 bit index
+        uint8_t upd16(uint8_t b_i = 255); // update 16 bit index
+        void reset();                     // reset index values
     };
 
     struct EcatMessageStruct // class for handeling ethercat messages

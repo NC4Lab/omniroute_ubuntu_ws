@@ -81,19 +81,10 @@ public:
 	void servoInit();
 
 public:
-	void feederLower();
+	void feederMove(uint8_t move_dir);
 
 public:
-	void feederRaise();
-
-public:
-	void pumpStart();
-
-public:
-	void pumpStop();
-
-public:
-	void reward(int dt_run);
+	void pumpRun(uint8_t run_state);
 };
 
 #endif

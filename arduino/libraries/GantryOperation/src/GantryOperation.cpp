@@ -96,6 +96,8 @@ uint8_t GantryOperation::_grblRead(String &resonse_str, unsigned long timeout)
 /// @brief Initialize the grbl settings.
 void GantryOperation::grblInit()
 {
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GRBL INITIALIZATION");
+
 	// Set Units (mm)
 	if (_grblWrite("G21") != 0)
 	{
@@ -113,11 +115,15 @@ void GantryOperation::grblInit()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting feed rate");
 	}
+
+	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: GRBL INITIALIZATION");
 }
 
 /// @brief Home the gantry.
 void GantryOperation::gantryHome()
 {
+	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GANTRY HOMING");
+
 	// Set the homing seek speed to 5000 mm/min
 	if (_grblWrite("$25=5000") != 0)
 	{
@@ -135,6 +141,8 @@ void GantryOperation::gantryHome()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting origin");
 	}
+
+	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: GANTRY HOMING");
 }
 
 /// @brief Used to process new ROS ethercat msg argument data.
@@ -177,34 +185,27 @@ void GantryOperation::procEcatMessage()
 		gantryHome();
 	}
 
-	// GANTRY_LOWER_FEEDER
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_LOWER_FEEDER)
+	// GANTRY_MOVE_REL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
-		feederLower();
+		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
+		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
+		_Dbg.printMsg(_Dbg.MT::INFO, "[GANTRY_MOVE_REL] Moving to x[%d] y[%d]", x, y);
+		delay(1000);
 	}
 
-	// GANTRY_RAISE_FEEDER
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RAISE_FEEDER)
+	// GANTRY_SET_FEEDER
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_SET_FEEDER)
 	{
-		feederRaise();
+		uint8_t move_dir = EsmaCom.rcvEM.ArgU.ui8[0]; // get the move direction
+		feederMove(move_dir);
 	}
 
-	// GANTRY_START_PUMP
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_START_PUMP)
+	// GANTRY_RUN_PUMP
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RUN_PUMP)
 	{
-		pumpStart();
-	}
-
-	// GANTRY_STOP_PUMP
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_STOP_PUMP)
-	{
-		pumpStop();
-	}
-
-	// GANTRY_REWARD
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
-	{
-		reward(2000);
+		uint8_t run_state = EsmaCom.rcvEM.ArgU.ui8[0]; // get the run state
+		pumpRun(run_state);
 	}
 
 	//............... Send Ecat Ack ...............
@@ -255,48 +256,38 @@ void GantryOperation::servoInit()
 	pumpServo.attach(pumpServoPin); // Attach the servo object to the pwm pin
 }
 
-/// @brief Lower the feeder.
-void GantryOperation::feederLower()
+/// @brief Lower or raise the feeder.
+///
+/// @param move_dir: Direction to move the feeder [0:lower, 1:raise].
+void GantryOperation::feederMove(uint8_t move_dir)
 {
-	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Lowering the feeder");
-	portServo.write(portDownAngle);
+	if (move_dir == 1)
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[feederMove] Lowering the feeder");
+		portServo.write(portDownAngle);
+	}
+	else
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[feederMove] Raising the feeder");
+		portServo.write(portUpAngle);
+	}
 }
 
-/// @brief Raise the feeder.
-void GantryOperation::feederRaise()
+/// @brief Start or stop the pump.
+///
+/// @param run_state: State to run the pump [0:stop, 1:run].
+void GantryOperation::pumpRun(uint8_t run_state)
 {
-	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Raising the feeder");
-	portServo.write(portUpAngle);
-}
-
-/// @brief Start the pump.
-void GantryOperation::pumpStart()
-{
-	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Running the pump");
-	pumpServo.write(pumpRunSpeed);
-}
-
-/// @brief Stop the pump.
-void GantryOperation::pumpStop()
-{
-	_Dbg.printMsg(_Dbg.MT::INFO, "[lowerFeeder] Stopping the pump");
-	pumpServo.write(pumpStopSpeed);
-}
-
-/// @brief Run the feeder.
-void GantryOperation::reward(int dt_run)
-{
-	// Lower the feeder
-	feederLower();
-	delay(1000);
-
-	// Run the pump
-	pumpStart();
-	delay(dt_run);
-	pumpStop();
-
-	// Raise the feeder
-	feederRaise();
+	if (run_state == 1)
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[pumpRun] Running the pump");
+		pumpServo.write(pumpRunSpeed);
+	}
+	else
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[pumpRun] Stopping the pump");
+		pumpServo.write(pumpStopSpeed);
+	}
 }
 
 // void command(const std::string &cmd)

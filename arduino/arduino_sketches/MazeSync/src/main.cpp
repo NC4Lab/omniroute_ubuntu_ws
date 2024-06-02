@@ -70,7 +70,7 @@ void loop()
   }
 
   // Set SpikeGadgets sync pin
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_SYNC_PIN)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_PIN)
   {
     digitalWrite(spikeGadgSyncPin, arg0);
     Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");

@@ -50,16 +50,13 @@ class EsmacatCom:
         REINITIALIZE_SYSTEM = 4
         RESET_SYSTEM = 5
         MOVE_WALLS = 6
-        SYNC_SET_OPTITRACK_SYNC_PIN = 100
-        SYNC_SET_SPIKEGADGETS_SYNC_PIN = 101
+        SYNC_SET_OPTITRACK_PIN = 100
+        SYNC_SET_SPIKEGADGETS_PIN = 101
         GANTRY_INITIALIZE_GRBL = 200
         GANTRY_HOME = 201
         GANTRY_MOVE_REL = 202
-        GANTRY_LOWER_FEEDER = 203
-        GANTRY_RAISE_FEEDER = 204
-        GANTRY_START_PUMP = 205
-        GANTRY_STOP_PUMP = 206
-        GANTRY_REWARD = 207
+        GANTRY_SET_FEEDER = 203
+        GANTRY_RUN_PUMP = 204
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
@@ -88,16 +85,16 @@ class EsmacatCom:
 
         def upd8(self, b_i=255):
             """Update union 8-bit and 16-bit index and return last updated 8-bit index"""
-            b_i = b_i if b_i != 255 else self.ii8
+            b_i = b_i if b_i != 255 else self.ii8 # if b_i is 255, use current union index
             self.ii8 = b_i + 1
             self.ii16 = self.ii8 // 2
             return b_i
 
         def upd16(self, b_i=255):
             """Update union 16-bit and 8-bit index and return last updated 16-bit index"""
-            b_i = b_i if b_i != 255 else self.ii16
+            b_i = b_i if b_i != 255 else self.ii16 # if b_i is 255, use current union index
             self.ii16 = b_i + 1
-            self.ii8 = self.ii16 * 2
+            self.ii8 = self.ii16 * 2 
             return b_i
 
         def reset(self):
@@ -151,79 +148,6 @@ class EsmacatCom:
         self.ts_ecat_init = rospy.get_time()  # (sec)
 
     # ------------------------ PRIVATE METHODS ------------------------
-
-    def _ros_callback(self, msg):
-        """ ROS callback for Esmacat_read topic """
-
-        # Wait for interface to initialize
-        current_time = rospy.get_time()
-        if (current_time - self.ts_ecat_init) < self.dt_ecat_start:  # Less than 100ms
-            return
-
-        # Store ethercat message in class variable
-        reg_arr_si16 = [0]*8
-        reg_arr_si16[0] = msg.INT0
-        reg_arr_si16[1] = msg.INT1
-        reg_arr_si16[2] = msg.INT2
-        reg_arr_si16[3] = msg.INT3
-        reg_arr_si16[4] = msg.INT4
-        reg_arr_si16[5] = msg.INT5
-        reg_arr_si16[6] = msg.INT6
-        reg_arr_si16[7] = msg.INT7
-
-        # Check for new messages
-        self._readEcatMessage(reg_arr_si16)
-
-    def _readEcatMessage(self, reg_arr_si16):
-        """
-        Used to parse new incoming ROS ethercat msg data.
-
-        Args:
-            reg_arr_si16 (list): Register array (signed int16).
-
-        Returns:
-            int: new message flag [0:no message, 1:new message].
-        """
-
-        # Bail if previous message not processed
-        if self.rcvEM.isNew:
-            return False
-
-        # Check register for garbage or incomplete data and copy register data into union
-        if not self._uSetCheckReg(self.rcvEM, reg_arr_si16):
-            return False
-
-        # Get message id and check for out of sequence messages
-        if not self._uGetMsgID(self.rcvEM):
-            return False
-
-        # Skip redundant messages
-        if self.rcvEM.msgID == self.rcvEM.msgID_last:
-            return False
-
-        # Get message type and check if not valid
-        if not self._uGetMsgType(self.rcvEM):
-            return False
-
-        # Get error type and flag if not valid
-        self._uGetErrType(self.rcvEM)
-
-        # Get argument length and arguments
-        self._uGetArgData8(self.rcvEM)
-
-        # Get footer and check if not found
-        if not self._uGetFooter(self.rcvEM):
-            return False
-
-        # Set new message flag
-        self.rcvEM.isNew = True
-
-        # Print message
-        MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
-                        self.rcvEM.msgID, self.rcvEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
-
-        return True
 
     def _uSetCheckReg(self, r_EM, reg_arr_si16):
         """
@@ -431,13 +355,20 @@ class EsmacatCom:
             # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
 
-            # Get 8-bit union index and set 8-bit argument data entry in union
+            #TEMP
+            MazeDB.printMsg('INFO', "[_uSetArgData8]===== Ecat: r_EM.argLen[%d] r_EM.argUI.ii8[%d] r_EM.argUI.ii16[%d]", r_EM.argLen, r_EM.argUI.ii8, r_EM.argUI.ii16)
+
+
+            # Get 8-bit union index 
             regu8_i = r_EM.argUI.ii8 + 4
 
             # Set message argument data in reg union
             r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
             # copy from union to associated struct variable
             self._uGetArgData8(r_EM)
+
+        else:
+            MazeDB.printMsg('WARNING', "Ecat: 8-bit argument data out of range: data[%d]", msg_arg_data8)
 
     def _uSetArgData16(self, r_EM, msg_arg_data16):
         """
@@ -448,7 +379,7 @@ class EsmacatCom:
             msg_arg_data16 (unsigned int16): Message argument data (unsigned int16)
         """
 
-        if isinstance(msg_arg_data16, int) and msg_arg_data16 > 255:  # check for 16-bit int data
+        if isinstance(msg_arg_data16, int) and msg_arg_data16 <= 65535:  # check for 16-bit int data
 
             # Increment argument union index
             r_EM.argUI.upd16()
@@ -456,13 +387,20 @@ class EsmacatCom:
             # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
 
-            # Get 16-bit union index and set 16-bit argument data entry in union
+            #TEMP
+            MazeDB.printMsg('INFO', "[_uSetArgData16]===== Ecat: r_EM.argLen[%d] r_EM.argUI.ii8[%d] r_EM.argUI.ii16[%d]", r_EM.argLen, r_EM.argUI.ii8, r_EM.argUI.ii16)
+
+
+            # Get 16-bit union index
             regu16_i = (r_EM.argUI.ii8 + 4) // 2
 
             # Set message argument data in reg union
             r_EM.RegU.ui16[r_EM.setUI.upd16(regu16_i)] = msg_arg_data16
             # copy from union to associated struct variable
             self._uGetArgData8(r_EM)
+
+        else:
+            MazeDB.printMsg('WARNING', "Ecat: 16-bit argument data out of range: data[%d]", msg_arg_data16)
 
     def _uGetArgData8(self, r_EM):
         """
@@ -587,6 +525,79 @@ class EsmacatCom:
                 MazeDB.printMsg(level, "\t\t ui8[%d][%d] [%d][%d]", 2 * i,
                                 2 * i + 1, reg_u.ui8[2 * i], reg_u.ui8[2 * i + 1])
 
+    def _ros_callback(self, msg):
+        """ ROS callback for Esmacat_read topic """
+
+        # Wait for interface to initialize
+        current_time = rospy.get_time()
+        if (current_time - self.ts_ecat_init) < self.dt_ecat_start:  # Less than 100ms
+            return
+
+        # Store ethercat message in class variable
+        reg_arr_si16 = [0]*8
+        reg_arr_si16[0] = msg.INT0
+        reg_arr_si16[1] = msg.INT1
+        reg_arr_si16[2] = msg.INT2
+        reg_arr_si16[3] = msg.INT3
+        reg_arr_si16[4] = msg.INT4
+        reg_arr_si16[5] = msg.INT5
+        reg_arr_si16[6] = msg.INT6
+        reg_arr_si16[7] = msg.INT7
+
+        # Check for new messages
+        self._readEcatMessage(reg_arr_si16)
+
+    def _readEcatMessage(self, reg_arr_si16):
+        """
+        Used to parse new incoming ROS ethercat msg data.
+
+        Args:
+            reg_arr_si16 (list): Register array (signed int16).
+
+        Returns:
+            int: new message flag [0:no message, 1:new message].
+        """
+
+        # Bail if previous message not processed
+        if self.rcvEM.isNew:
+            return False
+
+        # Check register for garbage or incomplete data and copy register data into union
+        if not self._uSetCheckReg(self.rcvEM, reg_arr_si16):
+            return False
+
+        # Get message id and check for out of sequence messages
+        if not self._uGetMsgID(self.rcvEM):
+            return False
+
+        # Skip redundant messages
+        if self.rcvEM.msgID == self.rcvEM.msgID_last:
+            return False
+
+        # Get message type and check if not valid
+        if not self._uGetMsgType(self.rcvEM):
+            return False
+
+        # Get error type and flag if not valid
+        self._uGetErrType(self.rcvEM)
+
+        # Get argument length and arguments
+        self._uGetArgData8(self.rcvEM)
+
+        # Get footer and check if not found
+        if not self._uGetFooter(self.rcvEM):
+            return False
+
+        # Set new message flag
+        self.rcvEM.isNew = True
+
+        # Print message
+        MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
+                        self.rcvEM.msgID, self.rcvEM.msgTp.name)
+        self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
+
+        return True
+
     # ------------------------ PUBLIC METHODS ------------------------
 
     def resetEcat(self):
@@ -606,13 +617,14 @@ class EsmacatCom:
         # Setup Ethercat handshake flag
         self.isEcatConnected = False
 
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data=None, do_print=True):
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data_i8=None, msg_arg_data_i16=None, do_print=True):
         """
         Used to send outgoing ROS ethercat msg data.
 
         Args:
             msg_type_enum (EsmacatCom.MessageType): Message type enum.
-            msg_arg_data (list or scalar): Message argument data array.
+            msg_arg_data_i8 (list or scalar): 8-bit message argument data array.
+            msg_arg_data_i16 (list or scalar): 16-bit message argument data array.
             do_print (bool): Print message to console if true (Optional).
 
         Returns:
@@ -633,20 +645,41 @@ class EsmacatCom:
 
         # 	------------- Store arguments -------------
 
-        # Convert scalar value to list if it's not already a list
-        if msg_arg_data is not None and not isinstance(msg_arg_data, list):
-            msg_arg_data = [msg_arg_data]
+        # Store 8-bit message argument
+        if msg_arg_data_i8 is not None:
 
-        if msg_arg_data is not None:  # store message arguments if provided
-            for i in range(len(msg_arg_data)):
-                self._uSetArgData8(self.sndEM, msg_arg_data[i])
-        else:
-            self._uSetArgLength(self.sndEM, 0)  # set arg length to 0
+            # Store scalar message argument
+            if not isinstance(msg_arg_data_i8, list):
+                self._uSetArgData8(self.sndEM, msg_arg_data_i8)
+
+            # Store list of arguments
+            else:
+                for i in range(len(msg_arg_data_i8)):
+                    self._uSetArgData8(self.sndEM, msg_arg_data_i8[i])
+
+        # Store 16-bit message argument
+        if msg_arg_data_i16 is not None:
+
+            # Store scalar message argument
+            if not isinstance(msg_arg_data_i16, list):
+                self._uSetArgData16(self.sndEM, msg_arg_data_i16)
+
+            # Store list of arguments
+            else:
+                for i in range(len(msg_arg_data_i16)):
+                    self._uSetArgData16(self.sndEM, msg_arg_data_i16[i])
+                
+        # set arg length to 0 if no message arguments provided
+        if msg_arg_data_i8 is None and msg_arg_data_i16 is None:
+            self._uSetArgLength(self.sndEM, 0)
 
         # 	------------- Finish setup and write -------------
 
         # Store footer
         self._uSetFooter(self.sndEM)
+
+        # HACK: TEMP Add 1 to arg length to account for 16-bit argument
+        self._uSetArgLength(self.sndEM, self.sndEM.argLen+1)
 
         # Publish to union uint16 type data to ease_registers topic
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)

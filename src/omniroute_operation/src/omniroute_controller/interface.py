@@ -56,6 +56,7 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # ======================== GLOBAL CLASSES ========================
 
+
 class WallConfig:
     """ 
     Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
@@ -397,10 +398,9 @@ class MazePlot(QGraphicsView):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
             # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
-            
+
             # Send command to move gantry to selected chamber
             self.gantry_pub.publish("MOVE_TO_CHAMBER", [self.chamber_num])
-            MazeDB.printMsg('DEBUG', "TEMP")
 
             return  # TEMP
 
@@ -542,6 +542,7 @@ class MazePlot(QGraphicsView):
             current_status_enum == MazePlot.Status.UP
 
 # ======================== MAIN UI CLASS ========================
+
 
 class Interface(Plugin):
     """ Interface plugin """
@@ -698,16 +699,18 @@ class Interface(Plugin):
         # ................ Gantry Setup ................
 
         # Paramters for positioning gantry
-        self.chamber_wd = 0.3 # Chamber width (m)
-        self.n_chamber_side = 3 
-        self.chamber_centers = [] # List of chamber centers 
-        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
+        self.chamber_wd = 0.3  # Chamber width (m)
+        self.n_chamber_side = 3
+        self.chamber_centers = []  # List of chamber centers
+        # Threshold distance for chamber entry from center(m)
+        self.threshold = 0.06
 
         # Compute the chamber centers
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
-            col = i%self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            col = i % self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
+                                      self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
 
         # ................ ROS Setup ................
@@ -1005,7 +1008,7 @@ class Interface(Plugin):
 
             # Send HANDSHAKE message with current system settings
             self.EsmaComMaze.writeEcatMessage(
-                EsmacatCom.MessageType.HANDSHAKE, self.getParamTxtBox())
+                EsmacatCom.MessageType.HANDSHAKE, msg_arg_data_i8=self.getParamTxtBox())
 
             # Restart check/send timer after 1 second
             self.timer_sendHandshake.start(1000)
@@ -1173,7 +1176,7 @@ class Interface(Plugin):
 
         # Send MOVE_WALLS message with wall byte array
         self.EsmaComMaze.writeEcatMessage(
-            EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+            EsmacatCom.MessageType.MOVE_WALLS, msg_arg_data_i8=WallConfig.get_wall_byte_list())
 
     def ros_callback_wall_config(self, msg):
         """ Callback function for subscribing to experiment controller command."""
@@ -1200,7 +1203,7 @@ class Interface(Plugin):
 
             # Send MOVE_WALLS message with wall byte array
             self.EsmaComMaze.writeEcatMessage(
-                EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
+                EsmacatCom.MessageType.MOVE_WALLS, msg_arg_data_i8=WallConfig.get_wall_byte_list())
 
         # Update walls
         self.MP.updatePlotFromWallConfig()
@@ -1224,8 +1227,8 @@ class Interface(Plugin):
     def move_gantry_to_chamber(self, chamber_num):
         x = self.chamber_centers[chamber_num][0]
         y = self.chamber_centers[chamber_num][1]
-        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
-    
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])
+
     def qt_callback_trackHarnessTogBtn_clicked(self):
         """ Callback function to start and stop gantry tracking the rat from button press."""
         if self._widget.trackHarnessTogBtn.isChecked():
@@ -1308,7 +1311,7 @@ class Interface(Plugin):
 
         # Send REINITIALIZE_SYSTEM message with current system settings
         self.EsmaComMaze.writeEcatMessage(
-            EsmacatCom.MessageType.REINITIALIZE_SYSTEM, self.getParamTxtBox())
+            EsmacatCom.MessageType.REINITIALIZE_SYSTEM, msg_arg_data_i8=self.getParamTxtBox())
 
         # Reset wall status to uninitialized
         for _, chamber in enumerate(self.MP.Chambers):
