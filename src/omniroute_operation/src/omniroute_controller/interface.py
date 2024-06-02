@@ -689,7 +689,7 @@ class Interface(Plugin):
         # ................ Ecat Setup ................
 
         # Create EsmacatCom object for maze_ard0_ease
-        self.EsmaComMaze = EsmacatCom('maze_ard0_ease')
+        self.EsmaCom = EsmacatCom('maze_ard0_ease')
 
         # ................ Projection Setup ................
 
@@ -811,32 +811,32 @@ class Interface(Plugin):
 
         # Print confirmation message
         MazeDB.printMsg('INFO', "(%d)ECAT PROCESSING ACK: %s",
-                        self.EsmaComMaze.rcvEM.msgID, self.EsmaComMaze.rcvEM.msgTp.name)
+                        self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.msgTp.name)
 
         # ................ Process Ack Error First ................
 
-        if self.EsmaComMaze.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
+        if self.EsmaCom.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
 
             MazeDB.printMsg('ERROR', "(%d)ECAT ERROR: %s",
-                            self.EsmaComMaze.rcvEM.msgID, self.EsmaComMaze.rcvEM.errTp.name)
+                            self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.errTp.name)
 
             # I2C_FAILED
-            if self.EsmaComMaze.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
+            if self.EsmaCom.rcvEM.errTp == EsmacatCom.ErrorType.I2C_FAILED:
 
                 # Update number of init chambers setting based on chambers i2c status
                 cham_cnt = sum(1 for i in range(
-                    self.EsmaComMaze.rcvEM.argLen) if self.EsmaComMaze.rcvEM.ArgU.ui8[i] == 0)
+                    self.EsmaCom.rcvEM.argLen) if self.EsmaCom.rcvEM.ArgU.ui8[i] == 0)
                 self.setParamTxtBox(param_ind=0, arg_val=cham_cnt)
 
                 # Loop through chambers and set enable flag for chamber and wall
                 for cham_i, chamber in enumerate(self.MP.Chambers):
 
                     # Skip chambers not acknowldged
-                    if cham_i >= self.EsmaComMaze.rcvEM.argLen:
+                    if cham_i >= self.EsmaCom.rcvEM.argLen:
                         continue
 
                     # Store i2c status from arguments
-                    i2c_status = self.EsmaComMaze.rcvEM.ArgU.ui8[cham_i]
+                    i2c_status = self.EsmaCom.rcvEM.ArgU.ui8[cham_i]
 
                     # Check if status not equal to 0 and set corresponding chamber to error
                     if i2c_status != 0:
@@ -849,17 +849,17 @@ class Interface(Plugin):
                             'ERROR', "\t chamber[%d] i2c_status[%d]", cham_i, i2c_status)
 
             # WALL_MOVE_FAILED
-            if self.EsmaComMaze.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
+            if self.EsmaCom.rcvEM.errTp == EsmacatCom.ErrorType.WALL_MOVE_FAILED:
 
                 # Loop through arguments
                 for cham_i, chamber in enumerate(self.MP.Chambers):
 
                     # Skip chambers not acknowldged
-                    if cham_i >= self.EsmaComMaze.rcvEM.argLen:
+                    if cham_i >= self.EsmaCom.rcvEM.argLen:
                         continue
 
                     # Store wall error byte from arguments
-                    wall_err_byte = self.EsmaComMaze.rcvEM.ArgU.ui8[cham_i]
+                    wall_err_byte = self.EsmaCom.rcvEM.ArgU.ui8[cham_i]
 
                     # Check if status not equal to 0
                     if wall_err_byte != 0:
@@ -880,17 +880,17 @@ class Interface(Plugin):
         # ................ Process Ack Message ................
 
         # HANDSHAKE
-        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
             MazeDB.printMsg('ATTN', "SYSTEM INITIALIZED")
 
             # Set the handshake flag
-            self.EsmaComMaze.isEcatConnected = True
+            self.EsmaCom.isEcatConnected = True
 
             # Set maze hardware status to initialized
             self.MP.setStatus(MazePlot.Status.INITIALIZED)
 
             # Send INITIALIZE_CYPRESS message
-            self.EsmaComMaze.writeEcatMessage(
+            self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_CYPRESS)
 
             # Enable buttons
@@ -902,14 +902,14 @@ class Interface(Plugin):
             self._widget.plotSendBtn.setEnabled(True)
 
         # INITIALIZE_CYPRESS
-        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_CYPRESS:
             MazeDB.printMsg('ATTN', "CYPRESS I2C INITIALIZED")
 
             # Loop through chambers and set enable flag for chamber and wall
             for cham_i, chamber in enumerate(self.MP.Chambers):
 
                 # Set chambers not acknowldged to excluded and skip
-                if cham_i >= self.EsmaComMaze.rcvEM.argLen:
+                if cham_i >= self.EsmaCom.rcvEM.argLen:
                     chamber.setStatus(MazePlot.Status.EXCLUDED)
                     continue
 
@@ -924,11 +924,11 @@ class Interface(Plugin):
             self.sys_widgets[0].setEnabled(False)
 
             # Send INITIALIZE_WALLS message
-            self.EsmaComMaze.writeEcatMessage(
+            self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # INITIALIZE_WALLS
-        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
             MazeDB.printMsg('ATTN', "WALLS INITIALIZED")
 
             # Loop through chambers and set enable flag for walls
@@ -949,22 +949,22 @@ class Interface(Plugin):
                     wall.setStatus(MazePlot.Status.INITIALIZED)
 
         # REINITIALIZE_SYSTEM
-        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             MazeDB.printMsg('ATTN', "SYSTEM REINITIALIZED")
 
             # Send INITIALIZE_WALLS message again
-            self.EsmaComMaze.writeEcatMessage(
+            self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.INITIALIZE_WALLS)
 
         # RESET_SYSTEM
-        if self.EsmaComMaze.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
             MazeDB.printMsg('ATTN', "ECAT COMMS DISCONNECTED")
 
             # Reset the handshake flag
-            self.EsmaComMaze.isEcatConnected = False
+            self.EsmaCom.isEcatConnected = False
 
         # Reset new message flag
-        self.EsmaComMaze.rcvEM.isNew = False
+        self.EsmaCom.rcvEM.isNew = False
 
     # ------------------------ CALLBACKS: Timers ------------------------
 
@@ -979,19 +979,19 @@ class Interface(Plugin):
         """ Timer callback to check for new ECAT messages. """
 
         # Check for new message
-        if self.EsmaComMaze.rcvEM.isNew:
+        if self.EsmaCom.rcvEM.isNew:
             self.procWallEcatMessage()
 
     def timer_callback_sendHandshake_once(self):
         """ Timer callback to send handshake message once resend till confirmation. """
 
         # Check for HANDSHAKE message confirm recieved flag
-        if self.EsmaComMaze.isEcatConnected == False:
+        if self.EsmaCom.isEcatConnected == False:
 
             # Give up after 3 attempts based on message ID
-            if self.EsmaComMaze.sndEM.msgID > 2:
+            if self.EsmaCom.sndEM.msgID > 2:
                 MazeDB.printMsg(
-                    'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaComMaze.sndEM.msgID)
+                    'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaCom.sndEM.msgID)
 
                 # Set maze hardware status to error
                 self.MP.setStatus(MazePlot.Status.ERROR)
@@ -1002,12 +1002,12 @@ class Interface(Plugin):
                 return
 
             # Print warning if more than 1 message has been sent
-            elif self.EsmaComMaze.sndEM.msgID > 0:
+            elif self.EsmaCom.sndEM.msgID > 0:
                 MazeDB.printMsg(
-                    'WARNING', "SHUTDOWN: Handshake Failure [%d]", self.EsmaComMaze.sndEM.msgID)
+                    'WARNING', "SHUTDOWN: Handshake Failure [%d]", self.EsmaCom.sndEM.msgID)
 
             # Send HANDSHAKE message with current system settings
-            self.EsmaComMaze.writeEcatMessage(
+            self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.HANDSHAKE, msg_arg_data_i8=self.getParamTxtBox())
 
             # Restart check/send timer after 1 second
@@ -1018,15 +1018,15 @@ class Interface(Plugin):
 
         if self.cnt_shutdown_step == 0:
             # Send RESET_SYSTEM message if connected
-            if self.EsmaComMaze.isEcatConnected:
-                self.EsmaComMaze.writeEcatMessage(
+            if self.EsmaCom.isEcatConnected:
+                self.EsmaCom.writeEcatMessage(
                     EsmacatCom.MessageType.RESET_SYSTEM)
 
-        elif self.EsmaComMaze.isEcatConnected == True:
+        elif self.EsmaCom.isEcatConnected == True:
             if self.cnt_shutdown_ack_check > int(30/self.dt_shutdown_step):
                 MazeDB.printMsg(
                     'ERROR', "FAILED: SHUTDOWN: RESET_SYSTEM CONFIRMATION AFTER 30 SECONDS")
-                self.EsmaComMaze.isEcatConnected = False
+                self.EsmaCom.isEcatConnected = False
             else:
                 self.cnt_shutdown_ack_check += 1
                 # Wait for RESET_SYSTEM message confirmation and restart timer
@@ -1175,7 +1175,7 @@ class Interface(Plugin):
         WallConfig._sort_entries()
 
         # Send MOVE_WALLS message with wall byte array
-        self.EsmaComMaze.writeEcatMessage(
+        self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.MOVE_WALLS, msg_arg_data_i8=WallConfig.get_wall_byte_list())
 
     def ros_callback_wall_config(self, msg):
@@ -1202,7 +1202,7 @@ class Interface(Plugin):
             WallConfig._sort_entries()
 
             # Send MOVE_WALLS message with wall byte array
-            self.EsmaComMaze.writeEcatMessage(
+            self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.MOVE_WALLS, msg_arg_data_i8=WallConfig.get_wall_byte_list())
 
         # Update walls
@@ -1310,7 +1310,7 @@ class Interface(Plugin):
         """ Callback function for the "Reinitialize" button."""
 
         # Send REINITIALIZE_SYSTEM message with current system settings
-        self.EsmaComMaze.writeEcatMessage(
+        self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.REINITIALIZE_SYSTEM, msg_arg_data_i8=self.getParamTxtBox())
 
         # Reset wall status to uninitialized

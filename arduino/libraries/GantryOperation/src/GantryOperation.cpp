@@ -145,6 +145,18 @@ void GantryOperation::gantryHome()
 	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: GANTRY HOMING");
 }
 
+/// @brief Move the gantry to the target coordinates.
+void GantryOperation::gantryMove(uint16_t x, uint16_t y)
+{
+	char buffer[50]; // Buffer to hold the formatted string
+	sprintf(buffer, "$J=G91 G21 X%d.0 Y%d.0 F25000", x, y);
+	String cmd_str = String(buffer);
+	if (_grblWrite(cmd_str) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
+	}
+}
+
 /// @brief Used to process new ROS ethercat msg argument data.
 void GantryOperation::procEcatMessage()
 {
@@ -188,9 +200,10 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_MOVE_REL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
+		/// HACK: To correct the
 		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
 		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
-		_Dbg.printMsg(_Dbg.MT::INFO, "[GANTRY_MOVE_REL] Moving to x[%d] y[%d]", x, y);
+		gantryMove(x, y);
 	}
 
 	// GANTRY_SET_FEEDER

@@ -120,8 +120,7 @@ class EsmacatCom:
 
             self.argLen = 0                       # Message argument length
             self.ArgU = EsmacatCom.RegUnion()    # Union for storing message arguments
-            # Union index handler for argument union data
-            self.argUI = EsmacatCom.UnionIndStruct()
+            self.argUI = EsmacatCom.UnionIndStruct() # Union index handler for argument union data
 
             self.isNew = False                         # New message flag
             self.isErr = False                         # Message error flag
@@ -592,23 +591,6 @@ class EsmacatCom:
 
     # ------------------------ PUBLIC METHODS ------------------------
 
-    def resetEcat(self):
-        """Reset all message structs."""
-
-        # Reset EtherCAT register data
-        self._resetReg()
-
-        # Reset message union data and indeces
-        self._uReset(self.sndEM)
-        self._uReset(self.rcvEM)
-
-        # Reset message counters
-        self.sndEM.msgID = 0
-        self.rcvEM.msgID = 0
-
-        # Setup Ethercat handshake flag
-        self.isEcatConnected = False
-
     def writeEcatMessage(self, msg_type_enum, msg_arg_data_i8=None, msg_arg_data_i16=None, do_print=True):
         """
         Used to send outgoing ROS ethercat msg data.
@@ -652,19 +634,20 @@ class EsmacatCom:
         # Store 16-bit message argument
         if msg_arg_data_i16 is not None:
 
-            # Store scalar message argument
+             # Store scalar message argument in list
             if not isinstance(msg_arg_data_i16, list):
-                self._uSetArgData16(self.sndEM, msg_arg_data_i16)
+                msg_arg_data_i16 = [msg_arg_data_i16]
 
-            # Store list of arguments
-            else:
-                for i in range(len(msg_arg_data_i16)):
-                    self._uSetArgData16(self.sndEM, msg_arg_data_i16[i])
+            # Copy 16-bit argument data to union 8-bit entries
+            temp_U = EsmacatCom.RegUnion()
+            for i in range(len(msg_arg_data_i16)):
+                
+                # Copy to temp union
+                temp_U.ui16[0] = msg_arg_data_i16[i]
 
-            # HACK: Add 1 to arg length to account for 16-bit argument
-            self.sndEM.argLen = self.sndEM.argLen + 1
-            self.sndEM.RegU.ui8[4] = self.sndEM.argLen
-            self.sndEM.getUI.upd8() 
+                # Copy to 8-bit union
+                self._uSetArgData8(self.sndEM, temp_U.ui8[0])
+                self._uSetArgData8(self.sndEM, temp_U.ui8[1])
                 
         # set arg length to 0 if no message arguments provided
         if msg_arg_data_i8 is None and msg_arg_data_i16 is None:
@@ -682,4 +665,21 @@ class EsmacatCom:
         if do_print:
             MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
                             self.sndEM.msgID, self.sndEM.msgTp.name)
-            self._printEcatReg('DEBUG', self.sndEM.RegU)
+            self._printEcatReg('DEBUG', self.sndEM.RegU) # TEMP
+
+    def resetEcat(self):
+        """Reset all message structs."""
+
+        # Reset EtherCAT register data
+        self._resetReg()
+
+        # Reset message union data and indeces
+        self._uReset(self.sndEM)
+        self._uReset(self.rcvEM)
+
+        # Reset message counters
+        self.sndEM.msgID = 0
+        self.rcvEM.msgID = 0
+
+        # Setup Ethercat handshake flag
+        self.isEcatConnected = False

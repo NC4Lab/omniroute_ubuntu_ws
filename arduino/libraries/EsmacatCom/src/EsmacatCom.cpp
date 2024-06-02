@@ -202,14 +202,14 @@ bool EsmacatCom::_uGetMsgID(EcatMessageStruct &r_EM)
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
 
-    // Check/log error skipped or out of sequence messages if not first message or id has rolled over
-    if (r_EM.msgID != 1)
-        if (r_EM.msgID - r_EM.msgID_last != 1 &&
-            r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
-        {
-            _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
-            return false;
-        }
+    // TEMP // Check/log error skipped or out of sequence messages if not first message or id has rolled over
+    // if (r_EM.msgID != 1)
+    //     if (r_EM.msgID - r_EM.msgID_last != 1 &&
+    //         r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
+    //     {
+    //         _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
+    //         return false;
+    //     }
     return true;
 }
 
@@ -309,8 +309,6 @@ void EsmacatCom::_uGetArgLength(EcatMessageStruct &r_EM)
 /// @note calls @ref EsmacatCom::_uSetArgLength
 void EsmacatCom::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
-    // Store argurment length
-
     // Increment argument union index
     r_EM.argUI.upd8();
 
@@ -514,8 +512,7 @@ bool EsmacatCom::readEcatMessage()
     rcvEM.isNew = true;
 
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
-    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.ArgU); // TEMP
+    //_printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
 
     // Return message status
     return true;
@@ -584,7 +581,7 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
 
     // Print ack message info with message type being acked
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
-    _printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
+    //_printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
 }
 
 /// @brief Used for printing curren Ethercat register values.

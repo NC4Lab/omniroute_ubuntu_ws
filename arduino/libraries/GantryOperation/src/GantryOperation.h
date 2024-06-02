@@ -49,7 +49,7 @@ public:
 	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 
 	// Instance of EsmacatCom class using SPI chip select pin 10
-	EsmacatCom EsmaCom; 
+	EsmacatCom EsmaCom;
 
 private:
 	// Instance of MazeDebug class for debugging messages
@@ -70,6 +70,9 @@ public:
 
 public:
 	void gantryHome();
+
+public:
+	void gantryMove(uint16_t x, uint16_t y);
 
 public:
 	void procEcatMessage();
