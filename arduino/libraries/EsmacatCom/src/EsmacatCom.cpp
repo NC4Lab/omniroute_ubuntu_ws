@@ -514,7 +514,8 @@ bool EsmacatCom::readEcatMessage()
     rcvEM.isNew = true;
 
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    //_printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+    _printEcatReg(_Dbg.MT::DEBUG, rcvEM.ArgU); // TEMP
 
     // Return message status
     return true;
@@ -583,7 +584,7 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
 
     // Print ack message info with message type being acked
     _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
-    //_printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
+    _printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
 }
 
 /// @brief Used for printing curren Ethercat register values.

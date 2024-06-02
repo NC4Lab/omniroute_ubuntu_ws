@@ -355,10 +355,6 @@ class EsmacatCom:
             # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
 
-            #TEMP
-            MazeDB.printMsg('INFO', "[_uSetArgData8]===== Ecat: r_EM.argLen[%d] r_EM.argUI.ii8[%d] r_EM.argUI.ii16[%d]", r_EM.argLen, r_EM.argUI.ii8, r_EM.argUI.ii16)
-
-
             # Get 8-bit union index 
             regu8_i = r_EM.argUI.ii8 + 4
 
@@ -386,10 +382,6 @@ class EsmacatCom:
 
             # Update message argument length from argument union 8-bit index
             self._uSetArgLength(r_EM, r_EM.argUI.ii8)
-
-            #TEMP
-            MazeDB.printMsg('INFO', "[_uSetArgData16]===== Ecat: r_EM.argLen[%d] r_EM.argUI.ii8[%d] r_EM.argUI.ii16[%d]", r_EM.argLen, r_EM.argUI.ii8, r_EM.argUI.ii16)
-
 
             # Get 16-bit union index
             regu16_i = (r_EM.argUI.ii8 + 4) // 2
@@ -668,6 +660,11 @@ class EsmacatCom:
             else:
                 for i in range(len(msg_arg_data_i16)):
                     self._uSetArgData16(self.sndEM, msg_arg_data_i16[i])
+
+            # HACK: Add 1 to arg length to account for 16-bit argument
+            self.sndEM.argLen = self.sndEM.argLen + 1
+            self.sndEM.RegU.ui8[4] = self.sndEM.argLen
+            self.sndEM.getUI.upd8() 
                 
         # set arg length to 0 if no message arguments provided
         if msg_arg_data_i8 is None and msg_arg_data_i16 is None:
@@ -677,9 +674,6 @@ class EsmacatCom:
 
         # Store footer
         self._uSetFooter(self.sndEM)
-
-        # HACK: TEMP Add 1 to arg length to account for 16-bit argument
-        self._uSetArgLength(self.sndEM, self.sndEM.argLen+1)
 
         # Publish to union uint16 type data to ease_registers topic
         self.maze_ard0_pub.publish(*self.sndEM.RegU.si16)

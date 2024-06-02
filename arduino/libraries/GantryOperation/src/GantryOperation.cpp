@@ -191,7 +191,6 @@ void GantryOperation::procEcatMessage()
 		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
 		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
 		_Dbg.printMsg(_Dbg.MT::INFO, "[GANTRY_MOVE_REL] Moving to x[%d] y[%d]", x, y);
-		delay(1000);
 	}
 
 	// GANTRY_SET_FEEDER
