@@ -63,14 +63,14 @@ void loop()
   uint8_t arg0 = EsmaCom.rcvEM.ArgU.ui8[0];
 
   // Set Optitrack sync pin
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_OPTITRACK_SYNC_PIN)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SYNC_SET_OPTITRACK_PIN)
   {
     digitalWrite(optiSyncPin, arg0);
     Dbg.printMsg(Dbg.MT::INFO, "Optitrack sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");
   }
 
   // Set SpikeGadgets sync pin
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_PIN)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SYNC_SET_SPIKEGADGETS_PIN)
   {
     digitalWrite(spikeGadgSyncPin, arg0);
     Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");

@@ -84,7 +84,7 @@ class GantryFeeder:
         # ................ Run node ................
 
         # Initialize the ROS rate 
-        r = rospy.Rate(30)
+        r = rospy.Rate(100)
 
         # Loop until the node is shutdown
         MazeDB.printMsg('INFO', "[GantryFeeder]: Initialzed gantry_operation_node")
@@ -143,6 +143,9 @@ class GantryFeeder:
         self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
            
     def move_gantry_rel(self, x, y):
+        # TEMP
+        MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move gantry by x(%0.2f) y(%0.2f)", x, y)
+
         # Round x and y to nearest integer
         x = int(round(x))
         y = int(round(y))

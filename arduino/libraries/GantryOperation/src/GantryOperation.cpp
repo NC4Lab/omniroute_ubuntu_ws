@@ -125,7 +125,7 @@ void GantryOperation::gantryHome()
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GANTRY HOMING");
 
 	// Set the homing seek speed to 5000 mm/min
-	if (_grblWrite("$25=5000") != 0)
+	if (_grblWrite("$25=7500") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting homing seek speed");
 	}

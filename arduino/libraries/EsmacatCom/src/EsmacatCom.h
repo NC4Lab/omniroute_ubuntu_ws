@@ -96,13 +96,13 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
-        SYNC_SET_OPTITRACK_PIN = 100,
-        SYNC_SET_SPIKEGADGETS_PIN = 101,
-        GANTRY_INITIALIZE_GRBL = 200,
-        GANTRY_HOME = 201,
-        GANTRY_MOVE_REL = 202,
-        GANTRY_SET_FEEDER = 203,
-        GANTRY_RUN_PUMP = 204,
+        SYNC_SET_OPTITRACK_PIN = 7,
+        SYNC_SET_SPIKEGADGETS_PIN = 8,
+        GANTRY_INITIALIZE_GRBL = 9,
+        GANTRY_HOME = 10,
+        GANTRY_MOVE_REL = 11,
+        GANTRY_SET_FEEDER = 12,
+        GANTRY_RUN_PUMP = 13,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
