@@ -72,7 +72,7 @@ public:
 	void gantryHome();
 
 public:
-	void gantryMove(uint16_t x, uint16_t y);
+	void gantryMove(float x, float y);
 
 public:
 	void procEcatMessage();

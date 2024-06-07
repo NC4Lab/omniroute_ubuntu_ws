@@ -83,6 +83,9 @@ class GantryFeeder:
 
         # ................ Run node ................
 
+        # TEMP
+        self.last_call_time = None
+
         # Initialize the ROS rate 
         r = rospy.Rate(100)
 
@@ -95,10 +98,10 @@ class GantryFeeder:
     def loop(self):
         self.current_time = rospy.Time.now()
 
-        # # Check for new message
-        # if not self.EsmaCom.rcvEM.isNew:
-        #     return
-        # self.procEcatMessage()
+        # Check for new message
+        if not self.EsmaCom.rcvEM.isNew:
+            return
+        self.procEcatMessage()
 
         if self.gantry_mode == GantryState.MOVE_TO_TARGET:
             # Unit vector from gantry to target
@@ -143,19 +146,22 @@ class GantryFeeder:
         self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
            
     def move_gantry_rel(self, x, y):
-        # TEMP
-        MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move gantry by x(%0.2f) y(%0.2f)", x, y)
 
-        # Round x and y to nearest integer
-        x = int(round(x))
-        y = int(round(y))
+        # TEMP
+        # Get the current time
+        current_time = time.time()
+        # Calculate and print the elapsed time since the last call
+        if self.last_call_time is not None:
+            elapsed_time = (current_time - self.last_call_time) * 1000  # Convert to milliseconds
+            print(f"Elapsed time: {elapsed_time:.2f} ms")
+        # Update the last call time to the current time
+        self.last_call_time = current_time
 
         # Convert x and y to a list
         xy_list = [x, y]
 
         # Send command to move gantry
-        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_i16=xy_list, do_print=False)
-        
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)      
 
     def run_reward(self, duration):
         self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_LOWER_FEEDER)

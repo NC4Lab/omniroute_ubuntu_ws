@@ -130,6 +130,7 @@ public:
         byte ui8[16];     // (byte) 1 byte
         uint16_t ui16[8]; // (uint16_t) 2 byte
         int si16[8];      // (int) 2 byte
+        float f32[4];     // (float) 4 byte
         uint64_t ui64[2]; // (uint64_t) 8 byte
         int64_t si64[2];  // (int64_t) 8 byte
     };

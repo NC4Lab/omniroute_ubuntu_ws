@@ -146,11 +146,21 @@ void GantryOperation::gantryHome()
 }
 
 /// @brief Move the gantry to the target coordinates.
-void GantryOperation::gantryMove(uint16_t x, uint16_t y)
+void GantryOperation::gantryMove(float x, float y)
 {
 	char buffer[50]; // Buffer to hold the formatted string
-	sprintf(buffer, "$J=G91 G21 X%d.0 Y%d.0 F25000", x, y);
+	char x_str[10];	 // Buffer to hold the x float as a string
+	char y_str[10];	 // Buffer to hold the y float as a string
+
+	// Have to create the strings for the float values before passing them to sprintf
+	dtostrf(x, 1, 2, x_str); // Convert x to string with 2 decimal places
+	dtostrf(y, 1, 2, y_str); // Convert y to string with 2 decimal places
+
+	// Format the jog string
+	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F25000", x_str, y_str);
 	String cmd_str = String(buffer);
+
+	// Send the jog command
 	if (_grblWrite(cmd_str) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
@@ -201,8 +211,8 @@ void GantryOperation::procEcatMessage()
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
 		/// HACK: To correct the
-		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
-		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
+		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
 		gantryMove(x, y);
 	}
 

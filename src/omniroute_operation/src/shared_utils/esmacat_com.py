@@ -69,12 +69,15 @@ class EsmacatCom:
         WALL_MOVE_FAILED = 6
 
     class RegUnion(ctypes.Union):
-        """ C++ style Union for storing ethercat data shareable accross 8 and 16-bit data types """
-        _fields_ = [("ui8", ctypes.c_uint8 * 16),
-                    ("ui16", ctypes.c_uint16 * 8),
-                    ("si16", ctypes.c_int16 * 8),
-                    ("ui64", ctypes.c_uint64 * 2),
-                    ("si64", ctypes.c_int64 * 2)]
+        """ C++ style Union for storing EtherCAT data shareable across 8 and 16-bit data types """
+        _fields_ = [
+            ("ui8", ctypes.c_uint8 * 16),
+            ("ui16", ctypes.c_uint16 * 8),
+            ("si16", ctypes.c_int16 * 8),
+            ("f32", ctypes.c_float * 4),  # Adding float array
+            ("ui64", ctypes.c_uint64 * 2),
+            ("si64", ctypes.c_int64 * 2)
+        ]
 
     class UnionIndStruct:
         """ Struct for storing ethercat data shareable accross 8 and 16-bit data types """
@@ -591,7 +594,7 @@ class EsmacatCom:
 
     # ------------------------ PUBLIC METHODS ------------------------
 
-    def writeEcatMessage(self, msg_type_enum, msg_arg_data_i8=None, msg_arg_data_i16=None, do_print=True):
+    def writeEcatMessage(self, msg_type_enum, msg_arg_data_i8=None, msg_arg_data_i16=None, msg_arg_data_f32=None, do_print=True):
         """
         Used to send outgoing ROS ethercat msg data.
 
@@ -599,6 +602,7 @@ class EsmacatCom:
             msg_type_enum (EsmacatCom.MessageType): Message type enum.
             msg_arg_data_i8 (list or scalar): 8-bit message argument data array.
             msg_arg_data_i16 (list or scalar): 16-bit message argument data array.
+            msg_arg_data_f32 (list or scalar): 32-bit float message argument data array.
             do_print (bool): Print message to console if true (Optional).
 
         Returns:
@@ -648,9 +652,27 @@ class EsmacatCom:
                 # Copy to 8-bit union
                 self._uSetArgData8(self.sndEM, temp_U.ui8[0])
                 self._uSetArgData8(self.sndEM, temp_U.ui8[1])
+
+        # Store 32-bit float message argument
+        if msg_arg_data_f32 is not None:
+
+            # Store scalar message argument in list
+            if not isinstance(msg_arg_data_f32, list):
+                msg_arg_data_f32 = [msg_arg_data_f32]
+
+            # Copy 32-bit float argument data to union 8-bit entries
+            temp_U = EsmacatCom.RegUnion()
+            for i in range(len(msg_arg_data_f32)):
+
+                # Copy to temp union
+                temp_U.f32[0] = msg_arg_data_f32[i]
+
+                # Copy to 8-bit union
+                for j in range(4):
+                    self._uSetArgData8(self.sndEM, temp_U.ui8[j])
                 
         # set arg length to 0 if no message arguments provided
-        if msg_arg_data_i8 is None and msg_arg_data_i16 is None:
+        if msg_arg_data_i8 is None and msg_arg_data_i16 is None and msg_arg_data_f32 is None:
             self._uSetArgLength(self.sndEM, 0)
 
         # 	------------- Finish setup and write -------------
