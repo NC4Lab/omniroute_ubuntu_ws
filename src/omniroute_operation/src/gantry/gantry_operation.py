@@ -84,7 +84,7 @@ class GantryFeeder:
         # ................ Run node ................
 
         # TEMP
-        self.last_call_time = None
+        self.last_call_time = rospy.get_time()
 
         # Initialize the ROS rate 
         r = rospy.Rate(100)
@@ -96,12 +96,19 @@ class GantryFeeder:
             r.sleep()
 
     def loop(self):
-        self.current_time = rospy.Time.now()
 
         # Check for new message
         if not self.EsmaCom.rcvEM.isNew:
             return
         self.procEcatMessage()
+
+                # TEMP
+        current_time = rospy.get_time()
+        elapsed_time = (current_time - self.last_call_time) * 1000  
+        MazeDB.printMsg('DEBUG', "[loop] Elapsed time: %0.2f ms", elapsed_time)
+        #self.move_gantry_rel(5.0, 5.0) 
+        self.last_call_time = current_time
+        #return
 
         if self.gantry_mode == GantryState.MOVE_TO_TARGET:
             # Unit vector from gantry to target
@@ -146,17 +153,6 @@ class GantryFeeder:
         self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
            
     def move_gantry_rel(self, x, y):
-
-        # TEMP
-        # Get the current time
-        current_time = time.time()
-        # Calculate and print the elapsed time since the last call
-        if self.last_call_time is not None:
-            elapsed_time = (current_time - self.last_call_time) * 1000  # Convert to milliseconds
-            print(f"Elapsed time: {elapsed_time:.2f} ms")
-        # Update the last call time to the current time
-        self.last_call_time = current_time
-
         # Convert x and y to a list
         xy_list = [x, y]
 

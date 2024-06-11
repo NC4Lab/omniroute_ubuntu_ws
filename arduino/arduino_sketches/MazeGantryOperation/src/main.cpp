@@ -24,8 +24,8 @@ bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
-MazeDebug Dbg;          // instance of MazeDebug class for debugging messages
-GantryOperation FdSrv;      // instance of GantryOperation class
+MazeDebug Dbg;         // instance of MazeDebug class for debugging messages
+GantryOperation GanOp; // instance of GantryOperation class
 
 //=============== SETUP =================
 void setup()
@@ -39,20 +39,30 @@ void setup()
   Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
 
   // Initialize servos
-  FdSrv.servoInit();
+  GanOp.servoInit();
   delay(1000);
 
   // Print setup complete
   Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
+
+  // // TEMP
+  // for (int i = 0; i < 100; i++)
+  // {
+  //   GanOp.gantryMove(5.0, 5.0);
+  // }
 }
 
 //=============== LOOP ==================
 void loop()
 {
+  // TEMP
+  Dbg.dtTrack(1);
+
   // Check ethercat coms
-  if (!FdSrv.EsmaCom.readEcatMessage())
+  if (!GanOp.EsmaCom.readEcatMessage())
     return;
 
   // Process and execute ethercat arguments
-  FdSrv.procEcatMessage();
+  GanOp.procEcatMessage();
+  Dbg.printMsg(Dbg.MT::INFO, "[loop] dt[%s]", Dbg.dtTrack());
 }
