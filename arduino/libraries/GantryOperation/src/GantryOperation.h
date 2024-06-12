@@ -59,11 +59,11 @@ private:
 public:
 	GantryOperation();
 
-private:
-	uint8_t _grblWrite(const String &cmd, unsigned long timeout = 1000);
+public:
+	uint8_t grblWrite(const String &cmd, bool do_read = true, unsigned long timeout = 1000);
 
-private:
-	uint8_t _grblRead(String &data, unsigned long timeout = 1000);
+public:
+	uint8_t grblRead(String &data, unsigned long timeout = 1000);
 
 public:
 	void grblInit();

@@ -22,21 +22,25 @@ GantryOperation::GantryOperation() {}
 /// @param timeout: Timeout for the grbl acknoledgement.
 ///
 /// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::_grblWrite(const String &cmd_str, unsigned long timeout)
+uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_read, unsigned long timeout)
 {
 	// Write the command with a new line character
 	String full_cmd = cmd_str + "\n";
 	Serial1.write(full_cmd.c_str());
-	delay(100);
+
+	// Bail if no read is needed
+	if (!do_read)
+		return 0;
 
 	// Check for acknoledgement
 	_Dbg.dtTrack(1);
 	String ack_str;
-	uint8_t status = _grblRead(ack_str, timeout);
+	uint8_t status = grblRead(ack_str, timeout);
+	//uint8_t status = 0;
 
 	// Print the acknoledgement
 	if (status == 0)
-		_Dbg.printMsg(_Dbg.MT::INFO, "[_grblWrite] Acknoledgement recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblWrite] Acknoledgement recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
 
 	// Return status from read
 	return status;
@@ -48,7 +52,7 @@ uint8_t GantryOperation::_grblWrite(const String &cmd_str, unsigned long timeout
 /// @param timeout: Timeout for the grbl response.
 ///
 /// @return Status/error codes [0:response, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::_grblRead(String &resonse_str, unsigned long timeout)
+uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout)
 {
 	// Check for new message
 	unsigned long start_time = millis(); // start time
@@ -78,16 +82,19 @@ uint8_t GantryOperation::_grblRead(String &resonse_str, unsigned long timeout)
 	// Check for timeout
 	if (millis() - start_time > timeout)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[_grblWrite] Timeout: resonse_str[%s]", resonse_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timeout: resonse_str[%s]", resonse_str.c_str());
 		return 2;
 	}
 
 	// Check for error message
 	if (resonse_str == "error")
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[_grblRead] Error message: resonse_str[%s]", resonse_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblRead] Error message: resonse_str[%s]", resonse_str.c_str());
 		return 1;
 	}
+
+	// Print response
+	_Dbg.printMsg(_Dbg.MT::INFO, "[grblRead] Response: \r\n%s", resonse_str);
 
 	// Return message received
 	return 0;
@@ -99,19 +106,19 @@ void GantryOperation::grblInit()
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GRBL INITIALIZATION");
 
 	// Set Units (mm)
-	if (_grblWrite("G21") != 0)
+	if (grblWrite("G21") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting units");
 	}
 
 	// Set Mode (G90 = Absolute, G91 = Relative)
-	if (_grblWrite("G90") != 0)
+	if (grblWrite("G90") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting absolute mode");
 	}
 
 	// Feed Rate (mm/min)
-	if (_grblWrite("F25000") != 0)
+	if (grblWrite("F50000") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting feed rate");
 	}
@@ -124,20 +131,20 @@ void GantryOperation::gantryHome()
 {
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GANTRY HOMING");
 
-	// Set the homing seek speed to 5000 mm/min
-	if (_grblWrite("$25=7500") != 0)
+	// Set the homing seek speed to 75000 mm/min
+	if (grblWrite("$25=7500") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting homing seek speed");
 	}
 
 	// Start the homing cycle
-	if (_grblWrite("$H", 60000) != 0) // allow for a longer timeout (60 sec)
+	if (grblWrite("$H", true, 60000) != 0) // allow for a longer timeout (60 sec)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error starting homing cycle");
 	}
 
 	// Set the current position as the origin (0,0,0) for the coordinate system
-	if (_grblWrite("G10 P0 L20 X0 Y0 Z0") != 0)
+	if (grblWrite("G10 P0 L20 X0 Y0 Z0") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting origin");
 	}
@@ -157,11 +164,11 @@ void GantryOperation::gantryMove(float x, float y)
 	dtostrf(y, 1, 2, y_str); // Convert y to string with 2 decimal places
 
 	// Format the jog string
-	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F25000", x_str, y_str);
+	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F50000", x_str, y_str);
 	String cmd_str = String(buffer);
 
 	// Send the jog command
-	if (_grblWrite(cmd_str) != 0)
+	if (grblWrite(cmd_str) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
 	}
