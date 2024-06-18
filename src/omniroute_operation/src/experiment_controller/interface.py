@@ -185,10 +185,13 @@ class Interface(Plugin):
         self._widget.stopPumpBtn.clicked.connect(self._handle_stopPumpBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
+        self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
+
 
         # Button for designating if this is the phys rat
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         self.is_ephys_rat = False
+        self.is_testing_phase = False
 
         self.curDir = os.path.dirname(__file__)
 
@@ -232,7 +235,7 @@ class Interface(Plugin):
 
         # Experiment parameters
         self.start_delay = rospy.Duration(8.0)  # Duration of delay in the beginning of the trial
-        self.choice_delay = rospy.Duration(10.0)  # Duration to wait for rat to move to the choice point
+        self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(3)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2.5)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(14.5)  # Duration to wait if the rat made the right choice
@@ -477,6 +480,12 @@ class Interface(Plugin):
             self.is_ephys_rat = True
         else:
             self.is_ephys_rat = False
+
+    def _handle_testingPhaseBtn_clicked(self):
+        if self._widget.testingPhaseBtn.isChecked():
+            self.is_testing_phase = True
+        else:
+            self.is_testing_phase = False
     
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -909,26 +918,14 @@ class Interface(Plugin):
                     
                     self.sound_cue = self.currentTrial[2]
                     self.play_sound_cue(self.sound_cue)
+
+                    if self.is_testing_phase:
+                        self.play_sound_cue(self.sound_cue)
+                    else:
+                        self.play_sound_cue(self.sound_cue)
                     
                     
                     self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
-
-                    # if self.start_chamber == 1:
-                    #     self.start_chamber_seq = 0
-                    #     self.left_chamber_seq = 5
-                    #     self.right_chamber_seq = 3
-                    # elif self.start_chamber == 3:
-                    #     self.start_chamber_seq = 2
-                    #     self.left_chamber_seq = 1
-                    #     self.right_chamber_seq = 7
-                    # elif self.start_chamber == 5:
-                    #     self.start_chamber_seq = 4
-                    #     self.left_chamber_seq = 7
-                    #     self.right_chamber_seq = 1
-                    # elif self.start_chamber == 7:
-                    #     self.start_chamber_seq = 6
-                    #     self.left_chamber_seq = 3
-                    #     self.right_chamber_seq = 5
                     
                     if self.sound_cue == "White_Noise":
                         if self.left_visual_cue == "Triangle":
@@ -1100,6 +1097,18 @@ class Interface(Plugin):
             self.sound_pub.publish("5KHz")
         elif self.sound_cue == "Error":
             self.sound_pub.publish("Error")
+    
+    # def play_sound_cue(self, sound_cue, mode):
+    #     if self.is_ephys_rat:
+    #         return
+    #     rospy.loginfo(f"Play sound cue {sound_cue}")    
+    #     if self.sound_cue == "White_Noise":
+    #         self.sound_pub.publish("White_Noise")
+    #     elif self.sound_cue == "5KHz":
+    #         self.sound_pub.publish("5KHz")
+    #     elif self.sound_cue == "Error":
+    #         self.sound_pub.publish("Error")
+
 
     def raise_wall(self, wall, send):
         self.wallStates.chamber = wall.chamber_num
