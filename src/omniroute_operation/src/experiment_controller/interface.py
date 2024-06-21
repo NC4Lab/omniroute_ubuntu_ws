@@ -236,7 +236,7 @@ class Interface(Plugin):
         # Experiment parameters
         self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
-        self.reward_start_delay = rospy.Duration(3)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_start_delay = rospy.Duration(5)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2.5)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(14.5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_delay = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
@@ -983,8 +983,6 @@ class Interface(Plugin):
             elif self.mode == Mode.RAT_IN_CHOICE_CHAMBER:
                     if self.is_testing_phase:
                         self.play_sound_cue(self.sound_cue)
-                    else:
-                        self.play_sound_cue(self.sound_cue_training_stop) 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE
                     rospy.loginfo("CHOICE")
@@ -1032,7 +1030,11 @@ class Interface(Plugin):
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
                     #self.reward_dispense()
-                    self.play_sound_cue(self.sound_cue) 
+                    #self.play_sound_cue(self.sound_cue) 
+                    if self.is_testing_phase:
+                        self.play_sound_cue(self.sound_cue)
+                    # else:
+                    #     self.play_sound_cue(self.sound_cue_training_stop)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
@@ -1096,25 +1098,25 @@ class Interface(Plugin):
         if self.is_ephys_rat:
             return
         rospy.loginfo(f"Play sound cue {sound_cue}")    
-        if self.sound_cue == "White_Noise":
+        if sound_cue == "White_Noise":
             self.sound_pub.publish("White_Noise")
 
-        elif self.sound_cue == "White_Noise_Training_Start":
+        elif sound_cue == "White_Noise_Training_Start":
             self.sound_pub.publish("White_Noise_Training_Start")
 
-        elif self.sound_cue == "White_Noise_Training_Stop":
+        elif sound_cue == "White_Noise_Training_Stop":
             self.sound_pub.publish("White_Noise_Stop")
 
-        elif self.sound_cue == "5KHz":
+        elif sound_cue == "5KHz":
             self.sound_pub.publish("5KHz")
 
-        elif self.sound_cue == "5KHz_Training_Start":
+        elif sound_cue == "5KHz_Training_Start":
             self.sound_pub.publish("5KHz_Training_Start")
 
-        elif self.sound_cue == "5KHz_Training_Stop":
+        elif sound_cue == "5KHz_Training_Stop":
             self.sound_pub.publish("5KHz_Training_Stop")
 
-        elif self.sound_cue == "Error":
+        elif sound_cue == "Error":
             self.sound_pub.publish("Error")
 
 
