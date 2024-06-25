@@ -56,6 +56,7 @@ class Mode(Enum):
     END_EXPERIMENT = 13
     PAUSE_EXPERIMENT = 14
     RESUME_EXPERIMENT = 15
+    ERROR_END = 16
 
 class Wall:
     def __init__(self, chamber_num, wall_num):
@@ -236,10 +237,11 @@ class Interface(Plugin):
         # Experiment parameters
         self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
-        self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_start_delay = rospy.Duration(6)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
-        self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
-        self.wrong_choice_delay = rospy.Duration(40.0)  # Duration to wait if the rat made the wrong choice
+        self.right_choice_delay = rospy.Duration(10)  # Duration to wait if the rat made the right choice
+        self.wrong_choice_first_delay = rospy.Duration(30.0)  # Duration to wait if the rat made the wrong choice
+        self.wrong_choice_second_delay = rospy.Duration(10.0) 
         self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
         # self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
@@ -1037,7 +1039,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    #self.gantry_pub.publish("TRACK_HARNESS", [])
+                    self.gantry_pub.publish("TRACK_HARNESS", [])
                     if self.is_testing_phase:
                         self.play_sound_cue(self.sound_cue)
                     else:
@@ -1062,7 +1064,17 @@ class Interface(Plugin):
                         rospy.loginfo("END TRIAL")
                     
             elif self.mode == Mode.ERROR:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_delay.to_sec():
+                if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_first_delay.to_sec():
+                    if self.is_testing_phase:
+                        self.play_sound_cue(self.sound_cue)
+                    else:
+                        self.play_sound_cue(self.sound_cue_training_stop) 
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.ERROR_END
+                    rospy.loginfo("ERROR_END")
+
+            elif self.mode == Mode.ERROR_END:
+                if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
                     if self.error_chamber == 1:
                         self.setChamberOneStartConfig()
                     elif self.error_chamber == 3:
