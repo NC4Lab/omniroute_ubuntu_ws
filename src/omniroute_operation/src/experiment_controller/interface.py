@@ -198,7 +198,8 @@ class Interface(Plugin):
 
         self._widget.pathDirEdit.setText(self.curDir)
 
-        self.dataDir = os.path.expanduser(os.path.join('~', 'Desktop', 'ros_data')) # Default data directory
+        #self.dataDir = os.path.expanduser(os.path.join('~', 'Desktop', 'ros_data')) # Default data directory
+        self.dataDir = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src','experiment_controller','data')) # Default data directory
         self.defaultDataDir = self.dataDir
 
         self._widget.recordDataDir.setText(self.defaultDataDir)
@@ -235,7 +236,8 @@ class Interface(Plugin):
         # self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
-        self.start_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        self.start_first_delay = rospy.Duration(3.0)  # Duration of delay in the beginning of the trial
+        self.start_second_delay = rospy.Duration(4.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
@@ -754,21 +756,22 @@ class Interface(Plugin):
 
 
             elif self.mode == Mode.RAT_IN_START_CHAMBER:
-                if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
-                    if self.success_chamber == self.left_chamber:
+                if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
+                    if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
+                        if self.success_chamber == self.left_chamber:
+                            self.lower_wall(self.left_goal_wall, send=True)
+                        else:
+                            self.lower_wall(self.right_goal_wall, send=True)
+                    elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
                         self.lower_wall(self.left_goal_wall, send=True)
-                    else:
                         self.lower_wall(self.right_goal_wall, send=True)
-                elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                    self.lower_wall(self.left_goal_wall, send=True)
-                    self.lower_wall(self.right_goal_wall, send=True)
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START
                 rospy.loginfo("START")
                     
             elif self.mode == Mode.START:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.start_delay.to_sec():
+                if (self.current_time - self.mode_start_time).to_sec() >= self.start_second_delay.to_sec():
                     self.lower_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.START_TO_CHOICE
@@ -967,11 +970,25 @@ class Interface(Plugin):
                 rospy.loginfo("RAT_IN_START_CHAMBER")
 
             elif self.mode == Mode.RAT_IN_START_CHAMBER:
-                if (self.current_time - self.mode_start_time).to_sec() >= self.start_delay.to_sec():
+                if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
+                    if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
+                        if self.success_chamber == self.left_chamber:
+                            self.lower_wall(self.left_goal_wall, send=True)
+                        else:
+                            self.lower_wall(self.right_goal_wall, send=True)
+                    elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
+                        self.lower_wall(self.left_goal_wall, send=False)
+                        self.lower_wall(self.right_goal_wall, send=True)
+                    
+                    self.mode = Mode.START
+                    rospy.loginfo("START")
+
+            elif self.mode == Mode.START:
+                if (self.current_time - self.mode_start_time).to_sec() >= self.start_second_delay.to_sec():
                     self.lower_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.START_TO_CHOICE
-                    rospy.loginfo("START TO CHOICE")
+                    rospy.loginfo("START_TO_CHOICE")
 
             elif self.mode == Mode.START_TO_CHOICE:
                 # Wait for the rat to move to the choice point
@@ -982,6 +999,22 @@ class Interface(Plugin):
                     self.mode = Mode.RAT_IN_CHOICE_CHAMBER
                     rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
 
+            # elif self.mode == Mode.RAT_IN_START_CHAMBER:
+            #     if (self.current_time - self.mode_start_time).to_sec() >= self.start_delay.to_sec():
+            #         self.lower_wall(self.start_wall, send=True)
+            #         self.mode_start_time = rospy.Time.now()
+            #         self.mode = Mode.START_TO_CHOICE
+            #         rospy.loginfo("START TO CHOICE")
+
+            # elif self.mode == Mode.START_TO_CHOICE:
+            #     # Wait for the rat to move to the choice point
+            #     #if self.is_rat_in_chamber_walls(self.start_chamber_seq, self.central_chamber):
+            #     if self.is_rat_in_chamber(self.central_chamber):
+            #         #self.raise_wall(self.start_wall, send=True)
+            #         self.mode_start_time = rospy.Time.now()
+            #         self.mode = Mode.RAT_IN_CHOICE_CHAMBER
+            #         rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
+
             elif self.mode == Mode.RAT_IN_CHOICE_CHAMBER:
                     if self.is_testing_phase:
                         self.play_sound_cue(self.sound_cue)
@@ -991,14 +1024,14 @@ class Interface(Plugin):
 
             elif self.mode == Mode.CHOICE:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
-                    if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
-                        if self.success_chamber == self.left_chamber:
-                            self.lower_wall(self.left_goal_wall, send=True)
-                        else:
-                            self.lower_wall(self.right_goal_wall, send=True)
-                    elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                        self.lower_wall(self.left_goal_wall, send=False)
-                        self.lower_wall(self.right_goal_wall, send=True)
+                    # if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
+                    #     if self.success_chamber == self.left_chamber:
+                    #         self.lower_wall(self.left_goal_wall, send=True)
+                    #     else:
+                    #         self.lower_wall(self.right_goal_wall, send=True)
+                    # elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
+                    #     self.lower_wall(self.left_goal_wall, send=False)
+                    #     self.lower_wall(self.right_goal_wall, send=True)
         
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_TO_GOAL
