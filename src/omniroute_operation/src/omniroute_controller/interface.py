@@ -30,14 +30,15 @@ from omniroute_esmacat_ros.msg import *
 from omniroute_operation.msg import *
 
 # PyQt and PySide Imports
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QRectF, QCoreApplication
-from PyQt5.QtGui import QPen, QColor, QFont
+from PyQt5.QtGui import QPen, QColor, QFont, QPixmap
 from python_qt_binding import loadUi, QtOpenGL
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
+from PyQt5 import QtWidgets
 
 # ======================== GLOBAL VARS ========================
 
@@ -572,6 +573,9 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
+        self.px = 0
+        self.py = 0
+
         # Create QWidget
         self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
@@ -620,6 +624,12 @@ class Interface(Plugin):
         # Set to default data file path
         self._widget.fileDirEdit.setText(data_dir_default)
 
+        self.image = QPixmap("rat.jpg")
+        self.imageItem = QGraphicsPixmapItem(self.image)
+        self.scene.addItem(self.imageItem)
+        self.imageItem.setPos(self.px, self.py)
+        self.scene.addItem(self.imageItem)   
+        
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
         self.csv_files = []
