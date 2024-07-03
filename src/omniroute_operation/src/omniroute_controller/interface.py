@@ -28,6 +28,7 @@ import rospy
 from std_msgs.msg import *
 from omniroute_esmacat_ros.msg import *
 from omniroute_operation.msg import *
+from geometry_msgs.msg import PoseStamped
 
 # PyQt and PySide Imports
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem, QGraphicsPixmapItem
@@ -696,6 +697,11 @@ class Interface(Plugin):
         self.imageItem.setPixmap(self.image.scaled(self.image_dimension,self.image_dimension))
         self.imageItem.setPos(self.px, self.py)   
         self.scene.addItem(self.imageItem)
+
+        # ................ ROS Setup ................
+
+        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         # ................ Ecat Setup ................
 

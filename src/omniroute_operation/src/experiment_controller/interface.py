@@ -196,17 +196,11 @@ class Interface(Plugin):
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         
         self.is_ephys_rat = False
-
         self.is_testing_phase = False
-
         self.manual_trial_edits = False
-
         self.white_noise = False
-
         self.five_khz = False
-
         self.triangle_left = False
-
         self.triangle_right = False
 
         self.curDir = os.path.dirname(__file__)
@@ -945,10 +939,8 @@ class Interface(Plugin):
                     elif self.triangle_right:
                         self.left_visual_cue = "No_Cue"
                         self.right_visual_cue = "Triangle"
-
                 else:
             
-
                     if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                         self.mode = Mode.END_EXPERIMENT
 
