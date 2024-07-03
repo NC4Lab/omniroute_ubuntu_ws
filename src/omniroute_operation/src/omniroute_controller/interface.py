@@ -573,8 +573,8 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-        self.px = 0
-        self.py = 0
+        self.px = 350
+        self.py = 150
 
         # Create QWidget
         self._widget = QWidget()
@@ -623,12 +623,6 @@ class Interface(Plugin):
             script_dir, '..', '..', '..', '..', 'data', 'paths'))
         # Set to default data file path
         self._widget.fileDirEdit.setText(data_dir_default)
-
-        self.image = QPixmap("rat.jpg")
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.scene.addItem(self.imageItem)
-        self.imageItem.setPos(self.px, self.py)
-        self.scene.addItem(self.imageItem)   
         
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
@@ -693,6 +687,15 @@ class Interface(Plugin):
         for chamber in self.MP.Chambers:
             for wall in chamber.Walls:
                 self.scene.addItem(wall)
+
+        # Add the rat image to the scene
+        self.image = QPixmap(os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), 'rat.jpg'))
+        self.imageItem = QGraphicsPixmapItem(self.image)
+        self.image_dimension = round(self._widget.plotMazeView.height()*0.1)
+        self.imageItem.setPixmap(self.image.scaled(self.image_dimension,self.image_dimension))
+        self.imageItem.setPos(self.px, self.py)   
+        self.scene.addItem(self.imageItem)
 
         # ................ Ecat Setup ................
 
