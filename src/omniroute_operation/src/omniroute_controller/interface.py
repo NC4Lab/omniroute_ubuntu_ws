@@ -698,11 +698,6 @@ class Interface(Plugin):
         self.imageItem.setPos(self.px, self.py)   
         self.scene.addItem(self.imageItem)
 
-        # ................ ROS Setup ................
-
-        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
-
         # ................ Ecat Setup ................
 
         # Create EsmacatCom object for maze_ard0_ease
@@ -737,6 +732,11 @@ class Interface(Plugin):
         # Gantry command publisher
         self.gantry_pub = rospy.Publisher(
             '/gantry_cmd', GantryCmd, queue_size=1)
+        
+        self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])  # Marker to gantry center offset
+
+        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         # ................ Callback Setup ................
 
@@ -1341,6 +1341,16 @@ class Interface(Plugin):
 
         # Call timer callback to incrementally shutdown session
         self.timer_endSession.start(0)
+
+    def gantry_pose_callback(self, msg):
+        self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
+        self.gantry_y = msg.pose.position.y + self.gantry_marker_to_gantry_center[1]
+        #rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
+
+    def harness_pose_callback(self, msg):
+        self.harness_x = msg.pose.position.x
+        self.harness_y = msg.pose.position.y
+        #rospy.loginfo("Harness pose: "f'x: {self.harness_x}, y: {self.harness_y}')
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
