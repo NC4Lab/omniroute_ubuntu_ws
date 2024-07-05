@@ -302,6 +302,7 @@ class Interface(Plugin):
             col = i%self.n_chamber_side
             chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
+            
 
         # Set the starting maze configuration
         #self.setPlusConfig()
@@ -495,10 +496,8 @@ class Interface(Plugin):
             self.is_ephys_rat = False
 
     def _handle_testingPhaseBtn_clicked(self):
-        if self._widget.testingPhaseBtn.isChecked():
-            self.is_testing_phase = True
-        else:
-            self.is_testing_phase = False
+        self.is_testing_phase = True
+        rospy.loginfo("Testing phase selected")
     
     def is_recording_on(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -543,18 +542,27 @@ class Interface(Plugin):
 
     def _handle_manualTrialEditsBtn_clicked(self):
         self.manual_trial_edits == True
+        rospy.loginfo("Manual trial edits enabled")  
 
     def _handle_whiteNoiseBtn_clicked(self):
         self.white_noise = True
+        rospy.loginfo("White noise selected")
+        
 
     def _handle_fiveKhzBtn_clicked(self):
         self.five_khz = True
+        rospy.loginfo("5 kHz selected")
+       
 
     def _handle_triangleLeftBtn_clicked(self):
         self.triangle_left = True
+        rospy.loginfo("Triangle left selected")
+        
 
     def _handle_triangleRightBtn_clicked(self):
         self.triangle_right = True
+        rospy.loginfo("Triangle right selected")    
+        
         
 
     #In the following functions, we define the starting maze configuration for each chamber. 
@@ -708,6 +716,18 @@ class Interface(Plugin):
             dist_from_center = (self.harness_x-self.chamber_centers[chamber_num][0])**2 + (self.harness_y-self.chamber_centers[chamber_num][1]+0.075)**2
         # rospy.loginfo(f"Distance from center: {dist_from_center}")
         return dist_from_center <= 0.07**2
+    
+    # def is_rat_in_goal_chamber(self, chamber_one, chamber_two):
+    #     if self.chamber_centers[chamber_one][1] == self.chamber_centers[chamber_two][1] and self.chamber_centers[chamber_one][0] < self.chamber_centers[chamber_two][0]:
+    #         dist_from_line = abs(self.harness_x - self.chamber_centers[chamber_two][0]+self.chamber_wd/4)
+    #     elif self.chamber_centers[chamber_one][1] == self.chamber_centers[chamber_two][1] and self.chamber_centers[chamber_one][0] > self.chamber_centers[chamber_two][0]:
+    #         dist_from_line = abs(self.harness_x - self.chamber_centers[chamber_two][0]-self.chamber_wd/4)
+    #     elif self.chamber_centers[chamber_one][0] == self.chamber_centers[chamber_two][0] and self.chamber_centers[chamber_one][1] < self.chamber_centers[chamber_two][1]:
+    #         dist_from_line = abs(self.harness_y - self.chamber_centers[chamber_two][1]+self.chamber_wd/4)
+    #     elif self.chamber_centers[chamber_one][0] == self.chamber_centers[chamber_two][0] and self.chamber_centers[chamber_one][1] > self.chamber_centers[chamber_two][1]:  
+    #         dist_from_line = abs(self.harness_y - self.chamber_centers[chamber_two][1]-self.chamber_wd/4)
+    #     return dist_from_line == 0
+    
 
     def run_experiment(self):
 
@@ -923,10 +943,8 @@ class Interface(Plugin):
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                     self.currentTrial = self.trials[self.currentTrialNumber]
                 else:
-                    # Handle the case where trials is empty or currentTrialNumber is out of range
+                # Handle the case where trials is empty or currentTrialNumber is out of range
                     self.currentTrial = None
-                
-                rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
                 if self.manual_trial_edits:
                     if self.white_noise:
@@ -940,6 +958,8 @@ class Interface(Plugin):
                         self.left_visual_cue = "No_Cue"
                         self.right_visual_cue = "Triangle"
                 else:
+
+                    rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
             
                     if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                         self.mode = Mode.END_EXPERIMENT
