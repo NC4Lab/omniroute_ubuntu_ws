@@ -29,6 +29,7 @@ from std_msgs.msg import *
 from omniroute_esmacat_ros.msg import *
 from omniroute_operation.msg import *
 from geometry_msgs.msg import PoseStamped
+from tf.transformations import euler_from_quaternion
 
 # PyQt and PySide Imports
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem, QGraphicsPixmapItem
@@ -551,6 +552,7 @@ class Interface(Plugin):
 
     # Define signals
     signal_Esmacat_read_maze_ard0_ease = Signal()
+    signal_rat_pos = Signal(int, int, int)
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
@@ -574,8 +576,8 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-        self.px = 350
-        self.py = 150
+        self.rat_pos_x = 350
+        self.rat_pos_y = 150
 
         # Create QWidget
         self._widget = QWidget()
@@ -691,12 +693,13 @@ class Interface(Plugin):
 
         # Add the rat image to the scene
         self.image = QPixmap(os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'rat.jpg'))
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.image_dimension = round(self._widget.plotMazeView.height()*0.1)
-        self.imageItem.setPixmap(self.image.scaled(self.image_dimension,self.image_dimension))
-        self.imageItem.setPos(self.px, self.py)   
-        self.scene.addItem(self.imageItem)
+            os.path.realpath(__file__)), 'rat.png'))
+        self.rat_image = QGraphicsPixmapItem(self.image)
+        self.rat_image_dim = round(self._widget.plotMazeView.height()*0.2)
+        self.rat_image.setPixmap(self.image.scaled(self.rat_image_dim,self.rat_image_dim))
+        self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)   
+        self.rat_image.setTransformOriginPoint(self.rat_image_dim/2, self.rat_image_dim/2)
+        self.scene.addItem(self.rat_image)
 
         # ................ Ecat Setup ................
 
@@ -722,6 +725,19 @@ class Interface(Plugin):
             col = i%self.n_chamber_side
             chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
+        
+        # To scale from maze to GUI coordinates
+        optitrack_chamber_dist = math.sqrt((self.chamber_centers[0][0] - self.chamber_centers[1][0])**2 + (self.chamber_centers[0][1] - self.chamber_centers[1][1])**2)
+        gui_chamber_dist = math.sqrt((self.MP.Chambers[0].center_x - self.MP.Chambers[1].center_x)**2 + (self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
+        self.optitrack_to_gui_scale = gui_chamber_dist/optitrack_chamber_dist
+
+
+        # test_x = (test_x - self.chamber_centers[0][0])*gui_chamber_dist/optitrack_chamber_dist + self.MP.Chambers[0].center_x
+        # test_y = -((test_y - self.chamber_centers[0][1])*gui_chamber_dist/optitrack_chamber_dist - self.MP.Chambers[0].center_y)
+
+        # rospy.loginfo("Test x: %f", test_x)
+        # rospy.loginfo("Test y: %f", test_y)
+
 
         # ................ ROS Setup ................
 
@@ -737,6 +753,8 @@ class Interface(Plugin):
 
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
+
+        self.signal_rat_pos.connect(self.update_rat_pos_in_gui)
 
         # ................ Callback Setup ................
 
@@ -818,6 +836,42 @@ class Interface(Plugin):
             self.proj_img_cfg_btn_vec.append(button)  # Store the button
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
+
+    def update_rat_pos_in_gui(self, x, y, yaw):
+        """
+        Update the rat position in the GUI
+        """
+        self.rat_pos_x = x
+        self.rat_pos_y = y
+        self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)
+        self.rat_image.setRotation(yaw)
+
+    
+    def optitrack_to_gui(self, optitrack_pos):
+        """
+        Converts optitrack position to GUI position
+        """
+        gui_pos = np.zeros(2)
+        gui_pos[0] = (optitrack_pos[0] - self.chamber_centers[0][0])*self.optitrack_to_gui_scale + self.MP.Chambers[0].center_x - self.rat_image_dim/2
+        gui_pos[1] = -((optitrack_pos[1] - self.chamber_centers[0][1])*self.optitrack_to_gui_scale - self.MP.Chambers[0].center_y) - self.rat_image_dim/2
+
+        # Convert to int
+        gui_pos = gui_pos.astype(int)
+        
+        sceneWidth = self._widget.plotMazeView.width()
+        sceneHeight = self._widget.plotMazeView.height()
+
+        # Bound the position to the scene
+        if gui_pos[0] < 0:
+            gui_pos[0] = 0
+        if gui_pos[0] > sceneWidth:
+            gui_pos[0] = sceneWidth
+        if gui_pos[1] < 0:
+            gui_pos[1] = 0
+        if gui_pos[1] > sceneHeight:
+            gui_pos[1] = sceneHeight
+        
+        return gui_pos
 
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
@@ -1350,7 +1404,19 @@ class Interface(Plugin):
     def harness_pose_callback(self, msg):
         self.harness_x = msg.pose.position.x
         self.harness_y = msg.pose.position.y
-        #rospy.loginfo("Harness pose: "f'x: {self.harness_x}, y: {self.harness_y}')
+
+        self.harness_pose_in_gui = self.optitrack_to_gui([self.harness_x, self.harness_y])
+        
+        # Convert orientation to euler angles
+        q = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        roll, pitch, yaw = euler_from_quaternion(q)
+
+        yaw = -(int(yaw * 180 / math.pi)-30)  # Convert to degrees and adjust for optitrack orientation
+
+        self.signal_rat_pos.emit(self.harness_pose_in_gui[0], self.harness_pose_in_gui[1], yaw)
+
+
+        
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
