@@ -59,6 +59,21 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # ======================== GLOBAL CLASSES ========================
 
+class MazeDimensions:
+    # Class for storing the dimensions of the maze
+    def __init__(self):
+        self.chamber_wd = 0.3 # Chamber width (m)
+        self.n_chamber_side = 3 
+        self.chamber_centers = [] # List of chamber centers 
+
+        # Compute the chamber centers
+        for i in range(0, self.n_chamber_side**2):
+            row = i//self.n_chamber_side
+            col = i%self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            self.chamber_centers.append(chamber_center)
+
+
 class WallConfig:
     """ 
     Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
@@ -713,31 +728,12 @@ class Interface(Plugin):
 
         # ................ Gantry Setup ................
 
-        # Paramters for positioning gantry
-        self.chamber_wd = 0.3 # Chamber width (m)
-        self.n_chamber_side = 3 
-        self.chamber_centers = [] # List of chamber centers 
-        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
-
-        # Compute the chamber centers
-        for i in range(0, self.n_chamber_side**2):
-            row = i//self.n_chamber_side
-            col = i%self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
-            self.chamber_centers.append(chamber_center)
+        self.MazeDim = MazeDimensions()
         
         # To scale from maze to GUI coordinates
-        optitrack_chamber_dist = math.sqrt((self.chamber_centers[0][0] - self.chamber_centers[1][0])**2 + (self.chamber_centers[0][1] - self.chamber_centers[1][1])**2)
+        optitrack_chamber_dist = math.sqrt((self.MazeDim.chamber_centers[0][0] - self.MazeDim.chamber_centers[1][0])**2 + (self.MazeDim.chamber_centers[0][1] - self.MazeDim.chamber_centers[1][1])**2)
         gui_chamber_dist = math.sqrt((self.MP.Chambers[0].center_x - self.MP.Chambers[1].center_x)**2 + (self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
         self.optitrack_to_gui_scale = gui_chamber_dist/optitrack_chamber_dist
-
-
-        # test_x = (test_x - self.chamber_centers[0][0])*gui_chamber_dist/optitrack_chamber_dist + self.MP.Chambers[0].center_x
-        # test_y = -((test_y - self.chamber_centers[0][1])*gui_chamber_dist/optitrack_chamber_dist - self.MP.Chambers[0].center_y)
-
-        # rospy.loginfo("Test x: %f", test_x)
-        # rospy.loginfo("Test y: %f", test_y)
-
 
         # ................ ROS Setup ................
 
@@ -852,8 +848,8 @@ class Interface(Plugin):
         Converts optitrack position to GUI position
         """
         gui_pos = np.zeros(2)
-        gui_pos[0] = (optitrack_pos[0] - self.chamber_centers[0][0])*self.optitrack_to_gui_scale + self.MP.Chambers[0].center_x - self.rat_image_dim/2
-        gui_pos[1] = -((optitrack_pos[1] - self.chamber_centers[0][1])*self.optitrack_to_gui_scale - self.MP.Chambers[0].center_y) - self.rat_image_dim/2
+        gui_pos[0] = (optitrack_pos[0] - self.MazeDim.chamber_centers[0][0])*self.optitrack_to_gui_scale + self.MP.Chambers[0].center_x - self.rat_image_dim/2
+        gui_pos[1] = -((optitrack_pos[1] - self.MazeDim.chamber_centers[0][1])*self.optitrack_to_gui_scale - self.MP.Chambers[0].center_y) - self.rat_image_dim/2
 
         # Convert to int
         gui_pos = gui_pos.astype(int)
@@ -1294,8 +1290,8 @@ class Interface(Plugin):
         self._widget.ySpinBox.setValue(0)
 
     def move_gantry_to_chamber(self, chamber_num):
-        x = self.chamber_centers[chamber_num][0]
-        y = self.chamber_centers[chamber_num][1]
+        x = self.MazeDim.chamber_centers[chamber_num][0]
+        y = self.MazeDim.chamber_centers[chamber_num][1]
         self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
     
     def qt_callback_trackHarnessTogBtn_clicked(self):
