@@ -11,7 +11,7 @@ d = generate_distutils_setup(
     
     # Define the packages to be included in the distribution
     packages=['omniroute_controller', 'experiment_controller',
-              'gantry', 'transformer', 'ts_sync', 'shared_utils'],
+              'gantry', 'rat_detector', 'transformer', 'ts_sync', 'shared_utils'],
     
     # Specify the root directory for the package source files
     package_dir={'': 'src'},
