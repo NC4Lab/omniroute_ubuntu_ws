@@ -802,7 +802,7 @@ QPushButton:pressed {
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="closeAllDoorsBtn">
+   <widget class="QPushButton" name="lowerAllDoorsBtn">
     <property name="geometry">
      <rect>
       <x>710</x>
@@ -812,7 +812,7 @@ QPushButton:pressed {
      </rect>
     </property>
     <property name="text">
-     <string>Close ALL Doors </string>
+     <string>Lower ALL Doors </string>
     </property>
    </widget>
    <zorder>frame_3</zorder>
@@ -849,7 +849,7 @@ QPushButton:pressed {
    <zorder>frame_12</zorder>
    <zorder>frame_14</zorder>
    <zorder>frame_13</zorder>
-   <zorder>closeAllDoorsBtn</zorder>
+   <zorder>lowerAllDoorsBtn</zorder>
   </widget>
  </widget>
  <resources/>

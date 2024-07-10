@@ -195,9 +195,9 @@ class Interface(Plugin):
         self._widget.fiveKhzBtn.clicked.connect(self._handle_fiveKhzBtn_clicked)
         self._widget.triangleLeftBtn.clicked.connect(self._handle_triangleLeftBtn_clicked)
         self._widget.triangleRightBtn.clicked.connect(self._handle_triangleRightBtn_clicked)
-        self._widget.closeAllDoorsBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
+        self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
         # Button for designating if this is the phys rat
-        self._widget.ephysRatTogBtn.clicked.connect(self._handle_closeAllDoorsBtn_clicked)
+        self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         
         self.is_ephys_rat = False
         self.is_testing_phase = False
@@ -215,6 +215,8 @@ class Interface(Plugin):
 
         self.dataDir = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src','experiment_controller','data')) # Default data directory
         self.defaultDataDir = self.dataDir
+
+        self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
         self._widget.recordDataDir.setText(self.defaultDataDir)
         
@@ -525,8 +527,8 @@ class Interface(Plugin):
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
             self.setChoiceMode()
 
-    def _handle_closeAllDoorsBtn_clicked(self):
-        self.setCloseConfig()
+    def _handle_lowerAllDoorsBtn_clicked(self):
+        self.setLowerConfig()
 
     def _handle_manualTrialEditsBtn_clicked(self):
         self.manual_trial_edits == True
@@ -584,10 +586,11 @@ class Interface(Plugin):
         
         self.activateWalls()
 
-    def setCloseConfig(self):
+    def setLowerConfig(self):
         #Lower Walls 0,2,4,6 in chamber 4 (central chamber)
         for i in [0, 2, 4, 6]:
-            self.lower_wall(Wall(4, i), True)
+            self.lower_wall(Wall(4, i), False)
+        self.activateWalls()
 
     
     def setChamberOneStartConfig(self):
