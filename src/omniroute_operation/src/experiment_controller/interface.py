@@ -4,11 +4,10 @@ import rospy
 import numpy as np
 import math
 import subprocess
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Int32, Int8
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
-from rat_detector.rat_detector import RatDetector
 from omniroute_controller.interface import MazeDimensions
 
 import pandas as pd
@@ -18,7 +17,8 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
-from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup
+from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup, QFileDialog, QWidget
+from PyQt5.QtCore import QTimer
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
@@ -141,6 +141,7 @@ class Interface(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
+
         # Add widget to the user interface
         context.add_widget(self._widget)
 
@@ -205,6 +206,8 @@ class Interface(Plugin):
         self.triangle_left = False
         self.triangle_right = False
 
+        self.maze_dim = MazeDimensions()
+
         self.curDir = os.path.dirname(__file__)
 
         self._widget.pathDirEdit.setText(self.curDir)
@@ -236,8 +239,11 @@ class Interface(Plugin):
         self.harness_x = 0.0
         self.harness_y = 0.0
         
-        self.rat_detector = RatDetector()
-        self.maze_dim = MazeDimensions()
+        rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
+
+        self.rat_head_chamber = -1
+        self.rat_body_chamber = -1
         
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
@@ -293,6 +299,7 @@ class Interface(Plugin):
         self.timer.start(10)
 
         self.rat_position = 0
+
 
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
@@ -658,10 +665,16 @@ class Interface(Plugin):
         self.harness_y = msg.pose.position.y
     # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
+    def rat_head_chamber_callback(self, msg):
+        self.rat_head_chamber = msg.data
+
+    def rat_body_chamber_callback(self, msg):
+        self.rat_body_chamber = msg.data
+
     def run_experiment(self):
 
         self.current_time = rospy.Time.now()
-        current_rat_chamber = self.rat_detector.rat_head_chamber()
+        current_rat_chamber = self.rat_head_chamber
 
         # Run legacy state machine for ephys rat
         if self.is_ephys_rat:
@@ -754,7 +767,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.START_TO_CHOICE:
                 # Wait for the rat to move to the choice point
-                if self.rat_detector.rat_head_chamber(self.central_chamber):
+                if self.rat_head_chamber == self.central_chamber:
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE
                     rospy.loginfo("CHOICE")
@@ -765,7 +778,7 @@ class Interface(Plugin):
                 rospy.loginfo("CHOICE_TO_GOAL")
 
             elif self.mode == Mode.CHOICE_TO_GOAL:
-                if self.rat_detector.did_rat_body_move_to(self.success_chamber):
+                if self.rat_body_chamber == self.success_chamber:
                     self.raise_wall(self.left_goal_wall, send=True)
                     self.raise_wall(self.right_goal_wall, send=True)
                     self.raise_wall(self.start_wall, send=True)
@@ -773,7 +786,7 @@ class Interface(Plugin):
                     self.mode = Mode.SUCCESS
                     rospy.loginfo("SUCCESS")
 
-                elif self.rat_detector.did_rat_body_move_to(self.error_chamber):
+                elif self.rat_body_chamber == self.error_chamber:
                     self.sound_pub.publish("Error")
                     self.raise_wall(self.left_goal_wall, send=True)
                     self.raise_wall(self.right_goal_wall, send=True)
@@ -945,7 +958,7 @@ class Interface(Plugin):
                         else:
                             self.lower_wall(self.right_goal_wall, send=True)
                     elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                        self.lower_wall(self.left_goal_wall, send=False)
+                        self.lower_wall(self.left_goal_wall, send=True)
                         self.lower_wall(self.right_goal_wall, send=True)
                     
                     self.mode = Mode.START
@@ -960,7 +973,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.START_TO_CHOICE:
                 # Wait for the rat to move to the choice point
-                if self.rat_detector.rat_head_chamber(self.central_chamber):
+                if self.rat_head_chamber == self.central_chamber:
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.RAT_IN_CHOICE_CHAMBER
                     rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
@@ -979,17 +992,17 @@ class Interface(Plugin):
                     rospy.loginfo("CHOICE TO GOAL")
 
             elif self.mode == Mode.CHOICE_TO_GOAL:
-                if self.rat_detector.did_rat_body_move_to(self.success_chamber):
+                if self.rat_body_chamber == self.success_chamber:
                     self.raise_wall(self.left_goal_wall, send=False)
-                    self.raise_wall(self.right_goal_wall, send=True)
+                    self.raise_wall(self.right_goal_wall, send=False)
                     self.raise_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.SUCCESS
                     rospy.loginfo("SUCCESS")
 
-                elif self.rat_detector.did_rat_body_move_to(self.error_chamber):
+                elif self.rat_body_chamber == self.error_chamber:
                     self.raise_wall(self.left_goal_wall, send=False)
-                    self.raise_wall(self.right_goal_wall, send=True)
+                    self.raise_wall(self.right_goal_wall, send=False)
                     self.raise_wall(self.start_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR

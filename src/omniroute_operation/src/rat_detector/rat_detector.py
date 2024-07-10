@@ -97,5 +97,5 @@ class RatDetector:
 
 if __name__ == '__main__':
     rospy.init_node('rat_detector')
-    rd = RatDetector()
+    RatDetector()
     rospy.spin()
