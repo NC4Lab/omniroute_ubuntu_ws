@@ -195,8 +195,9 @@ class Interface(Plugin):
         self._widget.fiveKhzBtn.clicked.connect(self._handle_fiveKhzBtn_clicked)
         self._widget.triangleLeftBtn.clicked.connect(self._handle_triangleLeftBtn_clicked)
         self._widget.triangleRightBtn.clicked.connect(self._handle_triangleRightBtn_clicked)
+        self._widget.closeAllDoorsBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         # Button for designating if this is the phys rat
-        self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
+        self._widget.ephysRatTogBtn.clicked.connect(self._handle_closeAllDoorsBtn_clicked)
         
         self.is_ephys_rat = False
         self.is_testing_phase = False
@@ -524,6 +525,9 @@ class Interface(Plugin):
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
             self.setChoiceMode()
 
+    def _handle_closeAllDoorsBtn_clicked(self):
+        self.setCloseConfig()
+
     def _handle_manualTrialEditsBtn_clicked(self):
         self.manual_trial_edits == True
         rospy.loginfo("Manual trial edits enabled")  
@@ -579,6 +583,12 @@ class Interface(Plugin):
                 self.raise_wall(Wall(i, j), False)
         
         self.activateWalls()
+
+    def setCloseConfig(self):
+        #Lower Walls 0,2,4,6 in chamber 4 (central chamber)
+        for i in [0, 2, 4, 6]:
+            self.lower_wall(Wall(4, i), True)
+
     
     def setChamberOneStartConfig(self):
         self.start_chamber = 1
