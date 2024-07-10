@@ -591,9 +591,6 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-        self.rat_pos_x = 350
-        self.rat_pos_y = 150
-
         # Create QWidget
         self._widget = QWidget()
         # Extend the widget with all attributes and children from UI file
@@ -669,6 +666,9 @@ class Interface(Plugin):
         self.dt_shutdown_step = 0.25  # (sec)
 
         # ................ Maze Setup ................
+
+        self.rat_pos_x = 350
+        self.rat_pos_y = 150
 
         # Default system settings [default][min][max]
         self.sysDefaults = [
