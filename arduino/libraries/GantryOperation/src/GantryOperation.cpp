@@ -131,7 +131,7 @@ void GantryOperation::gantryHome()
 {
 	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GANTRY HOMING");
 
-	// Set the homing seek speed to 75000 mm/min
+	// Set the homing seek speed to 7500 mm/min
 	if (grblWrite("$25=7500") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting homing seek speed");
@@ -164,13 +164,32 @@ void GantryOperation::gantryMove(float x, float y)
 	dtostrf(y, 1, 2, y_str); // Convert y to string with 2 decimal places
 
 	// Format the jog string
-	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F50000", x_str, y_str);
+	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F30000", x_str, y_str);
 	String cmd_str = String(buffer);
 
 	// Send the jog command
 	if (grblWrite(cmd_str) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
+	}
+}
+
+void GantryOperation::grblJogCancel()
+{
+	// Send the jog cancel command
+	if (grblWrite(""+char(0x85)) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error canceling jog");
+	}
+}
+
+
+void GantryOperation::grblResetAlarm()
+{
+	// Send the jog cancel command
+	if (grblWrite("$X") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblResetAlarm] Error resetting alarm");
 	}
 }
 
@@ -221,6 +240,12 @@ void GantryOperation::procEcatMessage()
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
 		gantryMove(x, y);
+	}
+
+	// GANTRY_JOG_CANCEL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_JOG_CANCEL)
+	{
+		grblJogCancel();
 	}
 
 	// GANTRY_SET_FEEDER

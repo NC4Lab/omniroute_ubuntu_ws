@@ -95,7 +95,7 @@ class GantryFeeder:
         self.last_call_time = rospy.get_time()
 
         # Initialize the ROS rate
-        r = rospy.Rate(30)
+        r = rospy.Rate(180)
 
         # Loop until the node is shutdown
         MazeDB.printMsg(
@@ -146,10 +146,10 @@ class GantryFeeder:
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
-            if distance > 0.01:
+            if distance > 0.15:
 
                 # Speed of gantry movement
-                k = 50.0
+                k = 35.0
 
                 # X component of the harness movement vector
                 y = k*gantry_to_harness[0]
@@ -158,6 +158,12 @@ class GantryFeeder:
 
                 if ~np.isnan(x) and ~np.isnan(y):
                     self.move_gantry_rel(x, y)
+            else:
+                self.jog_cancel()
+
+    def jog_cancel(self):
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.GANTRY_JOG_CANCEL)
 
     def home(self):
         # Send command to home gantry

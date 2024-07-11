@@ -75,6 +75,12 @@ public:
 	void gantryMove(float x, float y);
 
 public:
+	void grblJogCancel();	
+
+public:
+	void grblResetAlarm();	
+
+public:
 	void procEcatMessage();
 
 public:

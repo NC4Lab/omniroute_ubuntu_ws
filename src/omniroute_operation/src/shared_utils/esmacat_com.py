@@ -57,6 +57,7 @@ class EsmacatCom:
         GANTRY_MOVE_REL = 11
         GANTRY_SET_FEEDER = 12
         GANTRY_RUN_PUMP = 13
+        GANTRY_JOG_CANCEL = 14
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
