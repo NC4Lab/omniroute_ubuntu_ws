@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 import math
 import subprocess
+import random
 from std_msgs.msg import String, Int32, Int8
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
@@ -302,6 +303,64 @@ class Interface(Plugin):
         self.timer.start(10)
 
         self.rat_position = 0
+
+        #Designing Trials Live
+        self.trials = 50
+        self.sound_cues = ['White_Noise', '5KHz']
+        self.visual_cues = ['Triangle', 'No-Cue']
+        self.compartments = [1, 3, 5, 7]
+        self.trial_data = []
+        self.choices = {'left': 0, 'right': 0}
+        self.correct_counts = {1: 0, 3: 0, 5: 0, 7: 0}
+
+    def generate_trial(self):
+        trial = {}
+        
+        # Balance sound and visual cues
+        sound = random.choice(self.sound_cues)
+        visual = self.visual_cues[0] if sound == 'White_Noise' else self.visual_cues[1]
+        
+        # Randomize position of visual cue (left/right)
+        cue_position = random.choice(['left', 'right'])
+
+        # Randomize start chamber
+        start_chamber = random.choice(self.compartments)
+        
+        # Assign chambers ensuring equal distribution
+        if start_chamber == 1 or start_chamber == 7:
+            choice_chambers = random.choice([3, 5])
+        elif start_chamber == 3 or start_chamber == 5:
+            choice_chambers = random.choice([1, 7])
+
+        if start_chamber == 1:
+            if cue_position == 'left':
+                correct_chamber= 5
+            else:
+                correct_chamber = 3
+        elif start_chamber == 3:
+            if cue_position == 'left':
+                correct_chamber = 1
+            else:
+                correct_chamber = 7
+        elif start_chamber == 5:    
+            if cue_position == 'left':
+                correct_chamber = 7
+            else:
+                correct_chamber = 1
+        elif start_chamber == 7:
+            if cue_position == 'left':
+                correct_chamber = 3
+            else:
+                correct_chamber = 5
+
+    
+        trial['sound'] = sound
+        trial['visual'] = visual
+        trial['visual_position'] = cue_position
+        trial['choice_chambers'] = choice_chambers
+        trial['chambers'] = {1: 'empty', 3: 'empty', 5: 'empty', 7: 'empty'}
+        trial['correct_chamber'] = correct_chamber
+        return trial
 
 
     def _handle_browseBtn_clicked(self):
