@@ -313,6 +313,7 @@ class Interface(Plugin):
         self.choices = {'left': 0, 'right': 0}
         self.correct_counts = {1: 0, 3: 0, 5: 0, 7: 0}
 
+       
     def generate_trial(self):
         trial = {}
         
@@ -321,7 +322,7 @@ class Interface(Plugin):
         visual = self.visual_cues[0] if sound == 'White_Noise' else self.visual_cues[1]
         
         # Randomize position of visual cue (left/right)
-        cue_position = random.choice(['left', 'right'])
+        ccorrect_choice = random.choice(['left', 'right'])
 
         # Randomize start chamber
         start_chamber = random.choice(self.compartments)
@@ -333,22 +334,22 @@ class Interface(Plugin):
             choice_chambers = random.choice([1, 7])
 
         if start_chamber == 1:
-            if cue_position == 'left':
+            if ccorrect_choice == 'left':
                 correct_chamber= 5
             else:
                 correct_chamber = 3
         elif start_chamber == 3:
-            if cue_position == 'left':
+            if ccorrect_choice == 'left':
                 correct_chamber = 1
             else:
                 correct_chamber = 7
         elif start_chamber == 5:    
-            if cue_position == 'left':
+            if ccorrect_choice == 'left':
                 correct_chamber = 7
             else:
                 correct_chamber = 1
         elif start_chamber == 7:
-            if cue_position == 'left':
+            if ccorrect_choice == 'left':
                 correct_chamber = 3
             else:
                 correct_chamber = 5
@@ -356,13 +357,29 @@ class Interface(Plugin):
     
         trial['sound'] = sound
         trial['visual'] = visual
-        trial['visual_position'] = cue_position
+        trial['visual_position'] = ccorrect_choice
         trial['choice_chambers'] = choice_chambers
         trial['chambers'] = {1: 'empty', 3: 'empty', 5: 'empty', 7: 'empty'}
         trial['correct_chamber'] = correct_chamber
+        trial['chambers'][correct_chamber] = visual
         return trial
+    
+    def adjust_for_left_right_bias(self, trial):
+        # Adjust for bias
+        if self.choices['left'] - self.choices['right'] >= 5:
+            trial['visual_position'] = 'right'
+        elif self.choices['right'] - self.choices['left'] >= 5:
+            trial['visual_position'] = 'left'
+        else:
+            trial['visual_position'] = random.choice(['left', 'right'])
 
+        min_count = min(self.correct_counts.values())
+        compartments = [c for c in compartments if self.correct_counts[c] == min_count]
 
+        
+        return trial
+    
+    
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
         filter = "Text Files (*.xlsx)"  
