@@ -297,6 +297,9 @@ class Interface(Plugin):
         self.start_wall = Wall(0, 0)
         self.central_chamber = 0
         self.start_chamber = 0
+
+        self.left_goal_wall = Wall(0, 0)
+        self.right_goal_wall = Wall(0, 0)
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
@@ -1081,7 +1084,7 @@ class Interface(Plugin):
                         self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
                         
                         if self.sound_cue == "White_Noise":
-                            if self.left_visual_cue == "Triangle":
+                            if self.left_visual_cue == "Triangle":  
                                 self.projection_pub.publish(self.project_left_cue_triangle)
                                 rospy.loginfo("Projecting left cue triangle")
                                 self.success_chamber = self.left_chamber
