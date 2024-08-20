@@ -258,8 +258,8 @@ class Interface(Plugin):
         # self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
-        self.start_first_delay = rospy.Duration(3.0)  # Duration of delay in the beginning of the trial
-        self.start_second_delay = rospy.Duration(4.0)  # Duration of delay in the beginning of the trial
+        self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
+        self.start_second_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
@@ -1140,8 +1140,8 @@ class Interface(Plugin):
                     rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
                     
             elif self.mode == Mode.RAT_IN_CHOICE_CHAMBER:
-                    if self.is_testing_phase:
-                        self.play_sound_cue(self.sound_cue)
+                    # if self.is_testing_phase:
+                    #     self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE
                     rospy.loginfo("CHOICE")
@@ -1188,8 +1188,8 @@ class Interface(Plugin):
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
                     #self.reward_dispense()
-                    if self.is_testing_phase:
-                        self.play_sound_cue(self.sound_cue)
+                    # if self.is_testing_phase:
+                    #     self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
@@ -1197,9 +1197,9 @@ class Interface(Plugin):
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
                     #self.gantry_pub.publish("TRACK_HARNESS", [])
-                    if self.is_testing_phase:
-                        self.play_sound_cue(self.sound_cue)
-                    else:
+                    if not self.is_testing_phase:
+                    #     self.play_sound_cue(self.sound_cue)
+                    # else:
                         self.play_sound_cue(self.sound_cue_training_stop) 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
@@ -1226,9 +1226,9 @@ class Interface(Plugin):
                     
             elif self.mode == Mode.ERROR:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_first_delay.to_sec():
-                    if self.is_testing_phase:
-                        self.play_sound_cue(self.sound_cue)
-                    else:
+                    if not self.is_testing_phase:
+                    #     self.play_sound_cue(self.sound_cue)
+                    # else:
                         self.play_sound_cue(self.sound_cue_training_stop) 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR_END
