@@ -10,6 +10,7 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
 from omniroute_controller.interface import MazeDimensions
+from dateutil.parser import parse as parsedate
 
 import pandas as pd
 from enum import Enum
@@ -210,6 +211,22 @@ class Interface(Plugin):
 
         self.maze_dim = MazeDimensions()
 
+        self.trial_dir = r'\\10.34.1.59\big_gulp\nc4_rat_data\Maze_Rats'
+
+        self.rat = 6
+        self.date = '240819'
+
+        self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
+
+        if '-' in self.date: 
+            self.date = parsedate(self.date).strftime('%y%m%d')
+
+        date_folder = os.path.join(self.rat_folder, self.date)
+
+        self.trial_summary_path = os.path.join(date_folder, 'Past_three_days_biases.csv')
+
+        self.df = pd.read_csv(self.trial_summary_path)
+
         self.curDir = os.path.dirname(__file__)
 
         self._widget.pathDirEdit.setText(self.curDir)
@@ -307,6 +324,26 @@ class Interface(Plugin):
 
         self.rat_position = 0
 
+        #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
+        self.trial_types = {
+        1: ['1', 'Triangle', 'No_Cue', 'White_Noise'],
+        2: ['1', 'No_Cue', 'Triangle', '5KHz'],
+        3: ['1', 'Triangle', 'No_Cue', '5KHz'],
+        4: ['1', 'No_Cue', 'Triangle', 'White_Noise'],
+        5: ['3', 'Triangle', 'No_Cue', 'White_Noise'],
+        6: ['3', 'No_Cue', 'Triangle', '5KHz'],
+        7: ['3', 'Triangle', 'No_Cue', '5KHz'],
+        8: ['3', 'No_Cue', 'Triangle', 'White_Noise'],
+        9: ['5', 'Triangle', 'No_Cue', 'White_Noise'],
+        10: ['5', 'No_Cue', 'Triangle', '5KHz'],
+        11: ['5', 'Triangle', 'No_Cue', '5KHz'],
+        12: ['5', 'No_Cue', 'Triangle', 'White_Noise'],
+        13: ['7', 'Triangle', 'No_Cue', 'White_Noise'],
+        14: ['7', 'No_Cue', 'Triangle', '5KHz'],
+        15: ['7', 'Triangle', 'No_Cue', '5KHz'],
+        16: ['7', 'No_Cue', 'Triangle', 'White_Noise']
+        }
+
         #Designing Trials Live
         self.trials = 50
         self.sound_cues = ['White_Noise', '5KHz']
@@ -316,140 +353,165 @@ class Interface(Plugin):
         self.choices = {'left': 0, 'right': 0}
         self.correct_counts = {1: 0, 3: 0, 5: 0, 7: 0}
 
-       
-    def generate_trial(self):
-        trial = {}
-        
-        # Balance sound and visual cues
-        sound = random.choice(self.sound_cues)
-        visual = self.visual_cues[0] if sound == 'White_Noise' else self.visual_cues[1]
-        
-        # Randomize position of visual cue (left/right)
-        correct_choice = random.choice(['left', 'right'])
+    def find_start_chamber(self, id_value, df):
+        if id_value == 1:
+                start_row, end_row = 0, 4  # Rows 1 to 4 (index 0 to 3)
+        elif id_value == 3:
+                start_row, end_row = 4, 8  # Rows 5 to 8 (index 4 to 7)
+        elif id_value == 5:
+                start_row, end_row = 8, 12 # Rows 9 to 12 (index 8 to 11)
+        elif id_value == 7:
+                start_row, end_row = 12, 16 # Rows 13 to 16 (index 12 to 15)
+        else:
+                raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
 
-        # Randomize start chamber
-        start_chamber = random.choice(self.compartments)
-        
-        # Assign chambers ensuring equal distribution
-        if start_chamber == 1 or start_chamber == 7:
-            choice_chambers = random.choice([3, 5])
-        elif start_chamber == 3 or start_chamber == 5:
-            choice_chambers = random.choice([1, 7])
-               
-        if start_chamber == 1:
-            if correct_choice == 'left':
-                correct_chamber =  5
-                error_chamber = 3
-            else:
-                correct_chamber = 3
-                error_chamber = 5
-        elif start_chamber == 3:
-            if correct_choice == 'left':
-                correct_chamber = 1
-                error_chamber = 7
-            else:
-                correct_chamber = 7
-                error_chamber = 1
-        elif start_chamber == 5:    
-            if correct_choice == 'left':
-                correct_chamber = 7
-                error_chamber = 1
-            else:
-                correct_chamber = 1
-                error_chamber = 7
-        elif start_chamber == 7:
-            if correct_choice == 'left':
-                correct_chamber = 3
-                error_chamber = 5
-            else:
-                correct_chamber = 5
-                error_chamber = 3
+            # Select the specific section of rows
+        section = df.iloc[start_row:end_row]
+
+            # Find the row with the maximum value in column 'b'
+        max_row = section.loc[section['Error_Count'].idxmax()]
+
+            # Return the value in column 'a' from the same row
+        return max_row['Trial Type']
     
-        trial['sound'] = sound
-        trial['visual'] = visual
-        trial['correct_choice'] = correct_choice
-        trial['start_chamber'] = start_chamber
-        trial['choice_chambers'] = choice_chambers
-        trial['correct_chamber'] = correct_chamber
-        trial['error_chamber'] = error_chamber
-        
+    def generate_trial(self, id_value, df):
+        start_chamber = self.find_start_chamber(self, id_value ,df)
+        trial = self.trial_types[start_chamber]
         return trial
+       
+    # def generate_trial(self):
+    #     trial = {}
+        
+    #     # Balance sound and visual cues
+    #     sound = random.choice(self.sound_cues)
+    #     visual = self.visual_cues[0] if sound == 'White_Noise' else self.visual_cues[1]
+        
+    #     # Randomize position of visual cue (left/right)
+    #     correct_choice = random.choice(['left', 'right'])
+
+    #     # Randomize start chamber
+    #     start_chamber = random.choice(self.compartments)
+        
+    #     # Assign chambers ensuring equal distribution
+    #     if start_chamber == 1 or start_chamber == 7:
+    #         choice_chambers = random.choice([3, 5])
+    #     elif start_chamber == 3 or start_chamber == 5:
+    #         choice_chambers = random.choice([1, 7])
+               
+    #     if start_chamber == 1:
+    #         if correct_choice == 'left':
+    #             correct_chamber =  5
+    #             error_chamber = 3
+    #         else:
+    #             correct_chamber = 3
+    #             error_chamber = 5
+    #     elif start_chamber == 3:
+    #         if correct_choice == 'left':
+    #             correct_chamber = 1
+    #             error_chamber = 7
+    #         else:
+    #             correct_chamber = 7
+    #             error_chamber = 1
+    #     elif start_chamber == 5:    
+    #         if correct_choice == 'left':
+    #             correct_chamber = 7
+    #             error_chamber = 1
+    #         else:
+    #             correct_chamber = 1
+    #             error_chamber = 7
+    #     elif start_chamber == 7:
+    #         if correct_choice == 'left':
+    #             correct_chamber = 3
+    #             error_chamber = 5
+    #         else:
+    #             correct_chamber = 5
+    #             error_chamber = 3
     
-    def adjust_for_bias(self, trial):
-        # Adjust for left/right bias
-        if self.choices['left'] - self.choices['right'] >= 5:
-            # Correct choice is right
-            if trial['start_chamber'] == 1:
-                correct_chamber_lr = 3
-                error_chamber_lr= 5
-            elif trial['start_chamber'] == 3:
-                correct_chamber_lr= 7
-                error_chamber_lr = 1
-            elif trial['start_chamber'] == 5:
-                correct_chamber_lr= 1
-                error_chamber_lr= 7
-            elif trial['start_chamber'] == 7:
-                correct_chamber_lr= 5
-                error_chamber_lr = 3
-        elif self.choices['right'] - self.choices['left'] >= 5:
-            # Correct choice is left
-            if trial['start_chamber'] == 1:
-                correct_chamber_lr= 5
-                error_chamber_lr= 3
-            elif trial['start_chamber'] == 3:
-                correct_chamber_lr= 1
-                error_chamber_lr = 7
-            elif trial['start_chamber'] == 5:
-                correct_chamber_lr = 7
-                error_chamber_lr = 1
-            elif trial['start_chamber'] == 7:
-                correct_chamber_lr = 3
-                error_chamber_lr = 5
-        else:
-            correct_choice = random.choice(['left', 'right'])
-            if trial['start_chamber'] == 1:
-                if correct_choice == 'left':
-                    correct_chamber_lr =  5
-                    error_chamber_lr = 3
-                else:
-                    correct_chamber_lr = 3
-                    error_chamber_lr = 5
-            elif trial['start_chamber'] == 3:
-                if correct_choice == 'left':
-                    correct_chamber_lr = 1
-                    error_chamber_lr = 7
-                else:
-                    correct_chamber_lr = 7
-                    error_chamber_lr = 1
-            elif trial['start_chamber'] == 5:    
-                if correct_choice == 'left':
-                    correct_chamber_lr = 7
-                    error_chamber_lr = 1
-                else:
-                    correct_chamber_lr = 1
-                    error_chamber_lr = 7
-            elif trial['start_chamber'] == 7:
-                if correct_choice == 'left':
-                    correct_chamber_lr = 3
-                    error_chamber_lr = 5
-                else:
-                    correct_chamber_lr = 5
-                    error_chamber_lr = 3
+    #     trial['sound'] = sound
+    #     trial['visual'] = visual
+    #     trial['correct_choice'] = correct_choice
+    #     trial['start_chamber'] = start_chamber
+    #     trial['choice_chambers'] = choice_chambers
+    #     trial['correct_chamber'] = correct_chamber
+    #     trial['error_chamber'] = error_chamber
         
-        if trial['start_chamber'] == 1 or 7:
-            correct_chamber_cham_num = min(self.correct_counts[3], self.correct_counts[5])
-        elif trial['start_chamber'] == 3 or 5:
-            correct_chamber_cham_num = min(self.correct_counts[1], self.correct_counts[7])
+    #     return trial
+    
+    # def adjust_for_bias(self, trial):
+    #     # Adjust for left/right bias
+    #     if self.choices['left'] - self.choices['right'] >= 5:
+    #         # Correct choice is right
+    #         if trial['start_chamber'] == 1:
+    #             correct_chamber_lr = 3
+    #             error_chamber_lr= 5
+    #         elif trial['start_chamber'] == 3:
+    #             correct_chamber_lr= 7
+    #             error_chamber_lr = 1
+    #         elif trial['start_chamber'] == 5:
+    #             correct_chamber_lr= 1
+    #             error_chamber_lr= 7
+    #         elif trial['start_chamber'] == 7:
+    #             correct_chamber_lr= 5
+    #             error_chamber_lr = 3
+    #     elif self.choices['right'] - self.choices['left'] >= 5:
+    #         # Correct choice is left
+    #         if trial['start_chamber'] == 1:
+    #             correct_chamber_lr= 5
+    #             error_chamber_lr= 3
+    #         elif trial['start_chamber'] == 3:
+    #             correct_chamber_lr= 1
+    #             error_chamber_lr = 7
+    #         elif trial['start_chamber'] == 5:
+    #             correct_chamber_lr = 7
+    #             error_chamber_lr = 1
+    #         elif trial['start_chamber'] == 7:
+    #             correct_chamber_lr = 3
+    #             error_chamber_lr = 5
+    #     else:
+    #         correct_choice = random.choice(['left', 'right'])
+    #         if trial['start_chamber'] == 1:
+    #             if correct_choice == 'left':
+    #                 correct_chamber_lr =  5
+    #                 error_chamber_lr = 3
+    #             else:
+    #                 correct_chamber_lr = 3
+    #                 error_chamber_lr = 5
+    #         elif trial['start_chamber'] == 3:
+    #             if correct_choice == 'left':
+    #                 correct_chamber_lr = 1
+    #                 error_chamber_lr = 7
+    #             else:
+    #                 correct_chamber_lr = 7
+    #                 error_chamber_lr = 1
+    #         elif trial['start_chamber'] == 5:    
+    #             if correct_choice == 'left':
+    #                 correct_chamber_lr = 7
+    #                 error_chamber_lr = 1
+    #             else:
+    #                 correct_chamber_lr = 1
+    #                 error_chamber_lr = 7
+    #         elif trial['start_chamber'] == 7:
+    #             if correct_choice == 'left':
+    #                 correct_chamber_lr = 3
+    #                 error_chamber_lr = 5
+    #             else:
+    #                 correct_chamber_lr = 5
+    #                 error_chamber_lr = 3
+        
+    #     if trial['start_chamber'] == 1 or 7:
+    #         correct_chamber_cham_num = min(self.correct_counts[3], self.correct_counts[5])
+    #     elif trial['start_chamber'] == 3 or 5:
+    #         correct_chamber_cham_num = min(self.correct_counts[1], self.correct_counts[7])
 
 
-        if correct_chamber_lr != correct_chamber_cham_num:
-            correct_chamber = random.choice([correct_chamber_lr, correct_chamber_cham_num])
-            error_chamber = 8 - correct_chamber
-        else:
-            correct_chamber = correct_chamber_lr
-            error_chamber = error_chamber_lr
+    #     if correct_chamber_lr != correct_chamber_cham_num:
+    #         correct_chamber = random.choice([correct_chamber_lr, correct_chamber_cham_num])
+    #         error_chamber = 8 - correct_chamber
+    #     else:
+    #         correct_chamber = correct_chamber_lr
+    #         error_chamber = error_chamber_lr
         
-        return correct_chamber, error_chamber
+    #     return correct_chamber, error_chamber
     
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
@@ -882,7 +944,6 @@ class Interface(Plugin):
                     self.training_mode = self.currentTrial[2]
                     
                     self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
-
                     
                     if self.left_visual_cue == "Triangle":
                         self.projection_pub.publish(self.project_left_cue_triangle)
@@ -1026,85 +1087,73 @@ class Interface(Plugin):
 
             if self.mode == Mode.START_EXPERIMENT:
                 rospy.loginfo("START OF THE EXPERIMENT")
+           
+                # self.currentStartConfig = self._widget.startChamberBtnGroup.checkedId()
 
-                #self.currentTrialNumber= -1
-                self.currentStartConfig = self._widget.startChamberBtnGroup.checkedId()
-                # for button in self._widget.startChamberBtnGroup.buttons():
-                #     button.setEnabled(False)
+                # self.currentTrialNumber = self.current_trial_index-1
 
-                self.currentTrialNumber = self.current_trial_index-1
-                #rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
-                
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TRIAL
 
             elif self.mode == Mode.START_TRIAL:
-                self.currentTrialNumber = self.currentTrialNumber+1
-                rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
-                if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
-                    self.currentTrial = self.trials[self.currentTrialNumber]
-                else:
-                # Handle the case where trials is empty or currentTrialNumber is out of range
-                    self.currentTrial = None
+                # self.currentTrialNumber = self.currentTrialNumber+1
+                # rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+                # if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                #     self.currentTrial = self.trials[self.currentTrialNumber]
+                # else:
+                # # Handle the case where trials is empty or currentTrialNumber is out of range
+                #     self.currentTrial = None  
+                # if self.manual_trial_edits:
 
-                if self.manual_trial_edits:
-                    if self.white_noise:
-                        self.sound_cue = "White_Noise"
-                    elif self.five_khz:
-                        self.sound_cue = "5kHz"
-                    if self.triangle_left:
-                        self.left_visual_cue = "Triangle"
-                        self.right_visual_cue = "No_Cue"
-                    elif self.triangle_right:
-                        self.left_visual_cue = "No_Cue"
-                        self.right_visual_cue = "Triangle"
-                else:
-
-                    rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
+                trial = self.generate_trial(self.start_chamber, self.df)
+                self.left_visual_cue = trial[1]
+                self.right_visual_cue = trial[2]
+                self.sound_cue = trial[3]
+                    
+                    # rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
             
-                    if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
-                        self.mode = Mode.END_EXPERIMENT
+                    # if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                    #     self.mode = Mode.END_EXPERIMENT
 
-                    if self.currentTrial is not None:
-                        # Set training mode from file if the automatic mode is selected
-                        if self._widget.trainingModeBtnGroup.checkedId() == 3:
-                            self.training_mode = self.currentTrial[3]
+                    # if self.currentTrial is not None:
+                    #     # Set training mode from file if the automatic mode is selected
+                    #     if self._widget.trainingModeBtnGroup.checkedId() == 3:
+                    #         self.training_mode = self.currentTrial[3]
 
-                        self.left_visual_cue = self.currentTrial[0]
-                        self.right_visual_cue = self.currentTrial[1]
-                        self.sound_cue = self.currentTrial[2]
+                    #     self.left_visual_cue = self.currentTrial[0]
+                    #     self.right_visual_cue = self.currentTrial[1]
+                    #     self.sound_cue = self.currentTrial[2]
+                    
 
-                        if self.is_testing_phase:
-                            self.play_sound_cue(self.sound_cue)
-                        else:
-                            self.sound_cue_training_start = self.sound_cue + "_Training_Start"
-                            self.sound_cue_training_stop = self.sound_cue + "_Training_Stop"
-                            self.play_sound_cue(self.sound_cue_training_start)
-                        
-                        self.start_chamber = self._widget.startChamberBtnGroup.checkedId()
-                        
-                        if self.sound_cue == "White_Noise":
-                            if self.left_visual_cue == "Triangle":  
-                                self.projection_pub.publish(self.project_left_cue_triangle)
-                                rospy.loginfo("Projecting left cue triangle")
-                                self.success_chamber = self.left_chamber
-                                self.error_chamber = self.right_chamber
-                            else:
-                                self.projection_pub.publish(self.project_right_cue_triangle)
-                                rospy.loginfo("Projecting right cue triangle")
-                                self.success_chamber = self.right_chamber
-                                self.error_chamber = self.left_chamber
-                        else:
-                            if self.left_visual_cue == "No_Cue":
-                                self.projection_pub.publish(self.project_right_cue_triangle)
-                                rospy.loginfo("Projecting right cue triangle")
-                                self.success_chamber = self.left_chamber
-                                self.error_chamber = self.right_chamber
-                            else:
-                                self.projection_pub.publish(self.project_left_cue_triangle)
-                                rospy.loginfo("Projecting left cue triangle")
-                                self.success_chamber = self.right_chamber
-                                self.error_chamber = self.left_chamber
+                if self.is_testing_phase:
+                    self.play_sound_cue(self.sound_cue)
+                else:
+                    self.sound_cue_training_start = self.sound_cue + "_Training_Start"
+                    self.sound_cue_training_stop = self.sound_cue + "_Training_Stop"
+                    self.play_sound_cue(self.sound_cue_training_start)
+                
+                if self.sound_cue == "White_Noise":
+                    if self.left_visual_cue == "Triangle":  
+                        self.projection_pub.publish(self.project_left_cue_triangle)
+                        rospy.loginfo("Projecting left cue triangle")
+                        self.success_chamber = self.left_chamber
+                        self.error_chamber = self.right_chamber
+                    else:
+                        self.projection_pub.publish(self.project_right_cue_triangle)
+                        rospy.loginfo("Projecting right cue triangle")
+                        self.success_chamber = self.right_chamber
+                        self.error_chamber = self.left_chamber
+                else:
+                    if self.left_visual_cue == "No_Cue":
+                        self.projection_pub.publish(self.project_right_cue_triangle)
+                        rospy.loginfo("Projecting right cue triangle")
+                        self.success_chamber = self.left_chamber
+                        self.error_chamber = self.right_chamber
+                    else:
+                        self.projection_pub.publish(self.project_left_cue_triangle)
+                        rospy.loginfo("Projecting left cue triangle")
+                        self.success_chamber = self.right_chamber
+                        self.error_chamber = self.left_chamber
         
 
                 self.mode_start_time = rospy.Time.now()
