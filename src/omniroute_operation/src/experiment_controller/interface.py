@@ -211,10 +211,10 @@ class Interface(Plugin):
 
         self.maze_dim = MazeDimensions()
 
-        self.trial_dir = r'\\10.34.1.59\big_gulp\nc4_rat_data\Maze_Rats'
+        self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
 
         self.rat = 6
-        self.date = '240819'
+        self.date = '240820'
 
         self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
 
@@ -375,7 +375,7 @@ class Interface(Plugin):
         return max_row['Trial Type']
     
     def generate_trial(self, id_value, df):
-        start_chamber = self.find_start_chamber(self, id_value ,df)
+        start_chamber = self.find_start_chamber(id_value ,df)
         trial = self.trial_types[start_chamber]
         return trial
        
