@@ -213,8 +213,8 @@ class Interface(Plugin):
 
         self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
 
-        self.rat = 6
-        self.date = '240820'
+        self.rat = 7
+        self.date = '240821'
 
         self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
 
@@ -344,6 +344,8 @@ class Interface(Plugin):
         16: ['7', 'No_Cue', 'Triangle', 'White_Noise']
         }
 
+        self.trial_count = {key: 0 for key in self.trial_types}
+
         #Designing Trials Live
         self.trials = 50
         self.sound_cues = ['White_Noise', '5KHz']
@@ -355,29 +357,82 @@ class Interface(Plugin):
 
     def find_start_chamber(self, id_value, df):
         if id_value == 1:
-                start_row, end_row = 0, 4  # Rows 1 to 4 (index 0 to 3)
+            start_row, end_row = 0, 4  # Rows 1 to 4 (index 0 to 3)
         elif id_value == 3:
-                start_row, end_row = 4, 8  # Rows 5 to 8 (index 4 to 7)
+            start_row, end_row = 4, 8  # Rows 5 to 8 (index 4 to 7)
         elif id_value == 5:
-                start_row, end_row = 8, 12 # Rows 9 to 12 (index 8 to 11)
+            start_row, end_row = 8, 12 # Rows 9 to 12 (index 8 to 11)
         elif id_value == 7:
-                start_row, end_row = 12, 16 # Rows 13 to 16 (index 12 to 15)
+            start_row, end_row = 12, 16 # Rows 13 to 16 (index 12 to 15)
         else:
-                raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+            raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
 
-            # Select the specific section of rows
+        # Select the specific section of rows
         section = df.iloc[start_row:end_row]
 
-            # Find the row with the maximum value in column 'b'
+        # Find the row with the maximum value in column 'Error_Count'
         max_row = section.loc[section['Error_Count'].idxmax()]
 
-            # Return the value in column 'a' from the same row
-        return max_row['Trial Type']
+        # Get the trial type from the selected row
+        trial_type = max_row['Trial Type']
+
+        # Check if this trial type has been selected 8 times
+        
+        if self.trial_count[trial_type] < 8:
+            # If not selected 8 times, return this trial type
+            return trial_type
+        else:
+            # If selected 8 times, find the next trial type with the highest 'Error_Count'
+            section = section.drop(section[section['Trial Type'] == trial_type].index)
+            if not section.empty:
+                next_max_row = section.loc[section['Error_Count'].idxmax()]
+                return next_max_row['Trial Type']
+            else:
+                raise ValueError("No alternative trial type available.")
     
+    def get_trial_type_key(self, id_value, trial_type):
+        # Return the key corresponding to the trial type and id_value
+        for key, value in self.trial_types.items():
+            if value[0] == str(id_value) and value[1:] == trial_type:
+                return key
+        raise ValueError("Trial type key not found for given id_value and trial_type.")
+
     def generate_trial(self, id_value, df):
-        start_chamber = self.find_start_chamber(id_value ,df)
+        start_chamber = self.find_start_chamber(id_value, df)
         trial = self.trial_types[start_chamber]
+
+        # Update the count for the selected trial type
+        self.trial_count[start_chamber] += 1
+
         return trial
+
+    # def find_start_chamber(self, id_value, df):
+    #     if id_value == 1:
+    #             start_row, end_row = 0, 4  # Rows 1 to 4 (index 0 to 3)
+    #     elif id_value == 3:
+    #             start_row, end_row = 4, 8  # Rows 5 to 8 (index 4 to 7)
+    #     elif id_value == 5:
+    #             start_row, end_row = 8, 12 # Rows 9 to 12 (index 8 to 11)
+    #     elif id_value == 7:
+    #             start_row, end_row = 12, 16 # Rows 13 to 16 (index 12 to 15)
+    #     else:
+    #             raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+
+    #         # Select the specific section of rows
+    #     section = df.iloc[start_row:end_row]
+
+    #         # Find the row with the maximum value in column 'b'
+    #     max_row = section.loc[section['Error_Count'].idxmax()]
+
+    #         # Return the value in column 'a' from the same row
+    #     return max_row['Trial Type']
+    
+    # def generate_trial(self, id_value, df):
+    #     start_chamber = self.find_start_chamber(id_value ,df)
+    #     trial = self.trial_types[start_chamber]
+    #     # Update the count for the selected trial type
+    #     self.trial_count[start_chamber] += 1
+    #     return trial
        
     # def generate_trial(self):
     #     trial = {}
@@ -1090,26 +1145,20 @@ class Interface(Plugin):
            
                 # self.currentStartConfig = self._widget.startChamberBtnGroup.checkedId()
 
-                # self.currentTrialNumber = self.current_trial_index-1
+                self.currentTrialNumber = self.current_trial_index-1
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TRIAL
 
             elif self.mode == Mode.START_TRIAL:
-                # self.currentTrialNumber = self.currentTrialNumber+1
-                # rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+                self.currentTrialNumber = self.currentTrialNumber+1
+                rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
                 # if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                 #     self.currentTrial = self.trials[self.currentTrialNumber]
                 # else:
                 # # Handle the case where trials is empty or currentTrialNumber is out of range
                 #     self.currentTrial = None  
-                # if self.manual_trial_edits:
-
-                trial = self.generate_trial(self.start_chamber, self.df)
-                self.left_visual_cue = trial[1]
-                self.right_visual_cue = trial[2]
-                self.sound_cue = trial[3]
-                    
+                # if self.manual_trial_edits:  
                     # rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
             
                     # if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
@@ -1123,7 +1172,14 @@ class Interface(Plugin):
                     #     self.left_visual_cue = self.currentTrial[0]
                     #     self.right_visual_cue = self.currentTrial[1]
                     #     self.sound_cue = self.currentTrial[2]
-                    
+
+                trial = self.generate_trial(self.start_chamber, self.df)
+                self.left_visual_cue = trial[1]
+                self.right_visual_cue = trial[2]
+                self.sound_cue = trial[3]
+
+                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.sound_cue]}")    
+
 
                 if self.is_testing_phase:
                     self.play_sound_cue(self.sound_cue)
