@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     else {
         // If the name is not known, select through the terminal an ethernet adapter (the slave)
         // you'd like to communicate with over EtherCAT
-        // adapter_name = "enp7s0";
+        // adapter_name = "enp8s0";
         app.set_ethercat_adapter_name_through_terminal();
     }
     // app.set_ethercat_adapter_name((char*)adapter_name.c_str());
