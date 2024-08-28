@@ -691,7 +691,7 @@ QPushButton:pressed {
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="manualTrialEditsBtn">
+    <widget class="QPushButton" name="trialGeneratorBtn">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -701,7 +701,7 @@ QPushButton:pressed {
       </rect>
      </property>
      <property name="text">
-      <string>Manual Trial Edits </string>
+      <string>Trial Generator </string>
      </property>
     </widget>
    </widget>
