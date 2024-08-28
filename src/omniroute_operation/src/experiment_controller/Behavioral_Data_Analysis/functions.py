@@ -175,8 +175,8 @@ def get_previous_folders(rat, date, path=os.environ['DATA_PATH']):
     except ValueError:
         raise ValueError(f"The given date {date} does not exist in the folder list.")
     
-    # Get the previous two folders including the current one
-    start_index = max(current_index - 2, 0)
+    # Get the previous seven folders including the current one
+    start_index = max(current_index - 7, 0)
     return all_folders[start_index:current_index+1]
 
 def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
@@ -205,6 +205,6 @@ def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     combined_df['Success_Count'] = combined_df['Success_Count'] / combined_df['Total_Repetitions']
     
     # Save the combined DataFrame to a new CSV file
-    output_path = os.path.join(anim_folder, date, 'Past_three_days_biases.csv')
+    output_path = os.path.join(anim_folder, date, 'Past_seven_days_biases.csv')
     combined_df.to_csv(output_path, index=False)
     print(f"Combined CSV saved to {output_path}")
