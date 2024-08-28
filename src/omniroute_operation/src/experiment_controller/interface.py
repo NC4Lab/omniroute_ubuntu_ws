@@ -214,7 +214,7 @@ class Interface(Plugin):
         self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
 
         self.rat = 6
-        self.date = '240826'
+        self.date = '240827'
 
         self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
 
@@ -618,7 +618,7 @@ class Interface(Plugin):
         self.setLowerConfig()
 
     def _handle_trialGeneratorBtn_clicked(self):
-        self.trial_generator == True
+        self.trial_generator = True
         rospy.loginfo("Trial Generator enabled")  
 
     def _handle_whiteNoiseBtn_clicked(self):
@@ -976,34 +976,34 @@ class Interface(Plugin):
             elif self.mode == Mode.START_TRIAL:
                 self.currentTrialNumber = self.currentTrialNumber+1
                 rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+                if self.trial_generator:
+                    trial = self.generate_trial(self.start_chamber, self.df)
+                    self.left_visual_cue = trial[1]
+                    self.right_visual_cue = trial[2]
+                    self.sound_cue = trial[3]
+
+                    rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.sound_cue]}") 
+                else:
+                    if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                        self.currentTrial = self.trials[self.currentTrialNumber]
+                    else:
+                        # Handle the case where trials is empty or currentTrialNumber is out of range
+                        self.currentTrial = None
+
+                    rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
                 
-                trial = self.generate_trial(self.start_chamber, self.df)
-                self.left_visual_cue = trial[1]
-                self.right_visual_cue = trial[2]
-                self.sound_cue = trial[3]
+                    if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                        self.mode = Mode.END_EXPERIMENT
 
-                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.sound_cue]}") 
-                
-                # if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
-                #     self.currentTrial = self.trials[self.currentTrialNumber]
-                # else:
-                #     # Handle the case where trials is empty or currentTrialNumber is out of range
-                #     self.currentTrial = None
+                    if self.currentTrial is not None:
+                        # Set training mode from file if the automatic mode is selected
+                        if self._widget.trainingModeBtnGroup.checkedId() == 3:
+                            self.training_mode = self.currentTrial[3]
 
-                # rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
-            
-                # if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
-                #     self.mode = Mode.END_EXPERIMENT
-
-                # if self.currentTrial is not None:
-                #     # Set training mode from file if the automatic mode is selected
-                #     if self._widget.trainingModeBtnGroup.checkedId() == 3:
-                #         self.training_mode = self.currentTrial[3]
-
-                #     self.left_visual_cue = self.currentTrial[0]
-                #     self.right_visual_cue = self.currentTrial[1]
-                #     self.sound_cue = self.currentTrial[2]
-                       
+                        self.left_visual_cue = self.currentTrial[0]
+                        self.right_visual_cue = self.currentTrial[1]
+                        self.sound_cue = self.currentTrial[2]
+                        
 
                 if self.is_testing_phase:
                     self.play_sound_cue(self.sound_cue)
