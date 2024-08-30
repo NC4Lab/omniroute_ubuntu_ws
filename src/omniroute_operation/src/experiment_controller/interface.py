@@ -214,7 +214,7 @@ class Interface(Plugin):
         self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
 
         self.rat = 6
-        self.date = '240827'
+        self.date = '240828'
 
         self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
 
@@ -358,35 +358,28 @@ class Interface(Plugin):
         else:
             raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
 
-        # Filter the DataFrame for the relevant trial types
-        section = df[df['Trial Type'].isin(trial_types_to_check)]
+        # Extract the values from the specified trial types
+        subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
+      
+        values = subset_df['Error_Count'].to_numpy()
+     
+        # Normalize the values to create probabilities
+        total = np.sum(values)
+        probabilities = values / total
+        
+        # Choose one value based on probabilities
+        selected_value = np.random.choice(values, size=1, p=probabilities)
+     
+        selected_value_index = values.tolist().index(selected_value)
 
-        # Find the row with the maximum value in column 'Error_Count'
-        max_row = section.loc[section['Error_Count'].idxmax()]
-
-        # Get the trial type from the selected row
-        trial_type = max_row['Trial Type']
-
-        # Check if this trial type has been selected 8 times
-        if self.trial_count[trial_type] < 8:
-            # If not selected 8 times, return this trial type
-            return trial_type
-        else:
-            # If selected 8 times, find the next trial type with the highest 'Error_Count'
-            section = section.drop(section[section['Trial Type'] == trial_type].index)
-            if not section.empty:
-                next_max_row = section.loc[section['Error_Count'].idxmax()]
-                return next_max_row['Trial Type']
-            else:
-                raise ValueError("No remaining trial types available with high error counts.")
+        trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+        
+        return trial_type
 
 
     def generate_trial(self, id_value, df):
         start_chamber = self.find_start_chamber(id_value, df)
         trial = self.trial_types[start_chamber]
-
-        # Update the count for the selected trial type
-        self.trial_count[start_chamber] += 1
 
         return trial
 
@@ -844,14 +837,14 @@ class Interface(Plugin):
 
             elif self.mode == Mode.RAT_IN_START_CHAMBER:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
-                    #if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
-                    # if self.success_chamber == self.left_chamber:
-                    #     self.lower_wall(self.left_goal_wall, send=True)
-                    # else:
-                    #     self.lower_wall(self.right_goal_wall, send=True)
-                #elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                    self.lower_wall(self.left_goal_wall, send=False)
-                    self.lower_wall(self.right_goal_wall, send=True)
+                    if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
+                        if self.success_chamber == self.left_chamber:
+                            self.lower_wall(self.left_goal_wall, send=True)
+                        else:
+                            self.lower_wall(self.right_goal_wall, send=True)
+                    elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
+                        self.lower_wall(self.left_goal_wall, send=False)
+                        self.lower_wall(self.right_goal_wall, send=True)
 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.START
