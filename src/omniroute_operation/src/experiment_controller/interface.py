@@ -214,7 +214,7 @@ class Interface(Plugin):
         self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
 
         self.rat = 6
-        self.date = '240828'
+        self.date = '240829'
 
         self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
 
