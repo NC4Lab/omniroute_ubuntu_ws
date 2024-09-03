@@ -1,12 +1,12 @@
-// #################################
+// ######################################
 
-// ====== FeederOperation.ino ======
+//====== FeederOperation.ino ======
 
-// #################################
+// ######################################
 
 /**
- @file Arduino INO file for running feeeder related oppertions.
-*/
+ * @file Main Arduino INO file for running the maze.
+ */
 
 // BUILT IN
 #include "Arduino.h"
@@ -20,13 +20,13 @@
 //============ VARIABLES ===============
 
 // Global variables
-bool DB_VERBOSE = 0;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
-MazeDebug Dbg; // instance of MazeDebug class for debugging messages
-FeederServo FdSrv; // instance of FeederServo class
-EsmacatCom EsmaCom(10);  // instance of EsmacatCom class using SPI chip select pin 10
+MazeDebug Dbg;
+FeederServo FdSrv;
+EsmacatCom EsmaCom(10);
 
 //=============== SETUP =================
 void setup()
@@ -91,30 +91,3 @@ void loop()
   EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, EsmaCom.rcvEM.ArgU.ui8, EsmaCom.rcvEM.argLen);
 
 }
-
-// //=============== SETUP =================
-// void setup()
-// {
-//   Serial.begin(115200);
-//   delay(100);
-
-//   Serial1.begin(115200);
-//   delay(100);
-
-//   Serial.println("RUNNING SETUP");
-
-//   Serial1.println("$$");
-//   delay(100);
-
-//   Serial.println("SETUP COMPLETE");
-// }
-
-// //=============== LOOP ==================
-// void loop()
-// {
-//   while(Serial1.available())
-//   {
-//     Serial.write(Serial1.read());
-//   }
-//   delay(1000);
-// }
