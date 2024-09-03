@@ -200,8 +200,11 @@ class Interface(Plugin):
         self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
         # Button for designating if this is the phys rat
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
+        # Button for designating if rewards should be despensed from the gantry
+        self._widget.doGantryRewardTogBtn.clicked.connect(self._handle_doGantryRewardTogBtn_clicked)
         
         self.is_ephys_rat = False
+        self.do_gantry_reward = False
         self.is_testing_phase = False
         self.trial_generator = False
         self.white_noise = False
@@ -557,11 +560,17 @@ class Interface(Plugin):
     def _handle_stopPumpBtn_clicked(self):
         self.gantry_pub.publish("STOP_PUMP",[])
 
-    def _handle_ephysRatTogBtn_clicked(self):
+    def _handle_doGantryRewardTogBtn_clicked(self):
         if self._widget.ephysRatTogBtn.isChecked():
             self.is_ephys_rat = True
         else:
             self.is_ephys_rat = False
+
+    def _handle_ephysRatTogBtn_clicked(self):
+        if self._widget.gantryRewardTogBtn.isChecked():
+            self.do_gantry_reward = True
+        else:
+            self.do_gantry_reward = False
 
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
@@ -898,7 +907,8 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                    #self.reward_dispense()
+                    if self.do_gantry_reward:
+                        self.reward_dispense()
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
@@ -1113,7 +1123,8 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                    #self.reward_dispense()
+                    if self.do_gantry_reward:
+                        self.reward_dispense()
                     # if self.is_testing_phase:
                     #     self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()

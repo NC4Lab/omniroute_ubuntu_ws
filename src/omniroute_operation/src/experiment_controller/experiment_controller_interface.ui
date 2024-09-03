@@ -654,8 +654,8 @@ color: rgb(255, 255, 0);</string>
      <property name="geometry">
       <rect>
        <x>60</x>
-       <y>30</y>
-       <width>91</width>
+       <y>10</y>
+       <width>101</width>
        <height>31</height>
       </rect>
      </property>
@@ -694,14 +694,55 @@ QPushButton:pressed {
     <widget class="QPushButton" name="trialGeneratorBtn">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>90</y>
-       <width>141</width>
-       <height>41</height>
+       <x>50</x>
+       <y>110</y>
+       <width>121</width>
+       <height>31</height>
       </rect>
      </property>
      <property name="text">
       <string>Trial Generator </string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="ephysRatTogBtn_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>181</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Enable Gantry Reward</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
    </widget>
