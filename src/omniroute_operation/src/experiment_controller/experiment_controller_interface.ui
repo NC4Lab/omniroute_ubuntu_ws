@@ -704,7 +704,7 @@ QPushButton:pressed {
       <string>Trial Generator </string>
      </property>
     </widget>
-    <widget class="QPushButton" name="ephysRatTogBtn_2">
+    <widget class="QPushButton" name="gantryRewardTogBtn">
      <property name="geometry">
       <rect>
        <x>20</x>

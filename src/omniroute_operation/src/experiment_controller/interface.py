@@ -201,7 +201,7 @@ class Interface(Plugin):
         # Button for designating if this is the phys rat
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         # Button for designating if rewards should be despensed from the gantry
-        self._widget.doGantryRewardTogBtn.clicked.connect(self._handle_doGantryRewardTogBtn_clicked)
+        self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
         
         self.is_ephys_rat = False
         self.do_gantry_reward = False
@@ -560,7 +560,7 @@ class Interface(Plugin):
     def _handle_stopPumpBtn_clicked(self):
         self.gantry_pub.publish("STOP_PUMP",[])
 
-    def _handle_doGantryRewardTogBtn_clicked(self):
+    def _handle_gantryRewardTogBtn_clicked(self):
         if self._widget.ephysRatTogBtn.isChecked():
             self.is_ephys_rat = True
         else:
