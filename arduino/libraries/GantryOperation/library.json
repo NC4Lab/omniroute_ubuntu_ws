@@ -1,10 +1,10 @@
 {
-  "name": "FeederServo",
+  "name": "GantryOperation",
   "version": "1.0.0",
   "repository":
   {
     "type": "git",
-    "url": "https://github/FeederServo"
+    "url": "https://github/GantryOperation"
   },
   "authors":
   [
