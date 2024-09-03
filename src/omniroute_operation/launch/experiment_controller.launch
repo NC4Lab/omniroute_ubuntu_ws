@@ -69,7 +69,7 @@
     <!-- Esmacat parameter -->
     <param name="sync_ease_slave_index" type="int" value="0" />
     <param name="maze_ard0_ease_slave_index" type="int" value="1" />
-    <param name="gantry_ease_slave_index" type="int" value="2" />
+    <param name="_slave_index" type="int" value="2" />
 
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
@@ -94,7 +94,7 @@
     <!--  -->
     <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
     
-    <!-- Omniroute feeder cantry node -->
+    <!-- Omniroute gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
     
   </launch>

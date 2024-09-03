@@ -76,7 +76,7 @@
     <!-- Omniroute experiment controller interface node -->
     <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 
-    <!-- Omniroute feeder gantry node -->
+    <!-- Omniroute gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
 
      <!-- Omniroute omniroute_controller interface node -->
