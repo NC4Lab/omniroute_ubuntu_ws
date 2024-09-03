@@ -27,18 +27,18 @@ class SyncSender:
         rospy.Timer(rospy.Duration(self.interval), self.timer_callback_spikeGadgetsSync)
 
         # Create EsmacatCom object for sync_ease
-        self.EsmaComSync = EsmacatCom('sync_ease')
+        self.EsmaCom = EsmacatCom('sync_ease')
 
         MazeDB.printMsg('INFO', "[SyncSender]: Initialzed sync_sender_node")
 
     def event_callback(self, event):
         """ Callback function for modifying Optitrack sync pin through event subscriber """
         if event.event == 'start_optitrack_sync':
-            self.EsmaComSync.writeEcatMessage(EsmacatCom.MessageType.SET_OPTITRACK_SYNC_PIN, 1)
+            self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.SYNC_SET_OPTITRACK_PIN, 1)
             self.event_pub.publish("start_optitrack_recording", rospy.Time.now())
             MazeDB.printMsg('DEBUG', "[SyncSender]: Optitrack sync signal started")
         elif event.event == 'stop_optitrack_sync':
-            self.EsmaComSync.writeEcatMessage(EsmacatCom.MessageType.SET_OPTITRACK_SYNC_PIN, 0)
+            self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.SYNC_SET_OPTITRACK_PIN, 0)
             self.event_pub.publish("stop_optitrack_recording", rospy.Time.now())
             MazeDB.printMsg('DEBUG', "[SyncSender]: Optitrack sync signal stopped")
 
@@ -53,14 +53,14 @@ class SyncSender:
         self.event_pub.publish("sync_spikegadgets", rospy.Time.now())
 
         # Set the spike gadgets sync signal high
-        self.EsmaComSync.writeEcatMessage(EsmacatCom.MessageType.SET_SPIKEGADGETS_SYNC_PIN, 1, do_print=False)
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.SYNC_SET_SPIKEGADGETS_PIN, 1, do_print=False)
         #MazeDB.printMsg('DEBUG', "[SyncSender]: SpikeGadgets sync signal sent")
 
         # Wait for the width of the sync signal
         rospy.sleep(self.width)
 
         # Set the spike gadgets sync signal low
-        self.EsmaComSync.writeEcatMessage(EsmacatCom.MessageType.SET_SPIKEGADGETS_SYNC_PIN, 0, do_print=False)
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.SYNC_SET_SPIKEGADGETS_PIN, 0, do_print=False)
 
 
 if __name__ == '__main__':
