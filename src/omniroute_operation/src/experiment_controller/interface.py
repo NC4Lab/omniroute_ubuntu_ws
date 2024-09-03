@@ -1251,7 +1251,7 @@ class Interface(Plugin):
     def reward_dispense(self):
         if self.is_ephys_rat:
             return
-        self.gantry_pub.publish("REWARD", [4.0])
+        self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.maze_dim.chamber_centers[chamber_num][0]
