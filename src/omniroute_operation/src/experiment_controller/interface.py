@@ -897,10 +897,10 @@ class Interface(Plugin):
                     rospy.loginfo("ERROR")
 
             elif self.mode == Mode.SUCCESS:
-                # self.success_center_x = self.chamber_centers[self.success_chamber][0]
-                # self.success_center_y = self.chamber_centers[self.success_chamber][1]
-                #if not self.is_ephys_rat:
-                    #self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
+                self.success_center_x = self.chamber_centers[self.success_chamber][0]
+                self.success_center_y = self.chamber_centers[self.success_chamber][1]
+                if not self.is_ephys_rat:
+                    self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD START")
@@ -1114,9 +1114,9 @@ class Interface(Plugin):
                     rospy.loginfo("Left chamber selected and chamber number is {}".format(self.success_chamber))
                 else:
                     rospy.loginfo("Right chamber selected and chamber number is {}".format(self.success_chamber))
-                # self.success_center_x = self.chamber_centers[self.success_chamber][0]
-                # self.success_center_y = self.chamber_centers[self.success_chamber][1]
-                #self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
+                self.success_center_x = self.chamber_centers[self.success_chamber][0]
+                self.success_center_y = self.chamber_centers[self.success_chamber][1]
+                self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD_START")
