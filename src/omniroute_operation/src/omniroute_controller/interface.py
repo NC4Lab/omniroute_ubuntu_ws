@@ -825,10 +825,10 @@ class Interface(Plugin):
         # Projected image ui callbacks
         self.proj_img_cfg_btn_vec = []  # Initalize vector for buttons
         for i in range(9):
-            button_name = f'projImgCfgBtn_{i}'
+            button_name = f'projWallImgCfgBtn_{i}'
             button = getattr(self._widget, button_name)
             button.clicked.connect(  # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projImgCfgBtn_clicked(b))
+                lambda _, b=i: self.qt_callback_projWallImgCfgBtn_clicked(b))
             self.proj_img_cfg_btn_vec.append(button)  # Store the button
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
@@ -1340,7 +1340,7 @@ class Interface(Plugin):
         self.ProjOpp.publish_window_mode_cmd(-3)
         MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
-    def qt_callback_projImgCfgBtn_clicked(self, button_number):
+    def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
         """ Callback function to send projector command from button press."""
 
         # Get the button that was clicked
