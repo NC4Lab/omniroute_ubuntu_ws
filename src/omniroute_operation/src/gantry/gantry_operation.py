@@ -163,7 +163,7 @@ class GantryFeeder:
 
     def jog_cancel(self):
         self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_JOG_CANCEL)
+            EsmacatCom.MessageType.GANTRY_JOG_CANCEL, do_print=False)
 
     def home(self):
         # Send command to home gantry

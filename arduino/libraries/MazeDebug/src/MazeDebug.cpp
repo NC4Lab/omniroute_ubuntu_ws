@@ -26,16 +26,10 @@ void MazeDebug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 	if (DB_VERBOSE == 0)
 		return;
 
+	// Local variables
 	const uint8_t buff_s = 125;
 	static char buff[buff_s];
 	buff[0] = '\0';
-	const uint8_t buff_sym_s = 50;
-	static char buff_sym[buff_sym_s];
-	buff_sym[0] = '\0';
-
-	// Check if message type is an attention grabbing header message
-	bool is_head1_msg = (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A || msg_type_enum == MT::HEAD1B);
-	bool is_head2_msg = (msg_type_enum == MT::HEAD2);
 
 	// Format message
 	va_list args;
@@ -43,49 +37,47 @@ void MazeDebug::printMsg(MT msg_type_enum, const char *p_fmt, ...)
 	vsnprintf(buff, buff_s, p_fmt, args);
 	va_end(args);
 
-	// Get number of attention grabbing characters to print before and after message
-	size_t n =
-		(buff_s - 30) / 2 - strlen(buff) / 2 - 1; // account for current message (strlen(buff)) and type and time string (~30) and buffer size
-	n = n < buff_sym_s && n > 0 ? n : 3;		  // ensure n is not negative and doesn't exceed buff_sym size
-
-	// Fill buffer with attention grabbing characters
-	if (is_head1_msg)
-		memset(buff_sym, '=', n);
-	else if (is_head2_msg)
-		memset(buff_sym, '_', n);
-	else if (msg_type_enum == MT::ERROR)
-		memset(buff_sym, '!', n);
-	buff_sym[n] = '\0';
-
 	// Add additional new line for attention messages
-	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1A)
+	if (msg_type_enum == MT::ATTN)
 		Serial.print("\n");
 
-	// Print message type
-	Serial.print(_message_type_str[msg_type_enum]);
+	// Print message type based on the enum value
+	switch (msg_type_enum)
+	{
+	case MT::ATTN:
+		Serial.print("[ATTN]");
+		break;
+	case MT::INFO:
+		Serial.print("[INFO]");
+		break;
+	case MT::ERROR:
+		Serial.print("[!!ERROR!!]");
+		break;
+	case MT::WARNING:
+		Serial.print("[!WARNING!]");
+		break;
+	case MT::DEBUG:
+		Serial.print("[DEBUG]");
+		break;
+	default:
+		Serial.print("[UNKNOWN]");
+		break;
+	}
 
 	// Print time string
 	Serial.print(" [");
 	Serial.print(_timeStr(0));
 	Serial.print("]: ");
 
-	// Print preceding header symbols
-	if (is_head1_msg || is_head2_msg || msg_type_enum == MT::ERROR)
-		Serial.print(buff_sym);
-
 	// Print message
 	Serial.print(buff);
 
-	// Print proceding header symbols
-	if (is_head1_msg || is_head2_msg || msg_type_enum == MT::ERROR)
-		Serial.print(buff_sym);
-
 	// Add new line
-	Serial.print("\n");
+	Serial.print("\r\n");
 
 	// Add additional new line for attention messages
-	if (msg_type_enum == MT::HEAD1 || msg_type_enum == MT::HEAD1B)
-		Serial.print("\n");
+	if (msg_type_enum == MT::ATTN)
+		Serial.print("\r\n");
 }
 
 /// @brief Generate a time string based on current run time.
@@ -247,13 +239,9 @@ void MazeDebug::printTest()
 {
 	/// @note: Keep commmented out unless using because const strings take up memory
 
-	// printMsg(MT::ERROR, "ERROR");
-	// printMsg(MT::HEAD2, "HEAD2");
-	// printMsg(MT::DEBUG, "DEBUG");
-	// printMsg(MT::HEAD1, "HEAD1");
-	// printMsg(MT::INFO, "INFO .........................");																											 // 30 char
-	// printMsg(MT::HEAD1A, "           HEAD1A           ");																											 // 30 char
-	// printMsg(MT::INFO, "INFO ...................................................................................................................................."); // 130 char
-	// printMsg(MT::HEAD1B, "                                                                 HEAD1B                                                                "); // 130 char
-	// printMsg(MT::HEAD2, "HEAD2");
+	printMsg(MT::INFO, "INFO");
+	printMsg(MT::ATTN, "ATTN");
+	printMsg(MT::DEBUG, "DEBUG");
+	printMsg(MT::ERROR, "ERROR");
+	printMsg(MT::WARNING, "WARNING");
 }

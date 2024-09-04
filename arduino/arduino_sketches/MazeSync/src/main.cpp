@@ -36,7 +36,7 @@ void setup()
   delay(100);
 
   // Print setup started
-  Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
+  Dbg.printMsg(Dbg.MT::ATTN, "RUNNING SETUP");
 
   // Initialize ethercat coms
   EsmaCom.initEcat(true);
@@ -50,7 +50,7 @@ void setup()
   digitalWrite(optiSyncPin, LOW);
 
   // Print setup complete
-  Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
+  Dbg.printMsg(Dbg.MT::ATTN, "SETUP COMPLETE");
 }
 
 void loop()

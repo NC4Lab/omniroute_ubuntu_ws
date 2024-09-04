@@ -103,7 +103,7 @@ uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout)
 /// @brief Initialize the grbl settings.
 void GantryOperation::grblInit()
 {
-	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GRBL INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "START: GRBL INITIALIZATION");
 
 	// Set Units (mm)
 	if (grblWrite("G21") != 0)
@@ -123,13 +123,13 @@ void GantryOperation::grblInit()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting feed rate");
 	}
 
-	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: GRBL INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL INITIALIZATION");
 }
 
 /// @brief Home the gantry.
 void GantryOperation::gantryHome()
 {
-	_Dbg.printMsg(_Dbg.MT::HEAD1A, "START: GANTRY HOMING");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "START: GANTRY HOMING");
 
 	// Set the homing seek speed to 7500 mm/min
 	if (grblWrite("$25=7500") != 0)
@@ -149,7 +149,7 @@ void GantryOperation::gantryHome()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting origin");
 	}
 
-	_Dbg.printMsg(_Dbg.MT::HEAD1B, "FINISHED: GANTRY HOMING");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GANTRY HOMING");
 }
 
 /// @brief Move the gantry to the target coordinates.

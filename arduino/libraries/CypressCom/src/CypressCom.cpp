@@ -29,7 +29,7 @@ uint8_t CypressCom::i2cInit()
 
 	// Set I2C timeout to 5 seconds
 	Wire.setWireTimeout(5000000); // (us) for Wire librarary (default: 25000)
-	Wire.setTimeout(5000);		   // (ms) for Stream librarary
+	Wire.setTimeout(5000);		  // (ms) for Stream librarary
 
 	// Scan I2C bus for Cypress chips and print found addresses
 	return i2cScan();
@@ -286,19 +286,11 @@ uint8_t CypressCom::ioWriteReg(uint8_t address, uint8_t p_byte_mask_arr[], uint8
 uint8_t CypressCom::setupCypress(uint8_t address)
 {
 
-	// Check I2C lines
-	bool is_err = false;
-#ifdef ARDUINO_SAM_DUE
-	is_err = (digitalRead(20) == LOW) || (digitalRead(21) == LOW);
-#endif
-#ifdef __AVR_ATmega2560__
-	is_err = (digitalRead(20) == LOW) || (digitalRead(21) == LOW);
-#endif
-#ifdef ARDUINO_AVR_UNO
-	is_err = (digitalRead(PC4) == LOW) || (digitalRead(PC5) == LOW);
-#endif
-	if (is_err)
+	// Check I2C lines on Arduino Mega
+	if ((digitalRead(20) == LOW) || (digitalRead(21) == LOW))
+	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C LINES LOW: CHECK POWER");
+	}
 
 	// Test I2C connection
 	_beginTransmissionWrapper(address);
@@ -309,7 +301,7 @@ uint8_t CypressCom::setupCypress(uint8_t address)
 	/// @todo Get this working
 	if (resp != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED SETUP I2C CHECK: WIRE STATUS[%d]", resp);
+		_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: I2C CHECK: ADDR[%s] STATUS[%d]", _Dbg.hexStr(address), resp);
 	}
 
 	// Setup Cypress chip
@@ -318,12 +310,12 @@ uint8_t CypressCom::setupCypress(uint8_t address)
 		// Restore chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RESTORE);
 		if (resp)
-			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS CHIP RESTORE: WIRE STATUS[%d]", resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS RESTORE: ADDR[%s] STATUS[%d]", _Dbg.hexStr(address), resp);
 
 		// Reset chip
 		resp = i2cWrite(address, REG_CMD, REG_CMD_RECONF);
 		if (resp)
-			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS CHIP RECONFIGURE: WIRE STATUS[%d]", resp);
+			_Dbg.printMsg(_Dbg.MT::ERROR, "FAILED: CYPRESS RECONFIGURE: ADDR[%s] STATUS[%d]", _Dbg.hexStr(address), resp);
 	}
 
 	return resp;
@@ -476,7 +468,7 @@ uint8_t CypressCom::i2cScan()
 		_Dbg.printMsg(_Dbg.MT::INFO, "I2C Devices Found:");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print devices
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_addr[i]));
+			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d %s", i, _Dbg.hexStr(list_addr[i]));
 		}
 	}
 	else
@@ -488,7 +480,7 @@ uint8_t CypressCom::i2cScan()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "I2C Errors Found");
 		for (size_t i = 0; i < cnt_addr; i++)
 		{ // print errors
-			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d) %s", i, _Dbg.hexStr(list_addr_with_err[i]));
+			_Dbg.printMsg(_Dbg.MT::INFO, "\t%d %s", i, _Dbg.hexStr(list_addr_with_err[i]));
 		}
 	}
 

@@ -461,7 +461,7 @@ void EsmacatCom::initEcat(bool do_connect)
     isEcatConnected = do_connect;
 
     // Log connection status changes
-    _Dbg.printMsg(_Dbg.MT::HEAD1, "ECAT COMMS %s", isEcatConnected ? "CONNECTED" : "DISCONNECTED");
+    _Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS %s", isEcatConnected ? "CONNECTED" : "DISCONNECTED");
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
