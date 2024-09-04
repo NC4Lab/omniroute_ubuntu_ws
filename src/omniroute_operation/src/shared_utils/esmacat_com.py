@@ -54,10 +54,11 @@ class EsmacatCom:
         SYNC_SET_SPIKEGADGETS_PIN = 8
         GANTRY_INITIALIZE_GRBL = 9
         GANTRY_HOME = 10
-        GANTRY_MOVE_REL = 11
-        GANTRY_SET_FEEDER = 12
-        GANTRY_RUN_PUMP = 13
-        GANTRY_JOG_CANCEL = 14
+        GANTRY_SET_FEEDER = 11
+        GANTRY_RUN_PUMP = 12
+        GANTRY_REWARD = 13
+        GANTRY_MOVE_REL = 14
+        GANTRY_JOG_CANCEL = 15
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """

@@ -1317,7 +1317,7 @@ class Interface(Plugin):
 
     def qt_callback_rewardBtn_clicked(self):
         """ Callback function to run the full feeder opperation from button press."""
-        self.gantry_pub.publish("REWARD", [3.0])
+        self.gantry_pub.publish("REWARD", [1.0])
 
     def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""

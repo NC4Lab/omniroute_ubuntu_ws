@@ -94,6 +94,9 @@ public:
 
 public:
 	void pumpRun(uint8_t run_state);
+
+public:
+	void runReward(float diration);
 };
 
 #endif

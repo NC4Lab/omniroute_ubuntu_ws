@@ -36,7 +36,7 @@ uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_read, unsigned
 	_Dbg.dtTrack(1);
 	String ack_str;
 	uint8_t status = grblRead(ack_str, timeout);
-	//uint8_t status = 0;
+	// uint8_t status = 0;
 
 	// Print the acknoledgement
 	if (status == 0)
@@ -177,12 +177,11 @@ void GantryOperation::gantryMove(float x, float y)
 void GantryOperation::grblJogCancel()
 {
 	// Send the jog cancel command
-	if (grblWrite(""+char(0x85)) != 0)
+	if (grblWrite("" + char(0x85)) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error canceling jog");
 	}
 }
-
 
 void GantryOperation::grblResetAlarm()
 {
@@ -236,7 +235,6 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_MOVE_REL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
-		/// HACK: To correct the
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
 		gantryMove(x, y);
@@ -260,6 +258,13 @@ void GantryOperation::procEcatMessage()
 	{
 		uint8_t run_state = EsmaCom.rcvEM.ArgU.ui8[0]; // get the run state
 		pumpRun(run_state);
+	}
+
+	// GANTRY_REWARD
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
+	{
+		float duration = EsmaCom.rcvEM.ArgU.f32[0]*1000; // get the reward durration in ms
+		runReward(duration);
 	}
 
 	//............... Send Ecat Ack ...............
@@ -312,7 +317,7 @@ void GantryOperation::servoInit()
 
 /// @brief Lower or raise the feeder.
 ///
-/// @param move_dir: Direction to move the feeder [0:lower, 1:raise].
+/// @param move_dir: Direction to move the feeder [0:raise, 1:lower].
 void GantryOperation::feederMove(uint8_t move_dir)
 {
 	if (move_dir == 1)
@@ -344,42 +349,25 @@ void GantryOperation::pumpRun(uint8_t run_state)
 	}
 }
 
-// void command(const std::string &cmd)
-// {
-// 	try
-// 	{
-// 		std::string upper_cmd = cmd;
-// 		std::transform(upper_cmd.begin(), upper_cmd.end(), upper_cmd.begin(), ::toupper);
-// 		std::istringstream iss(upper_cmd);
-// 		std::string subcmd;
+/// @brief Start or stop the pump.
+///
+/// @param diration: Duration to run the pump (ms).
+///
+void GantryOperation::runReward(float diration)
+{
+	// Lower the feeder
+	feederMove(1);
+	delay(250);
 
-// 		while (iss >> subcmd)
-// 		{
-// 			if (subcmd[0] == 'X')
-// 			{
-// 				value_X += std::stod(subcmd.substr(1));
-// 			}
-// 			else if (subcmd[0] == 'Y')
-// 			{
-// 				value_Y += std::stod(subcmd.substr(1));
-// 			}
-// 		}
+	// Start the pump
+	pumpRun(1);
 
-// 		std::string full_cmd = cmd + "\n";
-// 		Serial1.write(full_cmd);
-// 		std::this_thread::sleep_for(std::chrono::seconds(1));
-// 		while (true)
-// 		{
-// 			std::string ack_str = ser.readline();
-// 			if (ack_str == "ok\n")
-// 			{
-// 				// std::cout << ack_str << std::endl;
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	catch (const std::exception &e)
-// 	{
-// 		std::cerr << "Gcode commands must be a string" << std::endl;
-// 	}
-// }
+	// Wait for the duration
+	delay(diration);
+
+	// Stop the pump
+	pumpRun(0);
+
+	// Raise the feeder
+	feederMove(0);
+}

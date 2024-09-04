@@ -15,7 +15,6 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 from enum import Enum
 
-
 class GantryState(Enum):
     IDLE = 0
     TRACK_HARNESS = 1
@@ -25,7 +24,6 @@ class GantryState(Enum):
     START_PUMP = 5
     STOP_PUMP = 6
     REWARD = 7
-
 
 class GantryFeeder:
     # Initialize the GantryFeeder class
@@ -38,6 +36,9 @@ class GantryFeeder:
         self.harness_y = 0.0
         self.target_x = 0.0
         self.target_y = 0.0
+
+        # Track if movement is in progress
+        self.movement_in_progress = False
 
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
         # self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
@@ -91,9 +92,6 @@ class GantryFeeder:
 
         # ................ Run node ................
 
-        # TEMP
-        self.last_call_time = rospy.get_time()
-
         # Initialize the ROS rate
         r = rospy.Rate(180)
 
@@ -107,17 +105,10 @@ class GantryFeeder:
     def loop(self):
 
         # # Check for new message
+        # TODO: Fix round trip timing
         # if not self.EsmaCom.rcvEM.isNew:
         #     return
         # self.procEcatMessage()
-
-        # # TEMP
-        # current_time = rospy.get_time()
-        # elapsed_time = (current_time - self.last_call_time) * 1000
-        # MazeDB.printMsg('DEBUG', "[loop] Elapsed time: %0.2f ms", elapsed_time)
-        # # self.move_gantry_rel(5.0, 5.0)
-        # self.last_call_time = current_time
-        # # return
 
         if self.gantry_mode == GantryState.MOVE_TO_TARGET:
             # Unit vector from gantry to target
@@ -146,6 +137,7 @@ class GantryFeeder:
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
+            # Incriment the gantry to harness vector
             if distance > 0.15:
 
                 # Speed of gantry movement
@@ -156,10 +148,17 @@ class GantryFeeder:
                 # Y component of the harness movement vector
                 x = k*gantry_to_harness[1]
 
+                # Move the gantry to the harness
                 if ~np.isnan(x) and ~np.isnan(y):
                     self.move_gantry_rel(x, y)
-            else:
+
+                # Set the flag
+                self.movement_in_progress = True
+
+            # Stop the gantry when it reaches the harness
+            elif self.movement_in_progress:
                 self.jog_cancel()
+                self.movement_in_progress = False
 
     def jog_cancel(self):
         self.EsmaCom.writeEcatMessage(
@@ -177,17 +176,6 @@ class GantryFeeder:
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
 
-    def run_reward(self, duration):
-        self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_LOWER_FEEDER)
-        time.sleep(0.5)  # Wait 0.5 seconds for the lowering to complete
-        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_START_PUMP)
-        time.sleep(duration)  # Wait for the reward duration
-        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_STOP_PUMP)
-        time.sleep(0.25)  # Wait 0.25 seconds for the command to complete
-        self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_RAISE_FEEDER)
-
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Homing command received")
@@ -197,7 +185,7 @@ class GantryFeeder:
             self.target_x = msg.args[0]
             self.target_y = msg.args[1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0)  # TEMP
+            self.move_gantry_rel(0, 0)  
             MazeDB.printMsg(
                 'DEBUG', "[GantryFeeder]: Move command received: target(%0.2f, %0.2f)", self.target_x, self.target_y)
 
@@ -206,7 +194,7 @@ class GantryFeeder:
             self.target_x = self.chamber_centers[chamber_num][0]
             self.target_y = self.chamber_centers[chamber_num][1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0)  # TEMP
+            self.move_gantry_rel(0, 0) 
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move to chamber command received: chamber(%d) target(%0.2f, %0.2f)",
                             chamber_num, self.target_x, self.target_y)
 
@@ -247,7 +235,8 @@ class GantryFeeder:
             duration = msg.args[0]  # Duration in seconds
             MazeDB.printMsg(
                 'DEBUG', "[GantryFeeder]: Reward command received: duration(%d)", duration)
-            self.run_reward(duration)
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_REWARD, msg_arg_data_f32=duration)
 
     def gantry_pose_callback(self, msg):
         self.gantry_x = msg.pose.position.x + \
@@ -286,7 +275,6 @@ class GantryFeeder:
 
         # Reset new message flag
         self.EsmaCom.rcvEM.isNew = False
-
 
 # @brief Main code
 if __name__ == '__main__':
