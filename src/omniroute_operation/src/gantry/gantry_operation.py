@@ -18,7 +18,7 @@ from enum import Enum
 class GantryState(Enum):
     IDLE = 0
     TRACK_HARNESS = 1
-    TARGET = 2
+    MOVE_TO_TARGET = 2
     LOWER_FEEDER = 3
     RAISE_FEEDER = 4
     START_PUMP = 5
@@ -28,7 +28,7 @@ class GantryState(Enum):
 class GantryFeeder:
     # Initialize the GantryFeeder class
     def __init__(self):
-        
+
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
         self.gantry_y = 0.0
@@ -37,124 +37,145 @@ class GantryFeeder:
         self.target_x = 0.0
         self.target_y = 0.0
 
+        # Track if movement is in progress
+        self.movement_in_progress = False
+
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
-        #self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
+        # self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
         self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])
 
         # Paramters for positioning gantry
-        self.chamber_wd = 0.3 # Chamber width (m)
-        self.n_chamber_side = 3 
-        self.threshold = 0.06    # Threshold distance for chamber entry from center(m)
-        self.chamber_centers = [] # List of chamber centers 
+        self.chamber_wd = 0.3  # Chamber width (m)
+        self.n_chamber_side = 3
+        # Threshold distance for chamber entry from center(m)
+        self.threshold = 0.06
+        self.chamber_centers = []  # List of chamber centers
 
         # Compute the chamber centers
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
-            col = i%self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            col = i % self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
+                                      self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
 
         # Initialize the subsrciber for reading in the gantry commands
-        rospy.Subscriber('/gantry_cmd', GantryCmd, self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
-        
+        rospy.Subscriber('/gantry_cmd', GantryCmd,
+                         self.gantry_cmd_callback, queue_size=1, tcp_nodelay=True)
+
         # Initialize the subsrciber for reading in the tracker position data
-        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/harness_pose_in_maze', PoseStamped,
+                         self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped,
+                         self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         # Initialize the gantry mode used for state machine
         self.gantry_mode = GantryState.IDLE
 
         # ................ Ecat Setup ................
 
-        # Create EsmacatCom object for feeder_ease
-        self.EsmaComFeeder = EsmacatCom('feeder_ease')
-
-        # ................ GCode Client Setup ................
-        self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-        ## TODO: Automatically determine the port
+        # Create EsmacatCom object for gantry_ease
+        self.EsmaCom = EsmacatCom('gantry_ease')
 
         # Wait for 1 second
-        time.sleep(1) 
-        
-        # # Home the gantry
-        # self.home() 
-        # time.sleep(1)
+        time.sleep(1)
 
-        # Initialize the gcode client
-        self.gcode_client.raw_command("M3 S1000")
+        # Send handshake command
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE)
 
-        # Initialize the ROS rate 
-        r = rospy.Rate(30)
+        # Wait for 1 second
+        time.sleep(1)
+
+        # Send command to initialize GRBL for gantry
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
+
+        # ................ Run node ................
+
+        # Initialize the ROS rate
+        r = rospy.Rate(180)
 
         # Loop until the node is shutdown
-        MazeDB.printMsg('INFO', "[GantryFeeder]: Initialzed gantry_operation_node")
+        MazeDB.printMsg(
+            'INFO', "[GantryFeeder]: Initialzed gantry_operation_node")
         while not rospy.is_shutdown():
             self.loop()
             r.sleep()
 
     def loop(self):
-        self.current_time = rospy.Time.now()
 
-        if self.gantry_mode == GantryState.TARGET:
+        # # Check for new message
+        # TODO: Fix round trip timing
+        # if not self.EsmaCom.rcvEM.isNew:
+        #     return
+        # self.procEcatMessage()
+
+        if self.gantry_mode == GantryState.MOVE_TO_TARGET:
             # Unit vector from gantry to target
-            gantry_to_target = np.array([self.target_x - self.gantry_x, self.target_y - self.gantry_y])
-            
+            gantry_to_target = np.array(
+                [self.target_x - self.gantry_x, self.target_y - self.gantry_y])
+
             # Slow on approach
             # distance = np.linalg.norm(gantry_to_target)
             # gantry_to_target = gantry_to_target / distance
 
-             # Speed of gantry movement
-            k = 15.0
+            # Speed of gantry movement
+            k = 25.0
 
             # X component of the target movement vector
-            y = k* gantry_to_target[0]
+            y = k * gantry_to_target[0]
             # Y component of the target movement vector
-            x = k* gantry_to_target[1]
-                    
+            x = k * gantry_to_target[1]
+
             # Move the gantry to the target
             if ~np.isnan(x) and ~np.isnan(y):
-                self.move_gantry_rel(x, y)         
+                self.move_gantry_rel(x, y)
 
         if self.gantry_mode == GantryState.TRACK_HARNESS:
             # Unit vector from gantry to harness
-            gantry_to_harness = np.array([self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
+            gantry_to_harness = np.array(
+                [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
-            if distance > 0.04:
-                
+            # Incriment the gantry to harness vector
+            if distance > 0.15:
+
                 # Speed of gantry movement
-                k = 25.0
+                k = 35.0
 
                 # X component of the harness movement vector
                 y = k*gantry_to_harness[0]
                 # Y component of the harness movement vector
-                x = k*gantry_to_harness[1] 
+                x = k*gantry_to_harness[1]
 
+                # Move the gantry to the harness
                 if ~np.isnan(x) and ~np.isnan(y):
-                    self.move_gantry_rel(x, y)      
-            
+                    self.move_gantry_rel(x, y)
+
+                # Set the flag
+                self.movement_in_progress = True
+
+            # Stop the gantry when it reaches the harness
+            elif self.movement_in_progress:
+                self.jog_cancel()
+                self.movement_in_progress = False
+
+    def jog_cancel(self):
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.GANTRY_JOG_CANCEL, do_print=False)
+
     def home(self):
-        MazeDB.printMsg('INFO', "[GantryFeeder]: Homing gantry...")
-        self.gcode_client.raw_command("$25=5000")
-        self.gcode_client.raw_command("$H")
-        self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
-           
+        # Send command to home gantry
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
+
     def move_gantry_rel(self, x, y):
-        cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F25000".format(x,y)
-        self.gcode_client.raw_command(cmd)
+        # Convert x and y to a list
+        xy_list = [x, y]
 
-    def move_gantry_abs(self, x, y):
-        self.gcode_client.raw_command("$J=G90 G21 X(%0.1f) Y(%0.1f) F25000", x, y)
+        # Send command to move gantry
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
 
-    def run_reward(self, duration):
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.LOWER_FEEDER, 1)
-        time.sleep(0.5) # Wait 0.5 seconds for the lowering to complete
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.START_PUMP, 1)
-        time.sleep(duration) # Wait for the reward duration
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.STOP_PUMP, 1)
-        time.sleep(0.25) # Wait 0.25 seconds for the command to complete
-        self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.RAISE_FEEDER, 1)
-            
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Homing command received")
@@ -163,58 +184,101 @@ class GantryFeeder:
         elif msg.cmd == "MOVE_TO_COORDINATE":
             self.target_x = msg.args[0]
             self.target_y = msg.args[1]
-            self.gantry_mode = GantryState.TARGET
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move command received: target(%0.2f, %0.2f)", self.target_x, self.target_y)
+            self.gantry_mode = GantryState.MOVE_TO_TARGET
+            self.move_gantry_rel(0, 0)  
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Move command received: target(%0.2f, %0.2f)", self.target_x, self.target_y)
 
         elif msg.cmd == "MOVE_TO_CHAMBER":
             chamber_num = int(msg.args[0])
             self.target_x = self.chamber_centers[chamber_num][0]
             self.target_y = self.chamber_centers[chamber_num][1]
-            self.gantry_mode = GantryState.TARGET
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move to chamber command received: chamber(%d) target(%0.2f, %0.2f)", chamber_num, self.target_x, self.target_y)
+            self.gantry_mode = GantryState.MOVE_TO_TARGET
+            self.move_gantry_rel(0, 0) 
+            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Move to chamber command received: chamber(%d) target(%0.2f, %0.2f)",
+                            chamber_num, self.target_x, self.target_y)
 
         elif msg.cmd == "TRACK_HARNESS":
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Track Hhrness command received")
-            self.gantry_mode = GantryState.TRACK_HARNESS        
-        
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Track Hhrness command received")
+            self.gantry_mode = GantryState.TRACK_HARNESS
+
         elif msg.cmd == "IDLE":
             MazeDB.printMsg('DEBUG', "[GantryFeeder]: Idle command received")
             self.gantry_mode = GantryState.IDLE
 
         elif msg.cmd == "LOWER_FEEDER":
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Lower Feeder command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.LOWER_FEEDER, 1)
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Lower Feeder command received")
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_SET_FEEDER, 1)
 
         elif msg.cmd == "RAISE_FEEDER":
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Raise Feeder command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.RAISE_FEEDER, 1)
-        
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Raise Feeder command received")
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_SET_FEEDER, 0)
+
         elif msg.cmd == "START_PUMP":
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Start Pump command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.START_PUMP, 1)
-        
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Start Pump command received")
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_RUN_PUMP, 1)
+
         elif msg.cmd == "STOP_PUMP":
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Stop Pump command received")
-            self.EsmaComFeeder.writeEcatMessage(EsmacatCom.MessageType.STOP_PUMP, 1)
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Stop Pump command received")
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_RUN_PUMP, 0)
 
         elif msg.cmd == "REWARD":
-            duration = msg.args[0] # Duration in seconds
-            MazeDB.printMsg('DEBUG', "[GantryFeeder]: Reward command received: duration(%d)", duration)
-            self.run_reward(duration)
+            duration = msg.args[0]  # Duration in seconds
+            MazeDB.printMsg(
+                'DEBUG', "[GantryFeeder]: Reward command received: duration(%d)", duration)
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_REWARD, msg_arg_data_f32=duration)
 
     def gantry_pose_callback(self, msg):
-        self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
-        self.gantry_y = msg.pose.position.y + self.gantry_marker_to_gantry_center[1]
-        #rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
+        self.gantry_x = msg.pose.position.x + \
+            self.gantry_marker_to_gantry_center[0]
+        self.gantry_y = msg.pose.position.y + \
+            self.gantry_marker_to_gantry_center[1]
+        # rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
 
     def harness_pose_callback(self, msg):
         self.harness_x = msg.pose.position.x
         self.harness_y = msg.pose.position.y
-        #rospy.loginfo("Harness pose: "f'x: {self.harness_x}, y: {self.harness_y}')
-        
+        # rospy.loginfo("Harness pose: "f'x: {self.harness_x}, y: {self.harness_y}')
+
+    def procEcatMessage(self):
+        """ Used to parse new incoming ROS ethercat msg data. """
+
+        # ................ Process Ack Error First ................
+
+        if self.EsmaCom.rcvEM.errTp != EsmacatCom.ErrorType.ERR_NONE:
+
+            MazeDB.printMsg('ERROR', "(%d)ECAT ERROR: %s",
+                            self.EsmaCom.rcvEM.msgID, self.EsmaCom.rcvEM.errTp.name)
+
+        # ................ Process Ack Message ................
+
+        # HANDSHAKE
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.HANDSHAKE:
+            MazeDB.printMsg('INFO', "Gantry Handshake Confirmed")
+
+            # Set the handshake flag
+            self.EsmaCom.isEcatConnected = True
+
+        # GANTRY_MOVE_REL
+        if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.GANTRY_MOVE_REL:
+            pass
+
+        # Reset new message flag
+        self.EsmaCom.rcvEM.isNew = False
 
 # @brief Main code
 if __name__ == '__main__':
-    rospy.init_node('gantry_operation') # Initialize the ROS node with name 'gantry_operation'
+    # Initialize the ROS node with name 'gantry_operation'
+    rospy.init_node('gantry_operation')
     GantryFeeder()  # Create an instance of the class
     rospy.spin()  # Keep the program running until it is explicitly shutdown

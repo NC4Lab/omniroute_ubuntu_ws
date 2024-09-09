@@ -72,7 +72,7 @@ public:
     bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[14][30] = {
+    const char message_type_str[16][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
@@ -80,13 +80,16 @@ public:
         "REINITIALIZE_SYSTEM",
         "RESET_SYSTEM",
         "MOVE_WALLS",
-        "LOWER_FEEDER",
-        "RAISE_FEEDER",
-        "START_PUMP",
-        "STOP_PUMP",
-        "REWARD",
-        "SET_OPTITRACK_SYNC_PIN",
-        "SET_SPIKEGADGETS_SYNC_PIN"};
+        "SYNC_SET_OPTITRACK_PIN",
+        "SYNC_SET_SPIKEGADGETS_PIN",
+        "GANTRY_INITIALIZE_GRBL",
+        "GANTRY_HOME",
+        "GANTRY_SET_FEEDER",
+        "GANTRY_RUN_PUMP",
+        "GANTRY_REWARD",
+        "GANTRY_MOVE_REL",
+        "GANTRY_JOG_CANCEL",};
+
     enum MessageType
     {
         MSG_NONE = 0,
@@ -96,13 +99,15 @@ public:
         REINITIALIZE_SYSTEM = 4,
         RESET_SYSTEM = 5,
         MOVE_WALLS = 6,
-        LOWER_FEEDER = 7,
-        RAISE_FEEDER = 8,
-        START_PUMP = 9,
-        STOP_PUMP = 10,
-        REWARD = 11,
-        SET_OPTITRACK_SYNC_PIN = 12,
-        SET_SPIKEGADGETS_SYNC_PIN = 13,
+        SYNC_SET_OPTITRACK_PIN = 7,
+        SYNC_SET_SPIKEGADGETS_PIN = 8,
+        GANTRY_INITIALIZE_GRBL = 9,
+        GANTRY_HOME = 10,
+        GANTRY_SET_FEEDER = 11,
+        GANTRY_RUN_PUMP = 12,
+        GANTRY_REWARD = 13,
+        GANTRY_MOVE_REL = 14,
+        GANTRY_JOG_CANCEL = 15,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
@@ -130,6 +135,7 @@ public:
         byte ui8[16];     // (byte) 1 byte
         uint16_t ui16[8]; // (uint16_t) 2 byte
         int si16[8];      // (int) 2 byte
+        float f32[4];     // (float) 4 byte
         uint64_t ui64[2]; // (uint64_t) 8 byte
         int64_t si64[2];  // (int64_t) 8 byte
     };
@@ -139,9 +145,9 @@ public:
         uint8_t ii8 = 0;  // 8 bit index
         uint8_t ii16 = 0; // 16 bit index
 
-        uint8_t upd8(uint8_t b_i = 255);
-        uint8_t upd16(uint8_t b_i = 255);
-        void reset();
+        uint8_t upd8(uint8_t b_i = 255);  // update 8 bit index
+        uint8_t upd16(uint8_t b_i = 255); // update 16 bit index
+        void reset();                     // reset index values
     };
 
     struct EcatMessageStruct // class for handeling ethercat messages

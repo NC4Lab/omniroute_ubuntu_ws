@@ -5,8 +5,8 @@
 // ######################################
 
 /**
-* @file Main Arduino INO file for running the maze.
-*/
+ * @file Main Arduino INO file for running the maze.
+ */
 
 // BUILT IN
 #include "Arduino.h"
@@ -32,8 +32,8 @@ uint8_t pwmDuty = 255;		   // PWM duty for all walls [0-255]
 uint16_t dtMoveTimeout = 1000; // timeout for wall movement (ms)
 
 // Initialize class instances for local libraries
-MazeDebug Dbg; // instance of MazeDebug class for debugging messages
-CypressCom CypCom; // instance of CypressCom class for Cypress communication
+MazeDebug Dbg;																		// instance of MazeDebug class for debugging messages
+CypressCom CypCom;																	// instance of CypressCom class for Cypress communication
 WallOperation WallOper(nCham, nChamPerBlock, nMoveAttempt, pwmDuty, dtMoveTimeout); // instance of WallOperation class for wall operations
 
 //=============== SETUP =================
@@ -41,26 +41,17 @@ void setup()
 {
 	// Setup serial coms
 	Serial.begin(115200);
-	Serial1.begin(115200);
 	delay(100);
 	Serial.print('\n');
-	
+
 	// Print setup started
-	Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
+	Dbg.printMsg(Dbg.MT::ATTN, "RUNNING SETUP");
 
 	// Initialize I2C for Cypress chips
 	CypCom.i2cInit();
 
-// Print which microcontroller is active
-#ifdef ARDUINO_AVR_UNO
-	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO UNO");
-#endif
-#ifdef __AVR_ATmega2560__
-	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO MEGA");
-#endif
-#ifdef ARDUINO_SAM_DUE
-	Dbg.printMsg(Dbg.MT::HEAD1, "FINISHED UPLOADING TO ARDUNO DUE");
-#endif
+	// Print setup finished
+	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED UPLOADING TO ARDUNO MEGA");
 }
 
 //=============== LOOP ==================
@@ -80,7 +71,7 @@ void loop()
 	// if (!init)
 	// {
 	// 	init = 1;
-	// 	Dbg.printMsg(Dbg.MT::HEAD1, "RUNNNING: STANDALONE SETUP");
+	// 	Dbg.printMsg(Dbg.MT::ATTN, "RUNNNING: STANDALONE SETUP");
 
 	// 	// Initialize software
 	// 	WallOper.initSoftware(0);
@@ -91,7 +82,7 @@ void loop()
 	// 	// Initalize Walls
 	// 	WallOper.initWalls(0); // Run wall up and down
 
-	// 	Dbg.printMsg(Dbg.MT::HEAD1B, "FINISHED: STANDALONE SETUP");
+	// 	Dbg.printMsg(Dbg.MT::ATTN, "FINISHED: STANDALONE SETUP");
 	// }
 
 	// //............... Cypress Testing ...............

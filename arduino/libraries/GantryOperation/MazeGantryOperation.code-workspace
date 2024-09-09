@@ -1,19 +1,10 @@
 {
 	"folders": [
 		{
-			"name": "FeederOperation",
-			"path": "."
+			"path": "../../arduino_sketches/MazeGantryOperation"
 		},
 		{
-			"name": "MazeDebug",
-			"path": "../../libraries/MazeDebug"
-		},
-		{
-			"name": "EsmacatCom",
-			"path": "../../libraries/EsmacatCom"
-		},
-		{
-			"path": "../../libraries/FeederServo"
+			"path": ".."
 		}
 	],
 	"settings": {
@@ -24,7 +15,6 @@
 		"python.analysis.extraPaths": [
 			"/home/nc4lab/omniroute_ubuntu_ws/devel/lib/python3/dist-packages",
 			"/opt/ros/noetic/lib/python3/dist-packages"
-		],
-		"ros.distro": "noetic"
+		]
 	}
 }

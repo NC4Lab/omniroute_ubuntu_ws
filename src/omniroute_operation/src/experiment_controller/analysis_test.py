@@ -26,7 +26,7 @@ if '-' in date:
 
 date_folder = os.path.join(rat_folder, date)
 
-trial_summary_path = os.path.join(date_folder, 'Past_three_days_biases.csv')
+trial_summary_path = os.path.join(date_folder, 'Past_seven_days_biases.csv')
 
 df = pd.read_csv(trial_summary_path)
 
@@ -53,82 +53,42 @@ trial_count = {key: 0 for key in trial_types}
 
 def find_start_chamber(id_value, df):
     if id_value == 1:
-        trial_types_to_check = [1, 2, 3, 4]
+        trial_types_to_check = [2, 3, 4, 5]
     elif id_value == 3:
-        trial_types_to_check = [5, 6, 7, 8]
+        trial_types_to_check = [6, 7, 8, 9]
     elif id_value == 5:
-        trial_types_to_check = [9, 10, 11, 12]
+        trial_types_to_check = [10, 11, 12, 13]
     elif id_value == 7:
-        trial_types_to_check = [13, 14, 15, 16]
+        trial_types_to_check = [14, 15, 16, 17]
     else:
         raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
 
-    # Filter the DataFrame for the relevant trial types
-    section = df[df['Trial Type'].isin(trial_types_to_check)]
-
-    # Find the row with the maximum value in column 'Error_Count'
-    max_row = section.loc[section['Error_Count'].idxmax()]
-
-    # Get the trial type from the selected row
-    trial_type = max_row['Trial Type']
-
-    # Check if this trial type has been selected 8 times
-    if trial_count[trial_type] < 8:
-        # If not selected 8 times, return this trial type
-        return trial_type
-    else:
-        # If selected 8 times, find the next trial type with the highest 'Error_Count'
-        section = section.drop(section[section['Trial Type'] == trial_type].index)
-        if not section.empty:
-            next_max_row = section.loc[section['Error_Count'].idxmax()]
-            return
-
-
-# def find_start_chamber(id_value, df):
-#     if id_value == 1:
-#         start_row, end_row = 1, 4  # Rows 1 to 4 (index 0 to 3)
-#     elif id_value == 3:
-#         start_row, end_row = 5, 8  # Rows 5 to 8 (index 4 to 7)
-#     elif id_value == 5:
-#         start_row, end_row = 9, 12 # Rows 9 to 12 (index 8 to 11)
-#     elif id_value == 7:
-#         start_row, end_row = 13, 16 # Rows 13 to 16 (index 12 to 15)
-#     else:
-#         raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
-
-#     # Select the specific section of rows
-#     section = df.iloc[start_row:end_row]
-
-#     # Find the row with the maximum value in column 'Error_Count'
-#     max_row = section.loc[section['Error_Count'].idxmax()]
-#     print(f"max_row: {max_row}")
-
-#     # Get the trial type from the selected row
-#     trial_type = max_row['Trial Type']
-#     print(f"trial_type: {trial_type}")
-
-#     # Check if this trial type has been selected 8 times
+   # Extract the values from the specified trial types
+    subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
+    print(subset_df)
+    values = subset_df['Error_Count'].to_numpy()
+    print(values)
     
-#     if trial_count[trial_type] < 8:
-#         # If not selected 8 times, return this trial type
-#         return trial_type
-#     else:
-#         # If selected 8 times, find the next trial type with the highest 'Error_Count'
-#         section = section.drop(section[section['Trial Type'] == trial_type].index)
-#         if not section.empty:
-#             next_max_row = section.loc[section['Error_Count'].idxmax()]
-#             return next_max_row['Trial Type']
-#         else:
-#             raise ValueError("No alternative trial type available.")
+    # Normalize the values to create probabilities
+    total = np.sum(values)
+    probabilities = values / total
+    
+    # Choose one value based on probabilities
+    selected_value = np.random.choice(values, size=1, p=probabilities)
+    print(selected_value)
+    selected_value_index = values.tolist().index(selected_value)
+    print(selected_value_index)
+
+    trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+    
+    return trial_type
+
 
 def generate_trial(id_value, df):
     start_chamber = find_start_chamber(id_value, df)
     trial = trial_types[start_chamber]
 
-    # Update the count for the selected trial type
-    trial_count[start_chamber] += 1
-
     return trial
 
 trial = generate_trial(5, df)
-print(trial)
+print(f'Trial: {trial}')

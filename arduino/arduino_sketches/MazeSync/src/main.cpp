@@ -1,12 +1,12 @@
 
-// ##########################
+// #################################
 
-// ====== MazeSync.ino ======
+// =========== main.ino ============
 
-// ##########################
+// #################################
 
 /**
- @file Arduino INO file for handeling time stamp syncing oppertions.
+ @file Arduino INO file for MazeSync handeling time stamp syncing oppertions.
 */
 
 // BUILT IN
@@ -36,7 +36,7 @@ void setup()
   delay(100);
 
   // Print setup started
-  Dbg.printMsg(Dbg.MT::HEAD1, "RUNNING SETUP");
+  Dbg.printMsg(Dbg.MT::ATTN, "RUNNING SETUP");
 
   // Initialize ethercat coms
   EsmaCom.initEcat(true);
@@ -50,7 +50,7 @@ void setup()
   digitalWrite(optiSyncPin, LOW);
 
   // Print setup complete
-  Dbg.printMsg(Dbg.MT::HEAD1, "SETUP COMPLETE");
+  Dbg.printMsg(Dbg.MT::ATTN, "SETUP COMPLETE");
 }
 
 void loop()
@@ -63,14 +63,14 @@ void loop()
   uint8_t arg0 = EsmaCom.rcvEM.ArgU.ui8[0];
 
   // Set Optitrack sync pin
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_OPTITRACK_SYNC_PIN)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SYNC_SET_OPTITRACK_PIN)
   {
     digitalWrite(optiSyncPin, arg0);
     Dbg.printMsg(Dbg.MT::INFO, "Optitrack sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");
   }
 
   // Set SpikeGadgets sync pin
-  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SET_SPIKEGADGETS_SYNC_PIN)
+  if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::SYNC_SET_SPIKEGADGETS_PIN)
   {
     digitalWrite(spikeGadgSyncPin, arg0);
     Dbg.printMsg(Dbg.MT::INFO, "SpikeGadgets sync pin set to: %s", arg0 == 0 ? "LOW" : "HIGH");

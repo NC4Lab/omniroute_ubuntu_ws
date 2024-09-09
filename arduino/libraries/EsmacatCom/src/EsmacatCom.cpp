@@ -202,14 +202,14 @@ bool EsmacatCom::_uGetMsgID(EcatMessageStruct &r_EM)
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
 
-    // Check/log error skipped or out of sequence messages if not first message or id has rolled over
-    if (r_EM.msgID != 1)
-        if (r_EM.msgID - r_EM.msgID_last != 1 &&
-            r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
-        {
-            _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
-            return false;
-        }
+    // TEMP // Check/log error skipped or out of sequence messages if not first message or id has rolled over
+    // if (r_EM.msgID != 1)
+    //     if (r_EM.msgID - r_EM.msgID_last != 1 &&
+    //         r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
+    //     {
+    //         _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
+    //         return false;
+    //     }
     return true;
 }
 
@@ -309,8 +309,6 @@ void EsmacatCom::_uGetArgLength(EcatMessageStruct &r_EM)
 /// @note calls @ref EsmacatCom::_uSetArgLength
 void EsmacatCom::_uSetArgData8(EcatMessageStruct &r_EM, uint8_t msg_arg_data8)
 {
-    // Store argurment length
-
     // Increment argument union index
     r_EM.argUI.upd8();
 
@@ -454,7 +452,7 @@ void EsmacatCom::initEcat(bool do_connect)
         sndEM.msgID = 0;
         rcvEM.msgID = 0;
 
-        // Reset reg one last diem after delay to allow last ack to be read before buffer is cleared
+        // Reset reg one last time after delay to allow last ack to be read before buffer is cleared
         delay(dtEcatDisconnect);
         _resetReg();
     }
@@ -463,7 +461,7 @@ void EsmacatCom::initEcat(bool do_connect)
     isEcatConnected = do_connect;
 
     // Log connection status changes
-    _Dbg.printMsg(_Dbg.MT::HEAD1, "ECAT COMMS %s", isEcatConnected ? "CONNECTED" : "DISCONNECTED");
+    _Dbg.printMsg(_Dbg.MT::ATTN, "ECAT COMMS %s", isEcatConnected ? "CONNECTED" : "DISCONNECTED");
 }
 
 /// @brief Used to get incoming ROS ethercat msg data.
