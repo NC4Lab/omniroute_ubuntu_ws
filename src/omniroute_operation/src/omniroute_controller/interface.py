@@ -633,11 +633,17 @@ class Interface(Plugin):
 
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Specify the defualt directory
-        data_dir_default = os.path.abspath(os.path.join(
+        
+        # Specify the defualt wall path directory
+        path_dir_default = os.path.abspath(os.path.join(
             script_dir, '..', '..', '..', '..', 'data', 'paths'))
+        
         # Set to default data file path
-        self._widget.fileDirEdit.setText(data_dir_default)
+        self._widget.fileDirEdit.setText(path_dir_default)
+
+        # Specify the defualt wall projection config directory
+        self.proj_cfg_dir_default = os.path.abspath(os.path.join(
+            script_dir, '..', '..', '..', '..', 'data', 'projection', 'image_config'))
         
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
@@ -1323,21 +1329,21 @@ class Interface(Plugin):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
 
         # Code -1
-        self.ProjOpp.publish_window_mode_cmd(-1)
+        self.ProjOpp.publish_command_message(-1)
         MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
 
         # Code -2
-        self.ProjOpp.publish_window_mode_cmd(-2)
+        self.ProjOpp.publish_command_message(-2)
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
     def qt_callback_projWinForceFucusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
 
         # Code -3
-        self.ProjOpp.publish_window_mode_cmd(-3)
+        self.ProjOpp.publish_command_message(-3)
         MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
@@ -1352,7 +1358,7 @@ class Interface(Plugin):
                 button.setChecked(False)
 
         # Use the button_number to send the corresponding ROS command
-        self.ProjOpp.publish_image_cfg_cmd(button_number)
+        self.ProjOpp.publish_command_message(button_number)
         MazeDB.printMsg(
             'DEBUG', "Command for Projector Image Configuration %d sent", button_number)
 
