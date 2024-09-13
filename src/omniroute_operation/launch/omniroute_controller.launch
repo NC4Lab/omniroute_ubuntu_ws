@@ -12,8 +12,8 @@
     <arg name="log_latencies" default="false"/>
   
     <!-- CONNECTION -->
-    <arg name="serverIP" default="10.34.5.192"/>
-    <arg name="clientIP" default="10.34.5.229"/>
+    <arg name="serverIP" default="192.168.0.101"/>
+    <arg name="clientIP" default="192.168.0.100"/>
     <!-- <arg name="serverType" default="multicast"/> -->
     <arg name="serverType" default="unicast"/>
     <!-- <arg name="multicastAddress" default="239.255.42.99"/> -->
@@ -60,7 +60,7 @@
     </node>
     
     <!-- Esmacat ethernet addapter address (GINGER_BEER) -->
-    <param name="ethercat_adapter_name" type="str" value="enp8s0" /> 
+    <param name="ethercat_adapter_name" type="str" value="enp9s0" /> 
     
     <!-- Esmacat parameter -->
     <param name="sync_ease_slave_index" type="int" value="0" />
