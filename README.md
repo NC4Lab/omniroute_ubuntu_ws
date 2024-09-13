@@ -136,5 +136,6 @@ Run projection code
 Ubuntu computer:
 ```
 roslaunch omniroute_operation experiment_controller.launch
+roslaunch omniroute_operation omniroute_controller.launch
 
 ```
