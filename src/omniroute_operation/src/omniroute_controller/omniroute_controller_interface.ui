@@ -791,7 +791,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>South 1</string>
+     <string>South R</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -827,7 +827,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>North 1</string>
+     <string>North R</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -863,7 +863,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>West 1</string>
+     <string>West R</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -899,7 +899,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>North 2</string>
+     <string>North L</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -935,7 +935,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>West 2</string>
+     <string>West L</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -1007,7 +1007,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>East 2</string>
+     <string>East L</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -1043,7 +1043,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>South 2</string>
+     <string>South L</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -1079,7 +1079,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>East 1</string>
+     <string>East R</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
@@ -1234,7 +1234,7 @@ QPushButton:pressed {
      <rect>
       <x>160</x>
       <y>10</y>
-      <width>131</width>
+      <width>271</width>
       <height>21</height>
      </rect>
     </property>
@@ -1245,7 +1245,7 @@ QPushButton:pressed {
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Wall by Direction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wall by Rat Start Direction &amp;amp; Choice&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>

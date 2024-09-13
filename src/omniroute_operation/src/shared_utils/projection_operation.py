@@ -99,13 +99,12 @@ class ProjectionOperation:
 
         return layout
     
-    def set_config(self, image_config, data_type, img_ind, cham_ind=None, wall_ind=None):
+    def set_config(self, data_type, img_ind, cham_ind=None, wall_ind=None):
         """
         Read the CSV and structure the data into either a 10x8 array for 'walls'
-        or extract a single value for 'floor' and modify the given image_config.
+        or extract a single value for 'floor' and modify the image_config.
         
         Args:
-            image_config (list): A 10x8 list that will be modified in place.
             data_type (str): A string that specifies whether to process the data as
                             'walls' or 'floor'. 
                             - 'walls': Updates the 10x8 array for wall configuration.
@@ -119,24 +118,20 @@ class ProjectionOperation:
         """
         
         if data_type == "walls":
-                image_config[cham_ind][wall_ind] = img_ind
+                self.image_config[cham_ind][wall_ind] = img_ind
 
         elif data_type == "floor":
-            image_config[-1][0] = img_ind  # Store the value in the last entry of dim1 and first entry of dim2
+            self.image_config[-1][0] = img_ind  # Store the value in the last entry of dim1 and first entry of dim2
 
         else:
             rospy.logwarn(f"[set_config] Invalid data_type: {data_type}. Expected 'walls' or 'floor'.")
-            return None
 
-        return image_config
-
-    def set_config_from_csv(self, image_config, file_path, data_type):
+    def set_config_from_csv(self, file_path, data_type):
         """
         Read the CSV and structure the data into either a 10x8 array for 'walls'
-        or extract a single value for 'floor' and modify the given image_config.
+        or extract a single value for 'floor' and modify the image_config.
         
         Args:
-            image_config (list): A 10x8 list that will be modified in place.
             file_path (str): The path to the CSV file containing the data.
             data_type (str): A string that specifies whether to process the data as
                             'walls' or 'floor'. 
@@ -157,25 +152,19 @@ class ProjectionOperation:
                     if row_idx < 10:
                         # Ignore the first column and take columns 1-8 (which are index 1 to 8 in 0-based indexing)
                         data_row = list(map(int, row[1:9]))
-                        image_config[row_idx] = data_row
+                        self.image_config[row_idx] = data_row
 
             elif data_type == "floor":
                 first_row = next(csv_reader)  # Get the first data row
                 floor_value = int(first_row[0])  # Read the value from the first column
-                image_config[-1][0] = floor_value  # Store the value in the last entry of dim1 and first entry of dim2
+                self.image_config[-1][0] = floor_value  # Store the value in the last entry of dim1 and first entry of dim2
 
             else:
                 rospy.logwarn(f"[set_config_from_csv] Invalid data_type: {data_type}. Expected 'walls' or 'floor'.")
-                return None
 
-        return image_config
-
-    def publish_image_message(self, image_config):
+    def publish_image_message(self):
         """
-        Send the data from the CSV as an Int32MultiArray message.
-                
-        Args:
-            image_config (list): A 10x8 list that will be modified in place.
+        Send the data from Int32MultiArray image_config.
         """
         rospy.loginfo("[ProjectionOperation:publish_image_message] Sending CSV-based data")
 
@@ -186,7 +175,7 @@ class ProjectionOperation:
         projection_data.layout.dim = self.setup_layout(10, 8)
 
         # Flatten the 10x8 array into a single list
-        flat_data = [image_config[i][j] for i in range(10) for j in range(8)]
+        flat_data = [self.image_config[i][j] for i in range(10) for j in range(8)]
         projection_data.data = flat_data
 
         # Publish the CSV data message
@@ -195,7 +184,7 @@ class ProjectionOperation:
         # Log the sent message data
         rospy.loginfo("[ProjectionOperation:publish_image_message] Sent the following CSV-based data:")
         for i in range(10):
-            rospy.loginfo("Data[%d] = %s", i, str(image_config[i]))
+            rospy.loginfo("Data[%d] = %s", i, str(self.image_config[i]))
 
 
     def publish_command_message(self, number):

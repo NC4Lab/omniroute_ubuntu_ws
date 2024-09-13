@@ -1357,10 +1357,25 @@ class Interface(Plugin):
             if i != button_number:
                 button.setChecked(False)
 
-        # Use the button_number to send the corresponding ROS command
-        self.ProjOpp.publish_command_message(button_number)
-        MazeDB.printMsg(
-            'DEBUG', "Command for Projector Image Configuration %d sent", button_number)
+        # Load the appropriate file based on the button number
+        file_name = None
+        if button_number == 0:  # Added missing colon
+            file_name = 'wall_cfg_0_blank.csv'
+        elif button_number == 1:  # Added missing colon
+            file_name = 'wall_cfg_1_east_r.csv'
+        elif button_number == 2:  # Added missing colon
+            file_name = 'wall_cfg_2_east_l.csv'
+
+        # Format full path
+        walls_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', file_name)
+
+        # Load and store CSV data
+        self.ProjOpp.set_config_from_csv(walls_csv_path, "walls")
+
+        # Send the new image configuration
+        self.ProjOpp.publish_image_message()
+        MazeDB.printMsg('Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
+
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
