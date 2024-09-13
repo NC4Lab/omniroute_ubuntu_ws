@@ -1360,11 +1360,23 @@ class Interface(Plugin):
         # Load the appropriate file based on the button number
         file_name = None
         if button_number == 0:  # Added missing colon
-            file_name = 'wall_cfg_0_blank.csv'
+            file_name = 'walls_0_blank.csv'
         elif button_number == 1:  # Added missing colon
-            file_name = 'wall_cfg_1_east_r.csv'
+            file_name = 'walls_1_east_r.csv'
         elif button_number == 2:  # Added missing colon
-            file_name = 'wall_cfg_2_east_l.csv'
+            file_name = 'walls_2_east_l.csv'
+        elif button_number == 3:  # Added missing colon
+            file_name = 'walls_3_south_r.csv'
+        elif button_number == 4:  # Added missing colon
+            file_name = 'walls_4_south_l.csv'
+        elif button_number == 5:  # Added missing colon
+            file_name = 'walls_5_west_r.csv'
+        elif button_number == 6:  # Added missing colon
+            file_name = 'walls_6_west_l.csv'
+        elif button_number == 7:  # Added missing colon
+            file_name = 'walls_7_north_r.csv'
+        elif button_number == 8:  # Added missing colon
+            file_name = 'walls_8_north_l.csv'
 
         # Format full path
         walls_csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
