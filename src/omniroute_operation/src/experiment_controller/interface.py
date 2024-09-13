@@ -228,7 +228,7 @@ class Interface(Plugin):
 
         self._widget.pathDirEdit.setText(self.curDir)
 
-        self.dataDir = os.path.expanduser(os.path.join('~', 'omniroute_ubuntu_ws', 'src', 'omniroute_operation', 'src','experiment_controller','data')) # Default data directory
+        self.dataDir = os.path.expanduser(os.path.join('~', 'maze_data')) # Default data directory
         self.defaultDataDir = self.dataDir
 
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
@@ -954,6 +954,7 @@ class Interface(Plugin):
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TRIAL
+
             elif self.mode == Mode.START_TRIAL:
                 self.currentTrialNumber = self.currentTrialNumber+1
                 rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
