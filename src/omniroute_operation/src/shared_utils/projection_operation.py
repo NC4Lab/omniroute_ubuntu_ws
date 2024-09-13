@@ -58,15 +58,23 @@ class ProjectionOperation:
         # Initialize image_config as a 10x8 array with default values
         self.image_config = [[0 for _ in range(8)] for _ in range(10)]
 
-        # Read data from walls and floor CSV
-        walls_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', 'walls_cfg_0.csv')
-        self.image_config = self.csv_read_and_store(self.image_config, walls_csv_path, "walls")
+        # # TEMP
+        # rospy.sleep(5)
+        # # Read data from walls CSV
+        # walls_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', 'walls_cfg_0.csv')
+        # self.image_config = self.set_config_from_csv(self.image_config, walls_csv_path, "walls")
+        # # Read data from floor CSV
+        # floors_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', 'floor_cfg_0.csv')
+        # self.image_config = self.set_config_from_csv(self.image_config, floors_csv_path, "floor")
+        # # Send the image configuration message
+        # self.publish_image_message(self.image_config)
 
-        floors_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', 'floor_cfg_0.csv')
-        self.image_config = self.csv_read_and_store(self.image_config, floors_csv_path, "floor")
-
-        # Send the image configuration message
-        self.publish_image_message(self.image_config)
+        # TEMP
+        # rospy.sleep(5)
+        # self.image_config = self.set_config(self.image_config, "walls", 3, 4, 1)
+        # self.image_config = self.set_config(self.image_config, "floor", 2)
+        # # Send the image configuration message
+        # self.publish_image_message(self.image_config)
 
         # Rate for publishing set to 30hz
         self.rate = rospy.Rate(30)
@@ -90,8 +98,39 @@ class ProjectionOperation:
         layout.append(dim2_layout)
 
         return layout
+    
+    def set_config(self, image_config, data_type, img_ind, cham_ind=None, wall_ind=None):
+        """
+        Read the CSV and structure the data into either a 10x8 array for 'walls'
+        or extract a single value for 'floor' and modify the given image_config.
+        
+        Args:
+            image_config (list): A 10x8 list that will be modified in place.
+            data_type (str): A string that specifies whether to process the data as
+                            'walls' or 'floor'. 
+                            - 'walls': Updates the 10x8 array for wall configuration.
+                            - 'floor': Updates a single value in the last entry of dim1 and first entry of dim2.
+            img_ind (int): The index of the image to set.
+            cham_ind (int): The index of the chamber to set.
+            wall_ind (int): The index of the wall to set.
 
-    def csv_read_and_store(self, image_config, file_path, data_type):
+        Returns:
+            list: modified 10x8 list.
+        """
+        
+        if data_type == "walls":
+                image_config[cham_ind][wall_ind] = img_ind
+
+        elif data_type == "floor":
+            image_config[-1][0] = img_ind  # Store the value in the last entry of dim1 and first entry of dim2
+
+        else:
+            rospy.logwarn(f"[set_config] Invalid data_type: {data_type}. Expected 'walls' or 'floor'.")
+            return None
+
+        return image_config
+
+    def set_config_from_csv(self, image_config, file_path, data_type):
         """
         Read the CSV and structure the data into either a 10x8 array for 'walls'
         or extract a single value for 'floor' and modify the given image_config.
@@ -105,9 +144,7 @@ class ProjectionOperation:
                             - 'floor': Updates a single value in the last entry of dim1 and first entry of dim2.
 
         Returns:
-            list: 
-                - If data_type is 'walls', returns the modified 10x8 list.
-                - If data_type is 'floor', returns the updated list with floor value set.
+            list: modified 10x8 list.
         """
         
         with open(file_path, mode='r') as csvfile:
@@ -128,7 +165,7 @@ class ProjectionOperation:
                 image_config[-1][0] = floor_value  # Store the value in the last entry of dim1 and first entry of dim2
 
             else:
-                rospy.logwarn(f"[csv_read_and_store] Invalid data_type: {data_type}. Expected 'walls' or 'floor'.")
+                rospy.logwarn(f"[set_config_from_csv] Invalid data_type: {data_type}. Expected 'walls' or 'floor'.")
                 return None
 
         return image_config
@@ -159,6 +196,7 @@ class ProjectionOperation:
         rospy.loginfo("[ProjectionOperation:publish_image_message] Sent the following CSV-based data:")
         for i in range(10):
             rospy.loginfo("Data[%d] = %s", i, str(image_config[i]))
+
 
     def publish_command_message(self, number):
         # Can send any number
