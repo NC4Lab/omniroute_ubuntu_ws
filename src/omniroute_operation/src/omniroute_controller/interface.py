@@ -1367,7 +1367,7 @@ class Interface(Plugin):
             file_name = 'wall_cfg_2_east_l.csv'
 
         # Format full path
-        walls_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'image_config', file_name)
+        walls_csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
 
         # Load and store CSV data
         self.ProjOpp.set_config_from_csv(walls_csv_path, "walls")
