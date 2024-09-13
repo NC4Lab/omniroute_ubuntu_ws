@@ -765,7 +765,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>230</x>
-      <y>40</y>
+      <y>70</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -801,7 +801,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>40</y>
+      <y>70</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -837,7 +837,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>300</x>
-      <y>40</y>
+      <y>70</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -873,7 +873,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>70</y>
+      <y>100</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -909,7 +909,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>300</x>
-      <y>70</y>
+      <y>100</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -944,8 +944,8 @@ QPushButton:pressed {
    <widget class="QPushButton" name="projWallImgCfgBtn_0">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>110</y>
+      <x>160</x>
+      <y>40</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -981,7 +981,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>70</y>
+      <y>100</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -1017,7 +1017,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>230</x>
-      <y>70</y>
+      <y>100</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -1053,7 +1053,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>40</y>
+      <y>70</y>
       <width>60</width>
       <height>30</height>
      </rect>
@@ -1101,7 +1101,7 @@ QPushButton:pressed {
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Floor&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Floor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -1249,6 +1249,150 @@ QPushButton:pressed {
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="projFloorImgCfgBtn_0">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>170</y>
+      <width>60</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Blank</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="projFloorImgCfgBtn_1">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>170</y>
+      <width>60</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Green</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="projFloorImgCfgBtn_2">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>170</y>
+      <width>60</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Pat 0</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="projFloorImgCfgBtn_3">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>170</y>
+      <width>60</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+    </property>
+    <property name="text">
+     <string>Pat 1</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

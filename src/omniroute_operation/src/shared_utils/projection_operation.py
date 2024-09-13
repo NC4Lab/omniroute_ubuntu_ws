@@ -33,6 +33,7 @@ class ProjectionOperation:
     # omniroute_windows_ws\src\projection_operation\include\projection_utils.h
     FLOOR_IMAGE_FILE_NAMES = [
         "f_black",
+        "f_green",
         "f_pattern_0",
         "f_pattern_1",
         "f_pattern_2",

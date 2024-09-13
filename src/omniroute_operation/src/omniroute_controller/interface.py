@@ -59,18 +59,20 @@ WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
 
 # ======================== GLOBAL CLASSES ========================
 
+
 class MazeDimensions:
     # Class for storing the dimensions of the maze
     def __init__(self):
-        self.chamber_wd = 0.3 # Chamber width (m)
-        self.n_chamber_side = 3 
-        self.chamber_centers = [] # List of chamber centers 
+        self.chamber_wd = 0.3  # Chamber width (m)
+        self.n_chamber_side = 3
+        self.chamber_centers = []  # List of chamber centers
 
         # Compute the chamber centers
         for i in range(0, self.n_chamber_side**2):
             row = i//self.n_chamber_side
-            col = i%self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd, self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
+            col = i % self.n_chamber_side
+            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
+                                      self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
 
 
@@ -415,7 +417,7 @@ class MazePlot(QGraphicsView):
             """Handles mouse press events and sets the chamber status"""
             # @todo: Figure out why this is not working
             # MazeDB.printMsg('DEBUG', "Chamber %d clicked", self.chamber_num)
-            
+
             # Send command to move gantry to selected chamber
             self.gantry_pub.publish("MOVE_TO_CHAMBER", [self.chamber_num])
 
@@ -560,6 +562,7 @@ class MazePlot(QGraphicsView):
 
 # ======================== MAIN UI CLASS ========================
 
+
 class Interface(Plugin):
     """ Interface plugin """
 
@@ -633,18 +636,18 @@ class Interface(Plugin):
 
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        
+
         # Specify the defualt wall path directory
         path_dir_default = os.path.abspath(os.path.join(
             script_dir, '..', '..', '..', '..', 'data', 'paths'))
-        
+
         # Set to default data file path
         self._widget.fileDirEdit.setText(path_dir_default)
 
         # Specify the defualt wall projection config directory
         self.proj_cfg_dir_default = os.path.abspath(os.path.join(
             script_dir, '..', '..', '..', '..', 'data', 'projection', 'image_config'))
-        
+
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
         self.csv_files = []
@@ -717,9 +720,11 @@ class Interface(Plugin):
             os.path.realpath(__file__)), 'rat.png'))
         self.rat_image = QGraphicsPixmapItem(self.image)
         self.rat_image_dim = round(self._widget.plotMazeView.height()*0.2)
-        self.rat_image.setPixmap(self.image.scaled(self.rat_image_dim,self.rat_image_dim))
-        self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)   
-        self.rat_image.setTransformOriginPoint(self.rat_image_dim/2, self.rat_image_dim/2)
+        self.rat_image.setPixmap(self.image.scaled(
+            self.rat_image_dim, self.rat_image_dim))
+        self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)
+        self.rat_image.setTransformOriginPoint(
+            self.rat_image_dim/2, self.rat_image_dim/2)
         self.scene.addItem(self.rat_image)
 
         # ................ Ecat Setup ................
@@ -735,10 +740,12 @@ class Interface(Plugin):
         # ................ Gantry Setup ................
 
         self.MazeDim = MazeDimensions()
-        
+
         # To scale from maze to GUI coordinates
-        optitrack_chamber_dist = math.sqrt((self.MazeDim.chamber_centers[0][0] - self.MazeDim.chamber_centers[1][0])**2 + (self.MazeDim.chamber_centers[0][1] - self.MazeDim.chamber_centers[1][1])**2)
-        gui_chamber_dist = math.sqrt((self.MP.Chambers[0].center_x - self.MP.Chambers[1].center_x)**2 + (self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
+        optitrack_chamber_dist = math.sqrt((self.MazeDim.chamber_centers[0][0] - self.MazeDim.chamber_centers[1][0])**2 + (
+            self.MazeDim.chamber_centers[0][1] - self.MazeDim.chamber_centers[1][1])**2)
+        gui_chamber_dist = math.sqrt((self.MP.Chambers[0].center_x - self.MP.Chambers[1].center_x)**2 + (
+            self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
         self.optitrack_to_gui_scale = gui_chamber_dist/optitrack_chamber_dist
 
         # ................ ROS Setup ................
@@ -750,11 +757,14 @@ class Interface(Plugin):
         # Gantry command publisher
         self.gantry_pub = rospy.Publisher(
             '/gantry_cmd', GantryCmd, queue_size=1)
-        
-        self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])  # Marker to gantry center offset
 
-        rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped, self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
+        self.gantry_marker_to_gantry_center = np.array(
+            [-0.317, -0.185])  # Marker to gantry center offset
+
+        rospy.Subscriber('/harness_pose_in_maze', PoseStamped,
+                         self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/gantry_pose_in_maze', PoseStamped,
+                         self.gantry_pose_callback, queue_size=1, tcp_nodelay=True)
 
         self.signal_rat_pos.connect(self.update_rat_pos_in_gui)
 
@@ -828,14 +838,23 @@ class Interface(Plugin):
             self.timer_callback_endSession_once)
         self.timer_endSession.setSingleShot(True)  # Run only once
 
-        # Projected image ui callbacks
-        self.proj_img_cfg_btn_vec = []  # Initalize vector for buttons
+        # Projected wall image ui callback
+        self.proj_wall_img_cfg_btn_vec = []  # Initalize vector for buttons
         for i in range(9):
             button_name = f'projWallImgCfgBtn_{i}'
             button = getattr(self._widget, button_name)
             button.clicked.connect(  # Use lambda pass button index tor callback
                 lambda _, b=i: self.qt_callback_projWallImgCfgBtn_clicked(b))
-            self.proj_img_cfg_btn_vec.append(button)  # Store the button
+            self.proj_wall_img_cfg_btn_vec.append(button)  # Store the button
+
+        # Projected floor image ui callback
+        self.proj_floor_img_cfg_btn_vec = []  # Initalize vector for buttons
+        for i in range(4):
+            button_name = f'projFloorImgCfgBtn_{i}'
+            button = getattr(self._widget, button_name)
+            button.clicked.connect(  # Use lambda pass button index tor callback
+                lambda _, b=i: self.qt_callback_projFloorImgCfgBtn_clicked(b))
+            self.proj_floor_img_cfg_btn_vec.append(button)  # Store the button
 
         MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
 
@@ -848,18 +867,20 @@ class Interface(Plugin):
         self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)
         self.rat_image.setRotation(yaw)
 
-    
     def optitrack_to_gui(self, optitrack_pos):
         """
         Converts optitrack position to GUI position
         """
         gui_pos = np.zeros(2)
-        gui_pos[0] = (optitrack_pos[0] - self.MazeDim.chamber_centers[0][0])*self.optitrack_to_gui_scale + self.MP.Chambers[0].center_x - self.rat_image_dim/2
-        gui_pos[1] = -((optitrack_pos[1] - self.MazeDim.chamber_centers[0][1])*self.optitrack_to_gui_scale - self.MP.Chambers[0].center_y) - self.rat_image_dim/2
+        gui_pos[0] = (optitrack_pos[0] - self.MazeDim.chamber_centers[0][0]) * \
+            self.optitrack_to_gui_scale + \
+            self.MP.Chambers[0].center_x - self.rat_image_dim/2
+        gui_pos[1] = -((optitrack_pos[1] - self.MazeDim.chamber_centers[0][1]) *
+                       self.optitrack_to_gui_scale - self.MP.Chambers[0].center_y) - self.rat_image_dim/2
 
         # Convert to int
         gui_pos = gui_pos.astype(int)
-        
+
         sceneWidth = self._widget.plotMazeView.width()
         sceneHeight = self._widget.plotMazeView.height()
 
@@ -872,7 +893,7 @@ class Interface(Plugin):
             gui_pos[1] = 0
         if gui_pos[1] > sceneHeight:
             gui_pos[1] = sceneHeight
-        
+
         return gui_pos
 
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
@@ -1298,8 +1319,8 @@ class Interface(Plugin):
     def move_gantry_to_chamber(self, chamber_num):
         x = self.MazeDim.chamber_centers[chamber_num][0]
         y = self.MazeDim.chamber_centers[chamber_num][1]
-        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])    
-    
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])
+
     def qt_callback_trackHarnessTogBtn_clicked(self):
         """ Callback function to start and stop gantry tracking the rat from button press."""
         if self._widget.trackHarnessTogBtn.isChecked():
@@ -1347,47 +1368,80 @@ class Interface(Plugin):
         MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
 
     def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
-        """ Callback function to send projector command from button press."""
+        """ Callback function to send projector wall image config from button press."""
 
         # Get the button that was clicked
-        clicked_button = self.proj_img_cfg_btn_vec[button_number]
+        clicked_button = self.proj_wall_img_cfg_btn_vec[button_number]
 
         # Uncheck all the buttons except the one that was clicked
-        for i, button in enumerate(self.proj_img_cfg_btn_vec):
+        for i, button in enumerate(self.proj_wall_img_cfg_btn_vec):
             if i != button_number:
                 button.setChecked(False)
 
         # Load the appropriate file based on the button number
         file_name = None
-        if button_number == 0:  # Added missing colon
+        if button_number == 0:
             file_name = 'walls_0_blank.csv'
-        elif button_number == 1:  # Added missing colon
+        elif button_number == 1:
             file_name = 'walls_1_east_r.csv'
-        elif button_number == 2:  # Added missing colon
+        elif button_number == 2:
             file_name = 'walls_2_east_l.csv'
-        elif button_number == 3:  # Added missing colon
+        elif button_number == 3:
             file_name = 'walls_3_south_r.csv'
-        elif button_number == 4:  # Added missing colon
+        elif button_number == 4:
             file_name = 'walls_4_south_l.csv'
-        elif button_number == 5:  # Added missing colon
+        elif button_number == 5:
             file_name = 'walls_5_west_r.csv'
-        elif button_number == 6:  # Added missing colon
+        elif button_number == 6:
             file_name = 'walls_6_west_l.csv'
-        elif button_number == 7:  # Added missing colon
+        elif button_number == 7:
             file_name = 'walls_7_north_r.csv'
-        elif button_number == 8:  # Added missing colon
+        elif button_number == 8:
             file_name = 'walls_8_north_l.csv'
 
         # Format full path
-        walls_csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
+        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
 
         # Load and store CSV data
-        self.ProjOpp.set_config_from_csv(walls_csv_path, "walls")
+        self.ProjOpp.set_config_from_csv(csv_path, "walls")
 
         # Send the new image configuration
         self.ProjOpp.publish_image_message()
-        MazeDB.printMsg('Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
+        MazeDB.printMsg(
+            'Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
 
+    def qt_callback_projFloorImgCfgBtn_clicked(self, button_number):
+        """ Callback function to send projector floor image config from button press."""
+
+        # Get the button that was clicked
+        clicked_button = self.proj_floor_img_cfg_btn_vec[button_number]
+
+        # Uncheck all the buttons except the one that was clicked
+        for i, button in enumerate(self.proj_floor_img_cfg_btn_vec):
+            if i != button_number:
+                button.setChecked(False)
+
+        # Load the appropriate file based on the button number
+        file_name = None
+        if button_number == 0:
+            file_name = 'floor_0_blank.csv'
+        elif button_number == 1:
+            file_name = 'floor_1_green.csv'
+        elif button_number == 2:
+            file_name = 'floor_2_pat_1.csv'
+        elif button_number == 3:
+            file_name = 'floor_3_pat_2.csv'
+
+        # Format full path
+        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
+
+        # Load and store CSV data
+        self.ProjOpp.set_config_from_csv(csv_path, "floor")
+
+        # Send the new image configuration
+        self.ProjOpp.publish_image_message()
+        MazeDB.printMsg(
+            'Sent', "Sent ROS Floor Image Configuration: file[%s]", file_name)
 
     def qt_callback_sysStartBtn_clicked(self):
         """ Callback function for the "Start" button."""
@@ -1426,26 +1480,29 @@ class Interface(Plugin):
         self.timer_endSession.start(0)
 
     def gantry_pose_callback(self, msg):
-        self.gantry_x = msg.pose.position.x + self.gantry_marker_to_gantry_center[0]
-        self.gantry_y = msg.pose.position.y + self.gantry_marker_to_gantry_center[1]
-        #rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
+        self.gantry_x = msg.pose.position.x + \
+            self.gantry_marker_to_gantry_center[0]
+        self.gantry_y = msg.pose.position.y + \
+            self.gantry_marker_to_gantry_center[1]
+        # rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
 
     def harness_pose_callback(self, msg):
         self.harness_x = msg.pose.position.x
         self.harness_y = msg.pose.position.y
 
-        self.harness_pose_in_gui = self.optitrack_to_gui([self.harness_x, self.harness_y])
-        
+        self.harness_pose_in_gui = self.optitrack_to_gui(
+            [self.harness_x, self.harness_y])
+
         # Convert orientation to euler angles
-        q = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        q = [msg.pose.orientation.x, msg.pose.orientation.y,
+             msg.pose.orientation.z, msg.pose.orientation.w]
         roll, pitch, yaw = euler_from_quaternion(q)
 
-        yaw = -(int(yaw * 180 / math.pi)-30)  # Convert to degrees and adjust for optitrack orientation
+        # Convert to degrees and adjust for optitrack orientation
+        yaw = -(int(yaw * 180 / math.pi)-30)
 
-        self.signal_rat_pos.emit(self.harness_pose_in_gui[0], self.harness_pose_in_gui[1], yaw)
-
-
-        
+        self.signal_rat_pos.emit(
+            self.harness_pose_in_gui[0], self.harness_pose_in_gui[1], yaw)
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
