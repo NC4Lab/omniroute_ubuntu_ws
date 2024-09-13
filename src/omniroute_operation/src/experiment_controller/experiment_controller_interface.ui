@@ -401,7 +401,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="homeBtn">
      <property name="geometry">
       <rect>
-       <x>150</x>
+       <x>140</x>
        <y>30</y>
        <width>91</width>
        <height>41</height>
@@ -414,7 +414,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="plusMazeBtn">
      <property name="geometry">
       <rect>
-       <x>150</x>
+       <x>140</x>
        <y>110</y>
        <width>91</width>
        <height>41</height>
@@ -440,7 +440,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="pumpGantryBtn">
      <property name="geometry">
       <rect>
-       <x>430</x>
+       <x>410</x>
        <y>30</y>
        <width>101</width>
        <height>41</height>
@@ -466,7 +466,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="startTrackingBtn">
      <property name="geometry">
       <rect>
-       <x>280</x>
+       <x>260</x>
        <y>30</y>
        <width>111</width>
        <height>41</height>
@@ -479,7 +479,7 @@ color: rgb(255, 255, 0);</string>
     <widget class="QPushButton" name="stopTrackingBtn">
      <property name="geometry">
       <rect>
-       <x>280</x>
+       <x>260</x>
        <y>110</y>
        <width>111</width>
        <height>41</height>
@@ -489,17 +489,45 @@ color: rgb(255, 255, 0);</string>
       <string>Stop Tracking</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="testingPhaseBtn">
+    <widget class="QPushButton" name="gantryRewardTogBtn">
      <property name="geometry">
       <rect>
-       <x>430</x>
-       <y>110</y>
-       <width>101</width>
-       <height>41</height>
+       <x>380</x>
+       <y>120</y>
+       <width>161</width>
+       <height>31</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+QPushButton:checked {
+    background-color: gray; /* Color when toggled */
+}
+
+QPushButton:pressed {
+    background-color: darkgray; /* Color when pressed */
+}
+</string>
+     </property>
      <property name="text">
-      <string>Testing Phase</string>
+      <string>Enable Gantry Reward</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
    </widget>
@@ -640,7 +668,7 @@ color: rgb(255, 255, 0);</string>
      <rect>
       <x>20</x>
       <y>910</y>
-      <width>221</width>
+      <width>341</width>
       <height>151</height>
      </rect>
     </property>
@@ -654,7 +682,7 @@ color: rgb(255, 255, 0);</string>
      <property name="geometry">
       <rect>
        <x>60</x>
-       <y>10</y>
+       <y>30</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -695,7 +723,7 @@ QPushButton:pressed {
      <property name="geometry">
       <rect>
        <x>50</x>
-       <y>110</y>
+       <y>90</y>
        <width>121</width>
        <height>31</height>
       </rect>
@@ -704,113 +732,30 @@ QPushButton:pressed {
       <string>Trial Generator </string>
      </property>
     </widget>
-    <widget class="QPushButton" name="gantryRewardTogBtn">
+    <widget class="QPushButton" name="testingPhaseBtn">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>60</y>
-       <width>181</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
-    background-color: lightgray;
-    border: 1px solid black;
-}
-
-QPushButton:checked {
-    background-color: gray; /* Color when toggled */
-}
-
-QPushButton:pressed {
-    background-color: darkgray; /* Color when pressed */
-}
-</string>
-     </property>
-     <property name="text">
-      <string>Enable Gantry Reward</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_14">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>910</y>
-      <width>321</width>
-      <height>151</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QPushButton" name="whiteNoiseBtn">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
+       <x>220</x>
        <y>20</y>
        <width>101</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>White Noise</string>
+      <string>Testing Phase</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="fiveKhzBtn">
+    <widget class="QPushButton" name="singleTmazeBtn">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>90</y>
+       <x>220</x>
+       <y>80</y>
        <width>101</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>5KHz Tone</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="triangleRightBtn">
-     <property name="geometry">
-      <rect>
-       <x>150</x>
-       <y>20</y>
-       <width>151</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Triangle on Right</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="triangleLeftBtn">
-     <property name="geometry">
-      <rect>
-       <x>150</x>
-       <y>90</y>
-       <width>151</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Triangle on Left</string>
+      <string>Single T-Maze</string>
      </property>
     </widget>
    </widget>
@@ -819,7 +764,7 @@ QPushButton:pressed {
      <rect>
       <x>20</x>
       <y>880</y>
-      <width>541</width>
+      <width>341</width>
       <height>31</height>
      </rect>
     </property>
@@ -832,7 +777,7 @@ QPushButton:pressed {
     <widget class="QLabel" name="label_8">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>70</x>
        <y>0</y>
        <width>231</width>
        <height>31</height>
@@ -846,8 +791,8 @@ QPushButton:pressed {
    <widget class="QPushButton" name="lowerAllDoorsBtn">
     <property name="geometry">
      <rect>
-      <x>710</x>
-      <y>960</y>
+      <x>620</x>
+      <y>950</y>
       <width>151</width>
       <height>41</height>
      </rect>
@@ -888,7 +833,6 @@ QPushButton:pressed {
    <zorder>frame_10</zorder>
    <zorder>frame_11</zorder>
    <zorder>frame_12</zorder>
-   <zorder>frame_14</zorder>
    <zorder>frame_13</zorder>
    <zorder>lowerAllDoorsBtn</zorder>
   </widget>
