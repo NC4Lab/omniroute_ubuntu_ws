@@ -81,6 +81,18 @@ catkin_make
 ```
 chmod +x sync_sender.py
 ```
+## PlatformIO Ubuntu setup
+
+After installig  platformio run the fullowing:
+```
+sudo apt install python3-venv
+```
+Give port write permissions. Note, ports will need to have devices connected:
+```
+sudo chmod a+rw /dev/ttyACM0
+sudo chmod a+rw /dev/ttyACM1
+...
+```
 
 # Runtime
 
