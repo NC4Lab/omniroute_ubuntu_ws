@@ -17,6 +17,7 @@ import numpy as np
 class MazeTransformer:
     # Initialize the OptitrackTransformer class
     def __init__(self):
+        MazeDB.printMsg('ATTN', "MAZE_TRANSFORMER NODE STARTED")
 
         # Subscribers to obtain pose data for three boundary markers of the maze
         rospy.Subscriber('/natnet_ros/MazeBoundary/marker0/pose', PointStamped, self.mazeboundary_marker0_callback, queue_size=1, tcp_nodelay=True)

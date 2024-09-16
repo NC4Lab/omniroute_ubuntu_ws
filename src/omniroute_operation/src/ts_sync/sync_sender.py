@@ -14,6 +14,7 @@ import random
 
 class SyncSender:
     def __init__(self):
+        MazeDB.printMsg('ATTN', "SYNC_SENDER NODE STARTED")
 
         # Sync signal parameters
         self.interval = 10.0 # Interval between sync signals

@@ -574,6 +574,7 @@ class Interface(Plugin):
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
+        MazeDB.printMsg('ATTN', "OMNIROUTE_CONTROLLER INTERFACE NODE STARTED")
 
         self._joint_sub = None
 
@@ -855,8 +856,6 @@ class Interface(Plugin):
             button.clicked.connect(  # Use lambda pass button index tor callback
                 lambda _, b=i: self.qt_callback_projFloorImgCfgBtn_clicked(b))
             self.proj_floor_img_cfg_btn_vec.append(button)  # Store the button
-
-        MazeDB.printMsg('ATTN', "FINISHED INTERFACE SETUP")
 
     def update_rat_pos_in_gui(self, x, y, yaw):
         """

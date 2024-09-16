@@ -28,6 +28,7 @@ class GantryState(Enum):
 class GantryOperation:
     # Initialize the GantryOperation class
     def __init__(self):
+        MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
