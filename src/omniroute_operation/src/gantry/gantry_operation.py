@@ -36,10 +36,23 @@ class GantryOperation:
 
         # ................ Gantry Tracking Setup ................
 
+        # Flag to run auto-tuning
+        self.track_method = "prop"  # Choose between "prop", "pid", or 'tune'
+        
         # PID values for normal operation
         self.Kp = 42.0
-        self.Ti = 0.0
-        self.Td = 0.0
+        self.Ki = 0.0
+        self.Kd = 0.0
+
+        # Initialize the PID auto-tuning variables
+        self.relay_output_x = 0.5  # Initial relay output value for X direction
+        self.relay_output_y = 0.5  # Initial relay output value for Y direction
+        self.oscillations = []  # Store oscillation periods and amplitudes
+        self.last_cross_time = None  # Timestamp of the last threshold crossing
+        self.last_error_sign_x = 0  # Track the sign of the previous X error
+        self.last_error_sign_y = 0  # Track the sign of the previous Y error
+        self.amplitude = 40  # Size of relay output change
+        self.threshold = 0.01  # Error limit for relay switching
 
         # For storing the PID control terms
         self.prev_error_x = 0.0
@@ -59,8 +72,7 @@ class GantryOperation:
         self.movement_in_progress = False
 
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
-        # self.gantry_marker_to_gantry_center = np.array([-0.285, -0.178])
-        self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])
+        self.gantry_marker_to_gantry_center = np.array([-0.185, -0.317])
 
         # Paramters for positioning gantry
         self.chamber_wd = 0.3  # Chamber width (m)
@@ -143,32 +155,69 @@ class GantryOperation:
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
-            # # Use proportional control with deceleration
-            # if distance > 0.15:
-            #     x, y = self.proportional_control(
-            #         gantry_to_harness, base_speed=35.0, slow_on_approach=False)
 
-            #     # Send the movement command
-            #     if ~np.isnan(x) and ~np.isnan(y):
-            #         self.move_gantry_rel(x, y)
+            # Run PID auto-tuning
+            if self.track_method == 'tune':
 
-            #     self.movement_in_progress = True
+                if distance > 0.01:
 
+                    # Once we have enough oscillations, calculate PID parameters
+                    if len(self.oscillations) > 2:
+                        Kp, Ki, Kd = self.calculate_pid_parameters()
+                        if Kp is not None:
+                            # Print the new PID values
+                            MazeDB.printMsg('INFO', "Tuned PID parameters: Kp=%0.2f, Ki=%0.2f, Kd=%0.2f", Kp, Ki, Kd)
+                            # End the tuning session
+                            self.run_auto_tuning = False
+                            return
+
+                    # Apply relay feedback control
+                    x, y = self.relay_feedback_control(gantry_to_harness)
+
+                    # Send the movement command
+                    if ~np.isnan(x) and ~np.isnan(y):
+                        self.move_gantry_rel(x, y)
+
+                    self.movement_in_progress = True
+                    
+                # Stop the gantry when it reaches the harness
+                elif self.movement_in_progress:
+                    self.jog_cancel()
+                    self.movement_in_progress = False
+            
             # Use PID values (tuned or hardcoded) for control
-            if distance > 0.01:
-                x, y = self.pid_control(
-                    gantry_to_harness, self.Kp, self.Ti, self.Td)
+            elif self.track_method == 'pid':
+                if distance > 0.01:
+                    x, y = self.pid_control(
+                        gantry_to_harness, self.Kp, self.Ki, self.Kd)
 
-                # Send the movement command
-                if ~np.isnan(x) and ~np.isnan(y):
-                    self.move_gantry_rel(x, y)
+                    # Send the movement command
+                    if ~np.isnan(x) and ~np.isnan(y):
+                        self.move_gantry_rel(x, y)
 
-                self.movement_in_progress = True
+                    self.movement_in_progress = True
 
-            # Stop the gantry when it reaches the harness
-            elif self.movement_in_progress:
-                self.jog_cancel()
-                self.movement_in_progress = False
+                # Stop the gantry when it reaches the harness
+                elif self.movement_in_progress:
+                    self.jog_cancel()
+                    self.movement_in_progress = False
+
+            # Use proportional control
+            elif self.track_method == 'prop':
+                if distance > 0.15:
+                    x, y = self.proportional_control(
+                        gantry_to_harness, base_speed=35.0, slow_on_approach=False)
+
+                    # Send the movement command
+                    if ~np.isnan(x) and ~np.isnan(y):
+                        self.move_gantry_rel(x, y)
+
+                    self.movement_in_progress = True
+
+                # Stop the gantry when it reaches the harness
+                elif self.movement_in_progress:
+                    self.jog_cancel()
+                    self.movement_in_progress = False
 
         if self.gantry_mode == GantryState.MOVE_TO_TARGET:
             # Unit vector from gantry to target
@@ -183,41 +232,87 @@ class GantryOperation:
             if ~np.isnan(x) and ~np.isnan(y):
                 self.move_gantry_rel(x, y)
 
-    def proportional_control(self, gantry_to_target, base_speed, slow_on_approach=True):
+    def relay_feedback_control(self, gantry_to_setpoint):
         """
-        Proportional control to calculate movement based on the current distance and direction to the target.
+        Simulates relay feedback by switching the output whenever the error crosses the threshold.
+        
+        Args:
+        - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
 
-        Parameters:
-        - gantry_to_target: Array containing the difference between the gantry and target positions in X and Y.
-        - base_speed: The base speed to scale the movement by.
-        - slow_on_approach: A flag to indicate if the gantry should decelerate when approaching the target.
+        Returns:
+        - output_x (float): Updated output for X direction.
+        - output_y (float): Updated output for Y direction.
         """
 
-        # Calculate the distance between the gantry and target
-        distance = np.linalg.norm(gantry_to_target)
-
-        # Avoid division by zero or small distances by checking the threshold
-        if distance < 0.001:
-            return 0, 0
-
-        # Apply the speed, with optional deceleration as it approaches the target
-        if slow_on_approach:
-            # Scale speed by distance, slowing down as it approaches the target
-            distance = np.linalg.norm(gantry_to_target)
-            gantry_to_target = gantry_to_target / distance
-
-        # Y component of the target movement vector
-        output_y = base_speed * gantry_to_target[0]
-        # X component of the target movement vector
-        output_x = base_speed * gantry_to_target[1]
-
-        return output_x, output_y
-
-    def pid_control(self, gantry_to_harness, Kp, Ti, Td):
-        """PID control to calculate movement based on current error with integral windup protection."""
         # Get the errors in x and y directions
-        error_y = gantry_to_harness[0]
-        error_x = gantry_to_harness[1]
+        error_x = gantry_to_setpoint[0]
+        error_y = gantry_to_setpoint[1]
+
+        # Check the signs of the errors in both X and Y directions
+        current_sign_x = np.sign(error_x)
+        current_sign_y = np.sign(error_y)
+        
+        crossed = False
+        current_time = time.time()
+
+        # Check if the error has crossed zero in the X direction
+        if current_sign_x != self.last_error_sign_x and abs(error_x) > self.threshold:
+            # Switch the relay output for X
+            self.relay_output_x = self.amplitude if error_x > 0 else -self.amplitude
+            crossed = True
+
+        # Check if the error has crossed zero in the Y direction
+        if current_sign_y != self.last_error_sign_y and abs(error_y) > self.threshold:
+            # Switch the relay output for Y
+            self.relay_output_y = self.amplitude if error_y > 0 else -self.amplitude
+            crossed = True
+
+        # Update the error signs for the next iteration
+        self.last_error_sign_x = current_sign_x
+        self.last_error_sign_y = current_sign_y
+
+        # Record time and amplitude if a true crossing occurred
+        if crossed:
+            if self.last_cross_time:
+                oscillation_period = current_time - self.last_cross_time
+                self.oscillations.append((oscillation_period, abs(self.relay_output_x), abs(self.relay_output_y)))  # Store periods and amplitudes for both directions
+            self.last_cross_time = current_time
+
+        return self.relay_output_x, self.relay_output_y
+
+    def calculate_pid_parameters(self):
+        """
+        Calculate PID parameters using Ziegler-Nichols tuning rules based on the measured
+        ultimate gain (Ku) and ultimate period (Tu).
+        
+        Returns:
+        - Kp, Ki, Kd (floats): Tuned PID parameters.
+        """
+        if len(self.oscillations) < 2:
+            return None, None, None  # Need at least 2 oscillations to calculate Ku and Tu
+        
+        # Calculate the ultimate period (Tu) and ultimate gain (Ku)
+        periods, amplitudes = zip(*self.oscillations[-2:])  # Use the last two oscillations
+        Tu = np.mean(periods)
+        Ku = 4 * self.amplitude / (np.pi * Tu)  # Ku from amplitude and period
+        
+        # Ziegler-Nichols tuning rules
+        Kp = 0.6 * Ku
+        Ki = 2 * Kp / Tu
+        Kd = Kp * Tu / 8
+        
+        return Kp, Ki, Kd
+
+    def pid_control(self, gantry_to_setpoint, Kp, Ki, Kd):
+        """
+        PID control to calculate movement based on current error with integral windup protection.
+        
+        Args:
+        - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
+        """
+        # Get the errors in x and y directions
+        error_x = gantry_to_setpoint[0]
+        error_y = gantry_to_setpoint[1]
 
         # Set limits for integral to prevent windup
         integral_limit = 100.0  # You can adjust this value based on system scale
@@ -234,12 +329,12 @@ class GantryOperation:
         self.integral_y = max(
             min(self.integral_y, integral_limit), -integral_limit)
 
-        I_x = (Kp / Ti) * self.integral_x if Ti != 0 else 0
-        I_y = (Kp / Ti) * self.integral_y if Ti != 0 else 0
+        I_x = (Kp / Ki) * self.integral_x if Ki != 0 else 0
+        I_y = (Kp / Ki) * self.integral_y if Ki != 0 else 0
 
         # Calculate the derivative term (rate of change of error)
-        D_x = Kp * Td * (error_x - self.prev_error_x)
-        D_y = Kp * Td * (error_y - self.prev_error_y)
+        D_x = Kp * Kd * (error_x - self.prev_error_x)
+        D_y = Kp * Kd * (error_y - self.prev_error_y)
 
         # Update previous errors for the next cycle
         self.prev_error_x = error_x
@@ -248,6 +343,36 @@ class GantryOperation:
         # Compute final control outputs for x and y
         output_x = P_x + I_x + D_x
         output_y = P_y + I_y + D_y
+
+        return output_x, output_y
+    
+    def proportional_control(self, gantry_to_setpoint, base_speed, slow_on_approach=True):
+        """
+        Proportional control to calculate movement based on the current distance and direction to the target.
+
+        Args:
+        - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
+        - base_speed: The base speed to scale the movement by.
+        - slow_on_approach: A flag to indicate if the gantry should decelerate when approaching the target.
+        """
+
+        # Calculate the distance between the gantry and target
+        distance = np.linalg.norm(gantry_to_setpoint)
+
+        # Avoid division by zero or small distances by checking the threshold
+        if distance < 0.001:
+            return 0, 0
+
+        # Apply the speed, with optional deceleration as it approaches the target
+        if slow_on_approach:
+            # Scale speed by distance, slowing down as it approaches the target
+            distance = np.linalg.norm(gantry_to_setpoint)
+            gantry_to_setpoint = gantry_to_setpoint / distance
+
+        # Y component of the target movement vector
+        output_x = base_speed * gantry_to_setpoint[0]
+        # X component of the target movement vector
+        output_y = base_speed * gantry_to_setpoint[1]
 
         return output_x, output_y
 
@@ -266,6 +391,24 @@ class GantryOperation:
         # Send command to move gantry
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
+        
+    def gantry_pose_callback(self, msg):
+
+        # Store y values in x
+        self.gantry_x = msg.pose.position.y + \
+            self.gantry_marker_to_gantry_center[0]
+        
+        # Store x values in y
+        self.gantry_y = msg.pose.position.x + \
+            self.gantry_marker_to_gantry_center[1]
+
+    def harness_pose_callback(self, msg):
+
+        # Store y values in x
+        self.harness_x = msg.pose.position.y
+
+        # Store x values in y
+        self.harness_y = msg.pose.position.x
 
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
@@ -330,18 +473,6 @@ class GantryOperation:
                 'DEBUG', "[GantryOperation]: Reward command received: duration(%d)", duration)
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.GANTRY_REWARD, msg_arg_data_f32=duration)
-
-    def gantry_pose_callback(self, msg):
-        self.gantry_x = msg.pose.position.x + \
-            self.gantry_marker_to_gantry_center[0]
-        self.gantry_y = msg.pose.position.y + \
-            self.gantry_marker_to_gantry_center[1]
-        # rospy.loginfo("Gantry pose: "f'x: {self.gantry_x}, y: {self.gantry_y}')
-
-    def harness_pose_callback(self, msg):
-        self.harness_x = msg.pose.position.x
-        self.harness_y = msg.pose.position.y
-        # rospy.loginfo("Harness pose: "f'x: {self.harness_x}, y: {self.harness_y}')
 
     def procEcatMessage(self):
         """ Used to parse new incoming ROS ethercat msg data. """
