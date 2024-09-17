@@ -14,7 +14,10 @@ import time
 from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 from enum import Enum
+import math
 
+
+# Track the state for state machine
 class GantryState(Enum):
     IDLE = 0
     TRACK_HARNESS = 1
@@ -25,10 +28,24 @@ class GantryState(Enum):
     STOP_PUMP = 6
     REWARD = 7
 
+
 class GantryOperation:
     # Initialize the GantryOperation class
     def __init__(self):
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
+
+        # ................ Gantry Tracking Setup ................
+
+        # PID values for normal operation
+        self.Kp = 42.0
+        self.Ti = 0.0
+        self.Td = 0.0
+
+        # For storing the PID control terms
+        self.prev_error_x = 0.0
+        self.prev_error_y = 0.0
+        self.integral_x = 0.0
+        self.integral_y = 0.0
 
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
@@ -59,6 +76,8 @@ class GantryOperation:
             chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
                                       self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
             self.chamber_centers.append(chamber_center)
+
+        # ................ ROS Setup ................
 
         # Initialize the subsrciber for reading in the gantry commands
         rospy.Subscriber('/gantry_cmd', GantryCmd,
@@ -91,6 +110,12 @@ class GantryOperation:
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
 
+        # TEMP
+        time.sleep(1)
+        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
+        time.sleep(5)
+        # self.gantry_mode = GantryState.TRACK_HARNESS
+
         # ................ Run node ................
 
         # Initialize the ROS rate
@@ -111,58 +136,120 @@ class GantryOperation:
         #     return
         # self.procEcatMessage()
 
-        if self.gantry_mode == GantryState.MOVE_TO_TARGET:
-            # Unit vector from gantry to target
-            gantry_to_target = np.array(
-                [self.target_x - self.gantry_x, self.target_y - self.gantry_y])
-
-            # Slow on approach
-            distance = np.linalg.norm(gantry_to_target)
-            gantry_to_target = gantry_to_target / distance
-
-            # Speed of gantry movement
-            k = 25.0
-
-            # X component of the target movement vector
-            y = k * gantry_to_target[0]
-            # Y component of the target movement vector
-            x = k * gantry_to_target[1]
-
-            # Move the gantry to the target
-            if ~np.isnan(x) and ~np.isnan(y):
-                self.move_gantry_rel(x, y)
-
         if self.gantry_mode == GantryState.TRACK_HARNESS:
-            # Unit vector from gantry to harness
+
+            # Get the current distance between the gantry and the harness
             gantry_to_harness = np.array(
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
-            # TEMP
-            #MazeDB.printMsg('INFO', "Distance: %0.2f", distance)
+            # # Use proportional control with deceleration
+            # if distance > 0.15:
+            #     x, y = self.proportional_control(
+            #         gantry_to_harness, base_speed=35.0, slow_on_approach=False)
 
-            # Incriment the gantry to harness vector
-            if distance > 0.05:
+            #     # Send the movement command
+            #     if ~np.isnan(x) and ~np.isnan(y):
+            #         self.move_gantry_rel(x, y)
 
-                # Speed of gantry movement
-                k = 35.0
+            #     self.movement_in_progress = True
 
-                # X component of the harness movement vector
-                y = k*gantry_to_harness[0]
-                # Y component of the harness movement vector
-                x = k*gantry_to_harness[1]
+            # Use PID values (tuned or hardcoded) for control
+            if distance > 0.01:
+                x, y = self.pid_control(
+                    gantry_to_harness, self.Kp, self.Ti, self.Td)
 
-                # Move the gantry to the harness
+                # Send the movement command
                 if ~np.isnan(x) and ~np.isnan(y):
                     self.move_gantry_rel(x, y)
 
-                # Set the flag
                 self.movement_in_progress = True
 
             # Stop the gantry when it reaches the harness
             elif self.movement_in_progress:
                 self.jog_cancel()
                 self.movement_in_progress = False
+
+        if self.gantry_mode == GantryState.MOVE_TO_TARGET:
+            # Unit vector from gantry to target
+            gantry_to_target = np.array(
+                [self.target_x - self.gantry_x, self.target_y - self.gantry_y])
+
+            # Use proportional control with deceleration
+            x, y = self.proportional_control(
+                gantry_to_target, base_speed=25.0, slow_on_approach=False)
+
+            # Move the gantry to the target
+            if ~np.isnan(x) and ~np.isnan(y):
+                self.move_gantry_rel(x, y)
+
+    def proportional_control(self, gantry_to_target, base_speed, slow_on_approach=True):
+        """
+        Proportional control to calculate movement based on the current distance and direction to the target.
+
+        Parameters:
+        - gantry_to_target: Array containing the difference between the gantry and target positions in X and Y.
+        - base_speed: The base speed to scale the movement by.
+        - slow_on_approach: A flag to indicate if the gantry should decelerate when approaching the target.
+        """
+
+        # Calculate the distance between the gantry and target
+        distance = np.linalg.norm(gantry_to_target)
+
+        # Avoid division by zero or small distances by checking the threshold
+        if distance < 0.001:
+            return 0, 0
+
+        # Apply the speed, with optional deceleration as it approaches the target
+        if slow_on_approach:
+            # Scale speed by distance, slowing down as it approaches the target
+            distance = np.linalg.norm(gantry_to_target)
+            gantry_to_target = gantry_to_target / distance
+
+        # Y component of the target movement vector
+        output_y = base_speed * gantry_to_target[0]
+        # X component of the target movement vector
+        output_x = base_speed * gantry_to_target[1]
+
+        return output_x, output_y
+
+    def pid_control(self, gantry_to_harness, Kp, Ti, Td):
+        """PID control to calculate movement based on current error with integral windup protection."""
+        # Get the errors in x and y directions
+        error_y = gantry_to_harness[0]
+        error_x = gantry_to_harness[1]
+
+        # Set limits for integral to prevent windup
+        integral_limit = 100.0  # You can adjust this value based on system scale
+
+        # Calculate the proportional term
+        P_x = Kp * error_x
+        P_y = Kp * error_y
+
+        # Calculate the integral term with clamping to prevent windup
+        self.integral_x += error_x
+        self.integral_y += error_y
+        self.integral_x = max(
+            min(self.integral_x, integral_limit), -integral_limit)
+        self.integral_y = max(
+            min(self.integral_y, integral_limit), -integral_limit)
+
+        I_x = (Kp / Ti) * self.integral_x if Ti != 0 else 0
+        I_y = (Kp / Ti) * self.integral_y if Ti != 0 else 0
+
+        # Calculate the derivative term (rate of change of error)
+        D_x = Kp * Td * (error_x - self.prev_error_x)
+        D_y = Kp * Td * (error_y - self.prev_error_y)
+
+        # Update previous errors for the next cycle
+        self.prev_error_x = error_x
+        self.prev_error_y = error_y
+
+        # Compute final control outputs for x and y
+        output_x = P_x + I_x + D_x
+        output_y = P_y + I_y + D_y
+
+        return output_x, output_y
 
     def jog_cancel(self):
         self.EsmaCom.writeEcatMessage(
@@ -182,14 +269,15 @@ class GantryOperation:
 
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
-            MazeDB.printMsg('DEBUG', "[GantryOperation]: Homing command received")
+            MazeDB.printMsg(
+                'DEBUG', "[GantryOperation]: Homing command received")
             self.home()
 
         elif msg.cmd == "MOVE_TO_COORDINATE":
             self.target_x = msg.args[0]
             self.target_y = msg.args[1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0)  
+            self.move_gantry_rel(0, 0)
             MazeDB.printMsg(
                 'DEBUG', "[GantryOperation]: Move command received: target(%0.2f, %0.2f)", self.target_x, self.target_y)
 
@@ -198,7 +286,7 @@ class GantryOperation:
             self.target_x = self.chamber_centers[chamber_num][0]
             self.target_y = self.chamber_centers[chamber_num][1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0) 
+            self.move_gantry_rel(0, 0)
             MazeDB.printMsg('DEBUG', "[GantryOperation]: Move to chamber command received: chamber(%d) target(%0.2f, %0.2f)",
                             chamber_num, self.target_x, self.target_y)
 
@@ -208,7 +296,8 @@ class GantryOperation:
             self.gantry_mode = GantryState.TRACK_HARNESS
 
         elif msg.cmd == "IDLE":
-            MazeDB.printMsg('DEBUG', "[GantryOperation]: Idle command received")
+            MazeDB.printMsg(
+                'DEBUG', "[GantryOperation]: Idle command received")
             self.gantry_mode = GantryState.IDLE
 
         elif msg.cmd == "LOWER_FEEDER":
@@ -279,6 +368,7 @@ class GantryOperation:
 
         # Reset new message flag
         self.EsmaCom.rcvEM.isNew = False
+
 
 # @brief Main code
 if __name__ == '__main__':
