@@ -28,7 +28,6 @@ class GantryState(Enum):
     STOP_PUMP = 6
     REWARD = 7
 
-
 class GantryOperation:
     # Initialize the GantryOperation class
     def __init__(self):
@@ -38,27 +37,26 @@ class GantryOperation:
 
         # Flag to run auto-tuning
         self.track_method = "prop"  # Choose between "prop", "pid", or 'tune'
-        
-        # PID values for normal operation
-        self.Kp = 42.0
-        self.Ki = 0.0
-        self.Kd = 0.0
 
-        # Initialize the PID auto-tuning variables
-        self.relay_output_x = 0.5  # Initial relay output value for X direction
-        self.relay_output_y = 0.5  # Initial relay output value for Y direction
-        self.oscillations = []  # Store oscillation periods and amplitudes
-        self.last_cross_time = None  # Timestamp of the last threshold crossing
-        self.last_error_sign_x = 0  # Track the sign of the previous X error
-        self.last_error_sign_y = 0  # Track the sign of the previous Y error
-        self.amplitude = 40  # Size of relay output change
-        self.threshold = 0.01  # Error limit for relay switching
+        # Limit to prevent integral windup
+        self.integral_limit = 100.0
 
-        # For storing the PID control terms
+        # PID values for x axis
+        self.Kp_x = 42.0
+        self.Ki_x = 0.0
+        self.Kd_x = 0.0
+
+        # PID values for y axis
+        self.Kp_y = 42.0
+        self.Ki_y = 0.0
+        self.Kd_y = 0.0
+
+        # PID tracking parameters
         self.prev_error_x = 0.0
         self.prev_error_y = 0.0
         self.integral_x = 0.0
         self.integral_y = 0.0
+        self.prev_time = time.time()
 
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
@@ -155,41 +153,53 @@ class GantryOperation:
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
-
             # Run PID auto-tuning
             if self.track_method == 'tune':
 
                 if distance > 0.01:
 
-                    # Once we have enough oscillations, calculate PID parameters
-                    if len(self.oscillations) > 2:
-                        Kp, Ki, Kd = self.calculate_pid_parameters()
-                        if Kp is not None:
-                            # Print the new PID values
-                            MazeDB.printMsg('INFO', "Tuned PID parameters: Kp=%0.2f, Ki=%0.2f, Kd=%0.2f", Kp, Ki, Kd)
-                            # End the tuning session
-                            self.run_auto_tuning = False
-                            return
-
-                    # Apply relay feedback control
-                    x, y = self.relay_feedback_control(gantry_to_harness)
+                    # UPDATE
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
                         self.move_gantry_rel(x, y)
 
                     self.movement_in_progress = True
-                    
+
                 # Stop the gantry when it reaches the harness
                 elif self.movement_in_progress:
                     self.jog_cancel()
                     self.movement_in_progress = False
-            
+
             # Use PID values (tuned or hardcoded) for control
             elif self.track_method == 'pid':
                 if distance > 0.01:
-                    x, y = self.pid_control(
-                        gantry_to_harness, self.Kp, self.Ki, self.Kd)
+
+                    # Calculate time step
+                    current_time = time.time()
+                    dt = current_time - self.prev_time
+                    self.prev_time = current_time
+
+                    # Compute PID for x
+                    x, self.integral_x, self.prev_error_x = self.pid_control(
+                        error=gantry_to_harness[0],
+                        Kp=self.Kp_x,
+                        Ki=self.Ki_x,
+                        Kd=self.Kd_x,
+                        integral=self.integral_x,
+                        prev_error=self.prev_error_x,
+                        dt=dt,
+                        integral_limit=self.integral_limit)
+                    # Compute PID for y
+                    y, self.integral_y, self.prev_error_y = self.pid_control(
+                        error=gantry_to_harness[1],
+                        Kp=self.Kp_y,
+                        Ki=self.Ki_y,
+                        Kd=self.Kd_y,
+                        integral=self.integral_y,
+                        prev_error=self.prev_error_y,
+                        dt=dt,
+                        integral_limit=self.integral_limit)
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
@@ -235,7 +245,7 @@ class GantryOperation:
     def relay_feedback_control(self, gantry_to_setpoint):
         """
         Simulates relay feedback by switching the output whenever the error crosses the threshold.
-        
+
         Args:
         - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
 
@@ -251,7 +261,7 @@ class GantryOperation:
         # Check the signs of the errors in both X and Y directions
         current_sign_x = np.sign(error_x)
         current_sign_y = np.sign(error_y)
-        
+
         crossed = False
         current_time = time.time()
 
@@ -275,7 +285,8 @@ class GantryOperation:
         if crossed:
             if self.last_cross_time:
                 oscillation_period = current_time - self.last_cross_time
-                self.oscillations.append((oscillation_period, abs(self.relay_output_x), abs(self.relay_output_y)))  # Store periods and amplitudes for both directions
+                self.oscillations.append((oscillation_period, abs(self.relay_output_x), abs(
+                    self.relay_output_y)))  # Store periods and amplitudes for both directions
             self.last_cross_time = current_time
 
         return self.relay_output_x, self.relay_output_y
@@ -284,68 +295,67 @@ class GantryOperation:
         """
         Calculate PID parameters using Ziegler-Nichols tuning rules based on the measured
         ultimate gain (Ku) and ultimate period (Tu).
-        
+
         Returns:
         - Kp, Ki, Kd (floats): Tuned PID parameters.
         """
         if len(self.oscillations) < 2:
             return None, None, None  # Need at least 2 oscillations to calculate Ku and Tu
-        
+
         # Calculate the ultimate period (Tu) and ultimate gain (Ku)
-        periods, amplitudes = zip(*self.oscillations[-2:])  # Use the last two oscillations
+        # Use the last two oscillations
+        periods, amplitudes = zip(*self.oscillations[-2:])
         Tu = np.mean(periods)
         Ku = 4 * self.amplitude / (np.pi * Tu)  # Ku from amplitude and period
-        
+
         # Ziegler-Nichols tuning rules
         Kp = 0.6 * Ku
         Ki = 2 * Kp / Tu
         Kd = Kp * Tu / 8
-        
+
         return Kp, Ki, Kd
 
-    def pid_control(self, gantry_to_setpoint, Kp, Ki, Kd):
+    def pid_control(self, error, Kp, Ki, Kd, integral, prev_error, dt, integral_limit=None):
         """
-        PID control to calculate movement based on current error with integral windup protection.
-        
+        PID control to calculate movement based on current error with integral windup protection for a single axis.
+
         Args:
-        - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
+        - error: The difference between the gantry and target position for a single axis.
+        - Kp: Proportional gain.
+        - Ki: Integral gain.
+        - Kd: Derivative gain.
+        - integral: The integral term for the given axis.
+        - prev_error: The previous error for the given axis.
+        - dt: Time step between current and previous error measurements.
+        - integral_limit: Optional maximum value to limit integral windup.
+
+        Returns:
+        - output (float): Updated output for the given axis.
+        - integral (float): Updated integral term for the given axis.
+        - prev_error (float): Updated previous error for the given axis.
         """
-        # Get the errors in x and y directions
-        error_x = gantry_to_setpoint[0]
-        error_y = gantry_to_setpoint[1]
 
-        # Set limits for integral to prevent windup
-        integral_limit = 100.0  # You can adjust this value based on system scale
+        # Proportional term
+        P = Kp * error
 
-        # Calculate the proportional term
-        P_x = Kp * error_x
-        P_y = Kp * error_y
+        # Integral term with windup protection
+        integral += error * dt
+        if integral_limit is not None:
+            integral = max(min(integral, integral_limit), -integral_limit)
 
-        # Calculate the integral term with clamping to prevent windup
-        self.integral_x += error_x
-        self.integral_y += error_y
-        self.integral_x = max(
-            min(self.integral_x, integral_limit), -integral_limit)
-        self.integral_y = max(
-            min(self.integral_y, integral_limit), -integral_limit)
+        I = Ki * integral
 
-        I_x = (Kp / Ki) * self.integral_x if Ki != 0 else 0
-        I_y = (Kp / Ki) * self.integral_y if Ki != 0 else 0
+        # Derivative term (preventing divide by zero in case dt is very small)
+        D = Kd * (error - prev_error) / dt if dt > 0 else 0
 
-        # Calculate the derivative term (rate of change of error)
-        D_x = Kp * Kd * (error_x - self.prev_error_x)
-        D_y = Kp * Kd * (error_y - self.prev_error_y)
+        # Calculate the output
+        output = P + I + D
 
-        # Update previous errors for the next cycle
-        self.prev_error_x = error_x
-        self.prev_error_y = error_y
+        # Update previous error
+        prev_error = error
 
-        # Compute final control outputs for x and y
-        output_x = P_x + I_x + D_x
-        output_y = P_y + I_y + D_y
+        return output, integral, prev_error
 
-        return output_x, output_y
-    
     def proportional_control(self, gantry_to_setpoint, base_speed, slow_on_approach=True):
         """
         Proportional control to calculate movement based on the current distance and direction to the target.
@@ -391,13 +401,13 @@ class GantryOperation:
         # Send command to move gantry
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
-        
+
     def gantry_pose_callback(self, msg):
 
         # Store y values in x
         self.gantry_x = msg.pose.position.y + \
             self.gantry_marker_to_gantry_center[0]
-        
+
         # Store x values in y
         self.gantry_y = msg.pose.position.x + \
             self.gantry_marker_to_gantry_center[1]
