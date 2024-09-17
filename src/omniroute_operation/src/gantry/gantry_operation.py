@@ -36,7 +36,9 @@ class GantryOperation:
         # ................ Gantry Tracking Setup ................
 
         # Flag to run auto-tuning
-        self.track_method = "prop"  # Choose between "prop", "pid", or 'tune'
+        self.track_method = "tune"  # Choose between "prop", "pid", or 'tune'
+
+        # PID auto-tuning parameters
 
         # Limit to prevent integral windup
         self.integral_limit = 100.0
@@ -158,7 +160,7 @@ class GantryOperation:
 
                 if distance > 0.01:
 
-                    # UPDATE
+                    # Impliment relay feedback control
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
@@ -178,7 +180,6 @@ class GantryOperation:
                     # Calculate time step
                     current_time = time.time()
                     dt = current_time - self.prev_time
-                    self.prev_time = current_time
 
                     # Compute PID for x
                     x, self.integral_x, self.prev_error_x = self.pid_control(
@@ -204,6 +205,9 @@ class GantryOperation:
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
                         self.move_gantry_rel(x, y)
+
+                    # Update the time
+                    self.prev_time = current_time
 
                     self.movement_in_progress = True
 
