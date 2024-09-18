@@ -43,8 +43,8 @@ class GantryOperation:
         self.integral_limit = 100.0
 
         # PID parameters
-        self.Kp = 40
-        self.Kd = 2.0
+        self.Kp = 40.0
+        self.Kd = 5.0
         self.Ki = 0.0
 
         # PID tracking parameters
@@ -174,7 +174,7 @@ class GantryOperation:
             # Run PID auto-tuning
             if self.track_method == 'tune':
 
-                if distance > 0.01:
+                if distance > 0.05:
 
                     # Relay feedback for X axis
                     self.relay_output_x, self.last_error_sign_x, self.last_cross_time_x, self.oscillations_x = self.relay_feedback_control(
@@ -199,6 +199,9 @@ class GantryOperation:
                         self.err_threshold,
                         axis_name="y"
                     )
+
+                    #TEMP
+                    self.jog_cancel()
 
                     #  # TEMP - Print the relay feedback for debugging
                     # MazeDB.printMsg(
@@ -241,6 +244,7 @@ class GantryOperation:
                         prev_error=self.prev_error_x,
                         dt=dt,
                         integral_limit=self.integral_limit)
+                    
                     # Compute PID for y
                     y, self.integral_y, self.prev_error_y = self.pid_control(
                         error=gantry_to_harness[1],
