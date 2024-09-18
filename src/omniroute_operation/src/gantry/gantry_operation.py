@@ -135,10 +135,10 @@ class GantryOperation:
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
 
-        # TEMP
-        time.sleep(1)
-        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
-        time.sleep(5)
+        # # TEMP
+        # time.sleep(1)
+        # self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
+        # time.sleep(5)
         # self.gantry_mode = GantryState.TRACK_HARNESS
 
         # ................ Run node ................
