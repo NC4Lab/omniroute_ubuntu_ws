@@ -289,11 +289,10 @@ class GantryOperation:
             # Use proportional control
             elif self.track_method == 'prop':
                 if distance > 0.1:
-                    # #TEMP
-                    # self.jog_cancel()
-                    
                     x, y = self.proportional_control(
                         gantry_to_harness, base_speed=25.0, slow_on_approach=False)
+                    
+                    # x, y = self.compute_jog(gantry_to_harness)
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
@@ -318,6 +317,35 @@ class GantryOperation:
             if ~np.isnan(x) and ~np.isnan(y):
                 self.move_gantry_rel(x, y)
 
+    def compute_jog(self, gantry_to_setpoint, delta_t=0.02, max_feed_rate=30000):
+        """
+        Compute relative jog values based on the distance to the target (error).
+        gantry_to_setpoint: tuple (x_error, y_error), distance from target position
+        delta_t: sampling time interval in seconds (50 Hz = 0.02 s)
+        max_feed_rate: max feed rate in mm/min
+        Returns: relative (x_jog, y_jog) distances to jog
+        """
+        # The feed rate is in mm/min, so convert to mm/s
+        feed_rate_mm_per_s = max_feed_rate / 60.0
+
+        # Determine how far we can move in delta_t seconds
+        max_move_per_sample = feed_rate_mm_per_s * delta_t
+
+        # Compute the magnitude of the current error vector (distance to target)
+        distance_to_target = (gantry_to_setpoint[0]**2 + gantry_to_setpoint[1]**2) ** 0.5
+
+        if distance_to_target > max_move_per_sample:
+            # Scale the jog values to fit within the maximum move distance
+            scale = max_move_per_sample / distance_to_target
+            x_jog = gantry_to_setpoint[0] * scale
+            y_jog = gantry_to_setpoint[1] * scale
+        else:
+            # If the error is small, jog directly to reduce it to zero
+            x_jog = gantry_to_setpoint[0]
+            y_jog = gantry_to_setpoint[1]
+
+        return x_jog, y_jog
+    
     def relay_feedback_control(self, error, relay_output, last_error_sign, last_cross_time, amplitude, oscillations, err_threshold, axis_name):
         """
         Relay feedback control to induce oscillations for a given axis (X or Y).
