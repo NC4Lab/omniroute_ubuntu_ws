@@ -139,7 +139,6 @@ class GantryOperation:
         # time.sleep(1)
         # self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
         # time.sleep(5)
-        # self.gantry_mode = GantryState.TRACK_HARNESS
 
         # ................ Run node ................
 
@@ -199,9 +198,6 @@ class GantryOperation:
                         self.err_threshold,
                         axis_name="y"
                     )
-
-                    #TEMP
-                    self.jog_cancel()
 
                     #  # TEMP - Print the relay feedback for debugging
                     # MazeDB.printMsg(
@@ -273,7 +269,7 @@ class GantryOperation:
             elif self.track_method == 'prop':
                 if distance > 0.1:
                     x, y = self.proportional_control(
-                        gantry_to_harness, base_speed=35.0, slow_on_approach=False)
+                        gantry_to_harness, base_speed=25.0, slow_on_approach=False)
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
