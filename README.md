@@ -92,6 +92,11 @@ Give port write permissions. Note, ports will need to have devices connected:
 sudo chmod a+rw /dev/ttyACM0
 sudo chmod a+rw /dev/ttyACM1
 ...
+Give complete port access. Note you need to logout or restart after running:
+```
+sudo usermod -aG dialout nc4-lassi
+```
+
 ```
 
 # Runtime

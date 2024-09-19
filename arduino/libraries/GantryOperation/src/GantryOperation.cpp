@@ -111,8 +111,8 @@ void GantryOperation::grblInit()
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting units");
 	}
 
-	// Set Mode (G90 = Absolute, G91 = Relative)
-	if (grblWrite("G90") != 0)
+	// Set Mode to relative (G90 = Absolute, G91 = Relative)
+	if (grblWrite("G91") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting absolute mode");
 	}
@@ -185,7 +185,7 @@ void GantryOperation::grblJogCancel()
 
 void GantryOperation::grblResetAlarm()
 {
-	// Send the jog cancel command
+	// Send the reset alarm command
 	if (grblWrite("$X") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblResetAlarm] Error resetting alarm");

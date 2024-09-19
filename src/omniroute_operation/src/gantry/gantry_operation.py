@@ -34,6 +34,27 @@ class GantryOperation:
     def __init__(self):
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
+        # ................ Serial Setup ................
+        
+        # Flag if using serial communication
+        self.use_serial = False
+
+        # Setup serial communication
+        if self.use_serial:
+
+            # GCode client setup
+            self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
+            time.sleep(1) 
+
+            # Set Units (mm)
+            self.gcode_client.raw_command("G21")
+
+            # Set Mode (G90 = Absolute, G91 = Relative)
+            self.gcode_client.raw_command("G91")
+
+            # Feed Rate (mm/min)
+            self.gcode_client.raw_command("F30000")
+
         # ................ Gantry Tracking Setup ................
 
         # Flag to run auto-tuning
@@ -447,21 +468,41 @@ class GantryOperation:
         return output_x, output_y
 
     def jog_cancel(self):
+        # Use serial to cancel jog
+        if self.use_serial:
+            # Cancel the jog
+            self.gcode_client.raw_command(bytes([0x85]))
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_JOG_CANCEL, do_print=False)
 
     def home(self):
+
+        # Use serial for homing
+        if self.use_serial:
+            # Home the gantry
+            self.gcode_client.raw_command("$25=7500") # Set homing speed
+            self.gcode_client.raw_command("$H") # Home the gantry
+            self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0") # Set the current position to 0
+
         # Send command to home gantry
-        self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
+        else:
+            self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
 
     def move_gantry_rel(self, x, y):
 
         # Flip x and y to account for gantry orientation and store to a list
         xy_list = [y, x]
 
+        # Use serial for move command
+        if self.use_serial:
+            # Move the gantry
+            cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F30000".format(xy_list[0], xy_list[1])
+            self.gcode_client.raw_command(cmd)
+
         # Send command to move gantry
-        self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
+        else:
+            self.EsmaCom.writeEcatMessage(
+                EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
 
     def gantry_pose_callback(self, msg):
         # Store x
