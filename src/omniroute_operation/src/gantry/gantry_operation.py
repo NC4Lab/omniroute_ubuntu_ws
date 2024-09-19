@@ -143,7 +143,7 @@ class GantryOperation:
         # ................ Run node ................
 
         # Initialize the ROS rate
-        r = rospy.Rate(180)
+        r = rospy.Rate(50)
 
         # Loop until the node is shutdown
         MazeDB.printMsg(
@@ -268,6 +268,9 @@ class GantryOperation:
             # Use proportional control
             elif self.track_method == 'prop':
                 if distance > 0.1:
+                    # #TEMP
+                    # self.jog_cancel()
+                    
                     x, y = self.proportional_control(
                         gantry_to_harness, base_speed=25.0, slow_on_approach=False)
 
@@ -435,6 +438,11 @@ class GantryOperation:
         output_x = base_speed * gantry_to_setpoint[0]
         # X component of the target movement vector
         output_y = base_speed * gantry_to_setpoint[1]
+
+        # Cap output to 10 
+        max_move = 10
+        output_x = min(max(output_x, -max_move), max_move)
+        output_y = min(max(output_y, -max_move), max_move)
 
         return output_x, output_y
 
