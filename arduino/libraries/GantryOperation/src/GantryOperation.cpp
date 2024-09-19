@@ -164,7 +164,7 @@ void GantryOperation::gantryMove(float x, float y)
 	dtostrf(y, 1, 2, y_str); // Convert y to string with 2 decimal places
 
 	// Format the jog string
-	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F50000", x_str, y_str);
+	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F25000", x_str, y_str);
 	String cmd_str = String(buffer);
 
 	// Send the jog command
