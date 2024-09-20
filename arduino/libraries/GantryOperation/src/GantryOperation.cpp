@@ -19,17 +19,18 @@ GantryOperation::GantryOperation() {}
 /// @brief: Write to grbl serial buffer.
 ///
 /// @param cmd_str: Command string to write.
+/// @param do_wait_ack: Flag to wait for grbl acknoledgement.
 /// @param timeout: Timeout for the grbl acknoledgement.
 ///
 /// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_read, unsigned long timeout)
+uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsigned long timeout)
 {
 	// Write the command with a new line character
 	String full_cmd = cmd_str + "\n";
 	Serial1.write(full_cmd.c_str());
 
 	// Bail if no read is needed
-	if (!do_read)
+	if (!do_wait_ack)
 		return 0;
 
 	// Check for acknoledgement
@@ -100,30 +101,61 @@ uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout)
 	return 0;
 }
 
-/// @brief Initialize the grbl settings.
-void GantryOperation::grblInit()
+/// @brief Initialize the grbl system settings.
+void GantryOperation::grblInitSystem()
+{
+    // Buffers to hold the formatted GRBL command and float value
+    char command_buff[30];  // Increased buffer size to accommodate the entire command
+    char float_buff[10];    // Buffer for float to string conversion
+
+    // Loop through the settings array
+    for (size_t i = 0; i < sizeof(_grblSettings) / sizeof(_grblSettings[0]); ++i)
+    {
+        // Convert the float value to a string using dtostrf
+        dtostrf(_grblSettings[i].value, 5, 3, float_buff);  // Format the value with 3 decimal places
+
+        // Format the GRBL command string using the converted float string
+        snprintf(command_buff, sizeof(command_buff), "%s=%s", _grblSettings[i].command, float_buff);
+
+        // Send the command using grblWrite
+        if (grblWrite(command_buff) != 0)
+        {
+            _Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitSystem] Error for GRBL commands: %s", command_buff);
+        }
+        else
+        {
+            _Dbg.printMsg(_Dbg.MT::INFO, "[grblInitSystem] GRBL command sent: %s", command_buff);
+        }
+    }
+
+    _Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL SYSTEM INITIALIZATION");
+}
+
+
+/// @brief Initialize the grbl settings for this session.
+void GantryOperation::grblInitRuntime()
 {
 	_Dbg.printMsg(_Dbg.MT::ATTN, "START: GRBL INITIALIZATION");
 
 	// Set Units (mm)
 	if (grblWrite("G21") != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting units");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting units");
 	}
 
 	// Set Mode to relative (G90 = Absolute, G91 = Relative)
 	if (grblWrite("G91") != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting absolute mode");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting absolute mode");
 	}
 
 	// Feed Rate (mm/min)
 	if (grblWrite("F50000") != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInit] Error setting feed rate");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting feed rate");
 	}
 
-	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL RUNTIME INITIALIZATION");
 }
 
 /// @brief Home the gantry.
@@ -216,14 +248,13 @@ void GantryOperation::procEcatMessage()
 	{
 		// Initialize ecat message variables
 		EsmaCom.initEcat(true);
-		_Dbg.printMsg(_Dbg.MT::INFO, "[HANDSHAKE] Initializing ecat message variables");
 	}
 
 	// GANTRY_INITIALIZE_GRBL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_INITIALIZE_GRBL)
 	{
-		grblInit();
-		_Dbg.printMsg(_Dbg.MT::INFO, "[GANTRY_INITIALIZE_GRBL] Initializing grbl");
+		grblInitSystem();
+		grblInitRuntime();
 	}
 
 	// GANTRY_HOME
@@ -263,7 +294,7 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_REWARD
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
 	{
-		float duration = EsmaCom.rcvEM.ArgU.f32[0]*1000; // get the reward durration in ms
+		float duration = EsmaCom.rcvEM.ArgU.f32[0] * 1000; // get the reward durration in ms
 		runReward(duration);
 	}
 
