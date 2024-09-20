@@ -75,6 +75,27 @@ class GantryOperation:
         self.integral_y = 0.0
         self.prev_time = time.time()
 
+        # Relay feedback parameters
+        self.amplitude = 20  # This can be adjusted based on system needs
+        self.err_threshold = 0.01  # Threshold for relay feedback
+        self.min_oscillations = 5  # Minimum occillations to test
+
+        # Relay feedback for Ziegler-Nichols (separate for X and Y axes)
+        self.relay_output_x = self.amplitude
+        self.relay_output_y = self.amplitude
+        self.last_error_sign_x = 1
+        self.last_error_sign_y = 1
+        self.oscillations_x = []
+        self.oscillations_y = []
+        self.last_cross_time_x = None
+        self.last_cross_time_y = None
+
+        # PID auto-tuned parameters (separate for X and Y axes)
+        self.Ku_x = None
+        self.Tu_x = None
+        self.Ku_y = None
+        self.Tu_y = None
+
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
         self.gantry_y = 0.0
@@ -167,8 +188,63 @@ class GantryOperation:
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
             distance = np.linalg.norm(gantry_to_harness)
 
+            # #TEMP - Print the distance and the gantry position for debugging
+            # MazeDB.printMsg('INFO', "X[%0.2f] Y[%0.2f] D[%0.2f]", gantry_to_harness[0], gantry_to_harness[1], distance)
+
+            # Run PID auto-tuning
+            if self.track_method == 'tune':
+
+                if distance > 0.05:
+
+                    # Relay feedback for X axis
+                    self.relay_output_x, self.last_error_sign_x, self.last_cross_time_x, self.oscillations_x = self.relay_feedback_control(
+                        gantry_to_harness[0],
+                        self.relay_output_x,
+                        self.last_error_sign_x,
+                        self.last_cross_time_x,
+                        self.amplitude,
+                        self.oscillations_x,
+                        self.err_threshold,
+                        axis_name="x"
+                    )
+
+                    # Relay feedback for Y axis
+                    self.relay_output_y, self.last_error_sign_y, self.last_cross_time_y, self.oscillations_y = self.relay_feedback_control(
+                        gantry_to_harness[1],
+                        self.relay_output_y,
+                        self.last_error_sign_y,
+                        self.last_cross_time_y,
+                        self.amplitude,
+                        self.oscillations_y,
+                        self.err_threshold,
+                        axis_name="y"
+                    )
+
+                    #  # TEMP - Print the relay feedback for debugging
+                    # MazeDB.printMsg(
+                    #     'INFO', "Relay feedback: x[%0.2f] y[%0.2f]", self.relay_output_x, self.relay_output_y)
+                    
+                    # Send the movement command
+                    self.move_gantry_rel(
+                        self.relay_output_x, self.relay_output_y)
+
+                    self.movement_in_progress = True
+
+                    # Calculate and apply PID tuning for X axis once enough oscillations have occurred
+                    if len(self.oscillations_x) >= self.min_oscillations:
+                        self.calculate_pid_parameters(self.oscillations_x, axis_name="x")
+
+                    # Calculate and apply PID tuning for Y axis once enough oscillations have occurred
+                    if len(self.oscillations_y) >= self.min_oscillations:
+                        self.calculate_pid_parameters(self.oscillations_y, axis_name="y")
+
+                # Stop the gantry when it reaches the harness
+                elif self.movement_in_progress:
+                    self.jog_cancel()
+                    self.movement_in_progress = False
+
             # Use PID values (tuned or hardcoded) for control
-            if self.track_method == 'pid':
+            elif self.track_method == 'pid':
                 if distance > 0.01:
 
                     # Calculate time step
@@ -269,6 +345,81 @@ class GantryOperation:
             y_jog = gantry_to_setpoint[1]
 
         return x_jog, y_jog
+    
+    def relay_feedback_control(self, error, relay_output, last_error_sign, last_cross_time, amplitude, oscillations, err_threshold, axis_name):
+        """
+        Relay feedback control to induce oscillations for a given axis (X or Y).
+
+        Args:
+        - error: The current error in the selected axis.
+        - relay_output: The current relay output for the selected axis.
+        - last_error_sign: Last sign of the error in the selected axis.
+        - last_cross_time: Time of the last crossing in the selected axis.
+        - amplitude: Amplitude of the relay signal.
+        - oscillations: List to track oscillation periods and amplitudes for the selected axis.
+        - err_threshold: Threshold to determine if the error is significant.
+        - axis_name: String to identify the axis ('x' or 'y') for debugging purposes.
+
+        Returns:
+        - relay_output: Updated relay output for the selected axis.
+        - last_error_sign: Updated last error sign for the selected axis.
+        - last_cross_time: Updated last cross time for the selected axis.
+        - oscillations: Updated oscillation tracking for the selected axis.
+        """
+
+        # Determine the current sign of the error
+        current_sign = np.sign(error)
+        current_time = time.time()
+
+        # #TEMP print everything
+        # MazeDB.printMsg('INFO', "[GantryOperation] Axis[%s] error[%0.2f] current_sign[%0.1f] last_error_sign[%0.1f] last_cross_time[%s] current_time[%0.2f]", 
+        #                 axis_name, error, current_sign, last_error_sign, 
+        #                 str(last_cross_time) if last_cross_time is not None else "None", current_time)
+
+
+        # Check if the error has crossed zero (sign change)
+        if current_sign != last_error_sign and abs(error) > err_threshold:
+            # Switch the relay relay_output based on error sign
+            relay_output = amplitude if error > 0 else -amplitude
+
+            # If this is not the first crossing, record the oscillation period
+            if last_cross_time:
+                oscillation_period = current_time - last_cross_time
+                oscillations.append((oscillation_period, abs(relay_output)))
+
+            # Update the time of the last crossing
+            last_cross_time = current_time
+
+            # For debugging, you can add print statements to monitor relay feedback per axis
+            MazeDB.printMsg(
+                'INFO', "[GantryOperation] Axis crossing detected: axis[%s] relay_output[%0.2f]", axis_name, relay_output)
+
+            # Update the last error sign for the next iteration
+            last_error_sign = current_sign
+
+        return relay_output, last_error_sign, last_cross_time, oscillations
+
+    def calculate_pid_parameters(self, oscillations, axis_name):
+        """
+        Calculate PID parameters using Ziegler-Nichols tuning rules.
+        This is done separately for each axis.
+        """
+        if len(oscillations) < 2:
+            return None, None, None  # Wait until at least 2 oscillations
+
+        # Calculate ultimate period (Tu) and ultimate gain (Ku) from oscillations
+        periods, amplitudes = zip(*oscillations[-2:])
+        Tu = np.mean(periods)
+        Ku = 4 * self.amplitude / (np.pi * Tu)  # From Ziegler-Nichols method
+
+        # Ziegler-Nichols tuning rules for PID
+        Kp = 0.6 * Ku
+        Ki = 2 * Kp / Tu
+        Kd = Kp * Tu / 8
+
+        # Log the PID parameters for debugging
+        MazeDB.printMsg(
+            'INFO', "[GantryOperation] PID tuning updated: axis[%s] Kp=%0.2f, Ki=%0.2f, Kd=%0.2f", axis_name, Kp, Ki, Kd)
 
     def pid_control(self, error, Kp, Ki, Kd, integral, prev_error, dt, integral_limit=None):
         """
