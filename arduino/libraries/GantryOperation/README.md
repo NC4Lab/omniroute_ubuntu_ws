@@ -1,68 +1,6 @@
-// ######################################
+## All GRBL Settings
 
-//========= GantryOperation.h ===========
-
-// ######################################
-
-/// @file Used for the GantryOperation class
-
-//============= INCLUDE ================
-
-// BUILT IN
-#include "Arduino.h"
-#include "Servo.h"
-
-// LOCAL
-#include "MazeDebug.h"
-#include "EsmacatCom.h"
-
-#ifndef _FEEDER_SERVO_h
-#define _FEEDER_SERVO_h
-
-extern bool DB_VERBOSE; ///< set this variable in your INO file to control debugging [0:silent, 1:verbose]
-
-/// @brief Used for printing different types of information to the Serial Output Window.
-///
-/// @remarks This class is used in both the CypressComm and WallOperation classes.
-class GantryOperation
-{
-
-	// ---------------VARIABLES---------------
-public:
-	// GRBL acknoledgement timeout
-	const unsigned long grblAckTimeout = 1000; // Timeout for grbl acknoledgement (ms)
-
-	// Gantry position parameters
-	double value_X = 0.0;
-	double value_Y = 0.0;
-
-	// Store max feed rate
-	float maxFeedRate = 50000.0;
-
-	// Feeder port servo parameters
-	Servo portServo;			 // Servo object
-	const int portServoPin = 8;	 // Servo pwm pin
-	const int portUpAngle = 270; // Servo up angle
-	const int portDownAngle = 0; // Servo down angle
-
-	// Pump servo parameters
-	Servo pumpServo;				// Servo object
-	const int pumpServoPin = 9;		// Servo pwm pin
-	const int pumpRunSpeed = 500;	// Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
-	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
-
-	// Instance of EsmacatCom class using SPI chip select pin 10
-	EsmacatCom EsmaCom;
-
-private:
-	// Struct to hold GRBL settings
-	struct GRBLSetting
-	{
-		String command; // The GRBL command string, e.g., "$0"
-		float value;	// The value associated with the setting, e.g., 10.0
-	};
-
-	// Fixed size array to store all GRBL settings
+```
 	GRBLSetting _grblSettings[70] = {
 		{"$0", 10.0},		 // Step pulse time, microseconds [1.0 - 100.0]
 		{"$1", 50.0},		 // Step idle delay, milliseconds [0.0 - 255.0]
@@ -116,9 +54,9 @@ private:
 		{"$100", 114.286},	 // X-axis steps per millimeter
 		{"$101", 114.286},	 // Y-axis steps per millimeter
 		{"$102", 114.286},	 // Z-axis steps per millimeter
-		{"$110", 50000.000}, // X-axis maximum rate, mm/min [0.0 - 100000.0]
-		{"$111", 50000.000}, // Y-axis maximum rate, mm/min [0.0 - 100000.0]
-		{"$112", 50000.000}, // Z-axis maximum rate, mm/min [0.0 - 100000.0]
+		{"$110", 30000.000}, // X-axis maximum rate, mm/min [0.0 - 100000.0]
+		{"$111", 30000.000}, // Y-axis maximum rate, mm/min [0.0 - 100000.0]
+		{"$112", 30000.000}, // Z-axis maximum rate, mm/min [0.0 - 100000.0]
 		{"$120", 500.000},	 // X-axis acceleration, mm/sec^2 [0.0 - 10000.0]
 		{"$121", 500.000},	 // Y-axis acceleration, mm/sec^2 [0.0 - 10000.0]
 		{"$122", 500.000},	 // Z-axis acceleration, mm/sec^2 [0.0 - 10000.0]
@@ -135,55 +73,4 @@ private:
 		{"$384", 0.0},		 // Disable G92 Persistence [0.0, 1.0]
 		{"$396", 30.0},		 // WebUI timeout in minutes [0.0 - 60].
 	};
-
-	// Instance of MazeDebug class for debugging messages
-	MazeDebug _Dbg;
-
-	// ---------------METHODS---------------
-public:
-	GantryOperation();
-
-public:
-	uint8_t grblWrite(const String &cmd, bool do_wait_ack = true, unsigned long timeout = 500);
-
-public:
-	uint8_t grblRead(String &data, unsigned long timeout = 500, bool do_print_response = false);
-
-public:
-	void grblInitSystem();
-
-public:
-	void grblInitRuntime(float max_feed_rate, float max_acceleration);
-
-public:
-	void gantryHome();
-
-public:
-	void gantryMove(float x, float y, float max_feed_rate);
-
-public:
-	void grblJogCancel();
-
-public:
-	void grblResetAlarm();
-
-public:
-	void procEcatMessage();
-
-public:
-	void debugPrintSerialChars();
-
-public:
-	void servoInit();
-
-public:
-	void feederMove(uint8_t move_dir);
-
-public:
-	void pumpRun(uint8_t run_state);
-
-public:
-	void runReward(float diration);
-};
-
-#endif
+```

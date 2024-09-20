@@ -362,8 +362,12 @@ class EsmacatCom:
             # Get 8-bit union index 
             regu8_i = r_EM.argUI.ii8 + 4
 
+            # Update 8-bit index
+            u8_i = r_EM.setUI.upd8(regu8_i)
+            
             # Set message argument data in reg union
-            r_EM.RegU.ui8[r_EM.setUI.upd8(regu8_i)] = msg_arg_data8
+            r_EM.RegU.ui8[u8_i] = msg_arg_data8
+            
             # copy from union to associated struct variable
             self._uGetArgData8(r_EM)
 

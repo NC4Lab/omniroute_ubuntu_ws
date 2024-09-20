@@ -41,7 +41,9 @@ uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsi
 
 	// Print the acknoledgement
 	if (status == 0)
-		_Dbg.printMsg(_Dbg.MT::INFO, "[grblWrite] Acknoledgement recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblWrite] Ack recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
+	else
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] No Ack recived: cmd_str[%s] dt[%s]", cmd_str.c_str(), _Dbg.dtTrack());
 
 	// Return status from read
 	return status;
@@ -51,9 +53,10 @@ uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsi
 ///
 /// @param resonse: The string to store the grbl response.
 /// @param timeout: Timeout for the grbl response.
+/// @param do_print_response: Flag to print the response.
 ///
 /// @return Status/error codes [0:response, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout)
+uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout, bool do_print_response)
 {
 	// Check for new message
 	unsigned long start_time = millis(); // start time
@@ -81,59 +84,56 @@ uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout)
 	}
 
 	// Check for timeout
-	if (millis() - start_time > timeout)
+	if (millis() - start_time >= timeout)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timeout: resonse_str[%s]", resonse_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timeodut");
 		return 2;
 	}
 
 	// Check for error message
 	if (resonse_str == "error")
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblRead] Error message: resonse_str[%s]", resonse_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblRead] Error message");
 		return 1;
 	}
 
 	// Print response
-	_Dbg.printMsg(_Dbg.MT::INFO, "[grblRead] Response: \r\n%s", resonse_str);
+	if (do_print_response)
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblRead] Response: \r\n%s", resonse_str);
 
 	// Return message received
 	return 0;
 }
 
 /// @brief Initialize the grbl system settings.
+/// @brief Initialize the grbl system settings.
 void GantryOperation::grblInitSystem()
 {
-    // Buffers to hold the formatted GRBL command and float value
-    char command_buff[30];  // Increased buffer size to accommodate the entire command
-    char float_buff[10];    // Buffer for float to string conversion
+	// Loop through the settings array
+	for (size_t i = 0; i < sizeof(_grblSettings) / sizeof(_grblSettings[0]); ++i)
+	{
+		// Convert the float value to a string
+		String float_str = String(_grblSettings[i].value, 3); // Format the value with 3 decimal places
 
-    // Loop through the settings array
-    for (size_t i = 0; i < sizeof(_grblSettings) / sizeof(_grblSettings[0]); ++i)
-    {
-        // Convert the float value to a string using dtostrf
-        dtostrf(_grblSettings[i].value, 5, 3, float_buff);  // Format the value with 3 decimal places
+		// Format the GRBL command string
+		String command_str = _grblSettings[i].command + String("=") + float_str;
 
-        // Format the GRBL command string using the converted float string
-        snprintf(command_buff, sizeof(command_buff), "%s=%s", _grblSettings[i].command, float_buff);
+		// Send the command using grblWrite
+		if (grblWrite(command_str.c_str()) != 0)
+		{
+			_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitSystem] Error for GRBL commands: %s", command_str.c_str());
+		}
+		else
+		{
+			_Dbg.printMsg(_Dbg.MT::INFO, "[grblInitSystem] GRBL command sent: %s", command_str.c_str());
+		}
+	}
 
-        // Send the command using grblWrite
-        if (grblWrite(command_buff) != 0)
-        {
-            _Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitSystem] Error for GRBL commands: %s", command_buff);
-        }
-        else
-        {
-            _Dbg.printMsg(_Dbg.MT::INFO, "[grblInitSystem] GRBL command sent: %s", command_buff);
-        }
-    }
-
-    _Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL SYSTEM INITIALIZATION");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL SYSTEM INITIALIZATION");
 }
 
-
 /// @brief Initialize the grbl settings for this session.
-void GantryOperation::grblInitRuntime()
+void GantryOperation::grblInitRuntime(float max_feed_rate, float max_acceleration)
 {
 	_Dbg.printMsg(_Dbg.MT::ATTN, "START: GRBL INITIALIZATION");
 
@@ -146,13 +146,28 @@ void GantryOperation::grblInitRuntime()
 	// Set Mode to relative (G90 = Absolute, G91 = Relative)
 	if (grblWrite("G91") != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting absolute mode");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting relative mode");
 	}
 
 	// Feed Rate (mm/min)
-	if (grblWrite("F50000") != 0)
+	String fr_cmd = "F" + String((int)max_feed_rate);
+	if (grblWrite(fr_cmd.c_str()) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting feed rate");
+	}
+
+	// Acceleration (mm/sec²) for X axis
+	String acc_x_cmd = "$120=" + String((int)max_acceleration);
+	if (grblWrite(acc_x_cmd.c_str()) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting X-axis acceleration");
+	}
+
+	// Acceleration (mm/sec²) for Y axis
+	String acc_y_cmd = "$121=" + String((int)max_acceleration);
+	if (grblWrite(acc_y_cmd.c_str()) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting Y-axis acceleration");
 	}
 
 	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL RUNTIME INITIALIZATION");
@@ -185,26 +200,26 @@ void GantryOperation::gantryHome()
 }
 
 /// @brief Move the gantry to the target coordinates.
-void GantryOperation::gantryMove(float x, float y)
+void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
 {
-	char buffer[50]; // Buffer to hold the formatted string
-	char x_str[10];	 // Buffer to hold the x float as a string
-	char y_str[10];	 // Buffer to hold the y float as a string
+	// Convert float values to String with 2 decimal places
+	String x_str = String(x, 2);
+	String y_str = String(y, 2);
+	String fr_str = "F" + String((int)max_feed_rate);
 
-	// Have to create the strings for the float values before passing them to sprintf
-	dtostrf(x, 1, 2, x_str); // Convert x to string with 2 decimal places
-	dtostrf(y, 1, 2, y_str); // Convert y to string with 2 decimal places
-
-	// Format the jog string
-	snprintf(buffer, sizeof(buffer), "$J=G91 G21 X%s Y%s F30000", x_str, y_str);
-	String cmd_str = String(buffer);
+	// Format the jog command string using Strings
+	String cmd_str = "$J=G91 G21 X" + x_str + " Y" + y_str + " " + fr_str;
 
 	// Send the jog command
 	if (grblWrite(cmd_str) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
 	}
+
+	// TEMP print the command string
+	_Dbg.printMsg(_Dbg.MT::INFO, "[gantryMove] Command string: %s", cmd_str.c_str());
 }
+
 
 void GantryOperation::grblJogCancel()
 {
@@ -253,8 +268,12 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_INITIALIZE_GRBL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_INITIALIZE_GRBL)
 	{
+		float max_feed_rate = EsmaCom.rcvEM.ArgU.f32[0];	// get the max feed rate
+		float max_acceleration = EsmaCom.rcvEM.ArgU.f32[1]; // get the max acceleration
 		grblInitSystem();
-		grblInitRuntime();
+		grblInitRuntime(max_feed_rate, max_acceleration);
+		// Store mzx feed rate
+		maxFeedRate = max_feed_rate;
 	}
 
 	// GANTRY_HOME
@@ -266,9 +285,9 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_MOVE_REL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
-		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
-		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
-		gantryMove(x, y);
+		float x = EsmaCom.rcvEM.ArgU.f32[0];			 // get the x position
+		float y = EsmaCom.rcvEM.ArgU.f32[1];			 // get the y position
+		gantryMove(x, y, maxFeedRate);
 	}
 
 	// GANTRY_JOG_CANCEL

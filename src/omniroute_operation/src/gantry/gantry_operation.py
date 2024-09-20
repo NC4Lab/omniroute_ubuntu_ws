@@ -34,8 +34,12 @@ class GantryOperation:
     def __init__(self):
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
+        # ................ GRBL Runtime Parameters ................
+        self.max_feed_rate = 1000  # Maxiumum feed rate (mm/min)
+        self.max_acceleration = 300  # Maximum acceleration (mm/sec^2)
+
         # ................ Serial Setup ................
-        
+
         # Flag if using serial communication
         self.use_serial = False
 
@@ -44,7 +48,7 @@ class GantryOperation:
 
             # GCode client setup
             self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-            time.sleep(1) 
+            time.sleep(1)
 
             # Set Units (mm)
             self.gcode_client.raw_command("G21")
@@ -53,12 +57,21 @@ class GantryOperation:
             self.gcode_client.raw_command("G91")
 
             # Feed Rate (mm/min)
-            self.gcode_client.raw_command("F30000")
+            feed_rate_command = f"F{self.max_feed_rate}"
+            self.gcode_client.raw_command(feed_rate_command)
+
+            # Max Acceleration for X and Y axes (mm/sec^2)
+            # X-axis acceleration
+            acceleration_command_x = f"$120={self.max_acceleration}"
+            # Y-axis acceleration
+            acceleration_command_y = f"$121={self.max_acceleration}"
+            self.gcode_client.raw_command(acceleration_command_x)
+            self.gcode_client.raw_command(acceleration_command_y)
 
         # ................ Gantry Tracking Setup ................
 
         # Flag to run auto-tuning
-        self.track_method = "prop"  # Choose between "prop", "pid", or 'tune'
+        self.track_method = "jog"  # Choose between "prop", "pid", or 'jog'
 
         # Limit to prevent integral windup
         self.integral_limit = 100.0
@@ -132,8 +145,9 @@ class GantryOperation:
         time.sleep(1)
 
         # Send command to initialize GRBL for gantry
+        init_list = [self.max_feed_rate, self.max_acceleration]
         self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
+            EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL, msg_arg_data_f32=init_list)
 
         # # TEMP
         # time.sleep(1)
@@ -185,7 +199,7 @@ class GantryOperation:
                         prev_error=self.prev_error_x,
                         dt=dt,
                         integral_limit=self.integral_limit)
-                    
+
                     # Compute PID for y
                     y, self.integral_y, self.prev_error_y = self.pid_control(
                         error=gantry_to_harness[1],
@@ -199,7 +213,7 @@ class GantryOperation:
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
-                        self.move_gantry_rel(x, y)
+                        self.move_gantry_rel(x, y, self.max_feed_rate)
                         self.movement_in_progress = True
 
                     # Update the time
@@ -214,14 +228,37 @@ class GantryOperation:
             elif self.track_method == 'prop':
                 if distance > 0.1:
                     x, y = self.proportional_control(
-                        gantry_to_harness, base_speed=25.0, slow_on_approach=False)
-                    
-                    # x, y = self.compute_jog(gantry_to_harness)
+                        gantry_to_harness, Kp=25.0, slow_on_approach=False)
 
                     # Send the movement command
                     if ~np.isnan(x) and ~np.isnan(y):
-                        self.move_gantry_rel(x, y)
+                        self.move_gantry_rel(x, y, self.max_feed_rate)
                         self.movement_in_progress = True
+
+                # Stop the gantry when it reaches the harness
+                elif self.movement_in_progress:
+                    self.jog_cancel()
+                    self.movement_in_progress = False
+
+            # Use jog computation
+            elif self.track_method == 'jog':
+
+                # Calculate time step
+                current_time = time.time()
+                dt = current_time - self.prev_time
+
+                if distance > 0.1:
+
+                    # Compute jog distance
+                    jog_distance = self.compute_jog(
+                        gantry_to_harness, self.max_feed_rate, dt, 1)
+
+                    # Send the movement command
+                    self.move_gantry_rel(
+                        jog_distance[0], jog_distance[1], self.max_feed_rate)
+
+                    # Update the time
+                    self.prev_time = current_time
 
                 # Stop the gantry when it reaches the harness
                 elif self.movement_in_progress:
@@ -235,40 +272,48 @@ class GantryOperation:
 
             # Use proportional control with deceleration
             x, y = self.proportional_control(
-                gantry_to_target, base_speed=25.0, slow_on_approach=False)
+                gantry_to_target, Kp=25.0, slow_on_approach=False)
 
             # Move the gantry to the target
             if ~np.isnan(x) and ~np.isnan(y):
-                self.move_gantry_rel(x, y)
+                self.move_gantry_rel(x, y, self.max_feed_rate)
 
-    def compute_jog(self, gantry_to_setpoint, delta_t=0.02, max_feed_rate=30000):
+    def compute_jog(self, gantry_to_target, max_feed_rate, dt_sec, Kp):
         """
-        Compute relative jog values based on the distance to the target (error).
-        gantry_to_setpoint: tuple (x_error, y_error), distance from target position
-        delta_t: sampling time interval in seconds (50 Hz = 0.02 s)
-        max_feed_rate: max feed rate in mm/min
-        Returns: relative (x_jog, y_jog) distances to jog
+        Compute jog increments for the gantry based on position error.
+
+        Args:
+        - gantry_to_target: numpy array [dx, dy] in mm.
+        - max_feed_rate: scalar max feed rate in mm/min.
+        - dt_sec: time interval between control loop iterations in seconds.
+        - Kp: Proportional gain.
+
+        Returns:
+        - jog_distance: numpy array [jog_x, jog_y] in mm.
         """
-        # The feed rate is in mm/min, so convert to mm/s
-        feed_rate_mm_per_s = max_feed_rate / 60.0
 
-        # Determine how far we can move in delta_t seconds
-        max_move_per_sample = feed_rate_mm_per_s * delta_t
+        # Convert gantry_to_target from m to mm
+        gantry_to_target_mm = gantry_to_target * 1000.0  # mm
 
-        # Compute the magnitude of the current error vector (distance to target)
-        distance_to_target = (gantry_to_setpoint[0]**2 + gantry_to_setpoint[1]**2) ** 0.5
+        # Compute desired velocity (mm/sec)
+        desired_velocity = Kp * gantry_to_target_mm  # mm/sec
 
-        if distance_to_target > max_move_per_sample:
-            # Scale the jog values to fit within the maximum move distance
-            scale = max_move_per_sample / distance_to_target
-            x_jog = gantry_to_setpoint[0] * scale
-            y_jog = gantry_to_setpoint[1] * scale
-        else:
-            # If the error is small, jog directly to reduce it to zero
-            x_jog = gantry_to_setpoint[0]
-            y_jog = gantry_to_setpoint[1]
+        # Convert max feed rate to mm/sec
+        max_feed_rate_mm_per_sec = max_feed_rate / 60.0  # mm/sec
 
-        return x_jog, y_jog
+        # Limit the desired velocity to the max feed rate
+        desired_velocity = np.clip(desired_velocity,
+                                   -max_feed_rate_mm_per_sec,
+                                   max_feed_rate_mm_per_sec)
+
+        # Compute jog distance (mm)
+        jog_distance = desired_velocity * dt_sec
+
+        # TEMP print all the parameters
+        MazeDB.printMsg('INFO', "gantry_to_target_mm[%0.2f, %0.2f] desired_velocity[%0.2f, %0.2f] jog_distance[%0.2f, %0.2f] dt_sec[%0.2f]",
+                        gantry_to_target_mm[0], gantry_to_target_mm[1], desired_velocity[0], desired_velocity[1], jog_distance[0], jog_distance[1], dt_sec)
+
+        return jog_distance
 
     def pid_control(self, error, Kp, Ki, Kd, integral, prev_error, dt, integral_limit=None):
         """
@@ -311,13 +356,13 @@ class GantryOperation:
 
         return output, integral, prev_error
 
-    def proportional_control(self, gantry_to_setpoint, base_speed, slow_on_approach=True):
+    def proportional_control(self, gantry_to_setpoint, Kp, slow_on_approach=True):
         """
         Proportional control to calculate movement based on the current distance and direction to the target.
 
         Args:
         - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
-        - base_speed: The base speed to scale the movement by.
+        - Kp: Proportional gain.
         - slow_on_approach: A flag to indicate if the gantry should decelerate when approaching the target.
         """
 
@@ -333,11 +378,11 @@ class GantryOperation:
             gantry_to_setpoint = gantry_to_setpoint / distance
 
         # Y component of the target movement vector
-        output_x = base_speed * gantry_to_setpoint[0]
+        output_x = Kp * gantry_to_setpoint[0]
         # X component of the target movement vector
-        output_y = base_speed * gantry_to_setpoint[1]
+        output_y = Kp * gantry_to_setpoint[1]
 
-        # Cap output to 10 
+        # Cap output to 10
         max_move = 10
         output_x = min(max(output_x, -max_move), max_move)
         output_y = min(max(output_y, -max_move), max_move)
@@ -357,23 +402,27 @@ class GantryOperation:
         # Use serial for homing
         if self.use_serial:
             # Home the gantry
-            self.gcode_client.raw_command("$25=7500") # Set homing speed
-            self.gcode_client.raw_command("$H") # Home the gantry
-            self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0") # Set the current position to 0
+            self.gcode_client.raw_command("$25=7500")  # Set homing speed
+            self.gcode_client.raw_command("$H")  # Home the gantry
+            # Set the current position to 0
+            self.gcode_client.raw_command("G10 P0 L20 X0 Y0 Z0")
 
         # Send command to home gantry
         else:
             self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
 
-    def move_gantry_rel(self, x, y):
+    def move_gantry_rel(self, x, y, max_feed_rate):
 
         # Flip x and y to account for gantry orientation and store to a list
         xy_list = [y, x]
 
         # Use serial for move command
         if self.use_serial:
-            # Move the gantry
-            cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F30000".format(xy_list[0], xy_list[1])
+            
+            # Format the command string
+            cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F{}".format(xy_list[0], xy_list[1], max_feed_rate) 
+            
+            # Send the command
             self.gcode_client.raw_command(cmd)
 
         # Send command to move gantry
@@ -405,7 +454,7 @@ class GantryOperation:
             self.target_x = msg.args[0]
             self.target_y = msg.args[1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0)
+            self.move_gantry_rel(0, 0, self.max_feed_rate)
             MazeDB.printMsg(
                 'DEBUG', "[GantryOperation]: Move command received: target(%0.2f, %0.2f)", self.target_x, self.target_y)
 
@@ -414,7 +463,7 @@ class GantryOperation:
             self.target_x = self.chamber_centers[chamber_num][0]
             self.target_y = self.chamber_centers[chamber_num][1]
             self.gantry_mode = GantryState.MOVE_TO_TARGET
-            self.move_gantry_rel(0, 0)
+            self.move_gantry_rel(0, 0, self.max_feed_rate)
             MazeDB.printMsg('DEBUG', "[GantryOperation]: Move to chamber command received: chamber(%d) target(%0.2f, %0.2f)",
                             chamber_num, self.target_x, self.target_y)
 
