@@ -1299,25 +1299,24 @@ class Interface(Plugin):
         # Update walls
         self.MP.updatePlotFromWallConfig()
 
-    def qt_callback_runGantryBtn_clicked(self):
-        """ Callback function for the "Run Gantry" button."""
-
-        MazeDB.printMsg('INFO', "Run Gantry")
-        MazeDB.printMsg('INFO', self._widget.xSpinBox.value())
-        MazeDB.printMsg('INFO', self._widget.ySpinBox.value())
-
-        self.gantry_pub.publish("MOVE_TO_COORDINATE", [round(
-            self._widget.xSpinBox.value()), round(self._widget.ySpinBox.value())])
-
     def qt_callback_homeGantryBtn_clicked(self):
         """ Callback function for the "Home Gantry" button."""
         self.gantry_pub.publish("HOME", [])
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
 
+    def qt_callback_runGantryBtn_clicked(self):
+        """ Callback function for the "Run Gantry" button."""
+        x = self._widget.xSpinBox.value()
+        y = self._widget.ySpinBox.value()
+        MazeDB.printMsg('DEBUG', "Publish Move to Coordinates: x[%0.2f] y[%0.2f]", x, y)
+        self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])
+
     def move_gantry_to_chamber(self, chamber_num):
         x = self.MazeDim.chamber_centers[chamber_num][0]
         y = self.MazeDim.chamber_centers[chamber_num][1]
+        MazeDB.printMsg(
+            'DEBUG', "Publish Move to Coordinates: x[%0.2f] y[%0.2f]", x, y)
         self.gantry_pub.publish("MOVE_TO_COORDINATE", [x, y])
 
     def qt_callback_trackHarnessTogBtn_clicked(self):

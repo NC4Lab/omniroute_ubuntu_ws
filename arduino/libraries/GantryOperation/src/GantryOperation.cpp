@@ -150,42 +150,55 @@ void GantryOperation::grblInitRuntime(float max_feed_rate, float max_acceleratio
 	}
 
 	// Feed Rate (mm/min)
-	String fr_cmd = "F" + String((int)max_feed_rate);
+	String fr_cmd = "F" + String((long)max_feed_rate);
 	if (grblWrite(fr_cmd.c_str()) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting feed rate");
 	}
+	else
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblInitRuntime] Feed rate set to: %d", (long)max_feed_rate);
+	}
 
 	// Acceleration (mm/sec²) for X axis
-	String acc_x_cmd = "$120=" + String((int)max_acceleration);
+	String acc_x_cmd = "$120=" + String((long)max_acceleration);
 	if (grblWrite(acc_x_cmd.c_str()) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting X-axis acceleration");
 	}
+	else
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblInitRuntime] X-axis acceleration set to: %d", (long)max_acceleration);
+	}
 
 	// Acceleration (mm/sec²) for Y axis
-	String acc_y_cmd = "$121=" + String((int)max_acceleration);
+	String acc_y_cmd = "$121=" + String((long)max_acceleration);
 	if (grblWrite(acc_y_cmd.c_str()) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblInitRuntime] Error setting Y-axis acceleration");
+	}
+	else
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[grblInitRuntime] Y-axis acceleration set to: %d", (long)max_acceleration);
 	}
 
 	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GRBL RUNTIME INITIALIZATION");
 }
 
 /// @brief Home the gantry.
-void GantryOperation::gantryHome()
+void GantryOperation::gantryHome(uint16_t home_speed)
 {
-	_Dbg.printMsg(_Dbg.MT::ATTN, "START: GANTRY HOMING");
+	_Dbg.printMsg(_Dbg.MT::ATTN, "GANTRY HOMING: speed[%d]", home_speed);
 
-	// Set the homing seek speed to 7500 mm/min
-	if (grblWrite("$25=7500") != 0)
+	// Set the homing seek speed
+	String home_speed_cmd = "$25=" + String(home_speed);
+	if (grblWrite(home_speed_cmd) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting homing seek speed");
 	}
 
 	// Start the homing cycle
-	if (grblWrite("$H", true, 60000) != 0) // allow for a longer timeout (60 sec)
+	if (grblWrite("$H") != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error starting homing cycle");
 	}
@@ -195,8 +208,6 @@ void GantryOperation::gantryHome()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryHome] Error setting origin");
 	}
-
-	_Dbg.printMsg(_Dbg.MT::ATTN, "FINISHED: GANTRY HOMING");
 }
 
 /// @brief Move the gantry to the target coordinates.
@@ -205,7 +216,7 @@ void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
 	// Convert float values to String with 2 decimal places
 	String x_str = String(x, 2);
 	String y_str = String(y, 2);
-	String fr_str = "F" + String((int)max_feed_rate);
+	String fr_str = "F" + String((long)max_feed_rate);
 
 	// Format the jog command string using Strings
 	String cmd_str = "$J=G91 G21 X" + x_str + " Y" + y_str + " " + fr_str;
@@ -279,7 +290,8 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_HOME
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_HOME)
 	{
-		gantryHome();
+		uint16_t home_speed = EsmaCom.rcvEM.ArgU.ui16[0]; // get the homing speed
+		gantryHome(home_speed);
 	}
 
 	// GANTRY_MOVE_REL

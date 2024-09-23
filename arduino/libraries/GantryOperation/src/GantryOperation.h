@@ -156,7 +156,7 @@ public:
 	void grblInitRuntime(float max_feed_rate, float max_acceleration);
 
 public:
-	void gantryHome();
+	void gantryHome(uint16_t home_speed);
 
 public:
 	void gantryMove(float x, float y, float max_feed_rate);
