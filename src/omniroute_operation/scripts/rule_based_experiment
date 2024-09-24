@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+import sys
+
+from rqt_gui.main import Main
+from rule_based_experiment.interface import Interface
+
+plugin = 'rule_based_experiment'
+main = Main(filename=plugin)
+sys.exit(main.main(standalone=plugin))#, plugin_argument_provider=Dot.add_arguments))

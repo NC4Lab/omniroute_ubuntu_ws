@@ -25,4 +25,46 @@
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
   </class>
+  <class name="SignleTmaze" type="single_T_maze.interface.Interface"
+    base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An rqt-based GUI for controlling single T maze experiment phases in maze.
+    </description>
+    <qtgui>
+      <group>
+        <label>omniroute_operation</label>
+      </group>
+      <label>Single T maze</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Use to test functioning of Single T maze</statustip>
+    </qtgui>
+  </class>
+  <class name="RuleBasedExperiment" type="rule_based_experiment.interface.Interface"
+    base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An rqt-based GUI for controlling dynamic trianing experiment phases in maze.
+    </description>
+    <qtgui>
+      <group>
+        <label>omniroute_operation</label>
+      </group>
+      <label>Rule Based Experiment</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Use to test functioning of Rule Based Experiment</statustip>
+    </qtgui>
+  </class>
+  <class name="DynamicTrainingController" type="dynamic_training_controller.interface.Interface"
+    base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An rqt-based GUI for controlling dynamic trianing experiment phases in maze.
+    </description>
+    <qtgui>
+      <group>
+        <label>omniroute_operation</label>
+      </group>
+      <label>Dynamic Training Controller</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Use to test functioning of Dynamic Training Controller</statustip>
+    </qtgui>
+  </class>
 </library>
