@@ -25,8 +25,8 @@ from PyQt5.QtCore import QTimer
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 
-import experiment_controller.interface
-from experiment_controller.interface import *
+import experiment_controller.experiment_controller_interface
+from experiment_controller.experiment_controller_interface import *
 
 class Mode(Enum):
     # START = -1

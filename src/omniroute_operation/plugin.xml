@@ -12,7 +12,9 @@
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
   </class>
-  <class name="ExperimentController" type="experiment_controller.interface.Interface" base_class_type="rqt_gui_py::Plugin">
+  <class name="ExperimentController"
+    type="experiment_controller.experiment_controller_interface.Interface"
+    base_class_type="rqt_gui_py::Plugin">
     <description>
         An rqt-based GUI for controlling experiment phases in maze.
     </description>

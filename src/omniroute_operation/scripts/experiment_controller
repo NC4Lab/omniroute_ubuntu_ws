@@ -2,7 +2,7 @@
 import sys
 
 from rqt_gui.main import Main
-from experiment_controller.interface import Interface
+from experiment_controller.experiment_controller_interface import Interface
 
 plugin = 'experiment_controller'
 main = Main(filename=plugin)
