@@ -3,7 +3,7 @@
 import sys
 
 from rqt_gui.main import Main
-from single_T_maze.interface import Interface
+from single_T_maze.single_T_maze_interface import Interface
 
 plugin = 'single_T_maze'
 main = Main(filename=plugin)

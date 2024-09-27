@@ -3,7 +3,7 @@
 import sys
 
 from rqt_gui.main import Main
-from dynamic_training_controller.controller.interface import Interface
+from dynamic_training_controller.dynamic_training_controller_interface import Interface
 
 plugin = 'dynamic_training_controller'
 main = Main(filename=plugin)

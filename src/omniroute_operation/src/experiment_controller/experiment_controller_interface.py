@@ -24,7 +24,7 @@ from PyQt5.QtCore import QTimer
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
-from rule_based_experiment.interface import *
+from rule_based_experiment.rule_based_experiment_interface import Mode
 
 
 # class Mode(Enum):
@@ -174,9 +174,9 @@ class Interface(Plugin):
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
         self._widget.nextBtn_2.clicked.connect(self._handle_nextBtn_2_clicked)
         self._widget.previousBtn_2.clicked.connect(self._handle_previousBtn_2_clicked)
-        self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
-        self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
-        self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
+        # self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
+        # self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
+        # self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
         self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
         self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
         self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
@@ -259,9 +259,6 @@ class Interface(Plugin):
         rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
 
-        self.rat_head_chamber = -1
-        self.rat_body_chamber = -1
-        
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
 
@@ -319,6 +316,10 @@ class Interface(Plugin):
         self.timer.start(10)
 
         self.rat_position = 0
+
+        self.rat_head_chamber = -1
+        self.rat_body_chamber = -1
+
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         # self.trial_types = {
@@ -481,17 +482,17 @@ class Interface(Plugin):
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index) 
     
-    def _handle_startBtn_clicked(self):
-        self.mode = Mode.START_EXPERIMENT
+    # def _handle_startBtn_clicked(self):
+    #     self.mode = Mode.START_EXPERIMENT
         
-    def _handle_pauseBtn_clicked(self):
-        # rospy.loginfo("Experiment paused")
-        self.mode_before_pause = self.mode
-        self.mode = Mode.PAUSE_EXPERIMENT
+    # def _handle_pauseBtn_clicked(self):
+    #     # rospy.loginfo("Experiment paused")
+    #     self.mode_before_pause = self.mode
+    #     self.mode = Mode.PAUSE_EXPERIMENT
 
-    def _handle_resumeBtn_clicked(self):
-        # rospy.loginfo("Experiment resumed")
-        self.mode = Mode.RESUME_EXPERIMENT
+    # def _handle_resumeBtn_clicked(self):
+    #     # rospy.loginfo("Experiment resumed")
+    #     self.mode = Mode.RESUME_EXPERIMENT
 
     # def _handle_recordBtn_clicked(self, checked):
     #     #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.

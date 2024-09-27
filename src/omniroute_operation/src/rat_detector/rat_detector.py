@@ -10,7 +10,7 @@ from shared_utils.maze_debug import MazeDB
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Int8
 
-from omniroute_controller.interface import MazeDimensions
+from omniroute_controller.omniroute_controller_interface import MazeDimensions
 
 import math
 

@@ -82,19 +82,21 @@
 
     <!-- Omniroute experiment controller interface -->
     <node name = "experiment_controller" pkg = "omniroute_operation" type = "experiment_controller" output = "screen"/>
-     
-    <!-- Omniroute experiment controller interface -->
+
+    <node name="rule_based_experiment" pkg="omniroute_operation" type="rule_based_experiment" output="screen" />
+
+  <!-- Omniroute experiment controller interface -->
     <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 
     <node name = "rat_detector" pkg = "omniroute_operation" type = "rat_detector.py" output = "screen"/>
-<!--  -->
-    <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->
-<!--  -->
-    <!-- <node pkg="projection_operation" type="sound_generator" name="sound_generator" machine="nc4-whiskey"/> -->
-    <!--  -->
-    <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
-    
-    <!-- Omniroute gantry node -->
+  <!--  -->
+  <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->
+  <!--  -->
+  <!-- <node pkg="projection_operation" type="sound_generator" name="sound_generator" machine="nc4-whiskey"/> -->
+  <!--  -->
+  <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
+
+  <!-- Omniroute gantry node -->
     <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
     
   </launch>

@@ -3,7 +3,7 @@
 import sys
 
 from rqt_gui.main import Main
-from rule_based_experiment.interface import Interface
+from rule_based_experiment.rule_based_experiment_interface import Interface
 
 plugin = 'rule_based_experiment'
 main = Main(filename=plugin)

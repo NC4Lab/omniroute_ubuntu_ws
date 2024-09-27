@@ -29,7 +29,7 @@
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
   </class>
-  <class name="SignleTmaze" type="single_T_maze.interface.Interface"
+  <class name="SignleTmaze" type="single_T_maze.single_T_maze_interface.Interface"
     base_class_type="rqt_gui_py::Plugin">
     <description>
       An rqt-based GUI for controlling single T maze experiment phases in maze.
@@ -43,7 +43,8 @@
       <statustip>Use to test functioning of Single T maze</statustip>
     </qtgui>
   </class>
-  <class name="RuleBasedExperiment" type="rule_based_experiment.interface.Interface"
+  <class name="RuleBasedExperiment"
+    type="rule_based_experiment.rule_based_experiment_interface.Interface"
     base_class_type="rqt_gui_py::Plugin">
     <description>
       An rqt-based GUI for controlling dynamic trianing experiment phases in maze.
@@ -57,7 +58,8 @@
       <statustip>Use to test functioning of Rule Based Experiment</statustip>
     </qtgui>
   </class>
-  <class name="DynamicTrainingController" type="dynamic_training_controller.interface.Interface"
+  <class name="DynamicTrainingController"
+    type="dynamic_training_controller.dynamic_training_controller_interface.Interface"
     base_class_type="rqt_gui_py::Plugin">
     <description>
       An rqt-based GUI for controlling dynamic trianing experiment phases in maze.
