@@ -21,10 +21,10 @@ from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
 from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup, QFileDialog, QWidget
 from PyQt5.QtCore import QTimer
+import json
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
-
 
 
 class Mode(Enum):
@@ -67,6 +67,9 @@ class Mode(Enum):
 class Interface(Plugin):
     def __init__(self, context):
         super(Interface, self).__init__(context)
+
+        from experiment_controller.experiment_controller_interface import Wall
+        from experiment_controller.experiment_controller_interface import Interface as ExistingInterface
 
         self._joint_sub = None
         self.setObjectName('Maze Experiment Interface')
@@ -153,6 +156,7 @@ class Interface(Plugin):
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
 
         
         # Time for setting up publishers and subscribers
@@ -174,43 +178,43 @@ class Interface(Plugin):
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
-        # self.currentTrial = []
-        # self.currentTrialNumber = 0 
-        # self.nTrials = 0 
-        # self.trials = [] 
+        self.currentTrial = []
+        self.currentTrialNumber = 0 
+        self.nTrials = 0 
+        self.trials = [] 
 
-        # self.currentStartConfig = 0
+        self.currentStartConfig = 0
 
-        # self.current_file_index = 0
-        # self.current_trial_index = 0
+        self.current_file_index = 0
+        self.current_trial_index = 0
         
-        # self.training_mode = None
+        self.training_mode = None
         self.previous_rat_chamber = -1
 
-        # self.wallStates = WallState() 
-        # self.wallStates.state = None
+        self.wallStates = WallState() 
+        self.wallStates.state = None
 
-        # self.project_left_cue_triangle = 0
-        # self.project_right_cue_triangle = 0
+        self.project_left_cue_triangle = 0
+        self.project_right_cue_triangle = 0
 
-        # self.success_chamber = 0
-        # self.error_chamber = 0
-        # self.start_wall = Wall(0, 0)
-        # self.central_chamber = 0
-        # self.start_chamber = 0
+        self.success_chamber = 0
+        self.error_chamber = 0
+        self.start_wall = Wall(0, 0)
+        self.central_chamber = 0
+        self.start_chamber = 0
 
-        # self.left_goal_wall = Wall(0, 0)
-        # self.right_goal_wall = Wall(0, 0)
+        self.left_goal_wall = Wall(0, 0)
+        self.right_goal_wall = Wall(0, 0)
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10)
 
         # self.rat_position = 0
-        from experiment_controller.experiment_controller_interface import Interface as ExistingInterface
         
         self.maze_dim = MazeDimensions()
         self.existing_interface = ExistingInterface(context)  # Create an instance
+        # self.existing_interface = ExistingInterface
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
@@ -363,6 +367,14 @@ class Interface(Plugin):
             self.is_ephys_rat = True
         else:
             self.is_ephys_rat = False
+
+    def trial_callback(self, msg):
+        # Convert the string back into a list (if necessary)
+        self.currentTrial = json.loads(msg.data)
+        self.left_visual_cue = self.currentTrial[0]
+        self.right_visual_cue = self.currentTrial[1]
+        self.sound_cue = self.currentTrial[2]
+
 
     #In the following functions, we define the starting maze configuration for each chamber. 
     #The starting maze configuration is defined by the chamber number, the walls that are present in the chamber.
@@ -626,9 +638,12 @@ class Interface(Plugin):
                         if self.existing_interface._widget.trainingModeBtnGroup.checkedId() == 3:
                             self.training_mode = self.currentTrial[3]
 
-                        self.left_visual_cue = self.currentTrial[0]
-                        self.right_visual_cue = self.currentTrial[1]
-                        self.sound_cue = self.currentTrial[2]
+                        # self.left_visual_cue = self.currentTrial[0]
+                        # self.right_visual_cue = self.currentTrial[1]
+                        # self.sound_cue = self.currentTrial[2]
+                        self.left_visual_cue = self.left_visual_cue
+                        self.right_visual_cue = self.right_visual_cue
+                        self.sound_cue = self.sound_cue
                         
                 if self.is_testing_phase:
                     self.play_sound_cue(self.sound_cue)

@@ -24,7 +24,10 @@ from PyQt5.QtCore import QTimer
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
+import json
+
 from rule_based_experiment.rule_based_experiment_interface import Mode
+# from rule_based_experiment.rule_based_experiment_interface import Interface as NewInterface
 
 
 # class Mode(Enum):
@@ -249,6 +252,7 @@ class Interface(Plugin):
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
+        self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -416,9 +420,6 @@ class Interface(Plugin):
         # Get the current file index from the list widget
         self.current_file_index = self._widget.xlsxFileListWidget.currentRow()
 
-        # Set the current file in the list widget
-        # self._widget.xlsxFileListWidget.setCurrentRow(self.current_file_index)
-
         # Get the full path of the selected file
         self.selected_file_path = os.path.join(self.xlsxDir, self.xlsxFiles[self.current_file_index])
 
@@ -459,6 +460,9 @@ class Interface(Plugin):
 
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
+        selected_trial = json.dumps(self.trials[self.current_trial_index])
+        self.trial_pub.publish(selected_trial)
+        rospy.loginfo(f"Published selected trial: {selected_trial}")
         
     def _handle_nextBtn_2_clicked(self):
         # Increment the current trial index
