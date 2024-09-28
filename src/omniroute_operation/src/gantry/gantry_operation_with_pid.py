@@ -10,7 +10,6 @@ import rospy
 from omniroute_operation.msg import *
 
 # Other Imports
-import time
 from geometry_msgs.msg import PoseStamped, PointStamped
 import numpy as np
 from enum import Enum
@@ -44,7 +43,7 @@ class GantryOperation:
 
             # GCode client setup
             self.gcode_client = GcodeClient('/dev/ttyUSB0', 115200)
-            time.sleep(1) 
+            rospy.sleep(1)
 
             # Set Units (mm)
             self.gcode_client.raw_command("G21")
@@ -73,7 +72,7 @@ class GantryOperation:
         self.prev_error_y = 0.0
         self.integral_x = 0.0
         self.integral_y = 0.0
-        self.prev_time = time.time()
+        self.prev_time = rospy.get_time().to_sec()
 
         # Relay feedback parameters
         self.amplitude = 20  # This can be adjusted based on system needs
@@ -144,29 +143,27 @@ class GantryOperation:
         self.EsmaCom = EsmacatCom('gantry_ease')
 
         # Wait for 1 second
-        time.sleep(1)
+        rospy.sleep(1)
 
         # Send handshake command
         self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.HANDSHAKE)
 
         # Wait for 1 second
-        time.sleep(1)
+        rospy.sleep(1)
 
         # Send command to initialize GRBL for gantry
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL)
 
         # # TEMP
-        # time.sleep(1)
+        # rospy.sleep(1)
         # self.EsmaCom.writeEcatMessage(EsmacatCom.MessageType.GANTRY_HOME)
-        # time.sleep(5)
+        # rospy.sleep(5)
 
         # ................ Run node ................
 
         # Initialize the ROS rate
-        r = rospy.Rate(50)
-
-        # Loop until the node is shutdown
+        r = rospy.Rate(30)
         MazeDB.printMsg(
             'INFO', "[GantryOperation]: Initialzed gantry_operation_node")
         while not rospy.is_shutdown():
@@ -248,7 +245,7 @@ class GantryOperation:
                 if distance > 0.01:
 
                     # Calculate time step
-                    current_time = time.time()
+                    current_time = rospy.get_time().to_sec()
                     dt = current_time - self.prev_time
 
                     # Compute PID for x
@@ -288,14 +285,17 @@ class GantryOperation:
 
             # Use proportional control
             elif self.track_method == 'prop':
-                if distance > 0.1:
+                if distance > 0.075:
                     x, y = self.proportional_control(
                         gantry_to_harness, base_speed=25.0, slow_on_approach=False)
                     
                     # x, y = self.compute_jog(gantry_to_harness)
+                    if x==0 and y==0 and self.movement_in_progress:
+                        self.jog_cancel()
+                        self.movement_in_progress = False
 
                     # Send the movement command
-                    if ~np.isnan(x) and ~np.isnan(y):
+                    elif ~np.isnan(x) and ~np.isnan(y):
                         self.move_gantry_rel(x, y)
                         self.movement_in_progress = True
 
@@ -313,9 +313,14 @@ class GantryOperation:
             x, y = self.proportional_control(
                 gantry_to_target, base_speed=25.0, slow_on_approach=False)
 
+            if x==0 and y==0 and self.movement_in_progress:
+                self.jog_cancel()
+                self.movement_in_progress = False
+
             # Move the gantry to the target
-            if ~np.isnan(x) and ~np.isnan(y):
+            elif ~np.isnan(x) and ~np.isnan(y):
                 self.move_gantry_rel(x, y)
+                self.movement_in_progress = True
 
     def compute_jog(self, gantry_to_setpoint, delta_t=0.02, max_feed_rate=30000):
         """
@@ -369,7 +374,7 @@ class GantryOperation:
 
         # Determine the current sign of the error
         current_sign = np.sign(error)
-        current_time = time.time()
+        current_time = rospy.get_time().to_sec()
 
         # #TEMP print everything
         # MazeDB.printMsg('INFO', "[GantryOperation] Axis[%s] error[%0.2f] current_sign[%0.1f] last_error_sign[%0.1f] last_cross_time[%s] current_time[%0.2f]", 
@@ -489,9 +494,22 @@ class GantryOperation:
         output_y = base_speed * gantry_to_setpoint[1]
 
         # Cap output to 10 
-        max_move = 10
-        output_x = min(max(output_x, -max_move), max_move)
-        output_y = min(max(output_y, -max_move), max_move)
+        # max_move = 8
+        # output_x = min(max(output_x, -max_move), max_move)
+        # output_y = min(max(output_y, -max_move), max_move)
+
+
+        # Move at least jog_dist
+        jog_dist = 1.0
+        if abs(output_x) < jog_dist:
+            output_x = 0
+        else:
+            output_x = jog_dist * np.sign(output_x)
+        
+        if abs(output_y) < jog_dist:
+            output_y = 0
+        else:
+            output_y = jog_dist * np.sign(output_y)
 
         return output_x, output_y
 
@@ -524,7 +542,7 @@ class GantryOperation:
         # Use serial for move command
         if self.use_serial:
             # Move the gantry
-            cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F30000".format(xy_list[0], xy_list[1])
+            cmd = "$J=G91 G21 X{:.1f} Y{:.1f} F25000".format(xy_list[0], xy_list[1])
             self.gcode_client.raw_command(cmd)
 
         # Send command to move gantry

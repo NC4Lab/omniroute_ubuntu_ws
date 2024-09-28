@@ -26,7 +26,6 @@ from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 import json
 
-from rule_based_experiment.rule_based_experiment_interface import Mode
 # from rule_based_experiment.rule_based_experiment_interface import Interface as NewInterface
 
 
@@ -115,6 +114,18 @@ class Wall:
 
     def __repr__(self):
             return f'Wall({self.chamber_num}, {self.wall_num})'    
+    
+    # Add to_dict method
+    def to_dict(self):
+        return {
+            'chamber_num': self.chamber_num,
+            'wall_num': self.wall_num
+        }
+    
+    # Add from_dict method
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data['chamber_num'], data['wall_num'])
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -253,6 +264,7 @@ class Interface(Plugin):
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
+        self.chambers_pub = rospy.Publisher('/chambers', String, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -460,9 +472,18 @@ class Interface(Plugin):
 
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index)
-        selected_trial = json.dumps(self.trials[self.current_trial_index])
-        self.trial_pub.publish(selected_trial)
-        rospy.loginfo(f"Published selected trial: {selected_trial}")
+        trial_data = {
+            # Selected trial data
+            'trials': self.trials,  # List of trials
+            'nTrials': self.nTrials,  # Number of trials
+            'trial': self.trials[self.current_trial_index],
+            'current_trial_index': self.current_trial_index  # Current trial index
+        }
+
+        # Serialize the dictionary to a JSON string
+        selected_trial_json = json.dumps(trial_data)
+        self.trial_pub.publish(selected_trial_json)
+        #rospy.loginfo(f"Published selected trial: {selected_trial_json}")
         
     def _handle_nextBtn_2_clicked(self):
         # Increment the current trial index
@@ -680,6 +701,19 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 4)
         self.right_goal_wall = Wall(4, 0)
 
+        chambers_info = {
+            'start_chamber': self.start_chamber,
+            'central_chamber': self.central_chamber,
+            'left_chamber': self.left_chamber,
+            'right_chamber': self.right_chamber,
+            'project_left_cue_triangle': self.project_left_cue_triangle,
+            'project_right_cue_triangle': self.project_right_cue_triangle,
+            'start_wall': self.start_wall.to_dict(),
+            'left_goal_wall': self.left_goal_wall.to_dict(),
+            'right_goal_wall': self.right_goal_wall.to_dict()
+        }
+        self.chambers_pub.publish(json.dumps(chambers_info))
+
     def setChamberThreeStartConfig(self):
         self.start_chamber = 3
         self.central_chamber = 4
@@ -692,6 +726,19 @@ class Interface(Plugin):
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
         self.right_goal_wall = Wall(4, 6)
+
+        chambers_info = {
+            'start_chamber': self.start_chamber,
+            'central_chamber': self.central_chamber,
+            'left_chamber': self.left_chamber,
+            'right_chamber': self.right_chamber,
+            'project_left_cue_triangle': self.project_left_cue_triangle,
+            'project_right_cue_triangle': self.project_right_cue_triangle,
+            'start_wall': self.start_wall.to_dict(),
+            'left_goal_wall': self.left_goal_wall.to_dict(),   
+            'right_goal_wall': self.right_goal_wall.to_dict()
+        }
+        self.chambers_pub.publish(json.dumps(chambers_info))
 
     def setChamberFiveStartConfig(self):
         self.start_chamber = 5
@@ -706,6 +753,19 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 6)
         self.right_goal_wall = Wall(4, 2)
 
+        chambers_info = {
+            'start_chamber': self.start_chamber,
+            'central_chamber': self.central_chamber,
+            'left_chamber': self.left_chamber,
+            'right_chamber': self.right_chamber,
+            'project_left_cue_triangle': self.project_left_cue_triangle,
+            'project_right_cue_triangle': self.project_right_cue_triangle,
+            'start_wall': self.start_wall.to_dict(),
+            'left_goal_wall': self.left_goal_wall.to_dict(),
+            'right_goal_wall': self.right_goal_wall.to_dict()
+        }
+        self.chambers_pub.publish(json.dumps(chambers_info))
+
     def setChamberSevenStartConfig(self):
         self.start_chamber = 7
         self.central_chamber = 4
@@ -719,13 +779,25 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
 
+        chambers_info = {
+            'start_chamber': self.start_chamber,
+            'central_chamber': self.central_chamber,
+            'left_chamber': self.left_chamber,
+            'right_chamber': self.right_chamber,
+            'project_left_cue_triangle': self.project_left_cue_triangle,
+            'project_right_cue_triangle': self.project_right_cue_triangle,
+            'start_wall': self.start_wall.to_dict(),
+            'left_goal_wall': self.left_goal_wall.to_dict(),
+            'right_goal_wall': self.right_goal_wall.to_dict()
+        }
+        self.chambers_pub.publish(json.dumps(chambers_info))
+
     def setForcedChoiceMode(self):
         self.training_mode = "user_defined_forced_choice"
 
     def setChoiceMode(self):
         self.training_mode = "user_defined_choice"
            
-
     def display_excel_content(self, file_path):
         # Display the content in the QListWidget
         self._widget.trialListWidget.clear()
@@ -733,7 +805,6 @@ class Interface(Plugin):
             row_list = row.tolist()  # Convert the row to a list
             item_text = ', '.join(map(str, row_list))
             self._widget.trialListWidget.addItem(item_text)
-
 
     def mazeboundary_marker0_callback(self, msg):
         self.mazeboundary_marker0 = np.array([msg.point.x, msg.point.y, msg.point.z])
