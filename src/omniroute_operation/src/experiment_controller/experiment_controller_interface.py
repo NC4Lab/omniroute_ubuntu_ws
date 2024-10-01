@@ -264,7 +264,7 @@ class Interface(Plugin):
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
-        self.chambers_pub = rospy.Publisher('/chambers', String, queue_size=1)
+        self.chambers_pub = rospy.Publisher('/selected_chamber', String, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -272,8 +272,8 @@ class Interface(Plugin):
         self.harness_x = 0.0
         self.harness_y = 0.0
         
-        rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
-        rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
+        # rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
+        # rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
 
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
@@ -823,11 +823,11 @@ class Interface(Plugin):
         self.harness_y = msg.pose.position.y
     # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
-    def rat_head_chamber_callback(self, msg):
-        self.rat_head_chamber = msg.data
+    # def rat_head_chamber_callback(self, msg):
+    #     self.rat_head_chamber = msg.data
 
-    def rat_body_chamber_callback(self, msg):
-        self.rat_body_chamber = msg.data
+    # def rat_body_chamber_callback(self, msg):
+    #     self.rat_body_chamber = msg.data
 
     # def run_experiment(self):
 

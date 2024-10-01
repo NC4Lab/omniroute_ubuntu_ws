@@ -155,16 +155,17 @@ class Interface(Plugin):
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
-        self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
+        self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1) 
         self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
-        rospy.Subscriber('/chamber', String, self.chamber_callback)
+
+        rospy.Subscriber('/selected_chamber', String, self.chamber_callback, queue_size=1)
 
         rospy.Subscriber('/rat_head_chamber', Int8,self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/rat_body_chamber', Int8,self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
 
         
         # Time for setting up publishers and subscribers
-        #rospy.sleep(1.0)
+        rospy.sleep(1.0)
 
         # Experiment parameters
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
@@ -391,11 +392,6 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-        # self.left_visual_cue = self.currentTrial[0]
-        # self.right_visual_cue = self.currentTrial[1]
-        # self.sound_cue = self.currentTrial[2]
-        # self.training_mode = self.currentTrial[3]
-
     def chamber_callback(self, msg):
         chamber_data = json.loads(msg.data)
         self.start_chamber = chamber_data['start_chamber']
@@ -412,10 +408,10 @@ class Interface(Plugin):
 
     def rat_head_chamber_callback(self, msg):
         self.rat_head_chamber = msg.data
-
+    
     def rat_body_chamber_callback(self, msg):
         self.rat_body_chamber = msg.data
-        
+            
     def run_experiment(self):
 
         self.current_time = rospy.Time.now()
