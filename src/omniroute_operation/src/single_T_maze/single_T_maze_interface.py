@@ -32,22 +32,6 @@ from experiment_controller.experiment_controller_interface import Interface as E
 
 
 class Mode(Enum):
-    # START = -1
-    # START_EXPERIMENT = 0
-    # START_TRIAL = 1
-    # RAT_IN_START_CHAMBER = 2
-    # START_TO_CHOICE = 3
-    # RAT_IN_CHOICE_CHAMBER = 4
-    # CHOICE = 5
-    # CHOICE_TO_GOAL = 6
-    # SUCCESS = 7
-    # REWARD =8
-    # POST_REWARD = 9
-    # ERROR = 10
-    # END_TRIAL = 11
-    # END_EXPERIMENT = 12
-    # PAUSE_EXPERIMENT = 13
-    # RESUME_EXPERIMENT = 14
     START = -1
     START_EXPERIMENT = 0
     START_TRIAL = 1
@@ -86,7 +70,7 @@ class Interface(Plugin):
 
         # Create QWidget
         self._widget = QWidget()
-        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'single_T_maze.ui')
+        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'single_T_maze_interface.ui')
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
         
@@ -102,25 +86,19 @@ class Interface(Plugin):
 
         self.scene = QGraphicsScene()
 
-        self._widget.pauseBtn.setEnabled(True)
-        self._widget.resumeBtn.setEnabled(False)
-
-        self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
-        self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
-        self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
         self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
         # Button for designating if rewards should be despensed from the gantry
         self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
+        self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
+        self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
         
-        self.is_ephys_rat = False
         self.do_gantry_reward = False
         self.is_testing_phase = False
         self.trial_generator = False
-        self.single_T_maze = Falsenc4-lassi
-
+        
         self.maze_dim = MazeDimensions()
 
         #self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
@@ -138,6 +116,8 @@ class Interface(Plugin):
         # self.trial_summary_path = os.path.join(date_folder, 'Past_seven_days_biases.csv')
 
         # self.df = pd.read_csv(self.trial_summary_path)
+
+        self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
         self.dataDir = os.path.expanduser(os.path.join('~', 'maze_data')) # Default data directory
         self.defaultDataDir = self.dataDir
@@ -161,6 +141,9 @@ class Interface(Plugin):
 
         rospy.Subscriber('/selected_chamber', String,self.chamber_callback, queue_size=1)
 
+        rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
+        self.button_pub = rospy.Publisher('/button', String, queue_size=1)
+
         rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
 
@@ -169,11 +152,6 @@ class Interface(Plugin):
         
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
-
-        # # Not needed anymore
-        # reg = [0]*8
-        # reg[0] = 0
-        # self.write_sync_ease_pub.publish(*reg)
 
         # Experiment parameters
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
@@ -285,18 +263,6 @@ class Interface(Plugin):
         trial = self.trial_types[start_chamber]
 
         return trial
-    
-    def _handle_startBtn_clicked(self):
-        self.mode = Mode.START_EXPERIMENT
-        
-    def _handle_pauseBtn_clicked(self):
-        # rospy.loginfo("Experiment paused")
-        self.mode_before_pause = self.mode
-        self.mode = Mode.PAUSE_EXPERIMENT
-
-    def _handle_resumeBtn_clicked(self):
-        # rospy.loginfo("Experiment resumed")
-        self.mode = Mode.RESUME_EXPERIMENT
 
     def _handle_recordBtn_clicked(self, checked):
         #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
@@ -367,6 +333,46 @@ class Interface(Plugin):
     def _handle_trialGeneratorBtn_clicked(self):
         self.trial_generator = True
         rospy.loginfo("Trial Generator enabled")  
+
+    def _handle_lowerAllDoorsBtn_clicked(self):
+        self.setLowerConfig()
+
+    def setLowerConfig(self):
+        # Lower Walls 0,2,4,6 in chamber 4 (central chamber)
+        for i in [0, 2, 4, 6]:
+            self.existing_interface.lower_wall(Wall(4, i), False)
+        self.existing_interface.activateWalls()
+
+    def _handle_plusMazeBtn_clicked(self):
+        self.setPlusConfig()
+
+    def setPlusConfig(self):
+        # Lower all walls
+        for i in range(9):
+            for j in range(8):
+                self.existing_interface.lower_wall(Wall(i, j), False)
+
+        for i in [1, 3, 4, 5, 7]:
+            for j in range(8):
+                self.existing_interface.raise_wall(Wall(i, j), False)
+
+        self.existing_interface.activateWalls()
+
+    def _handle_gantryRewardTogBtn_clicked(self):
+        if self._widget.gantryRewardTogBtn.isChecked():
+            self.do_gantry_reward = True
+        else:
+            self.do_gantry_reward = False
+
+    def mode_callback(self, msg):
+        mode = msg.data
+        if mode == "START_EXPERIMENT":
+            self.mode = Mode.START_EXPERIMENT
+        elif mode == "PAUSE_EXPERIMENT":
+            self.mode_before_pause = self.mode
+            self.mode = Mode.PAUSE_EXPERIMENT
+        elif mode == "RESUME_EXPERIMENT":
+            self.mode = Mode.RESUME_EXPERIMENT
 
     def trial_callback(self, msg):
         # Convert the string back into a list (if necessary)
@@ -590,14 +596,12 @@ class Interface(Plugin):
 
         elif self.mode == Mode.PAUSE_EXPERIMENT:
             rospy.loginfo("PAUSE_EXPERIMENT")
-            self.mode_start_time = rospy.Time.now()
-            self._widget.pauseBtn.setEnabled(False)
-            self._widget.resumeBtn.setEnabled(True)
+            self.button_pub.publish("Pause_button_disabled")
+            self.mode_start_time = rospy.Time.now()        
             
         elif self.mode == Mode.RESUME_EXPERIMENT:
             rospy.loginfo("RESUME_EXPERIMENT")
-            self._widget.pauseBtn.setEnabled(True)
-            self._widget.resumeBtn.setEnabled(False)
+            self.button_pub.publish("Pause_button_enabled")
             self.mode_start_time = rospy.Time.now()
             self.mode = self.mode_before_pause
 
@@ -607,8 +611,6 @@ class Interface(Plugin):
                 rospy.loginfo("START_TRIAL")
 
     def reward_dispense(self):
-        if self.is_ephys_rat:
-            return
         self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):

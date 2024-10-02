@@ -188,25 +188,25 @@ class Interface(Plugin):
         self._widget.nextBtn.clicked.connect(self._handle_nextBtn_clicked)
         self._widget.nextBtn_2.clicked.connect(self._handle_nextBtn_2_clicked)
         self._widget.previousBtn_2.clicked.connect(self._handle_previousBtn_2_clicked)
-        # self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
-        # self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
-        # self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
+        self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
+        self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
+        self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
         self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
         self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
         self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
         self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
         # self._widget.pumpGantryBtn.clicked.connect(self.reward_dispense)
         # self._widget.pumpStartBtn.clicked.connect(self._handle_pumpStartBtn_clicked)
-        self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
+        # self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
         # self._widget.homeBtn.clicked.connect(self._handle_homeBtn_clicked)
         # self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
         # self._widget.startTrackingBtn.clicked.connect(self._handle_startTrackingBtn_clicked)
         # self._widget.stopPumpBtn.clicked.connect(self._handle_stopPumpBtn_clicked)
-        self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
+        # self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
         #self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         # self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         # self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
-        self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
+        # self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
         #self._widget.singleTmazeBtn.clicked.connect(self._handle_singleTmazeBtn_clicked)
         # Button for designating if this is the phys rat
         #self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
@@ -244,9 +244,9 @@ class Interface(Plugin):
         self.dataDir = os.path.expanduser(os.path.join('~', 'maze_data')) # Default data directory
         self.defaultDataDir = self.dataDir
 
-        self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
+        # self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
-        self._widget.recordDataDir.setText(self.defaultDataDir)
+        # self._widget.recordDataDir.setText(self.defaultDataDir)
         
         #self.isRecording = self.is_recording_on()
 
@@ -265,6 +265,10 @@ class Interface(Plugin):
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
         self.chambers_pub = rospy.Publisher('/selected_chamber', String, queue_size=1)
+
+        self.mode_pub = rospy.Publisher('/mode', String, queue_size=1)
+
+        rospy.Subscriber('/button', String, self.button_callback, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -507,17 +511,20 @@ class Interface(Plugin):
         # Set the current trial in the trial list widget
         self._widget.trialListWidget.setCurrentRow(self.current_trial_index) 
     
-    # def _handle_startBtn_clicked(self):
-    #     self.mode = Mode.START_EXPERIMENT
+    def _handle_startBtn_clicked(self):
+        self.mode_pub.publish("START_EXPERIMENT")
+        #self.mode = Mode.START_EXPERIMENT
         
-    # def _handle_pauseBtn_clicked(self):
-    #     # rospy.loginfo("Experiment paused")
-    #     self.mode_before_pause = self.mode
-    #     self.mode = Mode.PAUSE_EXPERIMENT
+    def _handle_pauseBtn_clicked(self):
+        self.mode_pub.publish("PAUSE_EXPERIMENT")
+        # rospy.loginfo("Experiment paused")
+        #self.mode_before_pause = self.mode
+        #self.mode = Mode.PAUSE_EXPERIMENT
 
-    # def _handle_resumeBtn_clicked(self):
-    #     # rospy.loginfo("Experiment resumed")
-    #     self.mode = Mode.RESUME_EXPERIMENT
+    def _handle_resumeBtn_clicked(self):
+        self.mode_pub.publish("RESUME_EXPERIMENT")
+        # rospy.loginfo("Experiment resumed")
+        #self.mode = Mode.RESUME_EXPERIMENT
 
     # def _handle_recordBtn_clicked(self, checked):
     #     #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
@@ -557,15 +564,15 @@ class Interface(Plugin):
 
     #         self.isRecording = 0
 
-    def _handle_browseBtn_2_clicked(self):
-        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
-        self._widget.recordDataDir.setText(res)
+    # def _handle_browseBtn_2_clicked(self):
+    #     res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
+    #     self._widget.recordDataDir.setText(res)
 
     # def _handle_pumpStartBtn_clicked(self):
     #     self.gantry_pub.publish("START_PUMP", [])
 
-    def _handle_plusMazeBtn_clicked(self):
-        self.setPlusConfig()
+    # def _handle_plusMazeBtn_clicked(self):
+    #     self.setPlusConfig()
 
     # def _handle_stopTrackingBtn_clicked(self):
     #     self.gantry_pub.publish("IDLE", [])
@@ -635,8 +642,8 @@ class Interface(Plugin):
         elif self._widget.trainingModeBtnGroup.checkedId() == 2:
             self.setChoiceMode()
 
-    def _handle_lowerAllDoorsBtn_clicked(self):
-        self.setLowerConfig()
+    # def _handle_lowerAllDoorsBtn_clicked(self):
+    #     self.setLowerConfig()
 
     # def _handle_trialGeneratorBtn_clicked(self):
     #     self.trial_generator = True
@@ -669,23 +676,23 @@ class Interface(Plugin):
         self.wallStates.send = True
         self.door_pub.publish(self.wallStates)
     
-    def setPlusConfig(self):
-        # Lower all walls
-        for i in range(9):
-            for j in range(8):
-                self.lower_wall(Wall(i,j), False)
+    # def setPlusConfig(self):
+    #     # Lower all walls
+    #     for i in range(9):
+    #         for j in range(8):
+    #             self.lower_wall(Wall(i,j), False)
         
-        for i in [1, 3, 4, 5, 7]:
-            for j in range(8):
-                self.raise_wall(Wall(i, j), False)
+    #     for i in [1, 3, 4, 5, 7]:
+    #         for j in range(8):
+    #             self.raise_wall(Wall(i, j), False)
         
-        self.activateWalls()
+    #     self.activateWalls()
 
-    def setLowerConfig(self):
-        #Lower Walls 0,2,4,6 in chamber 4 (central chamber)
-        for i in [0, 2, 4, 6]:
-            self.lower_wall(Wall(4, i), False)
-        self.activateWalls()
+    # def setLowerConfig(self):
+    #     #Lower Walls 0,2,4,6 in chamber 4 (central chamber)
+    #     for i in [0, 2, 4, 6]:
+    #         self.lower_wall(Wall(4, i), False)
+    #     self.activateWalls()
 
     
     def setChamberOneStartConfig(self):
@@ -823,6 +830,15 @@ class Interface(Plugin):
         self.harness_y = msg.pose.position.y
     # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
+    def button_callback(self, msg):
+        button_mode = msg.data
+        if button_mode == "Pause_button_disabled":
+            self._widget.pauseBtn.setEnabled(False)
+            self._widget.resumeBtn.setEnabled(True)
+        elif button_mode == "Pause_button_enabled":
+            self._widget.pauseBtn.setEnabled(True)
+            self._widget.resumeBtn.setEnabled(False)
+            
     # def rat_head_chamber_callback(self, msg):
     #     self.rat_head_chamber = msg.data
 

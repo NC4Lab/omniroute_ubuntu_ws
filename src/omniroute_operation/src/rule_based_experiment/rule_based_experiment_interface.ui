@@ -87,9 +87,9 @@ color: rgb(255, 255, 0);</string>
    <widget class="QFrame" name="frame_7">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>420</x>
       <y>70</y>
-      <width>361</width>
+      <width>551</width>
       <height>91</height>
      </rect>
     </property>
@@ -103,7 +103,7 @@ color: rgb(255, 255, 0);</string>
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>20</y>
+       <y>30</y>
        <width>161</width>
        <height>31</height>
       </rect>
@@ -140,13 +140,39 @@ QPushButton:pressed {
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QPushButton" name="plusMazeBtn">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>20</y>
+       <width>101</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>PLus Maze</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="lowerAllDoorsBtn">
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>20</y>
+       <width>141</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Lower ALL Doors </string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_8">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>420</x>
       <y>40</y>
-      <width>361</width>
+      <width>551</width>
       <height>31</height>
      </rect>
     </property>
@@ -191,7 +217,7 @@ QPushButton:pressed {
      <rect>
       <x>10</x>
       <y>70</y>
-      <width>601</width>
+      <width>411</width>
       <height>91</height>
      </rect>
     </property>
@@ -245,7 +271,7 @@ QPushButton:pressed {
     <widget class="QPushButton" name="trialGeneratorBtn">
      <property name="geometry">
       <rect>
-       <x>310</x>
+       <x>280</x>
        <y>20</y>
        <width>121</width>
        <height>41</height>
@@ -258,7 +284,7 @@ QPushButton:pressed {
     <widget class="QPushButton" name="testingPhaseBtn">
      <property name="geometry">
       <rect>
-       <x>160</x>
+       <x>150</x>
        <y>20</y>
        <width>101</width>
        <height>41</height>
@@ -274,7 +300,7 @@ QPushButton:pressed {
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>601</width>
+      <width>411</width>
       <height>31</height>
      </rect>
     </property>
@@ -301,7 +327,7 @@ QPushButton:pressed {
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>430</x>
       <y>40</y>
       <width>231</width>
       <height>31</height>
@@ -311,45 +337,6 @@ QPushButton:pressed {
      <string>Maze and Gantry Buttons</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="startBtn">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>190</y>
-      <width>101</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pauseBtn">
-    <property name="geometry">
-     <rect>
-      <x>440</x>
-      <y>190</y>
-      <width>101</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Pause</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="resumeBtn">
-    <property name="geometry">
-     <rect>
-      <x>820</x>
-      <y>190</y>
-      <width>101</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Resume</string>
-    </property>
-   </widget>
    <zorder>frame_7</zorder>
    <zorder>frame_6</zorder>
    <zorder>frame_8</zorder>
@@ -357,9 +344,6 @@ QPushButton:pressed {
    <zorder>frame_12</zorder>
    <zorder>frame_13</zorder>
    <zorder>label_6</zorder>
-   <zorder>startBtn</zorder>
-   <zorder>pauseBtn</zorder>
-   <zorder>resumeBtn</zorder>
   </widget>
  </widget>
  <resources/>

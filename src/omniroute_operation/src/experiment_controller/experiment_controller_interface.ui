@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1075</width>
-    <height>1321</height>
+    <width>914</width>
+    <height>1046</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,8 +18,8 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>1051</width>
-     <height>1301</height>
+     <width>891</width>
+     <height>941</height>
     </rect>
    </property>
    <property name="title">
@@ -30,7 +30,7 @@
      <rect>
       <x>20</x>
       <y>60</y>
-      <width>901</width>
+      <width>741</width>
       <height>41</height>
      </rect>
     </property>
@@ -38,7 +38,7 @@
    <widget class="QPushButton" name="browseBtn">
     <property name="geometry">
      <rect>
-      <x>920</x>
+      <x>760</x>
       <y>60</y>
       <width>111</width>
       <height>41</height>
@@ -53,48 +53,9 @@
      <rect>
       <x>20</x>
       <y>110</y>
-      <width>1011</width>
+      <width>851</width>
       <height>141</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="startBtn">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>1080</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pauseBtn">
-    <property name="geometry">
-     <rect>
-      <x>480</x>
-      <y>1080</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Pause</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="resumeBtn">
-    <property name="geometry">
-     <rect>
-      <x>940</x>
-      <y>1080</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Resume</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="chamberThreeBtn">
@@ -165,7 +126,7 @@
    <widget class="QPushButton" name="nextBtn">
     <property name="geometry">
      <rect>
-      <x>940</x>
+      <x>780</x>
       <y>260</y>
       <width>91</width>
       <height>41</height>
@@ -180,7 +141,7 @@
      <rect>
       <x>20</x>
       <y>340</y>
-      <width>1011</width>
+      <width>851</width>
       <height>241</height>
      </rect>
     </property>
@@ -201,7 +162,7 @@
    <widget class="QPushButton" name="nextBtn_2">
     <property name="geometry">
      <rect>
-      <x>940</x>
+      <x>780</x>
       <y>590</y>
       <width>91</width>
       <height>41</height>
@@ -324,71 +285,12 @@
      <string>Automatic</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="recordDataDir">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>1240</y>
-      <width>871</width>
-      <height>41</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="recordBtn">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>1180</y>
-      <width>971</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(85, 170, 0);
-color: rgb(255, 255, 0);</string>
-    </property>
-    <property name="text">
-     <string>Record</string>
-    </property>
-   </widget>
-   <widget class="QFrame" name="frame_6">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>1170</y>
-      <width>1011</width>
-      <height>121</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QPushButton" name="browseBtn_2">
-     <property name="geometry">
-      <rect>
-       <x>890</x>
-       <y>70</y>
-       <width>101</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Browse</string>
-     </property>
-    </widget>
-   </widget>
    <widget class="QFrame" name="frame_7">
     <property name="geometry">
      <rect>
       <x>480</x>
       <y>680</y>
-      <width>551</width>
+      <width>391</width>
       <height>181</height>
      </rect>
     </property>
@@ -398,102 +300,11 @@ color: rgb(255, 255, 0);</string>
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="homeBtn">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>30</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Home</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="plusMazeBtn">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>110</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Plus Maze </string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="stopPumpBtn">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>110</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Stop Pump</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pumpGantryBtn">
-     <property name="geometry">
-      <rect>
-       <x>410</x>
-       <y>30</y>
-       <width>101</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Reward</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pumpStartBtn">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>30</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Start Pump </string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="startTrackingBtn">
-     <property name="geometry">
-      <rect>
-       <x>260</x>
-       <y>30</y>
-       <width>111</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Start Tracking</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="stopTrackingBtn">
-     <property name="geometry">
-      <rect>
-       <x>260</x>
-       <y>110</y>
-       <width>111</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Stop Tracking</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="gantryRewardTogBtn">
      <property name="geometry">
       <rect>
-       <x>380</x>
-       <y>120</y>
+       <x>20</x>
+       <y>80</y>
        <width>161</width>
        <height>31</height>
       </rect>
@@ -536,7 +347,7 @@ QPushButton:pressed {
      <rect>
       <x>480</x>
       <y>650</y>
-      <width>551</width>
+      <width>391</width>
       <height>31</height>
      </rect>
     </property>
@@ -581,7 +392,7 @@ QPushButton:pressed {
      <rect>
       <x>20</x>
       <y>310</y>
-      <width>1011</width>
+      <width>851</width>
       <height>31</height>
      </rect>
     </property>
@@ -610,7 +421,7 @@ QPushButton:pressed {
      <rect>
       <x>20</x>
       <y>30</y>
-      <width>1011</width>
+      <width>851</width>
       <height>31</height>
      </rect>
     </property>
@@ -634,185 +445,53 @@ QPushButton:pressed {
      </property>
     </widget>
    </widget>
-   <widget class="QFrame" name="frame_11">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>1140</y>
-      <width>1011</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QLabel" name="label_5">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>701</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Recording Experiment Data</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_12">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>910</y>
-      <width>341</width>
-      <height>151</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QPushButton" name="ephysRatTogBtn">
-     <property name="geometry">
-      <rect>
-       <x>60</x>
-       <y>30</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
-    background-color: lightgray;
-    border: 1px solid black;
-}
-
-QPushButton:checked {
-    background-color: gray; /* Color when toggled */
-}
-
-QPushButton:pressed {
-    background-color: darkgray; /* Color when pressed */
-}
-</string>
-     </property>
-     <property name="text">
-      <string>Ephys Rat</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="trialGeneratorBtn">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>90</y>
-       <width>121</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Trial Generator </string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="testingPhaseBtn">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>20</y>
-       <width>101</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Testing Phase</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="singleTmazeBtn">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>80</y>
-       <width>101</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Single T-Maze</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_13">
+   <widget class="QPushButton" name="startBtn">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>880</y>
-      <width>341</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QLabel" name="label_8">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>0</y>
-       <width>231</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Trials and Experiments types </string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QPushButton" name="lowerAllDoorsBtn">
-    <property name="geometry">
-     <rect>
-      <x>620</x>
-      <y>950</y>
-      <width>151</width>
+      <width>91</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Lower ALL Doors </string>
+     <string>Start</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pauseBtn">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>880</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Pause</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="resumeBtn">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>880</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Resume</string>
     </property>
    </widget>
    <zorder>frame_3</zorder>
    <zorder>frame_7</zorder>
-   <zorder>frame_6</zorder>
    <zorder>frame_4</zorder>
    <zorder>frame_5</zorder>
    <zorder>frame_2</zorder>
    <zorder>pathDirEdit</zorder>
    <zorder>browseBtn</zorder>
    <zorder>xlsxFileListWidget</zorder>
-   <zorder>startBtn</zorder>
-   <zorder>pauseBtn</zorder>
-   <zorder>resumeBtn</zorder>
    <zorder>chamberThreeBtn</zorder>
    <zorder>chamberFiveBtn</zorder>
    <zorder>chamberSevenBtn</zorder>
@@ -825,16 +504,13 @@ QPushButton:pressed {
    <zorder>forcedChoiceBtn</zorder>
    <zorder>choiceBtn</zorder>
    <zorder>automaticBtn</zorder>
-   <zorder>recordDataDir</zorder>
-   <zorder>recordBtn</zorder>
    <zorder>label_4</zorder>
    <zorder>frame_8</zorder>
    <zorder>frame_9</zorder>
    <zorder>frame_10</zorder>
-   <zorder>frame_11</zorder>
-   <zorder>frame_12</zorder>
-   <zorder>frame_13</zorder>
-   <zorder>lowerAllDoorsBtn</zorder>
+   <zorder>startBtn</zorder>
+   <zorder>pauseBtn</zorder>
+   <zorder>resumeBtn</zorder>
   </widget>
  </widget>
  <resources/>
