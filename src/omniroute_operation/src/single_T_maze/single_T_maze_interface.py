@@ -112,8 +112,6 @@ class Interface(Plugin):
         self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
-        # Button for designating if this is the phys rat
-        self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
         # Button for designating if rewards should be despensed from the gantry
         self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
         
@@ -121,7 +119,7 @@ class Interface(Plugin):
         self.do_gantry_reward = False
         self.is_testing_phase = False
         self.trial_generator = False
-        self.single_T_maze = False
+        self.single_T_maze = Falsenc4-lassi
 
         self.maze_dim = MazeDimensions()
 
@@ -310,7 +308,7 @@ class Interface(Plugin):
                 self._widget.recordDataDir.setText(self.dataDir)
 
             # Record all ROS topics to domeExperimentData.bag
-            command_data = f"rosbag record -a -o plusMazeExperimentData"
+            command_data = f"rosbag record -a -o singleTmazeExperimentData"
             self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
 
             # Pause for 3 seconds to allow the bag file to be created
