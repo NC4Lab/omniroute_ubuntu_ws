@@ -304,6 +304,7 @@ class GantryOperation:
             self.gantry_mode = GantryState.IDLE  # Set back to idle
             MazeDB.printMsg(
                 'DEBUG', "[GantryOperation]: Move to coordinate command received: target[%0.2fm, %0.2fm]", target_x, target_y)
+            rospy.loginfo("Move to coordinate command received: target[%0.2fm, %0.2fm]", target_x, target_y)
 
         elif msg.cmd == "MOVE_TO_CHAMBER":
             chamber_num = int(msg.args[0])

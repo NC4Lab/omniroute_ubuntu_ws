@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
 import os,time
 import rospy
 import numpy as np
@@ -89,7 +88,6 @@ class Interface(Plugin):
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
         # Button for designating if rewards should be despensed from the gantry
-        self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
         self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
         self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
 
@@ -109,7 +107,6 @@ class Interface(Plugin):
         self._widget.startChamberBtnGroup.buttonClicked.connect(
             self._handle_startChamberBtnGroup_clicked)
         
-        self.do_gantry_reward = False
         self.is_testing_phase = False
         self.trial_generator = False
         
@@ -319,12 +316,6 @@ class Interface(Plugin):
                 self.existing_interface.raise_wall(Wall(i, j), False)
 
         self.existing_interface.activateWalls()
-
-    def _handle_gantryRewardTogBtn_clicked(self):
-        if self._widget.gantryRewardTogBtn.isChecked():
-            self.do_gantry_reward = True
-        else:
-            self.do_gantry_reward = False
 
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
@@ -629,29 +620,28 @@ class Interface(Plugin):
                 rospy.loginfo("Right chamber selected and chamber number is {}".format(self.success_chamber))
             self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
             self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-            self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
+            self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.REWARD_START
             rospy.loginfo("REWARD_START")
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                if self.do_gantry_reward:
-                    self.reward_dispense()
+                self.existing_interface.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_END
                 rospy.loginfo("REWARD END")
 
         elif self.mode == Mode.REWARD_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                #self.gantry_pub.publish("TRACK_HARNESS", [])
+                self.gantry_pub.publish("TRACK_HARNESS", [])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.POST_REWARD
                 rospy.loginfo("POST REWARD") 
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
-                self.existing_interface.setChamberFiveStartConfig()
+                self.setChamberFiveStartConfig()
                 rospy.loginfo("Chamber 5 selected")
                         
                 self.mode_start_time = rospy.Time.now()
@@ -666,7 +656,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
-                self.existing_interface.setChamberFiveStartConfig()
+                self.setChamberFiveStartConfig()
                 rospy.loginfo("Chamber 5 selected")
                 
                 self.mode_start_time = rospy.Time.now()
@@ -688,14 +678,6 @@ class Interface(Plugin):
             if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_delay.to_sec():
                 self.mode = Mode.START_TRIAL
                 rospy.loginfo("START_TRIAL")
-
-    def reward_dispense(self):
-        self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
-
-    def move_gantry_to_chamber(self, chamber_num):
-        x = self.maze_dim.chamber_centers[chamber_num][0]
-        y = self.maze_dim.chamber_centers[chamber_num][1]
-
 
 if __name__ == '__main__':
     rospy.init_node('single_T_maze')

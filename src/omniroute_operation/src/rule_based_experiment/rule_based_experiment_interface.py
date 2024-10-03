@@ -104,7 +104,6 @@ class Interface(Plugin):
 
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)
-        self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
         self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
 
         self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
@@ -122,7 +121,6 @@ class Interface(Plugin):
         self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
 
         self.is_ephys_rat = False
-        self.do_gantry_reward = False
         self.is_testing_phase = False
         self.trial_generator = False
         
@@ -292,12 +290,6 @@ class Interface(Plugin):
         else:
             self.is_ephys_rat = False
 
-    def _handle_gantryRewardTogBtn_clicked(self):
-        if self._widget.gantryRewardTogBtn.isChecked():
-            self.do_gantry_reward = True
-        else:
-            self.do_gantry_reward = False
-
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
         rospy.loginfo("Testing phase selected")
@@ -325,12 +317,6 @@ class Interface(Plugin):
     def _handle_trialGeneratorBtn_clicked(self):
         self.trial_generator = True
         rospy.loginfo("Trial Generator enabled") 
-
-    def _handle_gantryRewardTogBtn_clicked(self):
-        if self._widget.ephysRatTogBtn.isChecked():
-            self.is_ephys_rat = True
-        else:
-            self.is_ephys_rat = False
 
     def _handle_lowerAllDoorsBtn_clicked(self):
         self.setLowerConfig()
@@ -862,24 +848,24 @@ class Interface(Plugin):
                     rospy.loginfo("Right chamber selected and chamber number is {}".format(self.success_chamber))
                 self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
                 self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-                self.gantry_pub.publish("MOVE", [self.success_center_x, self.success_center_y])
+                self.gantry_pub.publish("MOVE_TO_COORDINATE", [
+                                        self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD_START")
 
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                    # if self.do_gantry_reward:
-                    #     self.reward_dispense()
-                    # if self.is_testing_phase:
-                    #     self.play_sound_cue(self.sound_cue)
+                    self.existing_interface.reward_dispense()
+                    if self.is_testing_phase:
+                        self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    #self.gantry_pub.publish("TRACK_HARNESS", [])
+                    self.gantry_pub.publish("TRACK_HARNESS", [])
                     if not self.is_testing_phase:
                     #     self.play_sound_cue(self.sound_cue)
                     # else:

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>914</width>
-    <height>1293</height>
+    <height>1058</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>10</x>
      <y>10</y>
      <width>891</width>
-     <height>1181</height>
+     <height>1031</height>
     </rect>
    </property>
    <property name="title">
@@ -149,8 +149,8 @@
    <widget class="QRadioButton" name="choiceBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>760</y>
+      <x>190</x>
+      <y>700</y>
       <width>112</width>
       <height>23</height>
      </rect>
@@ -164,8 +164,8 @@
      <rect>
       <x>20</x>
       <y>680</y>
-      <width>161</width>
-      <height>181</height>
+      <width>391</width>
+      <height>61</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -178,8 +178,8 @@
    <widget class="QRadioButton" name="automaticBtn">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>820</y>
+      <x>300</x>
+      <y>700</y>
       <width>112</width>
       <height>23</height>
      </rect>
@@ -188,98 +188,12 @@
      <string>Automatic</string>
     </property>
    </widget>
-   <widget class="QFrame" name="frame_7">
-    <property name="geometry">
-     <rect>
-      <x>180</x>
-      <y>680</y>
-      <width>391</width>
-      <height>181</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QPushButton" name="gantryRewardTogBtn">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>80</y>
-       <width>161</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
-    background-color: lightgray;
-    border: 1px solid black;
-}
-
-QPushButton:checked {
-    background-color: gray; /* Color when toggled */
-}
-
-QPushButton:pressed {
-    background-color: darkgray; /* Color when pressed */
-}
-</string>
-     </property>
-     <property name="text">
-      <string>Enable Gantry Reward</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_8">
-    <property name="geometry">
-     <rect>
-      <x>180</x>
-      <y>650</y>
-      <width>391</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QLabel" name="label_6">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>231</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Maze and Gantry Buttons</string>
-     </property>
-    </widget>
-   </widget>
    <widget class="QFrame" name="frame_9">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>650</y>
-      <width>161</width>
+      <width>391</width>
       <height>31</height>
      </rect>
     </property>
@@ -352,7 +266,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>880</y>
+      <y>760</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -365,7 +279,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>390</x>
-      <y>880</y>
+      <y>760</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -378,7 +292,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>780</x>
-      <y>880</y>
+      <y>760</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -391,7 +305,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>1000</y>
+      <y>860</y>
       <width>851</width>
       <height>151</height>
      </rect>
@@ -450,7 +364,7 @@ color: rgb(255, 255, 0);</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>970</y>
+      <y>830</y>
       <width>851</width>
       <height>31</height>
      </rect>
@@ -476,7 +390,6 @@ color: rgb(255, 255, 0);</string>
     </widget>
    </widget>
    <zorder>frame_3</zorder>
-   <zorder>frame_7</zorder>
    <zorder>frame_4</zorder>
    <zorder>pathDirEdit</zorder>
    <zorder>browseBtn</zorder>
@@ -490,7 +403,6 @@ color: rgb(255, 255, 0);</string>
    <zorder>choiceBtn</zorder>
    <zorder>automaticBtn</zorder>
    <zorder>label_4</zorder>
-   <zorder>frame_8</zorder>
    <zorder>frame_9</zorder>
    <zorder>frame_10</zorder>
    <zorder>startBtn</zorder>

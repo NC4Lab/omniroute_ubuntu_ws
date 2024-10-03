@@ -210,9 +210,7 @@ class Interface(Plugin):
         #self._widget.singleTmazeBtn.clicked.connect(self._handle_singleTmazeBtn_clicked)
         # Button for designating if this is the phys rat
         #self._widget.ephysRatTogBtn.clicked.connect(self._handle_ephysRatTogBtn_clicked)
-        # Button for designating if rewards should be despensed from the gantry
-        #self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
-        
+       
         # self.is_ephys_rat = False
         # self.do_gantry_reward = False
         # self.is_testing_phase = False
@@ -602,17 +600,11 @@ class Interface(Plugin):
     # def _handle_stopPumpBtn_clicked(self):
     #     self.gantry_pub.publish("STOP_PUMP",[])
 
-    # def _handle_gantryRewardTogBtn_clicked(self):
+    # def _handle_ephysRatTogBtn_clicked(self):
     #     if self._widget.ephysRatTogBtn.isChecked():
     #         self.is_ephys_rat = True
     #     else:
     #         self.is_ephys_rat = False
-
-    # def _handle_ephysRatTogBtn_clicked(self):
-    #     if self._widget.gantryRewardTogBtn.isChecked():
-    #         self.do_gantry_reward = True
-    #     else:
-    #         self.do_gantry_reward = False
 
     # def _handle_testingPhaseBtn_clicked(self):
     #     self.is_testing_phase = True
@@ -1547,10 +1539,8 @@ class Interface(Plugin):
         self.wallStates.send = send
         self.door_pub.publish(self.wallStates)
 
-    # def reward_dispense(self):
-    #     if self.is_ephys_rat:
-    #         return
-    #     self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
+    def reward_dispense(self):
+        self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.maze_dim.chamber_centers[chamber_num][0]
