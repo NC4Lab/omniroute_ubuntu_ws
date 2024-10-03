@@ -165,14 +165,14 @@ class Interface(Plugin):
         self._widget.pauseBtn.setEnabled(True)
         self._widget.resumeBtn.setEnabled(False)
 
-        self._widget.startChamberBtnGroup = QButtonGroup()
-        self._widget.startChamberBtnGroup.addButton(self._widget.chamberOneBtn, id=1)
-        self._widget.startChamberBtnGroup.addButton(self._widget.chamberThreeBtn, id=3)
-        self._widget.startChamberBtnGroup.addButton(self._widget.chamberFiveBtn, id=5)
-        self._widget.startChamberBtnGroup.addButton(self._widget.chamberSevenBtn, id=7)
-        self._widget.startChamberBtnGroup.setExclusive(True)
-        for button in self._widget.startChamberBtnGroup.buttons():
-            button.setEnabled(True)
+        # self._widget.startChamberBtnGroup = QButtonGroup()
+        # self._widget.startChamberBtnGroup.addButton(self._widget.chamberOneBtn, id=1)
+        # self._widget.startChamberBtnGroup.addButton(self._widget.chamberThreeBtn, id=3)
+        # self._widget.startChamberBtnGroup.addButton(self._widget.chamberFiveBtn, id=5)
+        # self._widget.startChamberBtnGroup.addButton(self._widget.chamberSevenBtn, id=7)
+        # self._widget.startChamberBtnGroup.setExclusive(True)
+        # for button in self._widget.startChamberBtnGroup.buttons():
+        #     button.setEnabled(True)
 
         self._widget.trainingModeBtnGroup = QButtonGroup()
         self._widget.trainingModeBtnGroup.addButton(self._widget.forcedChoiceBtn, id=1)
@@ -191,7 +191,7 @@ class Interface(Plugin):
         self._widget.startBtn.clicked.connect(self._handle_startBtn_clicked)
         self._widget.resumeBtn.clicked.connect(self._handle_resumeBtn_clicked)
         self._widget.pauseBtn.clicked.connect(self._handle_pauseBtn_clicked)
-        self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
+        #self._widget.startChamberBtnGroup.buttonClicked.connect(self._handle_startChamberBtnGroup_clicked)
         self._widget.trainingModeBtnGroup.buttonClicked.connect(self._handle_trainingModeBtnGroup_clicked)
         self._widget.xlsxFileListWidget.itemClicked.connect(self._handle_xlsxFileListWidget_item_clicked)
         self._widget.trialListWidget.itemClicked.connect(self._handle_trialListWidget_item_clicked)
@@ -264,7 +264,7 @@ class Interface(Plugin):
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
-        self.chambers_pub = rospy.Publisher('/selected_chamber', String, queue_size=1)
+        #self.chambers_pub = rospy.Publisher('/selected_chamber', String, queue_size=1)
 
         self.mode_pub = rospy.Publisher('/mode', String, queue_size=1)
 
@@ -638,19 +638,19 @@ class Interface(Plugin):
             if (str.startswith(s)):
                 os.system("rosnode kill " + str)
     
-    def _handle_startChamberBtnGroup_clicked(self):
-        if self._widget.startChamberBtnGroup.checkedId() == 1:
-            self.setChamberOneStartConfig()
-            rospy.loginfo("Chamber 1 selected")
-        elif self._widget.startChamberBtnGroup.checkedId() == 3:
-            self.setChamberThreeStartConfig()
-            rospy.loginfo("Chamber 3 selected")
-        elif self._widget.startChamberBtnGroup.checkedId() == 5:
-            self.setChamberFiveStartConfig()
-            rospy.loginfo("Chamber 5 selected")
-        elif self._widget.startChamberBtnGroup.checkedId() == 7:
-            self.setChamberSevenStartConfig()
-            rospy.loginfo("Chamber 7 selected")
+    # def _handle_startChamberBtnGroup_clicked(self):
+    #     if self._widget.startChamberBtnGroup.checkedId() == 1:
+    #         self.setChamberOneStartConfig()
+    #         rospy.loginfo("Chamber 1 selected")
+    #     elif self._widget.startChamberBtnGroup.checkedId() == 3:
+    #         self.setChamberThreeStartConfig()
+    #         rospy.loginfo("Chamber 3 selected")
+    #     elif self._widget.startChamberBtnGroup.checkedId() == 5:
+    #         self.setChamberFiveStartConfig()
+    #         rospy.loginfo("Chamber 5 selected")
+    #     elif self._widget.startChamberBtnGroup.checkedId() == 7:
+    #         self.setChamberSevenStartConfig()
+    #         rospy.loginfo("Chamber 7 selected")
 
     def _handle_trainingModeBtnGroup_clicked(self):
         if self._widget.trainingModeBtnGroup.checkedId() == 1:
@@ -711,109 +711,109 @@ class Interface(Plugin):
     #     self.activateWalls()
 
     
-    def setChamberOneStartConfig(self):
-        self.start_chamber = 1
-        self.central_chamber = 4
-        self.left_chamber = 5
-        self.right_chamber = 3
+    # def setChamberOneStartConfig(self):
+    #     self.start_chamber = 1
+    #     self.central_chamber = 4
+    #     self.left_chamber = 5
+    #     self.right_chamber = 3
         
-        self.project_left_cue_triangle = 4 
-        self.project_right_cue_triangle = 3
+    #     self.project_left_cue_triangle = 4 
+    #     self.project_right_cue_triangle = 3
         
-        self.start_wall = Wall(1, 6)
-        self.left_goal_wall = Wall(4, 4)
-        self.right_goal_wall = Wall(4, 0)
+    #     self.start_wall = Wall(1, 6)
+    #     self.left_goal_wall = Wall(4, 4)
+    #     self.right_goal_wall = Wall(4, 0)
 
-        chambers_info = {
-            'start_chamber': self.start_chamber,
-            'central_chamber': self.central_chamber,
-            'left_chamber': self.left_chamber,
-            'right_chamber': self.right_chamber,
-            'project_left_cue_triangle': self.project_left_cue_triangle,
-            'project_right_cue_triangle': self.project_right_cue_triangle,
-            'start_wall': self.start_wall.to_dict(),
-            'left_goal_wall': self.left_goal_wall.to_dict(),
-            'right_goal_wall': self.right_goal_wall.to_dict()
-        }
-        self.chambers_pub.publish(json.dumps(chambers_info))
+    #     chambers_info = {
+    #         'start_chamber': self.start_chamber,
+    #         'central_chamber': self.central_chamber,
+    #         'left_chamber': self.left_chamber,
+    #         'right_chamber': self.right_chamber,
+    #         'project_left_cue_triangle': self.project_left_cue_triangle,
+    #         'project_right_cue_triangle': self.project_right_cue_triangle,
+    #         'start_wall': self.start_wall.to_dict(),
+    #         'left_goal_wall': self.left_goal_wall.to_dict(),
+    #         'right_goal_wall': self.right_goal_wall.to_dict()
+    #     }
+    #     self.chambers_pub.publish(json.dumps(chambers_info))
 
-    def setChamberThreeStartConfig(self):
-        self.start_chamber = 3
-        self.central_chamber = 4
-        self.left_chamber = 1
-        self.right_chamber = 7
+    # def setChamberThreeStartConfig(self):
+    #     self.start_chamber = 3
+    #     self.central_chamber = 4
+    #     self.left_chamber = 1
+    #     self.right_chamber = 7
 
-        self.project_left_cue_triangle = 2 
-        self.project_right_cue_triangle = 1
+    #     self.project_left_cue_triangle = 2 
+    #     self.project_right_cue_triangle = 1
 
-        self.start_wall = Wall(3, 4)
-        self.left_goal_wall = Wall(4, 2)
-        self.right_goal_wall = Wall(4, 6)
+    #     self.start_wall = Wall(3, 4)
+    #     self.left_goal_wall = Wall(4, 2)
+    #     self.right_goal_wall = Wall(4, 6)
 
-        chambers_info = {
-            'start_chamber': self.start_chamber,
-            'central_chamber': self.central_chamber,
-            'left_chamber': self.left_chamber,
-            'right_chamber': self.right_chamber,
-            'project_left_cue_triangle': self.project_left_cue_triangle,
-            'project_right_cue_triangle': self.project_right_cue_triangle,
-            'start_wall': self.start_wall.to_dict(),
-            'left_goal_wall': self.left_goal_wall.to_dict(),   
-            'right_goal_wall': self.right_goal_wall.to_dict()
-        }
-        self.chambers_pub.publish(json.dumps(chambers_info))
+    #     chambers_info = {
+    #         'start_chamber': self.start_chamber,
+    #         'central_chamber': self.central_chamber,
+    #         'left_chamber': self.left_chamber,
+    #         'right_chamber': self.right_chamber,
+    #         'project_left_cue_triangle': self.project_left_cue_triangle,
+    #         'project_right_cue_triangle': self.project_right_cue_triangle,
+    #         'start_wall': self.start_wall.to_dict(),
+    #         'left_goal_wall': self.left_goal_wall.to_dict(),   
+    #         'right_goal_wall': self.right_goal_wall.to_dict()
+    #     }
+    #     self.chambers_pub.publish(json.dumps(chambers_info))
 
-    def setChamberFiveStartConfig(self):
-        self.start_chamber = 5
-        self.central_chamber = 4
-        self.left_chamber = 7
-        self.right_chamber = 1
+    # def setChamberFiveStartConfig(self):
+    #     self.start_chamber = 5
+    #     self.central_chamber = 4
+    #     self.left_chamber = 7
+    #     self.right_chamber = 1
 
-        self.project_left_cue_triangle = 6
-        self.project_right_cue_triangle = 5
+    #     self.project_left_cue_triangle = 6
+    #     self.project_right_cue_triangle = 5
 
-        self.start_wall = Wall(5, 0)
-        self.left_goal_wall = Wall(4, 6)
-        self.right_goal_wall = Wall(4, 2)
+    #     self.start_wall = Wall(5, 0)
+    #     self.left_goal_wall = Wall(4, 6)
+    #     self.right_goal_wall = Wall(4, 2)
 
-        chambers_info = {
-            'start_chamber': self.start_chamber,
-            'central_chamber': self.central_chamber,
-            'left_chamber': self.left_chamber,
-            'right_chamber': self.right_chamber,
-            'project_left_cue_triangle': self.project_left_cue_triangle,
-            'project_right_cue_triangle': self.project_right_cue_triangle,
-            'start_wall': self.start_wall.to_dict(),
-            'left_goal_wall': self.left_goal_wall.to_dict(),
-            'right_goal_wall': self.right_goal_wall.to_dict()
-        }
-        self.chambers_pub.publish(json.dumps(chambers_info))
+    #     chambers_info = {
+    #         'start_chamber': self.start_chamber,
+    #         'central_chamber': self.central_chamber,
+    #         'left_chamber': self.left_chamber,
+    #         'right_chamber': self.right_chamber,
+    #         'project_left_cue_triangle': self.project_left_cue_triangle,
+    #         'project_right_cue_triangle': self.project_right_cue_triangle,
+    #         'start_wall': self.start_wall.to_dict(),
+    #         'left_goal_wall': self.left_goal_wall.to_dict(),
+    #         'right_goal_wall': self.right_goal_wall.to_dict()
+    #     }
+    #     self.chambers_pub.publish(json.dumps(chambers_info))
 
-    def setChamberSevenStartConfig(self):
-        self.start_chamber = 7
-        self.central_chamber = 4
-        self.left_chamber = 3
-        self.right_chamber = 5
+    # def setChamberSevenStartConfig(self):
+    #     self.start_chamber = 7
+    #     self.central_chamber = 4
+    #     self.left_chamber = 3
+    #     self.right_chamber = 5
 
-        self.project_left_cue_triangle = 8
-        self.project_right_cue_triangle = 7
+    #     self.project_left_cue_triangle = 8
+    #     self.project_right_cue_triangle = 7
 
-        self.start_wall = Wall(7, 2)
-        self.left_goal_wall = Wall(4, 0)
-        self.right_goal_wall = Wall(4, 4)
+    #     self.start_wall = Wall(7, 2)
+    #     self.left_goal_wall = Wall(4, 0)
+    #     self.right_goal_wall = Wall(4, 4)
 
-        chambers_info = {
-            'start_chamber': self.start_chamber,
-            'central_chamber': self.central_chamber,
-            'left_chamber': self.left_chamber,
-            'right_chamber': self.right_chamber,
-            'project_left_cue_triangle': self.project_left_cue_triangle,
-            'project_right_cue_triangle': self.project_right_cue_triangle,
-            'start_wall': self.start_wall.to_dict(),
-            'left_goal_wall': self.left_goal_wall.to_dict(),
-            'right_goal_wall': self.right_goal_wall.to_dict()
-        }
-        self.chambers_pub.publish(json.dumps(chambers_info))
+    #     chambers_info = {
+    #         'start_chamber': self.start_chamber,
+    #         'central_chamber': self.central_chamber,
+    #         'left_chamber': self.left_chamber,
+    #         'right_chamber': self.right_chamber,
+    #         'project_left_cue_triangle': self.project_left_cue_triangle,
+    #         'project_right_cue_triangle': self.project_right_cue_triangle,
+    #         'start_wall': self.start_wall.to_dict(),
+    #         'left_goal_wall': self.left_goal_wall.to_dict(),
+    #         'right_goal_wall': self.right_goal_wall.to_dict()
+    #     }
+    #     self.chambers_pub.publish(json.dumps(chambers_info))
 
     def setForcedChoiceMode(self):
         self.training_mode = "user_defined_forced_choice"

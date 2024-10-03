@@ -86,14 +86,28 @@ class Interface(Plugin):
 
         self.scene = QGraphicsScene()
 
-        self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
-        self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
         # Button for designating if rewards should be despensed from the gantry
         self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
         self._widget.plusMazeBtn.clicked.connect(self._handle_plusMazeBtn_clicked)
         self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
+
+        self._widget.startChamberBtnGroup = QButtonGroup()
+        self._widget.startChamberBtnGroup.addButton(
+            self._widget.chamberOneBtn, id=1)
+        self._widget.startChamberBtnGroup.addButton(
+            self._widget.chamberThreeBtn, id=3)
+        self._widget.startChamberBtnGroup.addButton(
+            self._widget.chamberFiveBtn, id=5)
+        self._widget.startChamberBtnGroup.addButton(
+            self._widget.chamberSevenBtn, id=7)
+        self._widget.startChamberBtnGroup.setExclusive(True)
+        for button in self._widget.startChamberBtnGroup.buttons():
+            button.setEnabled(True)
+
+        self._widget.startChamberBtnGroup.buttonClicked.connect(
+            self._handle_startChamberBtnGroup_clicked)
         
         self.do_gantry_reward = False
         self.is_testing_phase = False
@@ -119,27 +133,13 @@ class Interface(Plugin):
 
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
-        self.dataDir = os.path.expanduser(os.path.join('~', 'maze_data')) # Default data directory
-        self.defaultDataDir = self.dataDir
-
-        self._widget.recordDataDir.setText(self.defaultDataDir)
-        
-        self.isRecording = self.is_recording_on()
-
-        if self.isRecording:
-            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-            self._widget.recordBtn.setText("Stop")
-        else:
-            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-            self._widget.recordBtn.setText("Record")
-
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
 
-        rospy.Subscriber('/selected_chamber', String,self.chamber_callback, queue_size=1)
+        #rospy.Subscriber('/selected_chamber', String,self.chamber_callback, queue_size=1)
 
         rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
         self.button_pub = rospy.Publisher('/button', String, queue_size=1)
@@ -268,48 +268,6 @@ class Interface(Plugin):
 
         return trial
 
-    def _handle_recordBtn_clicked(self, checked):
-        #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
-        if not self.isRecording:   # Start recording
-            self.dataDir = self._widget.recordDataDir.text()
-            if not os.path.isdir(self.dataDir):
-                self._widget.recordDataDir.setText(self.defaultDataDir)
-                self.dataDir = self.defaultDataDir
-                self._widget.recordDataDir.setText(self.dataDir)
-
-            # Record all ROS topics to domeExperimentData.bag
-            command_data = f"rosbag record -a -o singleTmazeExperimentData"
-            self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
-
-            # Pause for 3 seconds to allow the bag file to be created
-            rospy.sleep(3)
-
-            # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
-            
-            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-            self._widget.recordBtn.setText("Stop")
-            rospy.loginfo('Recording data files')
-            self.isRecording = 1
-
-        else:   # Stop recording
-            # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
-
-            rospy.sleep(1)
-
-            self.terminate_ros_node("/record")
-
-            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-            self._widget.recordBtn.setText("Record")
-            rospy.loginfo('Stopping recording')
-
-            self.isRecording = 0
-
-    def _handle_browseBtn_2_clicked(self):
-        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
-        self._widget.recordDataDir.setText(res)
-
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
         rospy.loginfo("Testing phase selected")
@@ -368,6 +326,20 @@ class Interface(Plugin):
         else:
             self.do_gantry_reward = False
 
+    def _handle_startChamberBtnGroup_clicked(self):
+        if self._widget.startChamberBtnGroup.checkedId() == 1:
+            self.setChamberOneStartConfig()
+            rospy.loginfo("Chamber 1 selected")
+        elif self._widget.startChamberBtnGroup.checkedId() == 3:
+            self.setChamberThreeStartConfig()
+            rospy.loginfo("Chamber 3 selected")
+        elif self._widget.startChamberBtnGroup.checkedId() == 5:
+            self.setChamberFiveStartConfig()
+            rospy.loginfo("Chamber 5 selected")
+        elif self._widget.startChamberBtnGroup.checkedId() == 7:
+            self.setChamberSevenStartConfig()
+            rospy.loginfo("Chamber 7 selected")
+
     def mode_callback(self, msg):
         mode = msg.data
         if mode == "START_EXPERIMENT":
@@ -390,19 +362,19 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-    def chamber_callback(self, msg):
-        chamber_data = json.loads(msg.data)
-        self.start_chamber = chamber_data['start_chamber']
-        self.central_chamber = chamber_data['central_chamber']
-        self.left_chamber = chamber_data['left_chamber']
-        self.right_chamber = chamber_data['right_chamber']
+    # def chamber_callback(self, msg):
+    #     chamber_data = json.loads(msg.data)
+    #     self.start_chamber = chamber_data['start_chamber']
+    #     self.central_chamber = chamber_data['central_chamber']
+    #     self.left_chamber = chamber_data['left_chamber']
+    #     self.right_chamber = chamber_data['right_chamber']
 
-        self.project_left_cue_triangle = chamber_data['project_left_cue_triangle']
-        self.project_right_cue_triangle = chamber_data['project_right_cue_triangle']
+    #     self.project_left_cue_triangle = chamber_data['project_left_cue_triangle']
+    #     self.project_right_cue_triangle = chamber_data['project_right_cue_triangle']
 
-        self.start_wall = Wall.from_dict(chamber_data['start_wall'])
-        self.left_goal_wall = Wall.from_dict(chamber_data['left_goal_wall'])
-        self.right_goal_wall = Wall.from_dict(chamber_data['right_goal_wall'])
+    #     self.start_wall = Wall.from_dict(chamber_data['start_wall'])
+    #     self.left_goal_wall = Wall.from_dict(chamber_data['left_goal_wall'])
+    #     self.right_goal_wall = Wall.from_dict(chamber_data['right_goal_wall'])
 
     def rat_head_chamber_callback(self, msg):
         self.rat_head_chamber = msg.data
@@ -410,12 +382,115 @@ class Interface(Plugin):
     def rat_body_chamber_callback(self, msg):
         self.rat_body_chamber = msg.data
 
+    def setChamberOneStartConfig(self):
+        self.start_chamber = 1
+        self.central_chamber = 4
+        self.left_chamber = 5
+        self.right_chamber = 3
+
+        self.project_left_cue_triangle = 4
+        self.project_right_cue_triangle = 3
+
+        self.start_wall = Wall(1, 6)
+        self.left_goal_wall = Wall(4, 4)
+        self.right_goal_wall = Wall(4, 0)
+
+        # chambers_info = {
+        #     'start_chamber': self.start_chamber,
+        #     'central_chamber': self.central_chamber,
+        #     'left_chamber': self.left_chamber,
+        #     'right_chamber': self.right_chamber,
+        #     'project_left_cue_triangle': self.project_left_cue_triangle,
+        #     'project_right_cue_triangle': self.project_right_cue_triangle,
+        #     'start_wall': self.start_wall.to_dict(),
+        #     'left_goal_wall': self.left_goal_wall.to_dict(),
+        #     'right_goal_wall': self.right_goal_wall.to_dict()
+        # }
+        # self.chambers_pub.publish(json.dumps(chambers_info))
+
+    def setChamberThreeStartConfig(self):
+        self.start_chamber = 3
+        self.central_chamber = 4
+        self.left_chamber = 1
+        self.right_chamber = 7
+
+        self.project_left_cue_triangle = 2
+        self.project_right_cue_triangle = 1
+
+        self.start_wall = Wall(3, 4)
+        self.left_goal_wall = Wall(4, 2)
+        self.right_goal_wall = Wall(4, 6)
+
+        # chambers_info = {
+        #     'start_chamber': self.start_chamber,
+        #     'central_chamber': self.central_chamber,
+        #     'left_chamber': self.left_chamber,
+        #     'right_chamber': self.right_chamber,
+        #     'project_left_cue_triangle': self.project_left_cue_triangle,
+        #     'project_right_cue_triangle': self.project_right_cue_triangle,
+        #     'start_wall': self.start_wall.to_dict(),
+        #     'left_goal_wall': self.left_goal_wall.to_dict(),
+        #     'right_goal_wall': self.right_goal_wall.to_dict()
+        # }
+        # self.chambers_pub.publish(json.dumps(chambers_info))
+
+    def setChamberFiveStartConfig(self):
+        self.start_chamber = 5
+        self.central_chamber = 4
+        self.left_chamber = 7
+        self.right_chamber = 1
+
+        self.project_left_cue_triangle = 6
+        self.project_right_cue_triangle = 5
+
+        self.start_wall = Wall(5, 0)
+        self.left_goal_wall = Wall(4, 6)
+        self.right_goal_wall = Wall(4, 2)
+
+        # chambers_info = {
+        #     'start_chamber': self.start_chamber,
+        #     'central_chamber': self.central_chamber,
+        #     'left_chamber': self.left_chamber,
+        #     'right_chamber': self.right_chamber,
+        #     'project_left_cue_triangle': self.project_left_cue_triangle,
+        #     'project_right_cue_triangle': self.project_right_cue_triangle,
+        #     'start_wall': self.start_wall.to_dict(),
+        #     'left_goal_wall': self.left_goal_wall.to_dict(),
+        #     'right_goal_wall': self.right_goal_wall.to_dict()
+        # }
+        # self.chambers_pub.publish(json.dumps(chambers_info))
+
+    def setChamberSevenStartConfig(self):
+        self.start_chamber = 7
+        self.central_chamber = 4
+        self.left_chamber = 3
+        self.right_chamber = 5
+
+        self.project_left_cue_triangle = 8
+        self.project_right_cue_triangle = 7
+
+        self.start_wall = Wall(7, 2)
+        self.left_goal_wall = Wall(4, 0)
+        self.right_goal_wall = Wall(4, 4)
+
+        # chambers_info = {
+        #     'start_chamber': self.start_chamber,
+        #     'central_chamber': self.central_chamber,
+        #     'left_chamber': self.left_chamber,
+        #     'right_chamber': self.right_chamber,
+        #     'project_left_cue_triangle': self.project_left_cue_triangle,
+        #     'project_right_cue_triangle': self.project_right_cue_triangle,
+        #     'start_wall': self.start_wall.to_dict(),
+        #     'left_goal_wall': self.left_goal_wall.to_dict(),
+        #     'right_goal_wall': self.right_goal_wall.to_dict()
+        # }
+        # self.chambers_pub.publish(json.dumps(chambers_info))
+
     def run_experiment(self):
 
         self.current_time = rospy.Time.now()
         current_rat_chamber = self.rat_head_chamber
 
-        rospy.loginfo("Single T-maze experiment")
         if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
             # The rat has moved to a different chamber, update the gantry position
             self.existing_interface.move_gantry_to_chamber(current_rat_chamber)
@@ -426,7 +501,7 @@ class Interface(Plugin):
         if self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("START OF THE EXPERIMENT")
         
-            self.currentStartConfig = self.existing_interface._widget.startChamberBtnGroup.checkedId()
+            self.currentStartConfig = self._widget.startChamberBtnGroup.checkedId()
 
             self.currentTrialNumber = self.current_trial_index-1
 

@@ -58,58 +58,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QRadioButton" name="chamberThreeBtn">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>700</y>
-      <width>112</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Chamber  3 </string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="chamberFiveBtn">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>820</y>
-      <width>151</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Chamber  5 </string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="chamberSevenBtn">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>760</y>
-      <width>112</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Chamber 7 </string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="chamberOneBtn">
-    <property name="geometry">
-     <rect>
-      <x>210</x>
-      <y>760</y>
-      <width>112</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Chamber 1 </string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="previousBtn">
     <property name="geometry">
      <rect>
@@ -175,7 +123,7 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>30</x>
       <y>650</y>
       <width>761</width>
       <height>31</height>
@@ -188,7 +136,7 @@
    <widget class="QRadioButton" name="forcedChoiceBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>40</x>
       <y>700</y>
       <width>131</width>
       <height>23</height>
@@ -201,7 +149,7 @@
    <widget class="QRadioButton" name="choiceBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>40</x>
       <y>760</y>
       <width>112</width>
       <height>23</height>
@@ -211,57 +159,12 @@
      <string>Choice</string>
     </property>
    </widget>
-   <widget class="QFrame" name="frame_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>650</y>
-      <width>301</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QLabel" name="label_2">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>301</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Pick the starting Chamber</string>
-     </property>
-    </widget>
-   </widget>
    <widget class="QFrame" name="frame_4">
     <property name="geometry">
      <rect>
-      <x>320</x>
-      <y>680</y>
-      <width>161</width>
-      <height>181</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-   </widget>
-   <widget class="QFrame" name="frame_5">
-    <property name="geometry">
-     <rect>
       <x>20</x>
       <y>680</y>
-      <width>301</width>
+      <width>161</width>
       <height>181</height>
      </rect>
     </property>
@@ -275,7 +178,7 @@
    <widget class="QRadioButton" name="automaticBtn">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>40</x>
       <y>820</y>
       <width>112</width>
       <height>23</height>
@@ -288,7 +191,7 @@
    <widget class="QFrame" name="frame_7">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>180</x>
       <y>680</y>
       <width>391</width>
       <height>181</height>
@@ -345,7 +248,7 @@ QPushButton:pressed {
    <widget class="QFrame" name="frame_8">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>180</x>
       <y>650</y>
       <width>391</width>
       <height>31</height>
@@ -374,7 +277,7 @@ QPushButton:pressed {
    <widget class="QFrame" name="frame_9">
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>20</x>
       <y>650</y>
       <width>161</width>
       <height>31</height>
@@ -575,15 +478,9 @@ color: rgb(255, 255, 0);</string>
    <zorder>frame_3</zorder>
    <zorder>frame_7</zorder>
    <zorder>frame_4</zorder>
-   <zorder>frame_5</zorder>
-   <zorder>frame_2</zorder>
    <zorder>pathDirEdit</zorder>
    <zorder>browseBtn</zorder>
    <zorder>xlsxFileListWidget</zorder>
-   <zorder>chamberThreeBtn</zorder>
-   <zorder>chamberFiveBtn</zorder>
-   <zorder>chamberSevenBtn</zorder>
-   <zorder>chamberOneBtn</zorder>
    <zorder>previousBtn</zorder>
    <zorder>nextBtn</zorder>
    <zorder>trialListWidget</zorder>
