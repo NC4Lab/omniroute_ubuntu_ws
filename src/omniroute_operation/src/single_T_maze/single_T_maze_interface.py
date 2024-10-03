@@ -147,12 +147,16 @@ class Interface(Plugin):
         rospy.Subscriber('/rat_head_chamber', Int8, self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/rat_body_chamber', Int8, self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
 
+        self.experiment_pub = rospy.Publisher('/experiment', String, queue_size=1)
+
         self.rat_head_chamber = -1
         self.rat_body_chamber = -1
         
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
 
+        self.experiment_pub.publish("single_T_maze_experiment")
+ 
         # Experiment parameters
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial

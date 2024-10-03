@@ -202,8 +202,8 @@ class Interface(Plugin):
         # self._widget.stopTrackingBtn.clicked.connect(self._handle_stopTrackingBtn_clicked)
         # self._widget.startTrackingBtn.clicked.connect(self._handle_startTrackingBtn_clicked)
         # self._widget.stopPumpBtn.clicked.connect(self._handle_stopPumpBtn_clicked)
-        # self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
-        #self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
+        self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
+        self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         # self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         # self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  
         # self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
@@ -246,16 +246,16 @@ class Interface(Plugin):
 
         # self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
-        # self._widget.recordDataDir.setText(self.defaultDataDir)
+        self._widget.recordDataDir.setText(self.defaultDataDir)
         
-        #self.isRecording = self.is_recording_on()
+        self.isRecording = self.is_recording_on()
 
-        # if self.isRecording:
-        #     self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-        #     self._widget.recordBtn.setText("Stop")
-        # else:
-        #     self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-        #     self._widget.recordBtn.setText("Record")
+        if self.isRecording:
+            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
+            self._widget.recordBtn.setText("Stop")
+        else:
+            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
+            self._widget.recordBtn.setText("Record")
 
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
         self.door_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=200)
@@ -269,6 +269,7 @@ class Interface(Plugin):
         self.mode_pub = rospy.Publisher('/mode', String, queue_size=1)
 
         rospy.Subscriber('/button', String, self.button_callback, queue_size=1)
+        rospy.Subscriber('/experiment', String, self.experiment_callback, queue_size=1)
         
         #Initialize the subsrciber for reading from harness and maze boundary markers posistions
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped, self.harness_pose_callback, queue_size=1, tcp_nodelay=True)
@@ -400,7 +401,15 @@ class Interface(Plugin):
 
     #     return trial
 
-    
+    def experiment_callback(self, msg):
+        experiment = msg.data
+        if experiment == "rule_based_experiment":
+            self.experiment_type = "rule_based_experiment"
+            rospy.loginfo("Rule-based experiment selected")    
+        elif experiment == "single_T_maze_experiment":
+            self.experiment_type = "single_T_maze_experiment"
+            rospy.loginfo("Single T-maze experiment selected")
+
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
         filter = "Text Files (*.xlsx)"  
@@ -526,47 +535,54 @@ class Interface(Plugin):
         # rospy.loginfo("Experiment resumed")
         #self.mode = Mode.RESUME_EXPERIMENT
 
-    # def _handle_recordBtn_clicked(self, checked):
-    #     #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
-    #     if not self.isRecording:   # Start recording
-    #         self.dataDir = self._widget.recordDataDir.text()
-    #         if not os.path.isdir(self.dataDir):
-    #             self._widget.recordDataDir.setText(self.defaultDataDir)
-    #             self.dataDir = self.defaultDataDir
-    #             self._widget.recordDataDir.setText(self.dataDir)
+    def _handle_recordBtn_clicked(self, checked):
+        #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
+        if not self.isRecording:   # Start recording
+            self.dataDir = self._widget.recordDataDir.text()
+            if not os.path.isdir(self.dataDir):
+                self._widget.recordDataDir.setText(self.defaultDataDir)
+                self.dataDir = self.defaultDataDir
+                self._widget.recordDataDir.setText(self.dataDir)
 
-    #         # Record all ROS topics to domeExperimentData.bag
-    #         command_data = f"rosbag record -a -o plusMazeExperimentData"
-    #         self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
+            if self.experiment_type == "rule_based_experiment":
+                # Record all ROS topics to domeExperimentData.bag
+                command_data = f"rosbag record -a -o ruleBasedExperimentData"
+            elif self.experiment_type == "single_T_maze_experiment":
+                # Record all ROS topics to domeExperimentData.bag
+                command_data = f"rosbag record -a -o singleTmazeExperimentData"
+            else:
+                rospy.logerr(f"Unknown experiment type: {self.experiment_type}")
+                return
+                
+            self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
+            # Pause for 3 seconds to allow the bag file to be created
+            rospy.sleep(3)
 
-    #         # Pause for 3 seconds to allow the bag file to be created
-    #         rospy.sleep(3)
-
-    #         # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
-    #         self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
+            # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
+            self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
             
-    #         self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-    #         self._widget.recordBtn.setText("Stop")
-    #         rospy.loginfo('Recording data files')
-    #         self.isRecording = 1
+            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
+            self._widget.recordBtn.setText("Stop")
+            rospy.loginfo('Recording data files')
+            self.isRecording = 1
 
-    #     else:   # Stop recording
-    #         # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
-    #         self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
+        else:   # Stop recording
+            # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
+            self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
 
-    #         rospy.sleep(1)
+            rospy.sleep(1)
 
-    #         self.terminate_ros_node("/record")
+            self.terminate_ros_node("/record")
 
-    #         self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-    #         self._widget.recordBtn.setText("Record")
-    #         rospy.loginfo('Stopping recording')
+            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
+            self._widget.recordBtn.setText("Record")
+            rospy.loginfo('Stopping recording')
 
-    #         self.isRecording = 0
+            self.isRecording = 0
 
-    # def _handle_browseBtn_2_clicked(self):
-    #     res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
-    #     self._widget.recordDataDir.setText(res)
+    def _handle_browseBtn_2_clicked(self):
+        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
+        self._widget.recordDataDir.setText(res)
 
     # def _handle_pumpStartBtn_clicked(self):
     #     self.gantry_pub.publish("START_PUMP", [])
@@ -602,16 +618,16 @@ class Interface(Plugin):
     #     self.is_testing_phase = True
     #     rospy.loginfo("Testing phase selected")
     
-    # def is_recording_on(self):
-    #     list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-    #     list_output = list_cmd.stdout.read()
-    #     retcode = list_cmd.wait()
-    #     assert retcode == 0, "List command returned %d" % retcode
-    #     ret = 0
-    #     for str in list_output.decode().split("\n"):
-    #         if (str.startswith("/record")):
-    #             ret = 1
-    #     return ret
+    def is_recording_on(self):
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        ret = 0
+        for str in list_output.decode().split("\n"):
+            if (str.startswith("/record")):
+                ret = 1
+        return ret
     
     def terminate_ros_node(self,s):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -838,7 +854,17 @@ class Interface(Plugin):
         elif button_mode == "Pause_button_enabled":
             self._widget.pauseBtn.setEnabled(True)
             self._widget.resumeBtn.setEnabled(False)
+
+    def experiment_callback(self, msg):
+        experiment = msg.data
+        if experiment == "rule_based_experiment":
+            self.experiment_type = "rule_based_experiment"
+            rospy.loginfo("Rule-based experiment selected")    
+        elif experiment == "single_T_maze_experiment":
+            self.experiment_type = "single_T_maze_experiment"
+            rospy.loginfo("Single T-maze experiment selected")
             
+
     # def rat_head_chamber_callback(self, msg):
     #     self.rat_head_chamber = msg.data
 

@@ -102,8 +102,6 @@ class Interface(Plugin):
 
         self.scene = QGraphicsScene()
 
-        self._widget.browseBtn_2.clicked.connect(self._handle_browseBtn_2_clicked)
-        self._widget.recordBtn.clicked[bool].connect(self._handle_recordBtn_clicked)
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)
         self._widget.gantryRewardTogBtn.clicked.connect(self._handle_gantryRewardTogBtn_clicked)
@@ -135,20 +133,6 @@ class Interface(Plugin):
 
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
-        self.dataDir = os.path.expanduser(os.path.join('~', 'maze_data')) # Default data directory
-        self.defaultDataDir = self.dataDir
-
-        self._widget.recordDataDir.setText(self.defaultDataDir)
-        
-        self.isRecording = self.is_recording_on()
-
-        if self.isRecording:
-            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-            self._widget.recordBtn.setText("Stop")
-        else:
-            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-            self._widget.recordBtn.setText("Record")
-
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
@@ -160,6 +144,7 @@ class Interface(Plugin):
 
         rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
         self.button_pub = rospy.Publisher('/button', String, queue_size=1)
+        self.experiment_pub = rospy.Publisher('/experiment', String, queue_size=1)
 
         rospy.Subscriber('/rat_head_chamber', Int8,self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/rat_body_chamber', Int8,self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
@@ -168,6 +153,8 @@ class Interface(Plugin):
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
 
+        self.experiment_pub.publish("rule_based_experiment")
+ 
         # Experiment parameters
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
@@ -286,48 +273,6 @@ class Interface(Plugin):
         trial = self.trial_types[start_chamber]
 
         return trial
-
-    def _handle_recordBtn_clicked(self, checked):
-        #this function is called when the record button is clicked. It starts/stops recording data files.It saves all the ROS topics to a bag file.
-        if not self.isRecording:   # Start recording
-            self.dataDir = self._widget.recordDataDir.text()
-            if not os.path.isdir(self.dataDir):
-                self._widget.recordDataDir.setText(self.defaultDataDir)
-                self.dataDir = self.defaultDataDir
-                self._widget.recordDataDir.setText(self.dataDir)
-
-            # Record all ROS topics to domeExperimentData.bag
-            command_data = f"rosbag record -a -o RuleBasedExperimentData"
-            self.recordDataPid = subprocess.Popen(command_data, shell=True, cwd=self.dataDir)
-
-            # Pause for 3 seconds to allow the bag file to be created
-            rospy.sleep(3)
-
-            # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
-            
-            self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
-            self._widget.recordBtn.setText("Stop")
-            rospy.loginfo('Recording data files')
-            self.isRecording = 1
-
-        else:   # Stop recording
-            # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
-
-            rospy.sleep(1)
-
-            self.terminate_ros_node("/record")
-
-            self._widget.recordBtn.setStyleSheet("background-color: green; color: yellow")
-            self._widget.recordBtn.setText("Record")
-            rospy.loginfo('Stopping recording')
-
-            self.isRecording = 0
-
-    def _handle_browseBtn_2_clicked(self):
-        res = QFileDialog.getExistingDirectory(None,"Select directory for recording",self.dataDir,QFileDialog.ShowDirsOnly)
-        self._widget.recordDataDir.setText(res)
 
     def _handle_ephysRatTogBtn_clicked(self):
         if self._widget.ephysRatTogBtn.isChecked():
