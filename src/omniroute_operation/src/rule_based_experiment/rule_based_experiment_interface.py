@@ -367,20 +367,6 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-    # def chamber_callback(self, msg):
-    #     chamber_data = json.loads(msg.data)
-    #     self.start_chamber = chamber_data['start_chamber']
-    #     self.central_chamber = chamber_data['central_chamber']
-    #     self.left_chamber = chamber_data['left_chamber']
-    #     self.right_chamber = chamber_data['right_chamber']
-
-    #     self.project_left_cue_triangle = chamber_data['project_left_cue_triangle']
-    #     self.project_right_cue_triangle = chamber_data['project_right_cue_triangle']
-
-    #     self.start_wall = Wall.from_dict(chamber_data['start_wall'])
-    #     self.left_goal_wall = Wall.from_dict(chamber_data['left_goal_wall'])
-    #     self.right_goal_wall = Wall.from_dict(chamber_data['right_goal_wall'])
-
     def mode_callback(self, msg):
         mode = msg.data
         if mode == "START_EXPERIMENT":
