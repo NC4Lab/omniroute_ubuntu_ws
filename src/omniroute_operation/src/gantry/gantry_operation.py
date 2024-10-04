@@ -48,7 +48,7 @@ class GantryOperation:
             self.gcode_client.raw_command("G21")
 
             # Set Mode (G90 = Absolute, G91 = Relative)
-            self.gcode_client.raw_command("G91")
+            self.gcode_client.raw_command("G90")
 
             # Feed Rate (mm/min)
             feed_rate_command = f"F{self.max_feed_rate}"
@@ -130,6 +130,7 @@ class GantryOperation:
             EsmacatCom.MessageType.GANTRY_INITIALIZE_GRBL, msg_arg_data_f32=init_list)
 
         # ................ Run node ................
+        self.last_g92_time = time.time()
 
         # Initialize the ROS rate
         r = rospy.Rate(50)
@@ -141,6 +142,7 @@ class GantryOperation:
             self.loop()
             r.sleep()
 
+        
     def loop(self):
 
         # # Check for new message
@@ -148,6 +150,20 @@ class GantryOperation:
         # if not self.EsmaCom.rcvEM.isNew:
         #     return
         # self.procEcatMessage()
+
+        current_time = time.time()
+
+        if current_time - self.last_g92_time >= 2.0:
+            if self.use_serial:
+                # Construct the G92 command with current gantry positions
+                g92_command = f"G92 X{self.gantry_x:.3f} Y{self.gantry_y:.3f} Z0.000"
+                self.gcode_client.raw_command(g92_command)
+                MazeDB.printMsg('INFO', f"Sent G92 command: {g92_command}")
+            else:
+                pass 
+
+            # Update the last G92 time
+            self.last_g92_time = current_time
 
         if self.gantry_mode == GantryState.TRACK_HARNESS:
 
@@ -296,7 +312,7 @@ class GantryOperation:
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
         
-        if x>0 or y>0:
+        if x != 0 or y != 0:
             self.movement_in_progress = True
 
     def gantry_pose_callback(self, msg):
