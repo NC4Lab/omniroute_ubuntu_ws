@@ -28,7 +28,7 @@ class GantryOperation:
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
         # ................ GRBL Runtime Parameters ................
-        self.max_feed_rate = 30000  # Maxiumum feed rate (mm/min)
+        self.max_feed_rate = 25000  # Maxiumum feed rate (mm/min)
         self.max_acceleration = 500  # Maximum acceleration (mm/sec^2)
         self.home_speed = 10000  # Homing speed (mm/min)
 
@@ -65,7 +65,7 @@ class GantryOperation:
         # ................ Gantry Tracking Setup ................
 
         # Specity the proportionality constant for the gantry tracking
-        self.Kp = 1.5
+        self.Kp = 1.25
         
         # Specify the x and y offset from the gantry tracking marker to the gantry center (m)
         self.gantry_marker_to_gantry_center = np.array([-0.317, -0.185])
@@ -78,6 +78,10 @@ class GantryOperation:
         self.gantry_y = 0.0
         self.harness_x = 0.0
         self.harness_y = 0.0
+        self.prev_harness_x = 0.0
+        self.prev_harness_y = 0.0
+
+        self.distance_threshold = 0.10  # Distance threshold for stopping the gantry
 
         # Track if movement is in progress
         self.movement_in_progress = False
@@ -147,6 +151,9 @@ class GantryOperation:
 
         if self.gantry_mode == GantryState.TRACK_HARNESS:
 
+            self.harness_vel = np.array(
+                [self.harness_x - self.prev_harness_x, self.harness_y - self.prev_harness_y])
+
             # Get the current distance between the gantry and the harness
             gantry_to_harness = np.array(
                 [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
@@ -157,7 +164,19 @@ class GantryOperation:
             dt = current_time - self.prev_time
             dt = min(dt, 0.1) # Limit dt to 0.1 sec
 
-            if distance > 0.05:
+            if distance > self.distance_threshold:
+                # Compute angle between harness velocity and gantry to harness vector
+                angle = math.acos(np.dot(self.harness_vel, gantry_to_harness) /
+                                (np.linalg.norm(self.harness_vel) * np.linalg.norm(gantry_to_harness)))
+
+                # Print angle
+                # MazeDB.printMsg('INFO', "Angle: %.2f", angle*180/math.pi)
+
+                if angle > 3*math.pi/4:
+                    # Stop the gantry if it is moving in the wrong direction
+                    if self.movement_in_progress:
+                        self.jog_cancel()
+                        self.movement_in_progress = False
 
                 # Compute jog distance
                 jog_distance = self.compute_jog(
@@ -174,6 +193,9 @@ class GantryOperation:
             elif self.movement_in_progress:
                 self.jog_cancel()
                 self.movement_in_progress = False
+
+            self.prev_harness_x = self.harness_x
+            self.prev_harness_y = self.harness_y
 
     def compute_jog(self, gantry_to_target, max_feed_rate, dt_sec, Kp):
         """
@@ -273,6 +295,9 @@ class GantryOperation:
         else:
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
+        
+        if x>0 or y>0:
+            self.movement_in_progress = True
 
     def gantry_pose_callback(self, msg):
         # Store x

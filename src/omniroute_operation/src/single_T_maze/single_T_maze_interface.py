@@ -27,7 +27,7 @@ from qt_gui.plugin import Plugin
 import json
 from omniroute_controller.omniroute_controller_interface import MazeDimensions
 from experiment_controller.experiment_controller_interface import Wall
-from experiment_controller.experiment_controller_interface import Interface as ExistingInterface
+from experiment_controller.experiment_controller_interface import CommonFunctions
 
 
 class Mode(Enum):
@@ -205,7 +205,7 @@ class Interface(Plugin):
         self.rat_position = 0
 
         self.maze_dim = MazeDimensions()
-        self.existing_interface = ExistingInterface(context)  # Create an instance
+        self.common_functions = CommonFunctions() # Create an instance
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
@@ -299,8 +299,8 @@ class Interface(Plugin):
     def setLowerConfig(self):
         # Lower Walls 0,2,4,6 in chamber 4 (central chamber)
         for i in [0, 2, 4, 6]:
-            self.existing_interface.lower_wall(Wall(4, i), False)
-        self.existing_interface.activateWalls()
+            self.common_functions.lower_wall(Wall(4, i), False)
+        self.common_functions.activateWalls()
 
     def _handle_plusMazeBtn_clicked(self):
         self.setPlusConfig()
@@ -309,13 +309,13 @@ class Interface(Plugin):
         # Lower all walls
         for i in range(9):
             for j in range(8):
-                self.existing_interface.lower_wall(Wall(i, j), False)
+                self.common_functions.lower_wall(Wall(i, j), False)
 
         for i in [1, 3, 4, 5, 7]:
             for j in range(8):
-                self.existing_interface.raise_wall(Wall(i, j), False)
+                self.common_functions.raise_wall(Wall(i, j), False)
 
-        self.existing_interface.activateWalls()
+        self.common_functions.activateWalls()
 
     def _handle_startChamberBtnGroup_clicked(self):
         if self._widget.startChamberBtnGroup.checkedId() == 1:
@@ -484,7 +484,7 @@ class Interface(Plugin):
 
         if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
             # The rat has moved to a different chamber, update the gantry position
-            self.existing_interface.move_gantry_to_chamber(current_rat_chamber)
+            self.common_functions.move_gantry_to_chamber(current_rat_chamber)
 
             # Update the previous_rat_chamber for the next iteration
             self.previous_rat_chamber = current_rat_chamber
@@ -515,7 +515,7 @@ class Interface(Plugin):
 
             if self.currentTrial is not None:
                 # Set training mode from file if the automatic mode is selected
-                if self.existing_interface._widget.trainingModeBtnGroup.checkedId() == 3:
+                if self.common_functions._widget.trainingModeBtnGroup.checkedId() == 3:
                     self.training_mode = self.currentTrial[3]
 
                 self.left_visual_cue = self.currentTrial[0]
@@ -554,22 +554,22 @@ class Interface(Plugin):
                 if not self.trial_generator:
                     if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
                         if self.success_chamber == self.left_chamber:
-                            self.existing_interface.lower_wall(self.left_goal_wall, send=True)
+                            self.common_functions.lower_wall(self.left_goal_wall, send=True)
                         else:
-                            self.existing_interface.lower_wall(self.right_goal_wall, send=True)
+                            self.common_functions.lower_wall(self.right_goal_wall, send=True)
                     elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                        self.existing_interface.lower_wall(self.left_goal_wall, send=False)
-                        self.existing_interface.lower_wall(self.right_goal_wall, send=True)
+                        self.common_functions.lower_wall(self.left_goal_wall, send=False)
+                        self.common_functions.lower_wall(self.right_goal_wall, send=True)
                 else:
-                    self.existing_interface.lower_wall(self.left_goal_wall, send=True)
-                    self.existing_interface.lower_wall(self.right_goal_wall, send=True)
+                    self.common_functions.lower_wall(self.left_goal_wall, send=True)
+                    self.common_functions.lower_wall(self.right_goal_wall, send=True)
                 
                 self.mode = Mode.START
                 rospy.loginfo("START")
 
         elif self.mode == Mode.START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_second_delay.to_sec():
-                self.existing_interface.lower_wall(self.start_wall, send=True)
+                self.common_functions.lower_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
                 rospy.loginfo("START_TO_CHOICE")
@@ -594,17 +594,17 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             if self.rat_body_chamber == self.success_chamber:
-                self.existing_interface.raise_wall(self.left_goal_wall, send=False)
-                self.existing_interface.raise_wall(self.right_goal_wall, send=False)
-                self.existing_interface.raise_wall(self.start_wall, send=True)
+                self.common_functions.raise_wall(self.left_goal_wall, send=False)
+                self.common_functions.raise_wall(self.right_goal_wall, send=False)
+                self.common_functions.raise_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
 
             elif self.rat_body_chamber == self.error_chamber:
-                self.existing_interface.raise_wall(self.left_goal_wall, send=False)
-                self.existing_interface.raise_wall(self.right_goal_wall, send=False)
-                self.existing_interface.raise_wall(self.start_wall, send=True)
+                self.common_functions.raise_wall(self.left_goal_wall, send=False)
+                self.common_functions.raise_wall(self.right_goal_wall, send=False)
+                self.common_functions.raise_wall(self.start_wall, send=True)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.ERROR
                 rospy.loginfo("ERROR")
@@ -627,7 +627,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                self.existing_interface.reward_dispense()
+                self.common_functions.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_END
                 rospy.loginfo("REWARD END")
