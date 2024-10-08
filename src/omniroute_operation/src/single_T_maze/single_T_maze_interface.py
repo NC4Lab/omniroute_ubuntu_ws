@@ -130,7 +130,9 @@ class Interface(Plugin):
 
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
-        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=1)
+        self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
+        self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=1)
+        self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
@@ -203,6 +205,10 @@ class Interface(Plugin):
         self.timer.start(10)
 
         self.rat_position = 0
+
+        self.floor_img_black_num = 0
+        self.floor_img_green_num = 1
+        self.wall_img_num = 3
 
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions() # Create an instance
@@ -353,20 +359,6 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-    # def chamber_callback(self, msg):
-    #     chamber_data = json.loads(msg.data)
-    #     self.start_chamber = chamber_data['start_chamber']
-    #     self.central_chamber = chamber_data['central_chamber']
-    #     self.left_chamber = chamber_data['left_chamber']
-    #     self.right_chamber = chamber_data['right_chamber']
-
-    #     self.project_left_cue_triangle = chamber_data['project_left_cue_triangle']
-    #     self.project_right_cue_triangle = chamber_data['project_right_cue_triangle']
-
-    #     self.start_wall = Wall.from_dict(chamber_data['start_wall'])
-    #     self.left_goal_wall = Wall.from_dict(chamber_data['left_goal_wall'])
-    #     self.right_goal_wall = Wall.from_dict(chamber_data['right_goal_wall'])
-
     def rat_head_chamber_callback(self, msg):
         self.rat_head_chamber = msg.data
 
@@ -379,25 +371,29 @@ class Interface(Plugin):
         self.left_chamber = 5
         self.right_chamber = 3
 
-        self.project_left_cue_triangle = 4
-        self.project_right_cue_triangle = 3
+        self.project_left_wall_0 = Wall(5, 0).to_dict()
+        self.project_left_wall_1 = Wall(5, 1).to_dict()
+        self.project_left_wall_2 = Wall(2, 6).to_dict()
+        self.project_left_wall_3 = Wall(5, 3).to_dict()
+        self.project_left_wall_4 = Wall(5, 4).to_dict()
+        self.project_left_wall_5 = Wall(5, 5).to_dict()
+        self.project_left_wall_6 = Wall(8, 2).to_dict()
+        self.project_left_wall_7 = Wall(5, 7).to_dict()
+        self.project_left_wall = Wall(4, 5).to_dict()
+
+        self.project_right_wall_0 = Wall(3, 0).to_dict()
+        self.project_right_wall_1 = Wall(3, 1).to_dict()
+        self.project_right_wall_2 = Wall(0, 6).to_dict()
+        self.project_right_wall_3 = Wall(3, 3).to_dict()
+        self.project_right_wall_4 = Wall(3, 4).to_dict()
+        self.project_right_wall_5 = Wall(3, 5).to_dict()
+        self.project_right_wall_6 = Wall(6, 2).to_dict()
+        self.project_right_wall_7 = Wall(3, 7).to_dict()
+        self.project_right_wall = Wall(4, 3).to_dict()
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
         self.right_goal_wall = Wall(4, 0)
-
-        # chambers_info = {
-        #     'start_chamber': self.start_chamber,
-        #     'central_chamber': self.central_chamber,
-        #     'left_chamber': self.left_chamber,
-        #     'right_chamber': self.right_chamber,
-        #     'project_left_cue_triangle': self.project_left_cue_triangle,
-        #     'project_right_cue_triangle': self.project_right_cue_triangle,
-        #     'start_wall': self.start_wall.to_dict(),
-        #     'left_goal_wall': self.left_goal_wall.to_dict(),
-        #     'right_goal_wall': self.right_goal_wall.to_dict()
-        # }
-        # self.chambers_pub.publish(json.dumps(chambers_info))
 
     def setChamberThreeStartConfig(self):
         self.start_chamber = 3
@@ -405,25 +401,29 @@ class Interface(Plugin):
         self.left_chamber = 1
         self.right_chamber = 7
 
-        self.project_left_cue_triangle = 2
-        self.project_right_cue_triangle = 1
+        self.project_left_wall_0 = Wall(0, 4).to_dict()
+        self.project_left_wall_1 = Wall(1, 1).to_dict()
+        self.project_left_wall_2 = Wall(1, 2).to_dict()
+        self.project_left_wall_3 = Wall(1, 3).to_dict()
+        self.project_left_wall_4 = Wall(2, 0).to_dict()
+        self.project_left_wall_5 = Wall(1, 5).to_dict()
+        self.project_left_wall_6 = Wall(1, 6).to_dict()
+        self.project_left_wall_7 = Wall(1, 7).to_dict()
+        self.project_left_wall = Wall(4, 3).to_dict()
+
+        self.project_right_wall_0 = Wall(6, 4).to_dict()
+        self.project_right_wall_1 = Wall(7, 1).to_dict()
+        self.project_right_wall_2 = Wall(7, 2).to_dict()
+        self.project_right_wall_3 = Wall(7, 3).to_dict()
+        self.project_right_wall_4 = Wall(8, 0).to_dict()
+        self.project_right_wall_5 = Wall(7, 5).to_dict()
+        self.project_right_wall_6 = Wall(7, 6).to_dict()
+        self.project_right_wall_7 = Wall(7, 7).to_dict()
+        self.project_right_wall = Wall(4, 5).to_dict()
 
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
         self.right_goal_wall = Wall(4, 6)
-
-        # chambers_info = {
-        #     'start_chamber': self.start_chamber,
-        #     'central_chamber': self.central_chamber,
-        #     'left_chamber': self.left_chamber,
-        #     'right_chamber': self.right_chamber,
-        #     'project_left_cue_triangle': self.project_left_cue_triangle,
-        #     'project_right_cue_triangle': self.project_right_cue_triangle,
-        #     'start_wall': self.start_wall.to_dict(),
-        #     'left_goal_wall': self.left_goal_wall.to_dict(),
-        #     'right_goal_wall': self.right_goal_wall.to_dict()
-        # }
-        # self.chambers_pub.publish(json.dumps(chambers_info))
 
     def setChamberFiveStartConfig(self):
         self.start_chamber = 5
@@ -431,25 +431,29 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.project_left_cue_triangle = 6
-        self.project_right_cue_triangle = 5
+        self.project_left_wall_0 = Wall(6, 4).to_dict()
+        self.project_left_wall_1 = Wall(7, 1).to_dict()
+        self.project_left_wall_2 = Wall(7, 2).to_dict()
+        self.project_left_wall_3 = Wall(7, 3).to_dict()
+        self.project_left_wall_4 = Wall(8, 0).to_dict()
+        self.project_left_wall_5 = Wall(7, 5).to_dict()
+        self.project_left_wall_6 = Wall(7, 6).to_dict()
+        self.project_left_wall_7 = Wall(7, 7).to_dict()
+        self.project_left_wall = Wall(4, 7).to_dict()
+
+        self.project_right_wall_0 = Wall(0, 4).to_dict()
+        self.project_right_wall_1 = Wall(1, 1).to_dict()
+        self.project_right_wall_2 = Wall(1, 2).to_dict()
+        self.project_right_wall_3 = Wall(1, 3).to_dict()
+        self.project_right_wall_4 = Wall(2, 0).to_dict()
+        self.project_right_wall_5 = Wall(1, 5).to_dict()
+        self.project_right_wall_6 = Wall(1, 6).to_dict()
+        self.project_right_wall_7 = Wall(1, 7).to_dict()
+        self.project_right_wall = Wall(4, 1).to_dict()
 
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
         self.right_goal_wall = Wall(4, 2)
-
-        # chambers_info = {
-        #     'start_chamber': self.start_chamber,
-        #     'central_chamber': self.central_chamber,
-        #     'left_chamber': self.left_chamber,
-        #     'right_chamber': self.right_chamber,
-        #     'project_left_cue_triangle': self.project_left_cue_triangle,
-        #     'project_right_cue_triangle': self.project_right_cue_triangle,
-        #     'start_wall': self.start_wall.to_dict(),
-        #     'left_goal_wall': self.left_goal_wall.to_dict(),
-        #     'right_goal_wall': self.right_goal_wall.to_dict()
-        # }
-        # self.chambers_pub.publish(json.dumps(chambers_info))
 
     def setChamberSevenStartConfig(self):
         self.start_chamber = 7
@@ -457,25 +461,29 @@ class Interface(Plugin):
         self.left_chamber = 3
         self.right_chamber = 5
 
-        self.project_left_cue_triangle = 8
-        self.project_right_cue_triangle = 7
+        self.project_left_wall_0 = Wall(3, 0).to_dict()
+        self.project_left_wall_1 = Wall(3, 1).to_dict()
+        self.project_left_wall_2 = Wall(0, 6).to_dict()
+        self.project_left_wall_3 = Wall(3, 3).to_dict()
+        self.project_left_wall_4 = Wall(3, 4).to_dict()
+        self.project_left_wall_5 = Wall(3, 5).to_dict()
+        self.project_left_wall_6 = Wall(6, 2).to_dict()
+        self.project_left_wall_7 = Wall(3, 7).to_dict()
+        self.project_left_wall = Wall(4, 1).to_dict()
+
+        self.project_right_wall_0 = Wall(5, 0).to_dict()
+        self.project_right_wall_1 = Wall(5, 1).to_dict()
+        self.project_right_wall_2 = Wall(2, 6).to_dict()
+        self.project_right_wall_3 = Wall(5, 3).to_dict()
+        self.project_right_wall_4 = Wall(5, 4).to_dict()
+        self.project_right_wall_5 = Wall(5, 5).to_dict()
+        self.project_right_wall_6 = Wall(8, 2).to_dict()
+        self.project_right_wall_7 = Wall(5, 7).to_dict()
+        self.project_right_wall = Wall(4, 7).to_dict()
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
-
-        # chambers_info = {
-        #     'start_chamber': self.start_chamber,
-        #     'central_chamber': self.central_chamber,
-        #     'left_chamber': self.left_chamber,
-        #     'right_chamber': self.right_chamber,
-        #     'project_left_cue_triangle': self.project_left_cue_triangle,
-        #     'project_right_cue_triangle': self.project_right_cue_triangle,
-        #     'start_wall': self.start_wall.to_dict(),
-        #     'left_goal_wall': self.left_goal_wall.to_dict(),
-        #     'right_goal_wall': self.right_goal_wall.to_dict()
-        # }
-        # self.chambers_pub.publish(json.dumps(chambers_info))
 
     def run_experiment(self):
 
@@ -509,39 +517,108 @@ class Interface(Plugin):
                 self.currentTrial = None
 
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
+
+            self.projection_wall_img_pub.publish(self.wall_img_num)
         
             if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
 
             if self.currentTrial is not None:
                 # Set training mode from file if the automatic mode is selected
-                if self.common_functions._widget.trainingModeBtnGroup.checkedId() == 3:
-                    self.training_mode = self.currentTrial[3]
-
+                self.training_mode = self.currentTrial[3]
                 self.left_visual_cue = self.currentTrial[0]
                 self.right_visual_cue = self.currentTrial[1]
                 self.floor_cue = self.currentTrial[2]
 
             if self.floor_cue == "Green":
+                self.projection_floor_pub.publish(self.floor_img_black_num)
                 if self.left_visual_cue == "Triangle":  
-                    self.projection_pub.publish(self.project_left_cue_triangle)
-                    rospy.loginfo("Projecting left cue triangle")
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
-                    self.projection_pub.publish(self.project_right_cue_triangle)
-                    rospy.loginfo("Projecting right cue triangle")
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
             else:
                 if self.left_visual_cue == "No_Cue":
-                    self.projection_pub.publish(self.project_right_cue_triangle)
-                    rospy.loginfo("Projecting right cue triangle")
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
-                    self.projection_pub.publish(self.project_left_cue_triangle)
-                    rospy.loginfo("Projecting left cue triangle")
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
     
@@ -551,6 +628,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
+                rospy.sleep(0.1)
+                self.projection_floor_pub.publish(self.floor_img_black_num)
                 if not self.trial_generator:
                     if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
                         if self.success_chamber == self.left_chamber:
