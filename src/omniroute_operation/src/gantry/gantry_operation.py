@@ -28,7 +28,7 @@ class GantryOperation:
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
         # ................ GRBL Runtime Parameters ................
-        self.max_feed_rate = 25000  # Maxiumum feed rate (mm/min)
+        self.max_feed_rate = 28000  # Maxiumum feed rate (mm/min)
         self.max_acceleration = 500  # Maximum acceleration (mm/sec^2)
         self.home_speed = 10000  # Homing speed (mm/min)
 
