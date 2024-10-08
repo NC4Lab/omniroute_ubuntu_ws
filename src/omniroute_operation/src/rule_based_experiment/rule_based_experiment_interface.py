@@ -145,7 +145,7 @@ class Interface(Plugin):
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
-        self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=1)
+        self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
         self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=1)
         self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
@@ -398,26 +398,23 @@ class Interface(Plugin):
 
         self.project_left_wall_0 = Wall(5, 0).to_dict()
         self.project_left_wall_1 = Wall(5, 1).to_dict()
-        self.project_left_wall_2 = Wall(5, 2).to_dict()
+        self.project_left_wall_2 = Wall(2, 6).to_dict()
         self.project_left_wall_3 = Wall(5, 3).to_dict()
         self.project_left_wall_4 = Wall(5, 4).to_dict()
         self.project_left_wall_5 = Wall(5, 5).to_dict()
-        self.project_left_wall_6 = Wall(5, 6).to_dict()
+        self.project_left_wall_6 = Wall(8, 2).to_dict()
         self.project_left_wall_7 = Wall(5, 7).to_dict()
         self.project_left_wall = Wall(4, 5).to_dict()
 
         self.project_right_wall_0 = Wall(3, 0).to_dict()
         self.project_right_wall_1 = Wall(3, 1).to_dict()
-        self.project_right_wall_2 = Wall(3, 2).to_dict()
+        self.project_right_wall_2 = Wall(0, 6).to_dict()
         self.project_right_wall_3 = Wall(3, 3).to_dict()
         self.project_right_wall_4 = Wall(3, 4).to_dict()
         self.project_right_wall_5 = Wall(3, 5).to_dict()
-        self.project_right_wall_6 = Wall(3, 6).to_dict()
+        self.project_right_wall_6 = Wall(6, 2).to_dict()
         self.project_right_wall_7 = Wall(3, 7).to_dict()
         self.project_right_wall = Wall(4, 3).to_dict()
-
-        # self.project_left_cue_triangle = 4
-        # self.project_right_cue_triangle = 3
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
@@ -429,28 +426,25 @@ class Interface(Plugin):
         self.left_chamber = 1
         self.right_chamber = 7
         
-        self.project_left_wall_0 = Wall(1, 0).to_dict()
+        self.project_left_wall_0 = Wall(0, 4).to_dict()
         self.project_left_wall_1 = Wall(1, 1).to_dict()
         self.project_left_wall_2 = Wall(1, 2).to_dict()
         self.project_left_wall_3 = Wall(1, 3).to_dict()
-        self.project_left_wall_4 = Wall(1, 4).to_dict()
+        self.project_left_wall_4 = Wall(2, 0).to_dict()
         self.project_left_wall_5 = Wall(1, 5).to_dict()
         self.project_left_wall_6 = Wall(1, 6).to_dict()
         self.project_left_wall_7 = Wall(1, 7).to_dict()
         self.project_left_wall = Wall(4, 3).to_dict()
 
-        self.project_right_wall_0 = Wall(7, 0).to_dict()
+        self.project_right_wall_0 = Wall(6, 4).to_dict()
         self.project_right_wall_1 = Wall(7, 1).to_dict()
         self.project_right_wall_2 = Wall(7, 2).to_dict()
         self.project_right_wall_3 = Wall(7, 3).to_dict()
-        self.project_right_wall_4 = Wall(7, 4).to_dict()
+        self.project_right_wall_4 = Wall(8, 0).to_dict()
         self.project_right_wall_5 = Wall(7, 5).to_dict()
         self.project_right_wall_6 = Wall(7, 6).to_dict()
         self.project_right_wall_7 = Wall(7, 7).to_dict()
         self.project_right_wall = Wall(4, 5).to_dict()
-
-        # self.project_left_cue_triangle = 2
-        # self.project_right_cue_triangle = 1
 
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
@@ -462,28 +456,25 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.project_left_wall_0 = Wall(7, 0).to_dict()
+        self.project_left_wall_0 = Wall(6, 4).to_dict()
         self.project_left_wall_1 = Wall(7, 1).to_dict()
         self.project_left_wall_2 = Wall(7, 2).to_dict()
         self.project_left_wall_3 = Wall(7, 3).to_dict()
-        self.project_left_wall_4 = Wall(7, 4).to_dict()
+        self.project_left_wall_4 = Wall(8, 0).to_dict()
         self.project_left_wall_5 = Wall(7, 5).to_dict()
         self.project_left_wall_6 = Wall(7, 6).to_dict()
         self.project_left_wall_7 = Wall(7, 7).to_dict()
         self.project_left_wall = Wall(4, 7).to_dict()
 
-        self.project_right_wall_0 = Wall(1, 0).to_dict()
+        self.project_right_wall_0 = Wall(0, 4).to_dict()
         self.project_right_wall_1 = Wall(1, 1).to_dict()
         self.project_right_wall_2 = Wall(1, 2).to_dict()
         self.project_right_wall_3 = Wall(1, 3).to_dict()
-        self.project_right_wall_4 = Wall(1, 4).to_dict()
+        self.project_right_wall_4 = Wall(2, 0).to_dict()
         self.project_right_wall_5 = Wall(1, 5).to_dict()
         self.project_right_wall_6 = Wall(1, 6).to_dict()
         self.project_right_wall_7 = Wall(1, 7).to_dict()
         self.project_right_wall = Wall(4, 1).to_dict()
-
-        # self.project_left_cue_triangle = 6
-        # self.project_right_cue_triangle = 5
 
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
@@ -497,26 +488,23 @@ class Interface(Plugin):
 
         self.project_left_wall_0 = Wall(3, 0).to_dict()
         self.project_left_wall_1 = Wall(3, 1).to_dict()
-        self.project_left_wall_2 = Wall(3, 2).to_dict()
+        self.project_left_wall_2 = Wall(0, 6).to_dict()
         self.project_left_wall_3 = Wall(3, 3).to_dict()
         self.project_left_wall_4 = Wall(3, 4).to_dict()
         self.project_left_wall_5 = Wall(3, 5).to_dict()
-        self.project_left_wall_6 = Wall(3, 6).to_dict()
+        self.project_left_wall_6 = Wall(6, 2).to_dict()
         self.project_left_wall_7 = Wall(3, 7).to_dict()
         self.project_left_wall = Wall(4, 1).to_dict()
 
         self.project_right_wall_0 = Wall(5, 0).to_dict()
         self.project_right_wall_1 = Wall(5, 1).to_dict()
-        self.project_right_wall_2 = Wall(5, 2).to_dict()
+        self.project_right_wall_2 = Wall(2, 6).to_dict()
         self.project_right_wall_3 = Wall(5, 3).to_dict()
         self.project_right_wall_4 = Wall(5, 4).to_dict()
         self.project_right_wall_5 = Wall(5, 5).to_dict()
-        self.project_right_wall_6 = Wall(5, 6).to_dict()
+        self.project_right_wall_6 = Wall(8, 2).to_dict()
         self.project_right_wall_7 = Wall(5, 7).to_dict()
         self.project_right_wall = Wall(4, 7).to_dict()
-
-        # self.project_left_cue_triangle = 8
-        # self.project_right_cue_triangle = 7
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
@@ -773,91 +761,91 @@ class Interface(Plugin):
                 
                 if self.sound_cue == "White_Noise":
                     if self.left_visual_cue == "Triangle":  
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_0))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_1))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_2))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_3))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_4))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_5))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_6))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_7))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall))
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall))
+                        rospy.sleep(0.1)
                         rospy.loginfo("Projecting left cue triangle")
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_0))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_1))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_2))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_3))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_4))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_5))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_6))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_7))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall))
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall))
+                        rospy.sleep(0.1)
                         rospy.loginfo("Projecting right cue triangle")
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
                 else:
                     if self.left_visual_cue == "No_Cue":
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_0))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_1))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_2))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_3))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_4))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_5))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_6))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall_7))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_right_wall))
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_right_wall))
+                        rospy.sleep(0.1)
                         rospy.loginfo("Projecting right cue triangle")
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_0))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_1))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_2))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_3))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_4))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_5))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_6))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall_7))
-                        self.projection_pub.publish(
-                            json.dumps(self.project_left_wall))
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                        rospy.sleep(0.1)
+                        self.projection_pub.publish(json.dumps(self.project_left_wall))
+                        rospy.sleep(0.1)
                         rospy.loginfo("Projecting left cue triangle")
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber

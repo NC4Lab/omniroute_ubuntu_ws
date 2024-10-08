@@ -70,8 +70,9 @@ class ProjectionOperation:
     def projection_image_floor_callback(self, msg):
         rospy.loginfo("Received projection floor image number: number[%d]", msg.data)
         self.floor_img_num = msg.data
-        projection_config = self.set_config('floor', self.floor_img_num)
-        self.publish_command_message(projection_config)
+        #self.set_config('floor', self.floor_img_num)
+        self.publish_command_message(
+            self.set_config('floor', self.floor_img_num))
         
     def projection_image_wall_callback(self, msg):
         rospy.loginfo("Received projection wall image number: number[%d]", msg.data)
@@ -83,8 +84,13 @@ class ProjectionOperation:
         self.cham_ind = wall_num['chamber_num']
         self.wall_ind = wall_num['wall_num']
 
-        projection_config = self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
-        self.publish_image_message(projection_config)
+        # projection_config = self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
+        # self.publish_image_message(projection_config)
+
+        #self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
+        self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
+        self.publish_image_message()
+
     
     def setup_layout(self, dim1, dim2):
         """Helper function to set up the layout for a 2-dimensional array."""
@@ -135,7 +141,7 @@ class ProjectionOperation:
             MazeDB.printMsg(
                 'WARN', "[ProjectionOperation:set_config] Expected 'walls' or 'floor': data_type[%s]", data_type)
             
-        return self.image_config
+        #return self.image_config
 
     def set_config_from_csv(self, file_path, data_type):
         """
@@ -176,7 +182,7 @@ class ProjectionOperation:
                 MazeDB.printMsg(
                     'WARN', "[ProjectionOperation:set_config] Expected 'walls' or 'floor': data_type[%s]", data_type)
 
-    def publish_image_message(self, image_config):
+    def publish_image_message(self):
         """
         Send the data from Int32MultiArray image_config.
         """
@@ -188,7 +194,7 @@ class ProjectionOperation:
         projection_data.layout.dim = self.setup_layout(10, 8)
 
         # Flatten the 10x8 array into a single list
-        flat_data = [image_config[i][j]
+        flat_data = [self.image_config[i][j]
                      for i in range(10) for j in range(8)]
         projection_data.data = flat_data
 
