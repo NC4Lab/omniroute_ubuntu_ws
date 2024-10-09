@@ -35,6 +35,7 @@ class Mode(Enum):
     START_EXPERIMENT = 0
     START_TRIAL = 1
     RAT_IN_START_CHAMBER = 2
+    RAT_WAITS = 17
     START_TO_CHOICE = 3
     RAT_IN_CHOICE_CHAMBER = 4
     CHOICE = 5
@@ -131,7 +132,7 @@ class Interface(Plugin):
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
         self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
-        self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=1)
+        self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=100)
         self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
@@ -157,6 +158,7 @@ class Interface(Plugin):
         self.experiment_pub.publish("single_T_maze_experiment")
  
         # Experiment parameters
+        self.delay = rospy.Duration(2.0)  # Duration of delay between each loop
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
@@ -209,6 +211,8 @@ class Interface(Plugin):
         self.floor_img_black_num = 0
         self.floor_img_green_num = 1
         self.wall_img_num = 3
+
+        self.project_floor_img = Wall(9, 0).to_dict()
 
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions() # Create an instance
@@ -517,8 +521,6 @@ class Interface(Plugin):
                 self.currentTrial = None
 
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
-
-            self.projection_wall_img_pub.publish(self.wall_img_num)
         
             if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
@@ -531,8 +533,13 @@ class Interface(Plugin):
                 self.floor_cue = self.currentTrial[2]
 
             if self.floor_cue == "Green":
-                self.projection_floor_pub.publish(self.floor_img_black_num)
+                self.projection_wall_img_pub.publish(self.floor_img_green_num)
+                rospy.sleep(0.1)
+                self.projection_pub.publish(json.dumps(self.project_floor_img))
+                rospy.sleep(0.1)
                 if self.left_visual_cue == "Triangle":  
+                    self.projection_wall_img_pub.publish(self.wall_img_num)
+                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_1))
@@ -623,13 +630,19 @@ class Interface(Plugin):
                     self.error_chamber = self.left_chamber
     
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.RAT_IN_START_CHAMBER
-            rospy.loginfo("RAT_IN_START_CHAMBER")
+            self.mode = Mode.RAT_WAITS
+            rospy.loginfo("RAT_WAITS")
+
+        elif self.mode == Mode.RAT_WAITS:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
+                self.projection_floor_pub.publish(self.floor_img_black_num)
+                rospy.sleep(0.1)
+                self.mode_start_time = rospy.Time.now()
+                self.mode =  Mode.RAT_IN_START_CHAMBER
+                rospy.loginfo("RAT_IN_START_CHAMBER")
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
-                rospy.sleep(0.1)
-                self.projection_floor_pub.publish(self.floor_img_black_num)
+            if (self.current_time - self.mode_start_time).to_sec() >= self.delay.to_sec():
                 if not self.trial_generator:
                     if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
                         if self.success_chamber == self.left_chamber:
