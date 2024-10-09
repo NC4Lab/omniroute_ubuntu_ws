@@ -210,7 +210,8 @@ class Interface(Plugin):
 
         self.floor_img_black_num = 0
         self.floor_img_green_num = 1
-        self.wall_img_num = 3
+        self.wall_img_triangle_num = 3
+        self.wall_img_black_num = 0
 
         #self.project_floor_img = Wall(9, 0).to_dict()
 
@@ -521,7 +522,7 @@ class Interface(Plugin):
                 # Handle the case where trials is empty or currentTrialNumber is out of range
                 self.currentTrial = None
 
-            self.projection_wall_img_pub.publish(self.wall_img_num)
+            #self.projection_wall_img_pub.publish(self.wall_img_num)
 
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
         
@@ -538,7 +539,31 @@ class Interface(Plugin):
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
                 rospy.sleep(0.1)
-                if self.left_visual_cue == "Triangle":  
+                if self.left_visual_cue == "Triangle":
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting black images on the opposite walls")
+
+                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_1))
@@ -561,6 +586,30 @@ class Interface(Plugin):
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting black images on the opposite walls")
+
+                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_right_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_right_wall_1))
@@ -584,6 +633,30 @@ class Interface(Plugin):
                     self.error_chamber = self.left_chamber
             else:
                 if self.left_visual_cue == "No_Cue":
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_left_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting black images on the opposite walls")
+                    
+                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_right_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_right_wall_1))
@@ -606,6 +679,30 @@ class Interface(Plugin):
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_0))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_1))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_2))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_3))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_4))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_5))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_6))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall_7))
+                    rospy.sleep(0.1)
+                    self.projection_pub.publish(json.dumps(self.project_right_wall))
+                    rospy.sleep(0.1)
+                    rospy.loginfo("Projecting black images on the opposite walls")
+
+                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_1))
