@@ -212,7 +212,7 @@ class Interface(Plugin):
         self.floor_img_green_num = 1
         self.wall_img_num = 3
 
-        self.project_floor_img = Wall(9, 0).to_dict()
+        #self.project_floor_img = Wall(9, 0).to_dict()
 
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions() # Create an instance
@@ -512,6 +512,9 @@ class Interface(Plugin):
             self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.START_TRIAL:
+            #publish the images to be projected on the walls
+            self.projection_wall_img_pub.publish(self.wall_img_num)
+
             self.currentTrialNumber = self.currentTrialNumber+1
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -533,13 +536,11 @@ class Interface(Plugin):
                 self.floor_cue = self.currentTrial[2]
 
             if self.floor_cue == "Green":
-                self.projection_wall_img_pub.publish(self.floor_img_green_num)
+                self.projection_floor_pub.publish(self.floor_img_green_num)
                 rospy.sleep(0.1)
-                self.projection_pub.publish(json.dumps(self.project_floor_img))
-                rospy.sleep(0.1)
+                # self.projection_pub.publish(json.dumps(self.project_floor_img))
+                # rospy.sleep(0.1)
                 if self.left_visual_cue == "Triangle":  
-                    self.projection_wall_img_pub.publish(self.wall_img_num)
-                    rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                     rospy.sleep(0.1)
                     self.projection_pub.publish(json.dumps(self.project_left_wall_1))
