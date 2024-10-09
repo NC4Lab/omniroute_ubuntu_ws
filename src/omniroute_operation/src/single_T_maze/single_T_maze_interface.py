@@ -513,8 +513,6 @@ class Interface(Plugin):
 
         elif self.mode == Mode.START_TRIAL:
             #publish the images to be projected on the walls
-            self.projection_wall_img_pub.publish(self.wall_img_num)
-
             self.currentTrialNumber = self.currentTrialNumber+1
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -522,6 +520,8 @@ class Interface(Plugin):
             else:
                 # Handle the case where trials is empty or currentTrialNumber is out of range
                 self.currentTrial = None
+
+            self.projection_wall_img_pub.publish(self.wall_img_num)
 
             rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
         
@@ -538,8 +538,6 @@ class Interface(Plugin):
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
                 rospy.sleep(0.1)
-                # self.projection_pub.publish(json.dumps(self.project_floor_img))
-                # rospy.sleep(0.1)
                 if self.left_visual_cue == "Triangle":  
                     self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                     rospy.sleep(0.1)
@@ -648,8 +646,10 @@ class Interface(Plugin):
                     if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]: 
                         if self.success_chamber == self.left_chamber:
                             self.common_functions.lower_wall(self.left_goal_wall, send=True)
+                            rospy.loginfo("Lowering left goal wall")
                         else:
                             self.common_functions.lower_wall(self.right_goal_wall, send=True)
+                            rospy.loginfo("Lowering right goal wall")
                     elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
                         self.common_functions.lower_wall(self.left_goal_wall, send=False)
                         self.common_functions.lower_wall(self.right_goal_wall, send=True)
