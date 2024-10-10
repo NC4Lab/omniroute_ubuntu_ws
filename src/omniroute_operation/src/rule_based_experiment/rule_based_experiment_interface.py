@@ -237,46 +237,49 @@ class Interface(Plugin):
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions()
 
-        self.chamber1_wall_0 = Wall(1, 0).to_dict()
-        self.chamber1_wall_1 = Wall(1, 1).to_dict()
-        self.chamber1_wall_2 = Wall(1, 2).to_dict()
-        self.chamber1_wall_3 = Wall(1, 3).to_dict()
-        self.chamber1_wall_4 = Wall(1, 4).to_dict()
-        self.chamber1_wall_5 = Wall(1, 5).to_dict()
-        self.chamber1_wall_6 = Wall(1, 6).to_dict()
-        self.chamber1_wall_7 = Wall(1, 7).to_dict()
+        self.chamber1_walls_list = [Wall(1, 0).to_dict(),
+                                    Wall(1, 1).to_dict(),
+                                    Wall(1, 2).to_dict(),
+                                    Wall(1, 3).to_dict(),
+                                    Wall(1, 4).to_dict(),
+                                    Wall(1, 5).to_dict(),
+                                    Wall(1, 6).to_dict(),
+                                    Wall(1, 7).to_dict(),
+                                    Wall(4, 1).to_dict(),
+                                    Wall(4, 3).to_dict()]
 
-        self.chamber3_wall_0 = Wall(3, 0).to_dict()
-        self.chamber3_wall_1 = Wall(3, 1).to_dict()
-        self.chamber3_wall_2 = Wall(3, 2).to_dict()
-        self.chamber3_wall_3 = Wall(3, 3).to_dict()
-        self.chamber3_wall_4 = Wall(3, 4).to_dict()
-        self.chamber3_wall_5 = Wall(3, 5).to_dict()
-        self.chamber3_wall_6 = Wall(3, 6).to_dict()
-        self.chamber3_wall_7 = Wall(3, 7).to_dict()
+        self.chamber3_walls_list = [Wall(3, 0).to_dict(),
+                                    Wall(3, 1).to_dict(),
+                                    Wall(3, 2).to_dict(),
+                                    Wall(3, 3).to_dict(),
+                                    Wall(3, 4).to_dict(),
+                                    Wall(3, 5).to_dict(),
+                                    Wall(3, 6).to_dict(),
+                                    Wall(3, 7).to_dict(),
+                                    Wall(4, 1).to_dict(),
+                                    Wall(4, 7).to_dict()]
 
-        self.chamber5_wall_0 = Wall(5, 0).to_dict()
-        self.chamber5_wall_1 = Wall(5, 1).to_dict()
-        self.chamber5_wall_2 = Wall(5, 2).to_dict()
-        self.chamber5_wall_3 = Wall(5, 3).to_dict()
-        self.chamber5_wall_4 = Wall(5, 4).to_dict()
-        self.chamber5_wall_5 = Wall(5, 5).to_dict()
-        self.chamber5_wall_6 = Wall(5, 6).to_dict()
-        self.chamber5_wall_7 = Wall(5, 7).to_dict()
+        self.chamber5_walls_list = [Wall(5, 0).to_dict(),
+                                    Wall(5, 1).to_dict(),
+                                    Wall(5, 2).to_dict(),
+                                    Wall(5, 3).to_dict(),
+                                    Wall(5, 4).to_dict(),
+                                    Wall(5, 5).to_dict(),
+                                    Wall(5, 6).to_dict(),
+                                    Wall(5, 7).to_dict(),
+                                    Wall(4, 3).to_dict(),
+                                    Wall(4, 5).to_dict()]
 
-        self.chamber7_wall_0 = Wall(7, 0).to_dict()
-        self.chamber7_wall_1 = Wall(7, 1).to_dict()
-        self.chamber7_wall_2 = Wall(7, 2).to_dict()
-        self.chamber7_wall_3 = Wall(7, 3).to_dict()
-        self.chamber7_wall_4 = Wall(7, 4).to_dict()
-        self.chamber7_wall_5 = Wall(7, 5).to_dict()
-        self.chamber7_wall_6 = Wall(7, 6).to_dict()
-        self.chamber7_wall_7 = Wall(7, 7).to_dict()
-
-        self.chamber4_wall_1 = Wall(4, 1).to_dict()
-        self.chamber4_wall_3 = Wall(4, 3).to_dict()
-        self.chamber4_wall_5 = Wall(4, 5).to_dict()
-        self.chamber4_wall_7 = Wall(4, 7).to_dict()
+        self.chamber7_walls_list = [Wall(7, 0).to_dict(),
+                                    Wall(7, 1).to_dict(),
+                                    Wall(7, 2).to_dict(),
+                                    Wall(7, 3).to_dict(),
+                                    Wall(7, 4).to_dict(),
+                                    Wall(7, 5).to_dict(),
+                                    Wall(7, 6).to_dict(),
+                                    Wall(7, 7).to_dict(),
+                                    Wall(4, 5).to_dict(),
+                                    Wall(4, 7).to_dict()]
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
@@ -443,25 +446,25 @@ class Interface(Plugin):
         self.left_chamber = 5
         self.right_chamber = 3
 
-        self.project_left_wall_0 = Wall(5, 0).to_dict()
-        self.project_left_wall_1 = Wall(5, 1).to_dict()
-        self.project_left_wall_2 = Wall(2, 6).to_dict()
-        self.project_left_wall_3 = Wall(5, 3).to_dict()
-        self.project_left_wall_4 = Wall(5, 4).to_dict()
-        self.project_left_wall_5 = Wall(5, 5).to_dict()
-        self.project_left_wall_6 = Wall(8, 2).to_dict()
-        self.project_left_wall_7 = Wall(5, 7).to_dict()
-        self.project_left_wall = Wall(4, 5).to_dict()
+        self.left_walls = [Wall(5, 0).to_dict(),
+                           Wall(5, 1).to_dict(),
+                           Wall(2, 6).to_dict(),
+                           Wall(5, 3).to_dict(),
+                           Wall(5, 4).to_dict(),
+                           Wall(5, 5).to_dict(),
+                           Wall(8, 2).to_dict(),
+                           Wall(5, 7).to_dict(),
+                           Wall(4, 5).to_dict()]
 
-        self.project_right_wall_0 = Wall(3, 0).to_dict()
-        self.project_right_wall_1 = Wall(3, 1).to_dict()
-        self.project_right_wall_2 = Wall(0, 6).to_dict()
-        self.project_right_wall_3 = Wall(3, 3).to_dict()
-        self.project_right_wall_4 = Wall(3, 4).to_dict()
-        self.project_right_wall_5 = Wall(3, 5).to_dict()
-        self.project_right_wall_6 = Wall(6, 2).to_dict()
-        self.project_right_wall_7 = Wall(3, 7).to_dict()
-        self.project_right_wall = Wall(4, 3).to_dict()
+        self.right_walls = [Wall(3, 0).to_dict(),
+                            Wall(3, 1).to_dict(),
+                            Wall(0, 6).to_dict(),
+                            Wall(3, 3).to_dict(),
+                            Wall(3, 4).to_dict(),
+                            Wall(3, 5).to_dict(),
+                            Wall(6, 2).to_dict(),
+                            Wall(3, 7).to_dict(),
+                            Wall(4, 3).to_dict()]
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
@@ -472,26 +475,26 @@ class Interface(Plugin):
         self.central_chamber = 4
         self.left_chamber = 1
         self.right_chamber = 7
-        
-        self.project_left_wall_0 = Wall(0, 4).to_dict()
-        self.project_left_wall_1 = Wall(1, 1).to_dict()
-        self.project_left_wall_2 = Wall(1, 2).to_dict()
-        self.project_left_wall_3 = Wall(1, 3).to_dict()
-        self.project_left_wall_4 = Wall(2, 0).to_dict()
-        self.project_left_wall_5 = Wall(1, 5).to_dict()
-        self.project_left_wall_6 = Wall(1, 6).to_dict()
-        self.project_left_wall_7 = Wall(1, 7).to_dict()
-        self.project_left_wall = Wall(4, 3).to_dict()
 
-        self.project_right_wall_0 = Wall(6, 4).to_dict()
-        self.project_right_wall_1 = Wall(7, 1).to_dict()
-        self.project_right_wall_2 = Wall(7, 2).to_dict()
-        self.project_right_wall_3 = Wall(7, 3).to_dict()
-        self.project_right_wall_4 = Wall(8, 0).to_dict()
-        self.project_right_wall_5 = Wall(7, 5).to_dict()
-        self.project_right_wall_6 = Wall(7, 6).to_dict()
-        self.project_right_wall_7 = Wall(7, 7).to_dict()
-        self.project_right_wall = Wall(4, 5).to_dict()
+        self.left_walls = [Wall(0, 4).to_dict(),
+                           Wall(1, 1).to_dict(),
+                           Wall(1, 2).to_dict(),
+                           Wall(1, 3).to_dict(),
+                           Wall(1, 4).to_dict(),
+                           Wall(1, 5).to_dict(),
+                           Wall(1, 6).to_dict(),
+                           Wall(1, 7).to_dict(),
+                           Wall(4, 3).to_dict()]
+
+        self.right_walls = [Wall(6, 4).to_dict(),
+                            Wall(7, 1).to_dict(),
+                            Wall(7, 2).to_dict(),
+                            Wall(7, 3).to_dict(),
+                            Wall(8, 0).to_dict(),
+                            Wall(7, 5).to_dict(),
+                            Wall(7, 6).to_dict(),
+                            Wall(7, 7).to_dict(),
+                            Wall(4, 5).to_dict()]
 
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
@@ -503,25 +506,25 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.project_left_wall_0 = Wall(6, 4).to_dict()
-        self.project_left_wall_1 = Wall(7, 1).to_dict()
-        self.project_left_wall_2 = Wall(7, 2).to_dict()
-        self.project_left_wall_3 = Wall(7, 3).to_dict()
-        self.project_left_wall_4 = Wall(8, 0).to_dict()
-        self.project_left_wall_5 = Wall(7, 5).to_dict()
-        self.project_left_wall_6 = Wall(7, 6).to_dict()
-        self.project_left_wall_7 = Wall(7, 7).to_dict()
-        self.project_left_wall = Wall(4, 7).to_dict()
+        self.left_walls = [Wall(6, 4).to_dict(),
+                            Wall(7, 1).to_dict(),
+                            Wall(7, 2).to_dict(),
+                            Wall(7, 3).to_dict(),
+                            Wall(8, 0).to_dict(),
+                            Wall(7, 5).to_dict(),
+                            Wall(7, 6).to_dict(),
+                            Wall(7, 7).to_dict(),
+                            Wall(4, 7).to_dict()]
 
-        self.project_right_wall_0 = Wall(0, 4).to_dict()
-        self.project_right_wall_1 = Wall(1, 1).to_dict()
-        self.project_right_wall_2 = Wall(1, 2).to_dict()
-        self.project_right_wall_3 = Wall(1, 3).to_dict()
-        self.project_right_wall_4 = Wall(2, 0).to_dict()
-        self.project_right_wall_5 = Wall(1, 5).to_dict()
-        self.project_right_wall_6 = Wall(1, 6).to_dict()
-        self.project_right_wall_7 = Wall(1, 7).to_dict()
-        self.project_right_wall = Wall(4, 1).to_dict()
+        self.right_walls = [Wall(0, 4).to_dict(),
+                            Wall(1, 1).to_dict(),
+                            Wall(1, 2).to_dict(),
+                            Wall(1, 3).to_dict(),
+                            Wall(1, 4).to_dict(),
+                            Wall(1, 5).to_dict(),
+                            Wall(1, 6).to_dict(),
+                            Wall(1, 7).to_dict(),
+                            Wall(4, 1).to_dict()]
 
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
@@ -533,25 +536,25 @@ class Interface(Plugin):
         self.left_chamber = 3
         self.right_chamber = 5
 
-        self.project_left_wall_0 = Wall(3, 0).to_dict()
-        self.project_left_wall_1 = Wall(3, 1).to_dict()
-        self.project_left_wall_2 = Wall(0, 6).to_dict()
-        self.project_left_wall_3 = Wall(3, 3).to_dict()
-        self.project_left_wall_4 = Wall(3, 4).to_dict()
-        self.project_left_wall_5 = Wall(3, 5).to_dict()
-        self.project_left_wall_6 = Wall(6, 2).to_dict()
-        self.project_left_wall_7 = Wall(3, 7).to_dict()
-        self.project_left_wall = Wall(4, 1).to_dict()
+        self.left_walls = [Wall(3, 0).to_dict(),
+                            Wall(3, 1).to_dict(),
+                            Wall(0, 6).to_dict(),
+                            Wall(3, 3).to_dict(),
+                            Wall(3, 4).to_dict(),
+                            Wall(3, 5).to_dict(),
+                            Wall(6, 2).to_dict(),
+                            Wall(3, 7).to_dict(),
+                            Wall(4, 1).to_dict()]
 
-        self.project_right_wall_0 = Wall(5, 0).to_dict()
-        self.project_right_wall_1 = Wall(5, 1).to_dict()
-        self.project_right_wall_2 = Wall(2, 6).to_dict()
-        self.project_right_wall_3 = Wall(5, 3).to_dict()
-        self.project_right_wall_4 = Wall(5, 4).to_dict()
-        self.project_right_wall_5 = Wall(5, 5).to_dict()
-        self.project_right_wall_6 = Wall(8, 2).to_dict()
-        self.project_right_wall_7 = Wall(5, 7).to_dict()
-        self.project_right_wall = Wall(4, 7).to_dict()
+        self.right_walls = [Wall(5, 0).to_dict(),
+                            Wall(5, 1).to_dict(),
+                            Wall(2, 6).to_dict(),
+                            Wall(5, 3).to_dict(),
+                            Wall(5, 4).to_dict(),
+                            Wall(5, 5).to_dict(),
+                            Wall(8, 2).to_dict(),
+                            Wall(5, 7).to_dict(),
+                            Wall(4, 7).to_dict()]
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
@@ -805,115 +808,31 @@ class Interface(Plugin):
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
                         if self.previous_cued_chamber == 1:
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
+                            for i in self.chamber1_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 1")
                         elif self.previous_cued_chamber == 3:
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber3_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 3")
                         elif self.previous_cued_chamber == 5:
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
+                            for i in self.chamber5_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 5")
                         elif self.previous_cued_chamber == 7:
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber7_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 7")
-
 
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_0))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_1))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_2))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_3))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_4))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_5))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_6))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_7))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall))
-                        rospy.sleep(0.1)
+                        for i in self.left_walls:
+                            self.projection_pub.publish(json.dumps(i))
+                            rospy.sleep(0.1)
                         rospy.loginfo("Projecting wall images")
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
@@ -922,114 +841,31 @@ class Interface(Plugin):
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
                         if self.previous_cued_chamber == 1:
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
+                            for i in self.chamber1_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 1")
                         elif self.previous_cued_chamber == 3:
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber3_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 3")
                         elif self.previous_cued_chamber == 5:
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
+                            for i in self.chamber5_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 5")
                         elif self.previous_cued_chamber == 7:
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber7_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 7")
 
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_0))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_1))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_2))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_3))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_4))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_5))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_6))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_7))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall))
-                        rospy.sleep(0.1)
+                        for i in self.right_walls:
+                            self.projection_pub.publish(json.dumps(i))
+                            rospy.sleep(0.1)
                         rospy.loginfo("Projecting wall images")
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
@@ -1039,114 +875,31 @@ class Interface(Plugin):
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
                         if self.previous_cued_chamber == 1:
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
+                            for i in self.chamber1_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 1")
                         elif self.previous_cued_chamber == 3:
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber3_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 3")
                         elif self.previous_cued_chamber == 5:
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
+                            for i in self.chamber5_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 5")
                         elif self.previous_cued_chamber == 7:
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber7_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 7")
                         
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_0))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_1))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_2))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_3))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_4))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_5))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_6))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall_7))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_right_wall))
-                        rospy.sleep(0.1)
+                        for i in self.right_walls:
+                            self.projection_pub.publish(json.dumps(i))
+                            rospy.sleep(0.1)
                         rospy.loginfo("Projecting wall images")
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
@@ -1155,114 +908,31 @@ class Interface(Plugin):
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
                         if self.previous_cued_chamber == 1:
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
+                            for i in self.chamber1_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 1")
                         elif self.previous_cued_chamber == 3:
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber3_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 3")
                         elif self.previous_cued_chamber == 5:
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
+                            for i in self.chamber5_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 5")
                         elif self.previous_cued_chamber == 7:
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
-                            rospy.sleep(0.1)
-                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
-                            rospy.sleep(0.1)
+                            for i in self.chamber7_walls_list:
+                                self.projection_pub.publish(json.dumps(i))
+                                rospy.sleep(0.1)
                             rospy.loginfo("Projecting black images on the walls of chamber 7")
 
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_0))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_1))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_2))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_3))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_4))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_5))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_6))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall_7))
-                        rospy.sleep(0.1)
-                        self.projection_pub.publish(json.dumps(self.project_left_wall))
-                        rospy.sleep(0.1)
+                        for i in self.left_walls:
+                            self.projection_pub.publish(json.dumps(i))
+                            rospy.sleep(0.1)
                         rospy.loginfo("Projecting wall images")
                         self.success_chamber = self.right_chamber
                         self.error_chamber = self.left_chamber
