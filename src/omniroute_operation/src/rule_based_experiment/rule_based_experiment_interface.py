@@ -52,6 +52,7 @@ class Mode(Enum):
     START = -1
     START_EXPERIMENT = 0
     START_TRIAL = 1
+    RAT_WAITS = 17
     RAT_IN_START_CHAMBER = 2
     START_TO_CHOICE = 3
     RAT_IN_CHOICE_CHAMBER = 4
@@ -207,6 +208,9 @@ class Interface(Plugin):
         self.central_chamber = 0
         self.left_chamber = 0
         self.right_chamber = 0
+        self.cued_chamber = 0
+
+        self.previous_cued_chamber = 0
 
         self.success_chamber = 0
         self.error_chamber = 0
@@ -227,10 +231,52 @@ class Interface(Plugin):
 
         self.floor_img_black_num = 0
         self.floor_img_green_num = 1
-        self.wall_img_num = 3
+        self.wall_img_triangle_num = 3
+        self.wall_img_black_num = 0
         
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions()
+
+        self.chamber1_wall_0 = Wall(1, 0).to_dict()
+        self.chamber1_wall_1 = Wall(1, 1).to_dict()
+        self.chamber1_wall_2 = Wall(1, 2).to_dict()
+        self.chamber1_wall_3 = Wall(1, 3).to_dict()
+        self.chamber1_wall_4 = Wall(1, 4).to_dict()
+        self.chamber1_wall_5 = Wall(1, 5).to_dict()
+        self.chamber1_wall_6 = Wall(1, 6).to_dict()
+        self.chamber1_wall_7 = Wall(1, 7).to_dict()
+
+        self.chamber3_wall_0 = Wall(3, 0).to_dict()
+        self.chamber3_wall_1 = Wall(3, 1).to_dict()
+        self.chamber3_wall_2 = Wall(3, 2).to_dict()
+        self.chamber3_wall_3 = Wall(3, 3).to_dict()
+        self.chamber3_wall_4 = Wall(3, 4).to_dict()
+        self.chamber3_wall_5 = Wall(3, 5).to_dict()
+        self.chamber3_wall_6 = Wall(3, 6).to_dict()
+        self.chamber3_wall_7 = Wall(3, 7).to_dict()
+
+        self.chamber5_wall_0 = Wall(5, 0).to_dict()
+        self.chamber5_wall_1 = Wall(5, 1).to_dict()
+        self.chamber5_wall_2 = Wall(5, 2).to_dict()
+        self.chamber5_wall_3 = Wall(5, 3).to_dict()
+        self.chamber5_wall_4 = Wall(5, 4).to_dict()
+        self.chamber5_wall_5 = Wall(5, 5).to_dict()
+        self.chamber5_wall_6 = Wall(5, 6).to_dict()
+        self.chamber5_wall_7 = Wall(5, 7).to_dict()
+
+        self.chamber7_wall_0 = Wall(7, 0).to_dict()
+        self.chamber7_wall_1 = Wall(7, 1).to_dict()
+        self.chamber7_wall_2 = Wall(7, 2).to_dict()
+        self.chamber7_wall_3 = Wall(7, 3).to_dict()
+        self.chamber7_wall_4 = Wall(7, 4).to_dict()
+        self.chamber7_wall_5 = Wall(7, 5).to_dict()
+        self.chamber7_wall_6 = Wall(7, 6).to_dict()
+        self.chamber7_wall_7 = Wall(7, 7).to_dict()
+
+        self.chamber4_wall_1 = Wall(4, 1).to_dict()
+        self.chamber4_wall_3 = Wall(4, 3).to_dict()
+        self.chamber4_wall_5 = Wall(4, 5).to_dict()
+        self.chamber4_wall_7 = Wall(4, 7).to_dict()
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
@@ -745,23 +791,111 @@ class Interface(Plugin):
 
                     if self.currentTrial is not None:
                         # Access the current trial data
+                        self.training_mode = self.currentTrial[3]
                         self.left_visual_cue = self.currentTrial[0]
                         self.right_visual_cue = self.currentTrial[1]
-                        self.sound_cue = self.currentTrial[2]
-                        self.training_mode = self.currentTrial[3]
+                        self.floor_cue = self.currentTrial[2]
 
-                self.projection_floor_pub.publish(self.floor_img_green_num)
-                self.projection_wall_img_pub.publish(self.wall_img_num)
-                               
-                if self.is_testing_phase:
-                    self.play_sound_cue(self.sound_cue)
-                else:
-                    self.sound_cue_training_start = self.sound_cue + "_Training_Start"
-                    self.sound_cue_training_stop = self.sound_cue + "_Training_Stop"
-                    self.play_sound_cue(self.sound_cue_training_start)
-                
-                if self.sound_cue == "White_Noise":
-                    if self.left_visual_cue == "Triangle":  
+
+                if self.floor_cue == "Green":
+                    self.projection_floor_pub.publish(self.floor_img_green_num)
+                    rospy.sleep(0.1)
+                    if self.left_visual_cue == "Triangle":
+                        self.cued_chamber = self.left_chamber
+                        self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                        rospy.sleep(0.1)
+                        if self.previous_cued_chamber == 1:
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 1")
+                        elif self.previous_cued_chamber == 3:
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 3")
+                        elif self.previous_cued_chamber == 5:
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 5")
+                        elif self.previous_cued_chamber == 7:
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 7")
+
+
+                        self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                        rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                         rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_left_wall_1))
@@ -784,6 +918,100 @@ class Interface(Plugin):
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
+                        self.cued_chamber = self.right_chamber
+                        self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                        rospy.sleep(0.1)
+                        if self.previous_cued_chamber == 1:
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 1")
+                        elif self.previous_cued_chamber == 3:
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 3")
+                        elif self.previous_cued_chamber == 5:
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 5")
+                        elif self.previous_cued_chamber == 7:
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 7")
+
+                        self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                        rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_right_wall_0))
                         rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_right_wall_1))
@@ -807,6 +1035,100 @@ class Interface(Plugin):
                         self.error_chamber = self.left_chamber
                 else:
                     if self.left_visual_cue == "No_Cue":
+                        self.cued_chamber = self.right_chamber
+                        self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                        rospy.sleep(0.1)
+                        if self.previous_cued_chamber == 1:
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 1")
+                        elif self.previous_cued_chamber == 3:
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 3")
+                        elif self.previous_cued_chamber == 5:
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 5")
+                        elif self.previous_cued_chamber == 7:
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 7")
+                        
+                        self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                        rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_right_wall_0))
                         rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_right_wall_1))
@@ -829,6 +1151,100 @@ class Interface(Plugin):
                         self.success_chamber = self.left_chamber
                         self.error_chamber = self.right_chamber
                     else:
+                        self.cued_chamber = self.left_chamber
+                        self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                        rospy.sleep(0.1)
+                        if self.previous_cued_chamber == 1:
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber1_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 1")
+                        elif self.previous_cued_chamber == 3:
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber3_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 3")
+                        elif self.previous_cued_chamber == 5:
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber5_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 5")
+                        elif self.previous_cued_chamber == 7:
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_0))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_1))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_2))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_3))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_4))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_6))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber7_wall_7))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_5))
+                            rospy.sleep(0.1)
+                            self.projection_pub.publish(json.dumps(self.chamber4_wall_7))
+                            rospy.sleep(0.1)
+                            rospy.loginfo("Projecting black images on the walls of chamber 7")
+
+                        self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
+                        rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_left_wall_0))
                         rospy.sleep(0.1)
                         self.projection_pub.publish(json.dumps(self.project_left_wall_1))
@@ -852,8 +1268,16 @@ class Interface(Plugin):
                         self.error_chamber = self.left_chamber
 
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.RAT_IN_START_CHAMBER
-                rospy.loginfo("RAT_IN_START_CHAMBER")
+                self.mode = Mode.RAT_WAITS
+                rospy.loginfo("RAT_WAITS")
+
+            elif self.mode == Mode.RAT_WAITS:
+                if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
+                    self.projection_floor_pub.publish(self.floor_img_black_num)
+                    rospy.sleep(0.1)
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.RAT_IN_START_CHAMBER
+                    rospy.loginfo("RAT_IN_START_CHAMBER")
 
             elif self.mode == Mode.RAT_IN_START_CHAMBER:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
@@ -884,7 +1308,6 @@ class Interface(Plugin):
             elif self.mode == Mode.START_TO_CHOICE:
                 # Wait for the rat to move to the choice point
                 if self.rat_head_chamber == self.central_chamber:
-                    rospy.loginfo(self.rat_head_chamber)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.RAT_IN_CHOICE_CHAMBER
                     rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
@@ -930,17 +1353,18 @@ class Interface(Plugin):
                     rospy.loginfo("Right chamber selected and chamber number is {}".format(self.success_chamber))
                 self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
                 self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-                self.gantry_pub.publish("MOVE_TO_COORDINATE", [
-                                        self.success_center_x, self.success_center_y])
+                # self.gantry_pub.publish("MOVE_TO_COORDINATE", [
+                #                         self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD_START")
 
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                    self.common_functions.reward_dispense()
-                    if self.is_testing_phase:
-                        self.play_sound_cue(self.sound_cue)
+                    self.previous_cued_chamber = self.cued_chamber
+                    #self.common_functions.reward_dispense()
+                    # if self.is_testing_phase:
+                    #     self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_END
                     rospy.loginfo("REWARD END")
@@ -948,10 +1372,10 @@ class Interface(Plugin):
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
                     self.gantry_pub.publish("TRACK_HARNESS", [])
-                    if not self.is_testing_phase:
-                    #     self.play_sound_cue(self.sound_cue)
-                    # else:
-                        self.play_sound_cue(self.sound_cue_training_stop) 
+                    # if not self.is_testing_phase:
+                    # #     self.play_sound_cue(self.sound_cue)
+                    # # else:
+                    #     self.play_sound_cue(self.sound_cue_training_stop) 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD") 
@@ -977,10 +1401,10 @@ class Interface(Plugin):
                     
             elif self.mode == Mode.ERROR:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_first_delay.to_sec():
-                    if not self.is_testing_phase:
+                    #if not self.is_testing_phase:
                     #     self.play_sound_cue(self.sound_cue)
                     # else:
-                        self.play_sound_cue(self.sound_cue_training_stop) 
+                        #self.play_sound_cue(self.sound_cue_training_stop) 
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR_END
                     rospy.loginfo("ERROR_END")
@@ -1020,30 +1444,30 @@ class Interface(Plugin):
                     self.mode = Mode.START_TRIAL
                     rospy.loginfo("START_TRIAL")
 
-    def play_sound_cue(self, sound_cue):
-        if self.is_ephys_rat:
-            return
-        rospy.loginfo(f"Play sound cue {sound_cue}")    
-        if sound_cue == "White_Noise":
-            self.sound_pub.publish("White_Noise")
+    # def play_sound_cue(self, sound_cue):
+    #     if self.is_ephys_rat:
+    #         return
+    #     rospy.loginfo(f"Play sound cue {sound_cue}")    
+    #     if sound_cue == "White_Noise":
+    #         self.sound_pub.publish("White_Noise")
 
-        elif sound_cue == "White_Noise_Training_Start":
-            self.sound_pub.publish("White_Noise_Training_Start")
+    #     elif sound_cue == "White_Noise_Training_Start":
+    #         self.sound_pub.publish("White_Noise_Training_Start")
 
-        elif sound_cue == "White_Noise_Training_Stop":
-            self.sound_pub.publish("White_Noise_Training_Stop")
+    #     elif sound_cue == "White_Noise_Training_Stop":
+    #         self.sound_pub.publish("White_Noise_Training_Stop")
 
-        elif sound_cue == "5KHz":
-            self.sound_pub.publish("5KHz")
+    #     elif sound_cue == "5KHz":
+    #         self.sound_pub.publish("5KHz")
 
-        elif sound_cue == "5KHz_Training_Start":
-            self.sound_pub.publish("5KHz_Training_Start")
+    #     elif sound_cue == "5KHz_Training_Start":
+    #         self.sound_pub.publish("5KHz_Training_Start")
 
-        elif sound_cue == "5KHz_Training_Stop":
-            self.sound_pub.publish("5KHz_Training_Stop")
+    #     elif sound_cue == "5KHz_Training_Stop":
+    #         self.sound_pub.publish("5KHz_Training_Stop")
 
-        elif sound_cue == "Error":
-            self.sound_pub.publish("Error")
+    #     elif sound_cue == "Error":
+    #         self.sound_pub.publish("Error")
 
 
 if __name__ == '__main__':

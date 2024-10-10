@@ -817,14 +817,14 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                self.common_functions.reward_dispense()
+                #self.common_functions.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_END
                 rospy.loginfo("REWARD END")
 
         elif self.mode == Mode.REWARD_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                self.gantry_pub.publish("TRACK_HARNESS", [])
+                #self.gantry_pub.publish("TRACK_HARNESS", [])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.POST_REWARD
                 rospy.loginfo("POST REWARD") 
