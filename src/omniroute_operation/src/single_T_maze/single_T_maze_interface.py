@@ -156,7 +156,7 @@ class Interface(Plugin):
         # Experiment parameters
         self.delay = rospy.Duration(2.0)  # Duration of delay between each loop
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
-        self.start_second_delay = rospy.Duration(6.0)  # Duration of delay in the beginning of the trial
+        self.start_second_delay = rospy.Duration(1.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
         self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
@@ -372,7 +372,8 @@ class Interface(Plugin):
         self.left_chamber = 5
         self.right_chamber = 3
 
-        self.left_walls = [Wall(5, 0).to_dict(),
+        #self.walls = {1:left walls, 2:right walls} 
+        self.walls = {1: [Wall(5, 0).to_dict(),
                            Wall(5, 1).to_dict(),
                            Wall(2, 6).to_dict(),
                            Wall(5, 3).to_dict(),
@@ -380,9 +381,8 @@ class Interface(Plugin):
                            Wall(5, 5).to_dict(),
                            Wall(8, 2).to_dict(),
                            Wall(5, 7).to_dict(),
-                           Wall(4, 5).to_dict()]
-
-        self.right_walls = [Wall(3, 0).to_dict(),
+                           Wall(4, 5).to_dict()],
+                      2: [Wall(3, 0).to_dict(),
                             Wall(3, 1).to_dict(),
                             Wall(0, 6).to_dict(),
                             Wall(3, 3).to_dict(),
@@ -390,7 +390,7 @@ class Interface(Plugin):
                             Wall(3, 5).to_dict(),
                             Wall(6, 2).to_dict(),
                             Wall(3, 7).to_dict(),
-                            Wall(4, 3).to_dict()]
+                            Wall(4, 3).to_dict()]}
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
@@ -402,7 +402,10 @@ class Interface(Plugin):
         self.left_chamber = 1
         self.right_chamber = 7
 
-        self.left_walls = [Wall(0, 4).to_dict(),
+        # self.walls = {1:left walls, 2:right walls}
+        self.left_walls_key = 1
+        self.right_walls_key = 2
+        self.walls = {1: [Wall(0, 4).to_dict(),
                            Wall(1, 1).to_dict(),
                            Wall(1, 2).to_dict(),
                            Wall(1, 3).to_dict(),
@@ -410,9 +413,8 @@ class Interface(Plugin):
                            Wall(1, 5).to_dict(),
                            Wall(1, 6).to_dict(),
                            Wall(1, 7).to_dict(),
-                           Wall(4, 3).to_dict()]
-
-        self.right_walls = [Wall(6, 4).to_dict(),
+                           Wall(4, 3).to_dict()],
+                     2:  [Wall(6, 4).to_dict(),
                             Wall(7, 1).to_dict(),
                             Wall(7, 2).to_dict(),
                             Wall(7, 3).to_dict(),
@@ -420,7 +422,7 @@ class Interface(Plugin):
                             Wall(7, 5).to_dict(),
                             Wall(7, 6).to_dict(),
                             Wall(7, 7).to_dict(),
-                            Wall(4, 5).to_dict()]
+                            Wall(4, 5).to_dict()]}
 
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
@@ -432,7 +434,10 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.left_walls = [Wall(6, 4).to_dict(),
+        # self.walls = {1:left walls, 2:right walls}
+        self.left_walls_key = 1
+        self.right_walls_key = 2
+        self.walls ={1: [Wall(6, 4).to_dict(),
                            Wall(7, 1).to_dict(),
                            Wall(7, 2).to_dict(),
                            Wall(7, 3).to_dict(),
@@ -440,9 +445,8 @@ class Interface(Plugin):
                            Wall(7, 5).to_dict(),
                            Wall(7, 6).to_dict(),
                            Wall(7, 7).to_dict(),
-                           Wall(4, 7).to_dict()]
-
-        self.right_walls = [Wall(0, 4).to_dict(),
+                           Wall(4, 7).to_dict()],
+                     2: [Wall(0, 4).to_dict(),
                             Wall(1, 1).to_dict(),
                             Wall(1, 2).to_dict(),
                             Wall(1, 3).to_dict(),
@@ -450,7 +454,7 @@ class Interface(Plugin):
                             Wall(1, 5).to_dict(),
                             Wall(1, 6).to_dict(),
                             Wall(1, 7).to_dict(),
-                            Wall(4, 1).to_dict()]
+                            Wall(4, 1).to_dict()]}
 
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
@@ -462,7 +466,10 @@ class Interface(Plugin):
         self.left_chamber = 3
         self.right_chamber = 5
 
-        self.left_walls = [Wall(3, 0).to_dict(),
+        # self.walls = {1:left walls, 2:right walls}
+        self.left_walls_key = 1
+        self.right_walls_key = 2
+        self.walls = {1: [Wall(3, 0).to_dict(),
                            Wall(3, 1).to_dict(),
                            Wall(0, 6).to_dict(),
                            Wall(3, 3).to_dict(),
@@ -470,9 +477,8 @@ class Interface(Plugin):
                            Wall(3, 5).to_dict(),
                            Wall(6, 2).to_dict(),
                            Wall(3, 7).to_dict(),
-                           Wall(4, 1).to_dict()]
-
-        self.right_walls = [Wall(5, 0).to_dict(),
+                           Wall(4, 1).to_dict()],
+                     2: [Wall(5, 0).to_dict(),
                             Wall(5, 1).to_dict(),
                             Wall(2, 6).to_dict(),
                             Wall(5, 3).to_dict(),
@@ -480,12 +486,28 @@ class Interface(Plugin):
                             Wall(5, 5).to_dict(),
                             Wall(8, 2).to_dict(),
                             Wall(5, 7).to_dict(),
-                            Wall(4, 7).to_dict()]
+                            Wall(4, 7).to_dict()]}
 
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
+
+    def publish_walls(self, previous_cued_chamber, chamber_walls_list):
+        if previous_cued_chamber in chamber_walls_list:
+            # Get the list of objects associated with the key
+            object_list = chamber_walls_list[previous_cued_chamber]
+
+            # Publish each object in the list
+            for obj in object_list:
+                # Assuming obj can be serialized with json.dumps
+                self.projection_pub.publish(json.dumps(obj))
+                rospy.loginfo(f"Published: {obj}")
+                # Add a small delay to ensure proper publishing
+                rospy.sleep(0.1)
+        else:
+            rospy.logwarn(
+                f"Key {previous_cued_chamber} not found in the dictionary.")
 
     def run_experiment(self):
 
@@ -539,32 +561,24 @@ class Interface(Plugin):
                 if self.left_visual_cue == "Triangle":
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.right_walls_key, self.walls)
                     rospy.loginfo("Projecting black images on the opposite walls")
 
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.left_walls_key, self.walls)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.left_walls_key, self.walls)
                     rospy.loginfo("Projecting black images on the opposite walls")
 
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.right_walls_key, self.walls)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
@@ -572,32 +586,24 @@ class Interface(Plugin):
                 if self.left_visual_cue == "No_Cue":
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.left_walls_key, self.walls)
                     rospy.loginfo("Projecting black images on the opposite walls")
                     
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.right_walls_key, self.walls)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.right_walls_key, self.walls)
                     rospy.loginfo("Projecting black images on the opposite walls")
 
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                    self.publish_walls(self.left_walls_key, self.walls)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
