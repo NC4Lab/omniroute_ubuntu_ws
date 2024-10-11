@@ -237,7 +237,8 @@ class Interface(Plugin):
         self.maze_dim = MazeDimensions()
         self.common_functions = CommonFunctions()
 
-        self.chamber1_walls_list = [Wall(1, 0).to_dict(),
+        self.chamber_walls_list = {1:
+                                   [Wall(1, 0).to_dict(),
                                     Wall(1, 1).to_dict(),
                                     Wall(1, 2).to_dict(),
                                     Wall(1, 3).to_dict(),
@@ -246,9 +247,8 @@ class Interface(Plugin):
                                     Wall(1, 6).to_dict(),
                                     Wall(1, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
-                                    Wall(4, 3).to_dict()]
-
-        self.chamber3_walls_list = [Wall(3, 0).to_dict(),
+                                    Wall(4, 3).to_dict()],
+                                    3: [Wall(3, 0).to_dict(),
                                     Wall(3, 1).to_dict(),
                                     Wall(3, 2).to_dict(),
                                     Wall(3, 3).to_dict(),
@@ -257,9 +257,8 @@ class Interface(Plugin):
                                     Wall(3, 6).to_dict(),
                                     Wall(3, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
-                                    Wall(4, 7).to_dict()]
-
-        self.chamber5_walls_list = [Wall(5, 0).to_dict(),
+                                    Wall(4, 7).to_dict()],
+                                    5: [Wall(5, 0).to_dict(),
                                     Wall(5, 1).to_dict(),
                                     Wall(5, 2).to_dict(),
                                     Wall(5, 3).to_dict(),
@@ -268,9 +267,8 @@ class Interface(Plugin):
                                     Wall(5, 6).to_dict(),
                                     Wall(5, 7).to_dict(),
                                     Wall(4, 3).to_dict(),
-                                    Wall(4, 5).to_dict()]
-
-        self.chamber7_walls_list = [Wall(7, 0).to_dict(),
+                                    Wall(4, 5).to_dict()],
+                                    7: [Wall(7, 0).to_dict(),
                                     Wall(7, 1).to_dict(),
                                     Wall(7, 2).to_dict(),
                                     Wall(7, 3).to_dict(),
@@ -280,6 +278,7 @@ class Interface(Plugin):
                                     Wall(7, 7).to_dict(),
                                     Wall(4, 5).to_dict(),
                                     Wall(4, 7).to_dict()]
+        }
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
@@ -464,7 +463,7 @@ class Interface(Plugin):
                             Wall(3, 5).to_dict(),
                             Wall(6, 2).to_dict(),
                             Wall(3, 7).to_dict(),
-                            Wall(4, 3).to_dict()]
+                            Wall(4, 7).to_dict()]
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
@@ -554,11 +553,25 @@ class Interface(Plugin):
                             Wall(5, 5).to_dict(),
                             Wall(8, 2).to_dict(),
                             Wall(5, 7).to_dict(),
-                            Wall(4, 7).to_dict()]
+                            Wall(4, 3).to_dict()]
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
+
+    def publish_walls(self, previous_cued_chamber, chamber_walls_list):
+        if previous_cued_chamber in chamber_walls_list:
+            # Get the list of objects associated with the key 
+            object_list = chamber_walls_list[previous_cued_chamber]
+
+            # Publish each object in the list
+            for obj in object_list:
+                # Assuming obj can be serialized with json.dumps
+                self.projection_pub.publish(json.dumps(obj))
+                rospy.loginfo(f"Published: {obj}")
+                rospy.sleep(0.1)  # Add a small delay to ensure proper publishing
+        else:
+            rospy.logwarn(f"Key {previous_cued_chamber} not found in the dictionary.")
             
     def run_experiment(self):
 
@@ -807,27 +820,7 @@ class Interface(Plugin):
                         self.cued_chamber = self.left_chamber
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
-                        if self.previous_cued_chamber == 1:
-                            for i in self.chamber1_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 1")
-                        elif self.previous_cued_chamber == 3:
-                            for i in self.chamber3_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 3")
-                        elif self.previous_cued_chamber == 5:
-                            for i in self.chamber5_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 5")
-                        elif self.previous_cued_chamber == 7:
-                            for i in self.chamber7_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 7")
-
+                        self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
                         for i in self.left_walls:
@@ -840,27 +833,8 @@ class Interface(Plugin):
                         self.cued_chamber = self.right_chamber
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
-                        if self.previous_cued_chamber == 1:
-                            for i in self.chamber1_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 1")
-                        elif self.previous_cued_chamber == 3:
-                            for i in self.chamber3_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 3")
-                        elif self.previous_cued_chamber == 5:
-                            for i in self.chamber5_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 5")
-                        elif self.previous_cued_chamber == 7:
-                            for i in self.chamber7_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 7")
-
+                        self.publish_walls(
+                            self.previous_cued_chamber, self.chamber_walls_list)
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
                         for i in self.right_walls:
@@ -874,27 +848,8 @@ class Interface(Plugin):
                         self.cued_chamber = self.right_chamber
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
-                        if self.previous_cued_chamber == 1:
-                            for i in self.chamber1_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 1")
-                        elif self.previous_cued_chamber == 3:
-                            for i in self.chamber3_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 3")
-                        elif self.previous_cued_chamber == 5:
-                            for i in self.chamber5_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 5")
-                        elif self.previous_cued_chamber == 7:
-                            for i in self.chamber7_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 7")
-                        
+                        self.publish_walls(
+                            self.previous_cued_chamber, self.chamber_walls_list)
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
                         for i in self.right_walls:
@@ -907,27 +862,8 @@ class Interface(Plugin):
                         self.cued_chamber = self.left_chamber
                         self.projection_wall_img_pub.publish(self.wall_img_black_num)
                         rospy.sleep(0.1)
-                        if self.previous_cued_chamber == 1:
-                            for i in self.chamber1_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 1")
-                        elif self.previous_cued_chamber == 3:
-                            for i in self.chamber3_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 3")
-                        elif self.previous_cued_chamber == 5:
-                            for i in self.chamber5_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 5")
-                        elif self.previous_cued_chamber == 7:
-                            for i in self.chamber7_walls_list:
-                                self.projection_pub.publish(json.dumps(i))
-                                rospy.sleep(0.1)
-                            rospy.loginfo("Projecting black images on the walls of chamber 7")
-
+                        self.publish_walls(
+                            self.previous_cued_chamber, self.chamber_walls_list)
                         self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                         rospy.sleep(0.1)
                         for i in self.left_walls:
