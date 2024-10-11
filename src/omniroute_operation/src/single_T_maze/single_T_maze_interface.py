@@ -93,14 +93,10 @@ class Interface(Plugin):
         self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
 
         self._widget.startChamberBtnGroup = QButtonGroup()
-        self._widget.startChamberBtnGroup.addButton(
-            self._widget.chamberOneBtn, id=1)
-        self._widget.startChamberBtnGroup.addButton(
-            self._widget.chamberThreeBtn, id=3)
-        self._widget.startChamberBtnGroup.addButton(
-            self._widget.chamberFiveBtn, id=5)
-        self._widget.startChamberBtnGroup.addButton(
-            self._widget.chamberSevenBtn, id=7)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberOneBtn, id=1)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberThreeBtn, id=3)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberFiveBtn, id=5)
+        self._widget.startChamberBtnGroup.addButton(self._widget.chamberSevenBtn, id=7)
         self._widget.startChamberBtnGroup.setExclusive(True)
         for button in self._widget.startChamberBtnGroup.buttons():
             button.setEnabled(True)
