@@ -326,8 +326,10 @@ class GantryOperation:
     def harness_pose_callback(self, msg):
         # Store x
         self.harness_x = msg.pose.position.x
+        #rospy.loginfo("Harness x: %0.2f", self.harness_x)
         # Store y
         self.harness_y = msg.pose.position.y
+        #rospy.loginfo("Harness y: %0.2f", self.harness_y)
 
     def gantry_cmd_callback(self, msg):
         if msg.cmd == "HOME":
