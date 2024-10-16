@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>705</width>
-    <height>486</height>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>10</x>
      <y>10</y>
      <width>681</width>
-     <height>461</height>
+     <height>191</height>
     </rect>
    </property>
    <property name="title">
@@ -50,7 +50,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>PLus Maze</string>
+      <string>Cont. T-Maze</string>
      </property>
     </widget>
     <widget class="QPushButton" name="lowerAllDoorsBtn">
@@ -61,6 +61,157 @@
        <width>141</width>
        <height>41</height>
       </rect>
+     </property>
+     <property name="palette">
+      <palette>
+       <active>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>238</red>
+           <green>238</green>
+           <blue>236</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="ButtonText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>164</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Shadow">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>239</red>
+           <green>239</green>
+           <blue>239</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="PlaceholderText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="128">
+           <red>164</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </active>
+       <inactive>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>238</red>
+           <green>238</green>
+           <blue>236</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="ButtonText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>164</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Shadow">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>239</red>
+           <green>239</green>
+           <blue>239</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="PlaceholderText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="128">
+           <red>164</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </inactive>
+       <disabled>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>238</red>
+           <green>238</green>
+           <blue>236</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>190</red>
+           <green>190</green>
+           <blue>190</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="ButtonText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>190</red>
+           <green>190</green>
+           <blue>190</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Shadow">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>239</red>
+           <green>239</green>
+           <blue>239</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="PlaceholderText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="128">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </disabled>
+      </palette>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
      </property>
      <property name="text">
       <string>Lower ALL Doors </string>
@@ -166,103 +317,6 @@
     <property name="text">
      <string>Maze and Gantry Buttons</string>
     </property>
-   </widget>
-   <widget class="QFrame" name="frame_5">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>240</y>
-      <width>301</width>
-      <height>181</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QRadioButton" name="chamberOneBtn">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>80</y>
-       <width>112</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Chamber 1 </string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="chamberThreeBtn">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>30</y>
-       <width>112</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Chamber  3 </string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="chamberSevenBtn">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>80</y>
-       <width>112</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Chamber 7 </string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="chamberFiveBtn">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>130</y>
-       <width>151</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Chamber  5 </string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>210</y>
-      <width>301</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <widget class="QLabel" name="label_2">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>271</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Pick the starting Chamber</string>
-     </property>
-    </widget>
    </widget>
   </widget>
  </widget>
