@@ -961,8 +961,8 @@ class Interface(Plugin):
                 self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
                 # self.gantry_pub.publish("MOVE_TO_COORDINATE", [
                 #                          self.success_center_x, self.success_center_y])
-                self.gantry_pub.publish("MOVE_TO_CHAMBER", [
-                    self.success_chamber])
+                #self.gantry_pub.publish("MOVE_TO_CHAMBER", [
+                    #self.success_chamber])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD_START")
@@ -970,7 +970,7 @@ class Interface(Plugin):
             elif self.mode == Mode.REWARD_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
                     self.previous_cued_chamber = self.cued_chamber
-                    self.common_functions.reward_dispense()
+                    #self.common_functions.reward_dispense()
                     # if self.is_testing_phase:
                     #     self.play_sound_cue(self.sound_cue)
                     self.mode_start_time = rospy.Time.now()
@@ -979,7 +979,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    self.gantry_pub.publish("TRACK_HARNESS", [])
+                    #self.gantry_pub.publish("TRACK_HARNESS", [])
                     # if not self.is_testing_phase:
                     # #     self.play_sound_cue(self.sound_cue)
                     # # else:

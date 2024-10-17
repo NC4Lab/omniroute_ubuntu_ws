@@ -51,7 +51,7 @@ class Mode(Enum):
     END_TRIAL = 18
     END_EXPERIMENT = 19
     PAUSE_EXPERIMENT = 20
-    RESUME_EXPERIMENT = 21
+    RESUME_EXPERIMENT = 21 
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -79,6 +79,9 @@ class Interface(Plugin):
         rospy.loginfo('Test Interface started')
 
         self._widget.setObjectName('InterfacePluginUi')
+        if context.serial_number() > 1:
+            self._widget.setWindowTitle(
+                self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
         # Add widget to the user interface
         context.add_widget(self._widget)
@@ -137,7 +140,7 @@ class Interface(Plugin):
 
         # Time parameters
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.run_experiment)
+        #self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10)
 
         # Delay parameters (change durations later)
@@ -283,7 +286,7 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-        # Define run_experiment
+        # Define the experiment
 if __name__ == '__main__':
     rospy.init_node('dynamic_training_controller')
     Interface()
