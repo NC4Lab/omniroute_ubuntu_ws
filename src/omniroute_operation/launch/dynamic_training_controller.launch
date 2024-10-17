@@ -86,6 +86,8 @@
     <!-- Omniroute experiment controller interface -->
     <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
 
+    <node name = "dynamic_training_controller" pkg = "omniroute_operation" type = "dynamic_training_controller_interface.py" output = "screen"/>
+
     <node name = "rat_detector" pkg = "omniroute_operation" type = "rat_detector.py" output = "screen"/>
 <!--  -->
     <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->

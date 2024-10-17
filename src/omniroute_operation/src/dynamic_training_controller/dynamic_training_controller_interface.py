@@ -85,9 +85,10 @@ class Interface(Plugin):
 
         self.scene = QGraphicsScene()
 
+        # Define all buttons in the interface
+        self._widget.dynamicTrainingBtn.clicked.connect(self._handle_dynamicTrainingBtn_clicked)
+        self._widget.pseudorandomTrainingBtn.clicked.connect(self._handle_pseudorandomTrainingBtn_clicked) # Depending on how we design the dynamic controller, we may need more than one control training mode
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
-        # Button for genetating trials migth be removed later depending on how we design the dynamic_training_controller
-        self._widget.trialsGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)
         self._widget.contTMazeBtn.clicked.connect(self._handle_contTMazeBtn_clicked)
         self._widget.lowerAllDoorsBtn.clicked.connect(self._handle_lowerAllDoorsBtn_clicked)
         # The starting chamber is always the same so no need to define it in the interface
@@ -158,8 +159,8 @@ class Interface(Plugin):
         self.start_chamber = 0
         self.central_chamber = 0
         self.choice_chamber = 0
-        self.return_chambers_left = 0
-        self.return_chambers_right = 0
+        self.left_return_chamber = 0
+        self.right_return_chamber = 0
 
         # Wall parameters
         self.start_wall = Wall(0, 0)
@@ -168,10 +169,11 @@ class Interface(Plugin):
         self.left_goal_exit_wall = Wall(0,0)
         self.right_goal_exit_wall = Wall(0,0)
         self.left_return_wall = Wall(0,0)
-        self.right_return_wall + Wall(0,0)
+        self.right_return_wall = Wall(0,0)
 
         # Rat parameters
         self.rat_position = 0
+        current_rat_chamber = self.rat_head_chamber
 
         # Maze parameters
         self.maze_dim = MazeDimensions()
@@ -188,10 +190,104 @@ class Interface(Plugin):
         self.trial_count = {key: 0 for key in self.trial_types} 
 
         # Define actions for clicking each button in the interface
+        def _handle_dynamicTrainingBtn_clicked(self):
+            # set training mode to dynamic training
+            rospy.loginfo("Dynamic training selected")
+
+        def _handle_pseudorandomTrainingBtn_clicked(self):
+            #set training mode to pseudorandom training
+            rospy.loginfo("Pseudorandom training selected")
+
+        def _handle_testingPhaseBtn_clicked(self):
+            self.is_testing_phase = True
+            rospy.loginfo("Testing phase selected")
+
+        def _handle_contTMazeBtn_clicked(self):
+            self.setContTMazeConfig()
+            self.setchamberSevenStartConfig()
+
+        def setContTMazeConfig(self):
+            # Raise all walls
+            for i in range(9):
+                for j in range(8):
+                    self.common_functions.raise_wall(Wall(i, j), False)
+
+            # Lower walls between chambers 3 and 6, 1 and 4, 5 and 8
+            for i in [4, 6, 8]:
+                for j in range(2):
+                    self.common_functions.lower_wall(Wall(i, j), False) # Left and right goal walls remain raised until the first trial starts
+       
+        def _handle_lowerAllDoorsBtn_clicked(self):
+            self.setlowerConfig()
+
+        # Lower Walls of the chambers that the rat is at risk of getting caught in (i.e. those that are lowered/ raised during the experiment)
+        def setlowerConfig(self):
+            # Lower Walls 0, 4, 6 in chamber 7 (starting chamber); and 0, 6 in chamber 2 (right goal chamber)
+            if self.rat_head_chamber == 7 or 6 or 8 or 4:
+                for i in [0, 2, 4, 6]:
+                    self.common_functions.lower_wall(Wall(4, i), False)
+            # Lower Walls 4, 6 in chamber 0 (left goal chamber); and
+            elif self.rat_head_chamber == 0 or 1 or 3:
+                for i in [4, 6]:
+                    self.common_functions.lower_wall(Wall(0, i), False) ## CHECK WHY THIS IS NOT ACCEPTED
+            # Lower Walls and 0, 6 in chamber 2 (right goal chamber)
+            elif self.rat_head_chamber == 2 or 1 or 5:
+                for i in [0, 6]:
+                    self.common_functions.lower_wall(Wall(2, i), False)
+            self.common_functions.activateWalls()
+
+        # Define chambers
+        def setchamberSevenStartConfig(self):
+            self.start_chamber = 7
+            self.central_chaber = 4
+            self.choice_chamber = 1
+            self.left_goal_chamber = 0
+            self.right_goal_chamber = 2
+            self.left_return_chamber = 6
+            self.right_return_chamber = 8
+            
+            self.start_wall = Wall(4, 6)
+            self.left_goal_entry_wall = Wall(0, 4)
+            self.right_goal_entry_wall = Wall(2, 0)
+            self.left_goal_exit_wall = Wall(0, 6)
+            self.right_goal_exit_wall = Wall(2, 6)
+            self.left_return_wall = Wall(6,4)
+            self.right_return_wall = Wall(8,0)
 
         # Define messages (i.e. data) received from the gantry
+        def rat_head_chamber_callback(self, msg):
+            self.rat_head_chamber = msg.data
+
+        def rat_body_chamber_callback(self, msg):
+            self.rat_body_chamber = msg.data
+        
+        def mode_callback(self, msg):
+            mode = msg.data
+            if mode == "START_EXPERIMENT":
+                self.mode = Mode.START_EXPERIMENT
+            elif mode == "PAUSE_EXPERIMENT":
+                self.mode_before_pause = self.mode
+                self.mode = Mode.PAUSE_EXPERIMENT
+            elif mode == "RESUME_EXPERIMENT":
+                self.mode = Mode.RESUME_EXPERIMENT
+
+        def trial_callback(self, msg):
+            # Convert the string back into a list (if necessary)
+            trial_data = json.loads(msg.data)
+            self.currentTrial = trial_data['trial']
+            self.current_trial_index = trial_data['current_trial_index']
+            self.trials = trial_data['trials']
+            self.nTrials = trial_data['nTrials']
+
+        # Log the received trial and index
+        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
+        rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
         # Define run_experiment
+if __name__ == '__main__':
+    rospy.init_node('dynamic_training_controller')
+    Interface()
+    rospy.spin()
 
 
 

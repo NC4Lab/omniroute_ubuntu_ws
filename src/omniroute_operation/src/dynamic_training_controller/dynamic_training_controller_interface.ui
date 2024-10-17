@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>705</width>
-    <height>188</height>
+    <width>925</width>
+    <height>178</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>681</width>
+     <width>901</width>
      <height>191</height>
     </rect>
    </property>
@@ -28,10 +28,10 @@
    <widget class="QFrame" name="frame_7">
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>540</x>
       <y>70</y>
       <width>341</width>
-      <height>91</height>
+      <height>81</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -40,7 +40,7 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="plusMazeBtn">
+    <widget class="QPushButton" name="contTMazeBtn">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -221,7 +221,7 @@
    <widget class="QFrame" name="frame_8">
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>540</x>
       <y>40</y>
       <width>341</width>
       <height>31</height>
@@ -233,14 +233,27 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>231</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Maze and Gantry Buttons</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_12">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>70</y>
-      <width>301</width>
-      <height>91</height>
+      <width>521</width>
+      <height>81</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -249,23 +262,23 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="trialGeneratorBtn">
+    <widget class="QPushButton" name="dynamicTrainingBtn">
      <property name="geometry">
       <rect>
-       <x>170</x>
+       <x>30</x>
        <y>20</y>
-       <width>121</width>
+       <width>141</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>Trial Generator </string>
+      <string>Dynamic Training </string>
      </property>
     </widget>
     <widget class="QPushButton" name="testingPhaseBtn">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>390</x>
        <y>20</y>
        <width>101</width>
        <height>41</height>
@@ -275,13 +288,26 @@
       <string>Testing Phase</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="pseudorandomTrainingBtn">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>20</y>
+       <width>181</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pseudorandom Training</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_13">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>40</y>
-      <width>301</width>
+      <width>521</width>
       <height>31</height>
      </rect>
     </property>
@@ -301,22 +327,9 @@
       </rect>
      </property>
      <property name="text">
-      <string>Trials and Experiments types </string>
+      <string>Training &amp; Experimental types </string>
      </property>
     </widget>
-   </widget>
-   <widget class="QLabel" name="label_6">
-    <property name="geometry">
-     <rect>
-      <x>330</x>
-      <y>40</y>
-      <width>231</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Maze and Gantry Buttons</string>
-    </property>
    </widget>
   </widget>
  </widget>
