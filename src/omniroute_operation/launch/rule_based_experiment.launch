@@ -74,8 +74,10 @@
     <!-- Esmacat Node -->
     <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
 
+    <arg name="node_start_delay" default="3.0" />  
+
     <!-- Time stamp sync node -->
-    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen"/> 
+    <node name = "sync_sender_node" pkg = "omniroute_operation" type = "sync_sender.py" output = "screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " /> 
 
     <!-- Omniroute omniroute_controller interface -->
     <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen"/>
