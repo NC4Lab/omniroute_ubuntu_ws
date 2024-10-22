@@ -75,32 +75,41 @@
   <node name="Esmacat_application_node" pkg="omniroute_esmacat_ros" type="ros_esmacat_node"
     output="screen" launch-prefix="ethercat_grant" />
 
-    <!-- Time stamp sync node -->
-  <node name="sync_sender_node" pkg="omniroute_operation" type="sync_sender.py" output="screen" /> 
+  <arg name="node_start_delay" default="5.0" />
 
-    <!-- Omniroute omniroute_controller interface -->
+  <!-- Time stamp sync node -->
+  <node name="sync_sender_node" pkg="omniroute_operation" type="sync_sender.py" output="screen"
+    launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+
+  <!-- Omniroute omniroute_controller interface -->
   <node name="omniroute_controller_node" pkg="omniroute_operation" type="omniroute_controller"
-    output="screen" />
-
-    <!-- Omniroute experiment controller interface -->
-  <node name="experiment_controller" pkg="omniroute_operation" type="experiment_controller"
-    output="screen" />
-
-  <node name="single_T_maze" pkg="omniroute_operation" type="single_T_maze"
-    output="screen" />
+    output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
 
   <!-- Omniroute experiment controller interface -->
-    <node name = "maze_tf_broadcaster_node" pkg = "omniroute_operation" type = "maze_tf_broadcaster.py" output = "screen"/>
+  <node name="experiment_controller" pkg="omniroute_operation" type="experiment_controller"
+    output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
 
-    <node name = "rat_detector" pkg = "omniroute_operation" type = "rat_detector.py" output = "screen"/>
+   <node name="single_T_maze" pkg="omniroute_operation" type="single_T_maze"
+    output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+
+  <!-- Omniroute experiment controller interface -->
+  <node name="maze_tf_broadcaster_node" pkg="omniroute_operation" type="maze_tf_broadcaster.py"
+    output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+
+  <node name="rat_detector" pkg="omniroute_operation" type="rat_detector.py" output="screen"
+    launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
   <!--  -->
   <!-- <machine name="nc4-whiskey" address="10.34.5.192" user="nc4" default="true"/> -->
   <!--  -->
-  <!-- <node pkg="projection_operation" type="sound_generator" name="sound_generator" machine="nc4-whiskey"/> -->
+  <!-- <node pkg="projection_operation" type="sound_generator" name="sound_generator"
+  machine="nc4-whiskey"/> -->
   <!--  -->
-  <!-- <node pkg="projection_operation" type="projection_calibration_node" name="projection_calibration_node" machine="nc4-whiskey"/> -->
+  <!-- <node pkg="projection_operation" type="projection_calibration_node"
+  name="projection_calibration_node" machine="nc4-whiskey"/> -->
 
   <!-- Omniroute gantry node -->
-    <node name = "gantry_operation_node" pkg = "omniroute_operation" type = "gantry_operation.py" output = "screen"/>
+  <node name="gantry_operation_node" pkg="omniroute_operation" type="gantry_operation.py"
+    output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+  
     
   </launch>
