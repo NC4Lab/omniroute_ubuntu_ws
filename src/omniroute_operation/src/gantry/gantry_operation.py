@@ -28,7 +28,7 @@ class GantryOperation:
         MazeDB.printMsg('ATTN', "GANTRY_OPERATION NODE STARTED")
 
         # ................ GRBL Runtime Parameters ................
-        self.max_feed_rate = 28000  # Maxiumum feed rate (mm/min)
+        self.max_feed_rate = 25000  # Maxiumum feed rate (mm/min)
         self.max_acceleration = 500  # Maximum acceleration (mm/sec^2)
         self.home_speed = 10000  # Homing speed (mm/min)
 
@@ -155,8 +155,10 @@ class GantryOperation:
 
         if current_time - self.last_g92_time >= 2.0:
             if self.use_serial:
+                gantry_x_mm = self.gantry_x * 1000.0
+                gantry_y_mm = self.gantry_y * 1000.0
                 # Construct the G92 command with current gantry positions
-                g92_command = f"G92 X{self.gantry_x:.3f} Y{self.gantry_y:.3f} Z0.000"
+                g92_command = f"G92 X{gantry_x_mm:.3f} Y{gantry_y_mm:.3f} Z0.000"
                 self.gcode_client.raw_command(g92_command)
                 MazeDB.printMsg('INFO', f"Sent G92 command: {g92_command}")
             else:
