@@ -56,7 +56,7 @@ class Interface(Plugin):
         super(Interface, self).__init__(context)
 
         self._joint_sub = None
-        self.setObjectName('Maze Experiment Interface')
+        self.setObjectName('Single T maze Experiment Interface')
 
         from argparse import ArgumentParser
         parser = ArgumentParser()
@@ -76,7 +76,7 @@ class Interface(Plugin):
         
         rospy.loginfo('Test Interface started')
 
-        self._widget.setObjectName('InterfacePluginUi')
+        self._widget.setObjectName('SingleTmazeInterfacePluginUi')
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 

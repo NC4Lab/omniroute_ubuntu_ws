@@ -68,17 +68,17 @@ class ProjectionOperation:
         self.rate = rospy.Rate(30)
 
     def projection_image_floor_callback(self, msg):
-        rospy.loginfo("Received projection floor image number: number[%d]", msg.data)
+        #rospy.loginfo("Received projection floor image number: number[%d]", msg.data)
         self.floor_img_num = msg.data
         self.set_config('floor', self.floor_img_num)
         self.publish_image_message()
         
     def projection_image_wall_callback(self, msg):
-        rospy.loginfo("Received projection wall image number: number[%d]", msg.data)
+        #rospy.loginfo("Received projection wall image number: number[%d]", msg.data)
         self.wall_image_num = msg.data
         
     def projection_walls_callback(self, msg):
-        rospy.loginfo("Received projection wall number: number[%s]", msg.data)
+        #rospy.loginfo("Received projection wall number: number[%s]", msg.data)
         wall_num = json.loads(msg.data)
         self.cham_ind = wall_num['chamber_num']
         self.wall_ind = wall_num['wall_num']
