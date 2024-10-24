@@ -1013,6 +1013,7 @@ class Interface(Plugin):
                     #     self.play_sound_cue(self.sound_cue)
                     # else:
                         #self.play_sound_cue(self.sound_cue_training_stop) 
+                    self.previous_cued_chamber = self.cued_chamber
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR_END
                     rospy.loginfo("ERROR_END")
