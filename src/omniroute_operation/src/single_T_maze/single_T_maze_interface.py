@@ -50,6 +50,7 @@ class Mode(Enum):
     PAUSE_EXPERIMENT = 14
     RESUME_EXPERIMENT = 15
     ERROR_END = 16
+    ERROR_START = 18
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -127,6 +128,8 @@ class Interface(Plugin):
 
         self._widget.lowerAllDoorsBtn.setStyleSheet("background-color: red; color: yellow")
 
+        self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
+
         self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
         self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=100)
         self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
@@ -161,7 +164,8 @@ class Interface(Plugin):
         self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
-        self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
+        self.wrong_choice_delay = rospy.Duration(1)  # Duration to wait if the rat made the wrong choice
+        self.wrong_choice_first_delay = rospy.Duration(34.0)  # Duration to wait if the rat made the wrong choice
         self.wrong_choice_second_delay = rospy.Duration(5.0) 
         self.wrong_choice_delay = rospy.Duration(40)  # Duration to wait if the rat made the wrong choice
         self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
@@ -681,10 +685,6 @@ class Interface(Plugin):
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.ERROR
                 rospy.loginfo("ERROR")
-                if self.error_chamber == self.left_chamber:
-                    rospy.loginfo("Left chamber selected and chamber number is {}".format(self.error_chamber))
-                else:
-                    rospy.loginfo("Right chamber selected and chamber number is {}".format(self.error_chamber))
 
         elif self.mode == Mode.SUCCESS:
             if self.success_chamber == self.left_chamber:
@@ -722,6 +722,19 @@ class Interface(Plugin):
                 rospy.loginfo("END TRIAL")
                 
         elif self.mode == Mode.ERROR:
+            # if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_delay.to_sec():
+            self.sound_pub.publish("Error")
+            rospy.loginfo("Error sound played")
+            if self.error_chamber == self.left_chamber:
+                    rospy.loginfo(
+                        "Left chamber selected and chamber number is {}".format(self.error_chamber))
+            else:
+                    rospy.loginfo("Right chamber selected and chamber number is {}".format(self.error_chamber))
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.ERROR_START
+            rospy.loginfo("ERROR_START")
+
+        elif self.mode == Mode.ERROR_START:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_first_delay.to_sec():
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.ERROR_END

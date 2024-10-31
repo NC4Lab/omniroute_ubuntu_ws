@@ -68,6 +68,7 @@ class Mode(Enum):
     PAUSE_EXPERIMENT = 14
     RESUME_EXPERIMENT = 15
     ERROR_END = 16
+    ERROR_START = 18
  
 
 class Interface(Plugin):
@@ -153,6 +154,7 @@ class Interface(Plugin):
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1) 
         self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
+
 
         #rospy.Subscriber('/selected_chamber', String, self.chamber_callback, queue_size=1)
 
@@ -947,10 +949,6 @@ class Interface(Plugin):
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR
                     rospy.loginfo("ERROR")
-                    if self.error_chamber == self.left_chamber:
-                        rospy.loginfo("Left chamber selected and chamber number is {}".format(self.error_chamber))
-                    else:
-                        rospy.loginfo("Right chamber selected and chamber number is {}".format(self.error_chamber))
 
             elif self.mode == Mode.SUCCESS:
                 if self.success_chamber == self.left_chamber:
@@ -1006,13 +1004,21 @@ class Interface(Plugin):
                         self.mode_start_time = rospy.Time.now()
                         self.mode = Mode.END_TRIAL
                         rospy.loginfo("END TRIAL")
-                    
+
             elif self.mode == Mode.ERROR:
+                self.sound_pub.publish("Error")
+                rospy.loginfo("Error sound played")
+                if self.error_chamber == self.left_chamber:
+                        rospy.loginfo(
+                            "Left chamber selected and chamber number is {}".format(self.error_chamber))
+                else:
+                        rospy.loginfo("Right chamber selected and chamber number is {}".format(self.error_chamber))
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR_START
+                rospy.loginfo("ERROR_START")
+
+            elif self.mode == Mode.ERROR_START:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_first_delay.to_sec():
-                    #if not self.is_testing_phase:
-                    #     self.play_sound_cue(self.sound_cue)
-                    # else:
-                        #self.play_sound_cue(self.sound_cue_training_stop) 
                     self.previous_cued_chamber = self.cued_chamber
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR_END
@@ -1054,28 +1060,28 @@ class Interface(Plugin):
                     rospy.loginfo("START_TRIAL")
 
     # def play_sound_cue(self, sound_cue):
-    #     if self.is_ephys_rat:
-    #         return
-    #     rospy.loginfo(f"Play sound cue {sound_cue}")    
-    #     if sound_cue == "White_Noise":
-    #         self.sound_pub.publish("White_Noise")
+    #     # if self.is_ephys_rat:
+    #     #     return
+    #     # rospy.loginfo(f"Play sound cue {sound_cue}")    
+    #     # if sound_cue == "White_Noise":
+    #     #     self.sound_pub.publish("White_Noise")
 
-    #     elif sound_cue == "White_Noise_Training_Start":
-    #         self.sound_pub.publish("White_Noise_Training_Start")
+    #     # elif sound_cue == "White_Noise_Training_Start":
+    #     #     self.sound_pub.publish("White_Noise_Training_Start")
 
-    #     elif sound_cue == "White_Noise_Training_Stop":
-    #         self.sound_pub.publish("White_Noise_Training_Stop")
+    #     # elif sound_cue == "White_Noise_Training_Stop":
+    #     #     self.sound_pub.publish("White_Noise_Training_Stop")
 
-    #     elif sound_cue == "5KHz":
-    #         self.sound_pub.publish("5KHz")
+    #     # elif sound_cue == "5KHz":
+    #     #     self.sound_pub.publish("5KHz")
 
-    #     elif sound_cue == "5KHz_Training_Start":
-    #         self.sound_pub.publish("5KHz_Training_Start")
+    #     # elif sound_cue == "5KHz_Training_Start":
+    #     #     self.sound_pub.publish("5KHz_Training_Start")
 
-    #     elif sound_cue == "5KHz_Training_Stop":
-    #         self.sound_pub.publish("5KHz_Training_Stop")
+    #     # elif sound_cue == "5KHz_Training_Stop":
+    #     #     self.sound_pub.publish("5KHz_Training_Stop")
 
-    #     elif sound_cue == "Error":
+    #     if sound_cue == "Error":
     #         self.sound_pub.publish("Error")
 
 
