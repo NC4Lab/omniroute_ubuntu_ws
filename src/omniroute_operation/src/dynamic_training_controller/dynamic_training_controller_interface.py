@@ -152,6 +152,7 @@ class Interface(Plugin):
         self.reward_end_delay = rospy.Duration(2) # Duration to wait to dispense reward if the rat made the right choice
         self.success_delay = rospy.Duration(1) # Delay after reward ends
         self.error_delay = rospy.Duration(2) # Delay after error
+        self.end_trial_delay = rospy.Duration(1) #Delay after the end of the trial
 
         # Stimulus parameters
         self.play_left_sound_cue = 0
@@ -207,6 +208,7 @@ class Interface(Plugin):
         rospy.loginfo("Testing phase selected")
 
     def _handle_contTMazeBtn_clicked(self):
+        rospy.loginfo("Continuous T Maze selected")
         self.setContTMazeConfig()
         self.setchamberSevenStartConfig()
 
@@ -218,22 +220,28 @@ class Interface(Plugin):
 
         # Lower walls between chambers 3 and 6, 1 and 4, 5 and 8
         for i in [4, 6, 8]:
-            for j in range(2):
-                self.common_functions.lower_wall(Wall(i, j), False) # Left and right goal walls remain raised until the first trial starts
+                self.common_functions.lower_wall(Wall(i, 2), False) # Left and right goal walls remain raised until the first trial starts
+        self.common_functions.activateWalls()
+
 
     def _handle_lowerAllDoorsBtn_clicked(self):
         self.setlowerConfig()
 
     # Lower Walls of the chambers that the rat is at risk of getting caught in (i.e. those that are lowered/ raised during the experiment)
     def setlowerConfig(self):
-        # Lower Walls 0, 4, 6 in chamber 7 (starting chamber); and 0, 6 in chamber 2 (right goal chamber)
-        if self.rat_head_chamber == 7 or 6 or 8 or 4:
-            for i in [0, 2, 4, 6]:
-                self.common_functions.lower_wall(Wall(4, i), False)
+        # Lower Wall 6 in chamber 4 (central chamber); 
+        if self.rat_head_chamber == 7 or 4:
+            self.common_functions.lower_wall(Wall(4, 6), False)
+        # Lower Wall 4 in chamber 6 (left return chamber);
+        elif self.rat_head_chamber == 6 or 7:
+            self.common_functions.lower_wall(Wall(6, 4), False)
+        #Lower Wall 0 in chamber 8 (right return chamber);
+        elif self.rat_head_chamber == 8 or 7:
+            self.common_functions.lower_wall(Wall(8, 0), False)
         # Lower Walls 4, 6 in chamber 0 (left goal chamber); and
         elif self.rat_head_chamber == 0 or 1 or 3:
             for i in [4, 6]:
-                self.common_functions.lower_wall(Wall(0, i), False) ## CHECK WHY THIS IS NOT ACCEPTED
+                self.common_functions.lower_wall(Wall(0, i), False) 
         # Lower Walls and 0, 6 in chamber 2 (right goal chamber)
         elif self.rat_head_chamber == 2 or 1 or 5:
             for i in [0, 6]:
@@ -287,7 +295,197 @@ class Interface(Plugin):
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
 
-        # Define the experiment
+    def run_experiment(self):
+
+        self.current_time = rospy.Time.now()
+        current_rat_chamber = self.rat_head_chamber
+
+        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+            # The rat has moved to a different chamber, update the gantry position
+            self.common_functions.move_gantry_to_chamber(current_rat_chamber)
+
+            # Update the previous_rat_chamber for the next iteration
+            self.previous_rat_chamber = current_rat_chamber
+
+        if self.mode == Mode.START_EXPERIMENT:
+            rospy.loginfo("START OF THE EXPERIMENT")
+            self.currentTrialNumber = self.current_trial_index-1
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.START_TRIAL
+
+        elif self.mode == Mode.START_TRIAL:
+            self.currentTrialNumber = self.currentTrialNumber+1
+            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+            if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                self.currentTrial = self.trials[self.currentTrialNumber]
+            else:
+                # Handle the case where trials is empty or currentTrialNumber is out of range
+                self.currentTrial = None
+
+            rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
+
+            #End experiment if there are no more trials from the predefined number of total trials
+            if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                self.mode = Mode.END_EXPERIMENT
+
+            if self.currentTrial is not None:
+                # Set trial generator to the training mode selected
+                self.training_mode = self.currentTrial[0] #LOOK OVER THIS AGAIN
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RAT_IN_START_CHAMBER
+            rospy.loginfo("RAT_IN_START_CHAMBER")
+        
+        elif self.mode == Mode.RAT_IN_START_CHAMBER:
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.START
+            rospy.loginfo("START")
+
+        elif self.mode == Mode.START:
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.SOUND_CUE
+            rospy.loginfo("SOUND_CUE")
+
+        elif self.mode == Mode.SOUND_CUE:
+            #add a function for playing and publishing the sound cue based on trial type
+            if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay.to_sec():
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START_TO_CHOICE
+                rospy.loginfo("START_TO_CHOICE")
+
+        elif self.mode == Mode.START_TO_CHOICE:
+            #Lower start wall to let the rat move to the choice point
+            self.common_functions.lower_wall(self.start_wall, send=True)
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.CHOICE
+            rospy.loginfo("CHOICE")
+
+        elif self.mode == Mode.CHOICE:
+            if self.rat_body_chamber == self.choice_chamber:
+                self.common_functions.raise_wall(self.start_wall, send=False)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE_TO_GOAL
+                rospy.loginfo("CHOICE_TO_GOAL")
+
+        elif self.mode == Mode.CHOICE_TO_GOAL:
+            #If rat moved chose the correct chamber, raise the entry wall of both the left and right goal chambers
+            if self.rat_body_chamber == self.success_chamber:
+                self.common_functions.raise_wall(self.left_goal_entry_wall, send=False)
+                self.common_functions.raise_wall(self.right_goal_entry_wall, send=False)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.SUCCESS
+                rospy.loginfo("SUCCESS")
+
+            #If rat chose the wrong chamber, raise the entry wall of both the left and right return chambers
+            elif self.rat_body_chamber == self.error_chamber:
+                self.common_functions.raise_wall(self.left_goal_entry_wall, send=False)
+                self.common_functions.raise_wall(self.right_goal_entry_wall, send=False)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR
+                rospy.loginfo("ERROR")
+
+        elif self.mode == Mode.SUCCESS:
+            if self.success_chamber == self.left_goal_chamber:
+                rospy.loginfo("Left goal chamber selected")
+            else:
+                rospy.loginfo("Right goal chamber selected")
+            self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
+            self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
+            self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
+            
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.REWARD_START
+            rospy.loginfo("REWARD_START")
+
+        elif self.mode == Mode.REWARD_START:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
+                # self.common_functions.reward_dispense()
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.REWARD_END
+                rospy.loginfo("REWARD_END")
+
+        elif self.mode == Mode.REWARD_END:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
+                # self.gantry_pub.publish("TRACK_HARNESS", [])
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.POST_REWARD
+                rospy.loginfo("POST_REWARD")
+
+        elif self.mode == Mode.POST_REWARD:
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.REWARD_TO_RETURN
+            rospy.loginfo("REWARD_TO_RETURN")
+
+        elif self.mode == Mode.REWARD_TO_RETURN:
+            if self.success_chamber == self.left_goal_chamber:
+                self.common_functions.lower_wall(self.left_goal_exit_wall, send=False)
+                self.common_functions.lower_wall(self.left_return_wall, send=False)
+            elif self.success_chamber == self.right_goal_chamber:
+                self.common_functions.lower_wall(self.right_goal_exit_wall, send=False)
+                self.common_functions.lower_wall(self.right_return_wall, send=False)
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RETURN_TO_START
+            rospy.loginfo("RETURN_TO_START")
+
+        elif self.mode == Mode.ERROR:
+            if self.error_chamber == self.left_goal_chamber:
+                rospy.loginfo("Left goal chamber selected")
+            else:
+                rospy.loginfo("Right goal chamber selected")
+
+            if (self.current_time - self.mode_start_time).to_sec() >= self.error_delay.to_sec():
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.ERROR_TO_RETURN
+                rospy.loginfo("ERROR_TO_RETURN")
+
+        elif self.mode == Mode.ERROR_TO_RETURN:
+            if self.rat_error_chamber == self.left_goal_chamber:
+                self.common_functions.lower_wall(self.left_goal_exit_wall, send=False)
+                self.common_functions.lower_wall(self.left_return_wall, send=False)
+            elif self.error_chamber == self.right_goal_chamber:
+                self.common_functions.lower_wall(self.right_goal_exit_wall, send=False)
+                self.common_functions.lower_wall(self.right_return_wall, send=False)
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RETURN_TO_START
+            rospy.loginfo("RETURN_TO_START")
+
+        elif self.mode == Mode.RETURN_TO_START:
+            if self.rat_body_chamber == self.start_chamber:
+                self.common_functions.raise_wall(self.start_wall, send=False)
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START_TRIAL
+                rospy.loginfo("START_TRIAL")
+                
+
+        elif self.mode == Mode.END_TRIAL:
+            self.mode = Mode.INTER_TRIAL_INTERVAL
+            rospy.loginfo("INTER_TRIAL_INTERVAL")
+
+        elif self.mode == Mode.INTER_TRIAL_INTERVAL:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.inter_trial_interval.to_sec():
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.END_TRIAL
+                rospy.loginfo("END_TRIAL")
+
+
+        elif self.mode == Mode.PAUSE_EXPERIMENT:
+            rospy.loginfo("PAUSE_EXPERIMENT")
+            self.button_pub.publish("Pause_button_disabled")
+            self.mode_start_time = rospy.Time.now()
+
+        elif self.mode == Mode.RESUME_EXPERIMENT:
+            rospy.loginfo("RESUME_EXPERIMENT")
+            self.button_pub.publish("Pause_button_enabled")
+            self.mode_start_time = rospy.Time.now()
+            self.mode = self.mode_before_pause
+
+        elif self.mode == Mode.END_EXPERIMENT:
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.END_EXPERIMENT
+            rospy.loginfo("END_EXPERIMENT")
+        
+
 if __name__ == '__main__':
     rospy.init_node('dynamic_training_controller')
     Interface()
