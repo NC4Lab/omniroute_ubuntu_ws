@@ -51,6 +51,8 @@ class Mode(Enum):
     RESUME_EXPERIMENT = 15
     ERROR_END = 16
     ERROR_START = 18
+    MOVE_TO_START_CHAMBER = 19
+    RAT_BACK_IN_START_CHAMBER = 20
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -168,6 +170,7 @@ class Interface(Plugin):
         self.wrong_choice_first_delay = rospy.Duration(34.0)  # Duration to wait if the rat made the wrong choice
         self.wrong_choice_second_delay = rospy.Duration(5.0) 
         self.wrong_choice_delay = rospy.Duration(40)  # Duration to wait if the rat made the wrong choice
+        self.moving_back_to_start_chamber_delay = rospy.Duration(1)  # Duration to wait if the rat made the wrong choice
         self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
         self.mode = Mode.START
@@ -198,6 +201,7 @@ class Interface(Plugin):
         self.start_wall = Wall(0, 0)
         self.central_chamber = 0
         self.start_chamber = 0
+        self.rat_choice_chamber = 0
 
         self.left_goal_wall = Wall(0, 0)
         self.right_goal_wall = Wall(0, 0)
@@ -463,6 +467,10 @@ class Interface(Plugin):
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
         self.right_goal_wall = Wall(4, 2)
+        self.right_exit_wall = Wall(2, 0)
+        self.left_exit_wall = Wall(8, 0)
+        self.right_start_chamber_enter_wall = Wall(2, 6)
+        self.left_start_chamber_enter_wall = Wall(8, 2)
 
     def setChamberSevenStartConfig(self):
         self.start_chamber = 7
@@ -718,8 +726,8 @@ class Interface(Plugin):
                 rospy.loginfo("Chamber 5 selected")
                         
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.END_TRIAL
-                rospy.loginfo("END TRIAL")
+                self.mode = Mode.MOVE_TO_START_CHAMBER
+                rospy.loginfo("MOVE_TO_START_CHAMBER")
                 
         elif self.mode == Mode.ERROR:
             # if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_delay.to_sec():
@@ -746,8 +754,37 @@ class Interface(Plugin):
                 rospy.loginfo("Chamber 5 selected")
                 
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.END_TRIAL
-                rospy.loginfo("END TRIAL")
+                self.mode = Mode.MOVE_TO_START_CHAMBER
+                rospy.loginfo("MOVE_TO_START_CHAMBER")
+
+        elif self.mode == Mode.MOVE_TO_START_CHAMBER:
+            if self.rat_body_chamber == self.right_chamber:
+                self.common_functions.lower_wall(self.right_start_chamber_enter_wall, send=False)
+                self.common_functions.lower_wall(self.right_exit_wall, send=True)
+                self.rat_choice_chamber = self.right_chamber
+
+            elif self.rat_body_chamber == self.left_chamber:
+                self.common_functions.lower_wall(self.left_start_chamber_enter_wall, send=False)
+                self.common_functions.lower_wall(self.left_exit_wall, send=True)
+                self.rat_choice_chamber = self.left_chamber
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RAT_BACK_IN_START_CHAMBER
+            rospy.loginfo("RAT_BACK_IN_START_CHAMBER")
+
+        elif self.mode == Mode.RAT_BACK_IN_START_CHAMBER:
+            if (self.current_time - self.mode_start_time).to_sec() >= self.moving_back_to_start_chamber_delay.to_sec():
+                if self.rat_body_chamber == self.start_chamber:
+                    if self.rat_choice_chamber == self.left_chamber:
+                        self.common_functions.raise_wall(self.left_exit_wall, send=False)
+                        self.common_functions.raise_wall(self.left_start_chamber_enter_wall, send=True)
+                        
+                    elif self.rat_choice_chamber == self.right_chamber:
+                        self.common_functions.raise_wall(self.right_exit_wall, send=False)
+                        self.common_functions.raise_wall(self.right_start_chamber_enter_wall, send=True)
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.END_TRIAL
+                    rospy.loginfo("END_TRIAL")
 
         elif self.mode == Mode.PAUSE_EXPERIMENT:
             rospy.loginfo("PAUSE_EXPERIMENT")
