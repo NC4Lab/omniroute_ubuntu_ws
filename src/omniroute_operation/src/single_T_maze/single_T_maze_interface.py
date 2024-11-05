@@ -322,11 +322,14 @@ class Interface(Plugin):
 
     def setPlusConfig(self):
         # Lower all walls
-        for i in range(9):
-            for j in range(8):
-                self.common_functions.lower_wall(Wall(i, j), False)
+        # for i in range(9):
+        #     for j in range(8):
+        #         self.common_functions.lower_wall(Wall(i, j), False)
 
-        for i in [1, 3, 4, 5, 7]:
+        # for i in [1, 3, 4, 5, 7]:
+        #     for j in range(8):
+        #         self.common_functions.raise_wall(Wall(i, j), False)
+        for i in range(9):
             for j in range(8):
                 self.common_functions.raise_wall(Wall(i, j), False)
 
