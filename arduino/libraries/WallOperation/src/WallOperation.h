@@ -8,9 +8,9 @@
 
 //============= INCLUDE ================
 #include "Arduino.h"
-#include "MazeDebug.h"
-#include "CypressCom.h"
-#include "EsmacatCom.h"
+#include <MazeDebug.h>
+#include <CypressCom.h>
+#include <EsmacatCom.h>
 
 /// @brief This class handles the actual opperation of the maze walls and Ethercat coms.
 ///

@@ -1080,7 +1080,7 @@ class Interface(Plugin):
         if self.EsmaComMaze.isEcatConnected == False:
 
             # Give up after 3 attempts based on message ID
-            if self.EsmaComMaze.sndEM.msgID > 2:
+            if self.EsmaComMaze.sndEM.msgID > 5:
                 MazeDB.printMsg(
                     'ERROR', "SHUTDOWN: Handshake Failure Final [%d]", self.EsmaComMaze.sndEM.msgID)
 
