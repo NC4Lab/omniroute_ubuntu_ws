@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from shared_utils.ui_utilities import UIUtilities
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
+from shared_utils.wall_utilities import MazeDimensions
 
 import os,time
 import rospy

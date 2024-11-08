@@ -9,7 +9,7 @@ from std_msgs.msg import String, Int32, Int8, Int32MultiArray
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
+from shared_utils.wall_utilities import MazeDimensions
 from dateutil.parser import parse as parsedate
 
 import pandas as pd

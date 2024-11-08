@@ -3,6 +3,9 @@
 Class for common UI operations.
 """
 
+# ROS Imports
+import rospy
+
 # PyQt and PySide Imports
 from PyQt5.QtWidgets import QApplication, QWidget
 

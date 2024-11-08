@@ -3,14 +3,14 @@
 # ======================== PACKAGES ========================
 
 # Custom Imports
-from argparse import ArgumentParser
 from shared_utils.maze_debug import MazeDB
 from shared_utils.projection_operation import ProjectionOperation
 from shared_utils.esmacat_com import EsmacatCom
 from shared_utils.ui_utilities import UIUtilities
-
+from shared_utils.wall_utilities import MazeDimensions, WallConfig
 
 # Standard Library Imports
+from argparse import ArgumentParser
 import os
 import glob
 import subprocess
@@ -36,7 +36,7 @@ from tf.transformations import euler_from_quaternion
 
 # PyQt and PySide Imports
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsTextItem, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QRectF, QCoreApplication
+from PyQt5.QtCore import Qt, QRectF, QCoreApplication, pyqtSignal, QObject
 from PyQt5.QtGui import QPen, QColor, QFont, QPixmap
 from python_qt_binding import loadUi, QtOpenGL
 from python_qt_binding.QtCore import *
@@ -45,186 +45,8 @@ from python_qt_binding.QtGui import *
 from qt_gui.plugin import Plugin
 from PyQt5 import QtWidgets
 
-# ======================== GLOBAL VARS ========================
 
-NUM_ROWS_COLS = 3  # number of rows and columns in maze
-WALL_MAP = {  # wall map for 3x3 maze [chamber_num][wall_num]
-    0: [0, 1, 2, 3, 4, 5, 6, 7],
-    1: [1, 2, 3, 5, 7],
-    2: [0, 1, 2, 3, 4, 5, 6, 7],
-    3: [0, 1, 3, 5, 7],
-    4: [0, 1, 2, 3, 4, 5, 6, 7],
-    5: [1, 3, 4, 5, 7],
-    6: [0, 1, 2, 3, 4, 5, 6, 7],
-    7: [1, 3, 5, 6, 7],
-    8: [0, 1, 2, 3, 4, 5, 6, 7]
-}
-
-# ======================== GLOBAL CLASSES ========================
-
-
-class MazeDimensions:
-    # Class for storing the dimensions of the maze
-    def __init__(self):
-        self.chamber_wd = 0.3  # Chamber width (m)
-        self.n_chamber_side = 3
-        self.chamber_centers = []  # List of chamber centers
-
-        # Compute the chamber centers
-        for i in range(0, self.n_chamber_side**2):
-            row = i//self.n_chamber_side
-            col = i % self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
-                                      self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
-            self.chamber_centers.append(chamber_center)
-
-
-class WallConfig:
-    """ 
-    Used to stores the wall configuration of the maze for CSV and Ethercat for the maze.
-    """
-
-    # ------------------------ CLASS VARIABLES ------------------------
-
-    # Stores the wall configuration list
-    cw_wall_num_list = []  # cham_num x [wall_num]
-    cw_wall_byte_list = []  # cham_num x wall_byte
-
-    # ------------------------ CLASS METHODS ------------------------
-
-    @classmethod
-    def reset(cls):
-        """Resets the wall configuration list"""
-
-        cls.cw_wall_num_list = []
-        cls.cw_wall_byte_list = []
-
-    @classmethod
-    def get_len(cls):
-        """Returns the number of entries in the wall configuration list"""
-
-        return len(cls.cw_wall_num_list)
-
-    @classmethod
-    def add_wall(cls, chamber_num, wall_num):
-        """Adds a wall to the wall configuration list"""
-        for item in cls.cw_wall_num_list:
-            if item[0] == chamber_num:
-                if wall_num not in item[1]:
-                    item[1].append(wall_num)
-                return
-        cls.cw_wall_num_list.append([chamber_num, [wall_num]])
-
-    @classmethod
-    def remove_wall(cls, chamber_num, wall_num):
-        """Removes a wall from the wall configuration list"""
-        for item in cls.cw_wall_num_list[:]:  # Iterate over a copy of the list
-            if item[0] == chamber_num:
-                if wall_num in item[1]:
-                    item[1].remove(wall_num)
-                    if not item[1]:  # If the second column is empty, remove the entire row
-                        cls.cw_wall_num_list.remove(item)
-                    return
-
-    @classmethod
-    def make_byte2num_cw_list(cls, _cw_wall_byte_list, do_print=False):
-        """
-        Used to convert imported CSV with wall byte mask values to a list with wall numbers
-
-        Arguments:
-            _cw_wall_byte_list (list): 2D list: col_1 = chamber number, col_2 = wall byte mask
-
-        Returns:
-            2D list: col_1 = chamber number, col_2 = nested wall numbers
-        """
-
-        # Clear/reset the existing wall_config_list
-        cls.reset()
-
-        # Convert the byte values to arrays and update the wall_config_list
-        for row in _cw_wall_byte_list:
-            chamber_num = row[0]
-            byte_value = row[1]
-
-            # Convert the byte_value back to an array of wall numbers
-            wall_numbers = [i for i in range(8) if byte_value & (1 << i)]
-
-            cls.cw_wall_num_list.append([chamber_num, wall_numbers])
-
-        # loop thorugh wall_byte_config_list and print each element
-        if do_print:
-            for row in cls.cw_wall_num_list:
-                MazeDB.printMsg('DEBUG', "[%d][%d]", row[0], row[1])
-
-        return cls.cw_wall_num_list
-
-    @classmethod
-    def make_num2byte_cw_list(cls):
-        """
-        Used to covert wall number arrays to byte values for saving to CSV
-
-        Returns:
-            2D list: col_1 = chamber number, col_2 = wall byte mask
-        """
-
-        cls.cw_wall_byte_list = []
-
-        for row in cls.cw_wall_num_list:  # row = [chamber_num, wall_numbers]
-            chamber_num = row[0]
-            wall_arr = row[1]
-
-            # Initialize the byte value
-            byte_value = 0
-            # Iterate over the array of values
-            for wall_i in wall_arr:
-                if 0 <= wall_i <= 7:
-                    # Set the corresponding bit to 1 using bitwise OR
-                    byte_value |= (1 << wall_i)
-            cls.cw_wall_byte_list.append([chamber_num, byte_value])
-
-        return cls.cw_wall_byte_list
-
-    @classmethod
-    def get_wall_byte_list(cls):
-        """
-        Used to generate a 1D list with only byte values for each chamber corespoinding to the wall configuration
-        For use with the EsmacatCom class
-
-        Returns: 
-            1D list with byte values for all chambers
-        """
-
-        cls.cw_wall_byte_list = cls.make_num2byte_cw_list()
-
-        # Update U_arr with corresponding chamber and wall byte
-        _wall_byte_list = [0] * len(WALL_MAP)
-        # wall_arr = [0] * len(cls.wallConfigList)
-        for cw in cls.cw_wall_byte_list:
-            _wall_byte_list[cw[0]] = cw[1]
-
-        return _wall_byte_list
-
-    @classmethod
-    def _sort_entries(cls):
-        """Sorts the entries in the wall configuration list by chamber number and wall numbers"""
-
-        # Sort the rows by the entries in the based on the first chamber number
-        cls.cw_wall_num_list.sort(key=lambda row: row[0])
-
-        # Sort the arrays in the second column
-        for row in cls.cw_wall_num_list:
-            row[1].sort()
-
-    @classmethod
-    def __iter__(cls):
-        """Returns an iterator for the wall configuration list"""
-        return iter(cls.cw_wall_num_list)
-
-    @classmethod
-    def __str__(cls):
-        """Returns the wall configuration list as a string"""
-        return str(cls.cw_wall_num_list)
-
+# # ======================== GLOBAL CLASSES ========================
 
 class MazePlot(QGraphicsView):
     """ MazePlot class to plot the maze """
@@ -495,7 +317,7 @@ class MazePlot(QGraphicsView):
                     chamber_num = chamber.chamber_num
                     wall_num = wall.wall_num
                     entry_found = any(
-                        chamber_num == entry[0] and wall_num in entry[1] for entry in WallConfig.cw_wall_num_list)
+                        chamber_num == entry[0] and wall_num in entry[1] for entry in WallConfig.wall_cfg_num_list)
 
                     # Set the wall status to up if entry found
                     if entry_found:
@@ -563,15 +385,25 @@ class Interface(Plugin):
     # ------------------------ CLASS VARIABLES ------------------------
 
     # Define signals
-    signal_Esmacat_read_maze_ease = Signal()
-    signal_rat_pos = Signal(int, int, int)
+    signal_rat_pos = pyqtSignal(int, int, int)
+    signal_update_wall_plot = pyqtSignal()
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
         MazeDB.printMsg('ATTN', "Omniroute Conroller Interface Started")
 
-        # ................ QT UI Setup ................
+        # ................ Access Shared State Variables ................
+        self.wall_cfg_dir_default = rospy.get_param(
+            '/shared_state/wall_cfg_dir_default')
+        self.proj_cfg_dir_default = rospy.get_param(
+            '/shared_state/proj_cfg_dir_default')
+        self.is_arduinos_connected = rospy.get_param(
+            '/shared_state/is_arduinos_connected')
+        self.is_maze_initialized = rospy.get_param(
+            '/shared_state/is_maze_initialized')
+        
 
+        # ................ QT UI Setup ................
 
         # Set a name for this QObject instance. Helpful for debugging and identifying objects in complex UIs.
         self.setObjectName('Interface')
@@ -584,7 +416,7 @@ class Interface(Plugin):
         parser.add_argument("-q", "--quiet", action="store_true",
                             dest="quiet",
                             help="Put plugin in silent mode")
-        
+
         # Parse the arguments passed to this plugin from the command line.
         # 'context.argv()' contains the command-line arguments for this specific plugin context.
         args, unknowns = parser.parse_known_args(context.argv())
@@ -624,24 +456,13 @@ class Interface(Plugin):
         # Move the window
         UIUtilities.move_ui_window(
             self._widget, horizontal_alignment='left', vertical_alignment='top')
-        
+
         # Set the background color of the scene to white
         self._widget.plotMazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.plotMazeView.setViewport(QtOpenGL.QGLWidget())
 
-        # Get the absolute path of the current script file
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # Specify the defualt wall path directory
-        path_dir_default = os.path.abspath(os.path.join(
-            script_dir, '..', '..', '..', '..', 'data', 'paths'))
-
         # Set to default data file path
-        self._widget.fileDirEdit.setText(path_dir_default)
-
-        # Specify the defualt wall projection config directory
-        self.proj_cfg_dir_default = os.path.abspath(os.path.join(
-            script_dir, '..', '..', '..', '..', 'data', 'projection', 'image_config'))
+        self._widget.fileDirEdit.setText(self.wall_cfg_dir_default)
 
         # Initialize file list and index
         self.current_file_index = 0  # set to zero
@@ -682,11 +503,11 @@ class Interface(Plugin):
         self.getParamTxtBox()
 
         # Calculate chamber width and wall line width and offset
-        chamber_width = self._widget.plotMazeView.width()*0.9/NUM_ROWS_COLS
+        chamber_width = self._widget.plotMazeView.width()*0.9/3
         wall_width = chamber_width*0.1
 
         # Create MazePlot and populate walls according to WALL_MAP
-        self.MP = MazePlot.Maze(_num_rows_cols=NUM_ROWS_COLS,
+        self.MP = MazePlot.Maze(_num_rows_cols=3,
                                 _chamber_width=chamber_width,
                                 _wall_width=wall_width)
 
@@ -694,7 +515,7 @@ class Interface(Plugin):
         for cham_i, chamber in enumerate(self.MP.Chambers):
             self.scene.addItem(chamber)
             for wall_i, wall in enumerate(chamber.Walls):
-                if wall_i not in WALL_MAP[cham_i]:
+                if wall_i not in MazeDimensions.WallMap[cham_i]:
                     # set status to excluded
                     wall.setStatus(MazePlot.Status.EXCLUDED)
                     wall.setEnabled(False)  # disable wall graphics object
@@ -717,7 +538,7 @@ class Interface(Plugin):
             self.rat_image_dim/2, self.rat_image_dim/2)
         self.scene.addItem(self.rat_image)
 
-        # ................ Initialize Other Class Variables ................
+        # ................ Initialize General Class Variables ................
 
         # Track arduino connection states in a dictionary
         self.is_arduino_connected_list = {
@@ -782,8 +603,6 @@ class Interface(Plugin):
         rospy.Subscriber('/harness_pose_in_maze', PoseStamped,
                          self.ros_callback_harness_pose, queue_size=1, tcp_nodelay=True)
 
-        self.signal_rat_pos.connect(self.sig_callback_update_rat_pos_in_gui)
-
         # ................ Callback Setup ................
 
         # QT UI wall config button callback setup
@@ -832,6 +651,13 @@ class Interface(Plugin):
         self._widget.projWinForceFucusBtn.clicked.connect(
             self.qt_callback_projWinForceFucusBtn_clicked)
 
+        # Signal callback to upsate rat position in GUI
+        self.signal_rat_pos.connect(self.sig_callback_update_rat_pos_in_gui)
+
+        # Signal to update maze wall plot
+        self.signal_update_wall_plot.connect(
+            self.sig_callback_update_wall_plot)
+
         # QT timer setup for UI updating
         self.timer_updateUI = QTimer()
         self.timer_updateUI.timeout.connect(self.timer_callback_updateUI_loop)
@@ -871,7 +697,7 @@ class Interface(Plugin):
             button.clicked.connect(  # Use lambda pass button index tor callback
                 lambda _, b=i: self.qt_callback_projFloorImgCfgBtn_clicked(b))
             self.proj_floor_img_cfg_btn_vec.append(button)  # Store the button
-    
+
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
 
     def procEcatMessage(self):
@@ -1019,6 +845,9 @@ class Interface(Plugin):
                     # Set walls to initialized
                     wall.setStatus(MazePlot.Status.INITIALIZED)
 
+                    # Set shared state flag
+                    rospy.set_param('/shared_state/is_maze_initialized', True)
+
         # REINITIALIZE_SYSTEM
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             MazeDB.printMsg('ATTN', "System Reinitialization Confirmed")
@@ -1090,10 +919,11 @@ class Interface(Plugin):
                 return
 
         elif self.cnt_shutdown_step == 1:
-            # Kill self.signal_Esmacat_read_maze_ease thread
-            self.signal_Esmacat_read_maze_ease.disconnect()
+            # Kill self.signal_rat_pos thread
+            self.signal_rat_pos.disconnect()
+            self.signal_update_wall_plot.disconnect()
             MazeDB.printMsg(
-                'INFO', "SHUTDOWN: Disconnected from Esmacat read timer thread")
+                'INFO', "SHUTDOWN: Disconnected from signals")
 
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
@@ -1152,10 +982,10 @@ class Interface(Plugin):
         if csv_file_paths:
 
             # Update file list widget
-            self.updateListCSV(csv_file_paths)
+            self.update_qt_list_from_csv(csv_file_paths)
 
             # Load CSV data from active file
-            self.loadFromCSV(0)
+            self.load_qt_list_rom_csv(0)
 
             # Enable the "Next" and "Previous" buttons if there is more than one file
             if len(self.csv_files) > 1:
@@ -1183,7 +1013,8 @@ class Interface(Plugin):
                 save_file_path += ".csv"
 
             # Call the function to save wall config data to the CSV file with the wall array values converted to bytes
-            self.saveToCSV(save_file_path, WallConfig.make_num2byte_cw_list())
+            WallConfig.save_to_csv(
+                save_file_path, WallConfig.make_num2byte_cfg_list())
 
             # Use glob to get a list of CSV file paths
             save_dir_path = os.path.dirname(save_file_path)
@@ -1192,10 +1023,10 @@ class Interface(Plugin):
 
             # Update file list widget
             save_file_name = os.path.basename(save_file_path)
-            self.updateListCSV(csv_file_paths, save_file_name)
+            self.update_qt_list_from_csv(csv_file_paths, save_file_name)
 
             # Load CSV data from active filev
-            self.loadFromCSV(0)
+            self.load_qt_list_rom_csv(0)
 
     def qt_callback_fileListWidget_item_clicked(self, item):
         """ Callback function for the file list widget."""
@@ -1204,19 +1035,19 @@ class Interface(Plugin):
         self.current_file_index = self._widget.fileListWidget.currentRow()
 
         # Update file index and load csv
-        self.loadFromCSV(0)
+        self.load_qt_list_rom_csv(0)
 
     def qt_callback_fileNextBtn_clicked(self):
         """ Callback function for the "Next" button."""
 
         # Update file index and load csv
-        self.loadFromCSV(1)
+        self.load_qt_list_rom_csv(1)
 
     def qt_callback_filePreviousBtn_clicked(self):
         """ Callback function for the "Previous" button."""
 
         # Update file index and load csv
-        self.loadFromCSV(-1)
+        self.load_qt_list_rom_csv(-1)
 
     def qt_callback_plotClearBtn_clicked(self):
         """ Callback function for the "Clear" button."""
@@ -1391,7 +1222,6 @@ class Interface(Plugin):
         # Start handshake callback timer
         self.timer_sendCheckHandshake.start(self.dt_check_handshake)
 
-
     def qt_callback_sysReinitBtn_clicked(self):
         """ Callback function for the "Reinitialize" button."""
 
@@ -1443,8 +1273,8 @@ class Interface(Plugin):
             self.EsmaCom.writeEcatMessage(
                 EsmacatCom.MessageType.MOVE_WALLS, WallConfig.get_wall_byte_list())
 
-        # Update walls
-        self.MP.updatePlotFromWallConfig()
+        # Emit the signal to update the plot (runs on the main GUI thread)
+        self.signal_update_wall_plot.emit()
 
     def ros_callback_harness_pose(self, msg):
         harness_x = msg.pose.position.x
@@ -1482,6 +1312,10 @@ class Interface(Plugin):
             # Enable Reinitialize button
             self._widget.sysReinitBtn.setEnabled(True)
 
+            # Set shared state to connected
+            rospy.set_param('/shared_state/is_arduinos_connected', True)
+            
+
     def sig_callback_update_rat_pos_in_gui(self, x, y, yaw):
         """
         Update variables for rat position used by the GUI
@@ -1490,6 +1324,12 @@ class Interface(Plugin):
         self.rat_pos_y = y
         self.rat_image.setPos(self.rat_pos_x, self.rat_pos_y)
         self.rat_image.setRotation(yaw)
+
+    def sig_callback_update_wall_plot(self):
+        """ 
+        Slot that updates the plot in the main UI thread 
+        """
+        self.MP.updatePlotFromWallConfig()
 
     # ------------------------ FUNCTIONS: Minor ------------------------
 
@@ -1543,7 +1383,7 @@ class Interface(Plugin):
 
     # ------------------------ FUNCTIONS: CSV File Handling ------------------------
 
-    def updateListCSV(self, csv_file_paths, selected_file_name=None):
+    def update_qt_list_from_csv(self, csv_file_paths, selected_file_name=None):
         """ 
         Update the file list widget with the CSV files from csv_file_paths list.
         If selected_file_name is provided, set the currentRow to that file.
@@ -1575,7 +1415,7 @@ class Interface(Plugin):
                     self._widget.fileListWidget.setCurrentRow(
                         self.current_file_index)
 
-    def loadFromCSV(self, list_increment):
+    def load_qt_list_rom_csv(self, list_increment):
         """ Function to load the wall config data from a CSV file """
 
         # Update the current file index by adding the given increment value
@@ -1594,47 +1434,12 @@ class Interface(Plugin):
         # Get the directory path and current file name to construct the full file path
         dir_path = self._widget.fileDirEdit.text()
         file_name = self.csv_files[self.current_file_index]
-        file_path = os.path.join(dir_path, file_name)
 
-        # Load and store CSV data into the wall configuration
-        try:
-            with open(file_path, 'r') as csv_file:
-                csv_reader = csv.reader(csv_file)
-                
-                # Read each row and convert the data to integers, representing chamber and wall configuration
-                wall_byte_config_list = [
-                    [int(row[0]), int(row[1])] for row in csv_reader]
-                
-                # Update the wall configuration using the WallConfig class
-                WallConfig.make_byte2num_cw_list(wall_byte_config_list)
-                MazeDB.printMsg(
-                    'INFO', "CSV: Data Loaded from File: %s", file_name)
-                
-        except Exception as e:
-            # Print an error message if loading the CSV file fails
-            MazeDB.printMsg('ERROR', "CSV: Loading Data Error: %s", str(e))
+        # Load CSV data and update wall configuration
+        WallConfig.load_from_csv(dir_path, file_name)
 
         # Update the plotted wall configuration based on the newly loaded data
         self.MP.updatePlotFromWallConfig()
-
-    def saveToCSV(self, save_file_path, wall_config_list):
-        """ Function to save the wall config data to a CSV file """
-
-        try:
-            # Open the file for writing and use a CSV writer to write each row of wall configuration data
-            with open(save_file_path, 'w', newline='') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                for row in wall_config_list:
-                    csv_writer.writerow(row)
-           
-            # Extract the file name from the full path to log it
-            save_file_name = os.path.basename(save_file_path)
-            MazeDB.printMsg(
-                'INFO', "CSV: Data Saved to File: %s", save_file_name)
-            
-        except Exception as e:
-            # Print an error message if saving the CSV file fails
-            MazeDB.printMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
 

@@ -69,6 +69,10 @@
   <param name="maze_ease_slave_index" type="int" value="1" />
   <param name="gantry_ease_slave_index" type="int" value="2" />
 
+  <!-- Run the shared state node first -->
+  <node name="shared_state_node" pkg="omniroute_operation" type="shared_state.py"
+    output="screen" />
+
   <!-- Node start delays (sec) -->
   <arg name="Esmacat_application_start_delay" default="0.0" />
   <arg name="sync_node_start_delay" default="0.0" />

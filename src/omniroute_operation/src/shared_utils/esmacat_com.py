@@ -734,15 +734,4 @@ class EsmacatCom:
 
         # Setup Ethercat handshake flag
         self.isEcatConnected = False
-
-    def TEMP(self):
-        temp_u = EsmacatCom.RegUnion()
-        for i_16 in range(8):
-            temp_u.si16[i_16] = 4
-        self.maze_ard0_pub.publish(*temp_u.si16)
-        rospy.sleep(1000)
-        for i_16 in range(8):
-            temp_u.si16[i_16] = 6
-        self.maze_ard0_pub.publish(*temp_u.si16)
-        rospy.sleep(1000)
         

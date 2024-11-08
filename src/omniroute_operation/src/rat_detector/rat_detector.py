@@ -2,7 +2,7 @@
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
+from shared_utils.wall_utilities import MazeDimensions
 
 # ROS Imports
 import rospy

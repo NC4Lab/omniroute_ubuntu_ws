@@ -201,15 +201,6 @@ bool EsmacatCom::_uGetMsgID(EcatMessageStruct &r_EM)
 {
     r_EM.msgID_last = r_EM.msgID; // store last message ID if
     r_EM.msgID = r_EM.RegU.ui16[r_EM.getUI.upd16(0)];
-
-    // TEMP // Check/log error skipped or out of sequence messages if not first message or id has rolled over
-    // if (r_EM.msgID != 1)
-    //     if (r_EM.msgID - r_EM.msgID_last != 1 &&
-    //         r_EM.msgID != r_EM.msgID_last) // don't log errors for repeat message reads
-    //     {
-    //         _trackParseErrors(r_EM, ErrorType::ECAT_ID_DISORDERED);
-    //         return false;
-    //     }
     return true;
 }
 

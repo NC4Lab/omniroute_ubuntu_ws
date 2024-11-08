@@ -26,7 +26,7 @@ from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 
 import json
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
+from shared_utils.wall_utilities import MazeDimensions
 from experiment_controller.experiment_controller_interface import Wall
 from experiment_controller.experiment_controller_interface import CommonFunctions
 
