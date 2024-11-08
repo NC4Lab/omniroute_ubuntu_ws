@@ -1,2 +1,2 @@
 string cmd
-float32[] args
+time timestamp
