@@ -13,7 +13,6 @@ from std_msgs.msg import Int8
 # Other Imports
 import math
 
-
 class RatDetector:
     # Initialize the RatDetector class
     def __init__(self):

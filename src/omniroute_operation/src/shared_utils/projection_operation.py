@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# Class for publishing commands to the projection system
+"""
+Class for publishing commands to the projection system
+"""
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
@@ -109,7 +111,7 @@ class ProjectionOperation:
         Read the CSV and structure the data into either a 10x8 array for 'walls'
         or extract a single value for 'floor' and modify the image_config.
 
-        Args:
+        Arguments:
             data_type (str): A string that specifies whether to process the data as
                             'walls' or 'floor'. 
                             - 'walls': Updates the 10x8 array for wall configuration.
@@ -139,7 +141,7 @@ class ProjectionOperation:
         Read the CSV and structure the data into either a 10x8 array for 'walls'
         or extract a single value for 'floor' and modify the image_config.
 
-        Args:
+        Arguments:
             file_path (str): The path to the CSV file containing the data.
             data_type (str): A string that specifies whether to process the data as
                             'walls' or 'floor'. 

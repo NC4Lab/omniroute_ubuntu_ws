@@ -290,7 +290,7 @@
 #         Compute jog increments for the gantry based on position error, ensuring
 #         movement is along the direct vector to the target without exceeding max feed rate.
 
-#         Args:
+#         Arguments:
 #         - gantry_to_target: numpy array [dx, dy] in mm.
 #         - max_feed_rate: scalar max feed rate in mm/min.
 #         - dt_sec: time interval between control loop iterations in seconds.

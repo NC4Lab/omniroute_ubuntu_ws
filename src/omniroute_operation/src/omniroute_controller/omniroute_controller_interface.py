@@ -3,9 +3,12 @@
 # ======================== PACKAGES ========================
 
 # Custom Imports
+from argparse import ArgumentParser
 from shared_utils.maze_debug import MazeDB
 from shared_utils.projection_operation import ProjectionOperation
 from shared_utils.esmacat_com import EsmacatCom
+from shared_utils.ui_utilities import UIUtilities
+
 
 # Standard Library Imports
 import os
@@ -128,7 +131,7 @@ class WallConfig:
         """
         Used to convert imported CSV with wall byte mask values to a list with wall numbers
 
-        Args:
+        Arguments:
             _cw_wall_byte_list (list): 2D list: col_1 = chamber number, col_2 = wall byte mask
 
         Returns:
@@ -286,7 +289,7 @@ class MazePlot(QGraphicsView):
             """
             Set/update wall status and set UI object colors
 
-            Args:
+            Arguments:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
             """
@@ -394,7 +397,7 @@ class MazePlot(QGraphicsView):
             """
             Set/update chamber status and set UI object colors
 
-            Args:
+            Arguments:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
             """
@@ -468,7 +471,7 @@ class MazePlot(QGraphicsView):
             """
             Set/update maze status and set UI object colors
 
-            Args:
+            Arguments:
                 status_enum (MazePlot.Status): Status enum
                 do_force (bool): Force status update if true (Optional)
             """
@@ -521,7 +524,7 @@ class MazePlot(QGraphicsView):
         """
         Checks if the new status is valid and updates the status if it is
 
-        Args:
+        Arguments:
             current_status_enum (MazePlot.Status): Current status enum
             new_status_enum (MazePlot.Status): New status enum to set
             do_force (bool): Force status update if true (Optional)
@@ -569,33 +572,41 @@ class Interface(Plugin):
 
         # ................ QT UI Setup ................
 
-        # Give QObjects reasonable names
+
+        # Set a name for this QObject instance. Helpful for debugging and identifying objects in complex UIs.
         self.setObjectName('Interface')
 
-        # Process standalone plugin command-line arguments
-        from argparse import ArgumentParser
+        # Import the ArgumentParser class from the argparse module.
         parser = ArgumentParser()
-        # Add argument(s) to the parser.
+
+        # Define command-line arguments for this plugin, specifically adding a "quiet" mode.
+        # "-q" or "--quiet" can be used as flags when starting the plugin to suppress output messages.
         parser.add_argument("-q", "--quiet", action="store_true",
                             dest="quiet",
                             help="Put plugin in silent mode")
+        
+        # Parse the arguments passed to this plugin from the command line.
+        # 'context.argv()' contains the command-line arguments for this specific plugin context.
         args, unknowns = parser.parse_known_args(context.argv())
+
+        # If "quiet" mode is not enabled, print the arguments and any unrecognized options.
         if not args.quiet:
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-        # Create QWidget
+        # Create an empty QWidget that will serve as the base for the plugin UI.
         self._widget = QWidget()
-        # Extend the widget with all attributes and children from UI file
+
+        # Load and extend the QWidget with UI elements from the .ui file.
         loadUi(os.path.join(os.path.dirname(
             os.path.realpath(__file__)), 'omniroute_controller_interface.ui'), self._widget)
 
+        # Assign a unique object name to the loaded UI, useful for debugging purposes.
         self._widget.setObjectName('InterfacePluginUi')
-        # Show _widget.windowTitle on left-top of each plugin (when
-        # it's set in _widget). This is useful when you open multiple
-        # plugins at once. Also if you open multiple instances of your
-        # plugin at once, these lines add number to make it easy to
-        # tell from pane to pane.
+
+        # Set the title of the widget. If multiple instances of this plugin are opened,
+        # append a unique serial number to the window title. This helps to distinguish
+        # between different instances, especially when multiple instances are opened in the same session.
         if context.serial_number() > 1:
             self._widget.setWindowTitle(
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
@@ -607,22 +618,16 @@ class Interface(Plugin):
         self.scene = QGraphicsScene()
         self._widget.plotMazeView.setScene(self.scene)
 
-        # Set the fixed size of the main window based on the dimensions from the UI file
-        main_window_width = self._widget.geometry().width()
-        main_window_height = self._widget.geometry().height()
-        self._widget.setFixedSize(main_window_width, main_window_height)
+        # Set the window to a fixed size
+        UIUtilities.set_fixed_size(self._widget)
 
-        # Set the size hint of the main window to match the size of the _widget
-        self._widget.window().setMinimumSize(main_window_width, main_window_height)
-        self._widget.window().setMaximumSize(main_window_width, main_window_height)
-
+        # Move the window
+        UIUtilities.move_ui_window(
+            self._widget, horizontal_alignment='left', vertical_alignment='top')
+        
         # Set the background color of the scene to white
         self._widget.plotMazeView.setBackgroundBrush(QColor(255, 255, 255))
         self._widget.plotMazeView.setViewport(QtOpenGL.QGLWidget())
-
-        # Move the window
-        self.move_ui_window(
-            self._widget, horizontal_alignment='left', vertical_alignment='top')
 
         # Get the absolute path of the current script file
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1492,7 +1497,7 @@ class Interface(Plugin):
         """
         Converts an Optitrack position (coordinates from a tracking system) to a GUI-compatible position.
 
-        Args:
+        Arguments:
         - optitrack_pos (array-like): A 2D position [x, y] in the Optitrack coordinate system.
 
         Returns:
@@ -1573,50 +1578,62 @@ class Interface(Plugin):
     def loadFromCSV(self, list_increment):
         """ Function to load the wall config data from a CSV file """
 
-        # Update the current file index
+        # Update the current file index by adding the given increment value
         self.current_file_index += list_increment
 
-        # Loop back to the end or start if start or end reached, respectively
+        # Loop back to the end or start if the index goes out of range, effectively creating a circular index
         if list_increment < 0 and self.current_file_index < 0:
-            self.current_file_index = len(self.csv_files) - 1  # set to end
+            # Set to the last index if negative overflow occurs
+            self.current_file_index = len(self.csv_files) - 1
         elif list_increment > 0 and self.current_file_index >= len(self.csv_files):
-            self.current_file_index = 0  # set to start
+            self.current_file_index = 0  # Set to the first index if positive overflow occurs
 
-        # Set the current file in the list widget
+        # Set the current file in the list widget for user interface purposes
         self._widget.fileListWidget.setCurrentRow(self.current_file_index)
 
-        # Get the currently selected file path
+        # Get the directory path and current file name to construct the full file path
         dir_path = self._widget.fileDirEdit.text()
         file_name = self.csv_files[self.current_file_index]
         file_path = os.path.join(dir_path, file_name)
 
-        # Load and store CSV data
+        # Load and store CSV data into the wall configuration
         try:
             with open(file_path, 'r') as csv_file:
                 csv_reader = csv.reader(csv_file)
+                
+                # Read each row and convert the data to integers, representing chamber and wall configuration
                 wall_byte_config_list = [
                     [int(row[0]), int(row[1])] for row in csv_reader]
+                
+                # Update the wall configuration using the WallConfig class
                 WallConfig.make_byte2num_cw_list(wall_byte_config_list)
                 MazeDB.printMsg(
                     'INFO', "CSV: Data Loaded from File: %s", file_name)
+                
         except Exception as e:
+            # Print an error message if loading the CSV file fails
             MazeDB.printMsg('ERROR', "CSV: Loading Data Error: %s", str(e))
 
-        # Update plot walls
+        # Update the plotted wall configuration based on the newly loaded data
         self.MP.updatePlotFromWallConfig()
 
     def saveToCSV(self, save_file_path, wall_config_list):
         """ Function to save the wall config data to a CSV file """
 
         try:
+            # Open the file for writing and use a CSV writer to write each row of wall configuration data
             with open(save_file_path, 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile)
                 for row in wall_config_list:
                     csv_writer.writerow(row)
+           
+            # Extract the file name from the full path to log it
             save_file_name = os.path.basename(save_file_path)
-            MazeDB.printMsg('INFO', "CSV: Data Saved to File: %s",
-                            save_file_name)
+            MazeDB.printMsg(
+                'INFO', "CSV: Data Saved to File: %s", save_file_name)
+            
         except Exception as e:
+            # Print an error message if saving the CSV file fails
             MazeDB.printMsg('ERROR', "CSV: Saving Data Error: %s", str(e))
 
     # ------------------------ FUNCTIONS: System Operations ------------------------
@@ -1697,41 +1714,6 @@ class Interface(Plugin):
         if param_ind is not None and arg_val is not None:
             self.sysDefaults[param_ind] = set_field(
                 self.sys_widgets[param_ind], self.sysDefaults[param_ind], arg_val)
-
-    def move_ui_window(self, widget, horizontal_alignment, vertical_alignment):
-        """
-        Move the given widget to the specified position on the given monitor.
-
-        Arguments:
-            widget: The widget or window to move.
-            horizontal_alignment: A string specifying the horizontal alignment. Valid values are 'left', 'center', and 'right'.
-            vertical_alignment: A string specifying the vertical alignment. Valid values are 'top', 'middle', and 'bottom'.
-        """
-
-        # Get the geometry of the main monitor
-        screen_geometry = QApplication.desktop().screenGeometry(0)
-
-        if horizontal_alignment == "left":
-            x = 0
-        elif horizontal_alignment == "center":
-            x = (screen_geometry.width() - widget.width()) / 2
-        elif horizontal_alignment == "right":
-            x = screen_geometry.width() - widget.width()
-        else:
-            raise ValueError(
-                f"Invalid horizontal_alignment value: {horizontal_alignment}")
-
-        if vertical_alignment == "top":
-            y = 0
-        elif vertical_alignment == "middle":
-            y = (screen_geometry.height() - widget.height()) / 2
-        elif vertical_alignment == "bottom":
-            y = screen_geometry.height() - widget.height()
-        else:
-            raise ValueError(
-                f"Invalid vertical_alignment value: {vertical_alignment}")
-
-        widget.window().move(x, y)
 
     def terminate_ros_node(self, s):
         """ Function to terminate a ROS node when exiting the application """

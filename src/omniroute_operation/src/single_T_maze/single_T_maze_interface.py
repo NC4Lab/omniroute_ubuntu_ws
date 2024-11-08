@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+
+#!/usr/bin/env python
+from shared_utils.ui_utilities import UIUtilities
+from shared_utils.maze_debug import MazeDB
+from omniroute_controller.omniroute_controller_interface import MazeDimensions
+from experiment_controller.experiment_controller_interface import Wall
+from experiment_controller.experiment_controller_interface import CommonFunctions
+
 import os,time
 import rospy
 import numpy as np
@@ -25,9 +33,6 @@ from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 
 import json
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
-from experiment_controller.experiment_controller_interface import Wall
-from experiment_controller.experiment_controller_interface import CommonFunctions
 
 
 class Mode(Enum):
@@ -88,6 +93,13 @@ class Interface(Plugin):
         context.add_widget(self._widget)
 
         self.scene = QGraphicsScene()
+
+        # Set the window to a fixed size
+        UIUtilities.set_fixed_size(self._widget)
+
+        # Move the window
+        UIUtilities.move_ui_window(
+            self._widget, horizontal_alignment='right', vertical_alignment='top')
 
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(self._handle_trialGeneratorBtn_clicked)  

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# Class for managing communication with the Esmacat shields via EtherCAT
+"""
+Class for managing communication with the Esmacat shields via EtherCAT
+"""
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
@@ -136,7 +138,7 @@ class EsmacatCom:
         """
         Constructor for the the EsmacatCom class.
 
-        Args:
+        Arguments:
             suffix_str (string): String specifying the suffix used for the ROS topic lable.
         """
 
@@ -171,7 +173,7 @@ class EsmacatCom:
         Note: This is a workaround for the fact that the Esmacat does not clear and sometimes will be
         read midway through writing a message. This can lead to only partial or overlapping messages being read.
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             reg_arr_si16 (list): Register array (signed int16).
         """
@@ -210,7 +212,7 @@ class EsmacatCom:
         """
         Set message ID entry in union and update associated variable
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
         """
 
@@ -225,7 +227,7 @@ class EsmacatCom:
         """
         Get message ID from union
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
 
         Returns:
@@ -248,7 +250,7 @@ class EsmacatCom:
         """
         Set message type entry in union and update associated variable
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             msg_type_enum (EsmacatCom.MessageType): Message type enum
         """
@@ -262,7 +264,7 @@ class EsmacatCom:
         """
         Get message type from union and check if valid
 
-        Args:   
+        Arguments:   
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
 
         Returns:
@@ -290,7 +292,7 @@ class EsmacatCom:
         """
         Set message type entry in union and update associated variable
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             err_type_enum (EsmacatCom.ErrorType): Error type enum  
         """
@@ -304,7 +306,7 @@ class EsmacatCom:
         """
         Get message type from union and check if valid
 
-        Args:   
+        Arguments:   
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
 
         Returns:
@@ -332,7 +334,7 @@ class EsmacatCom:
         """
         Set message argument length entry in union and update associated variable
 
-        Args:   
+        Arguments:   
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct 
             msg_arg_len (int): Message argument length (unsigned int8)
         """
@@ -346,7 +348,7 @@ class EsmacatCom:
         """
         Get message argument length
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
         """
 
@@ -357,7 +359,7 @@ class EsmacatCom:
         """
         Set message 8-bit argument data entry in union
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             msg_arg_data8 (unsigned int8): Message argument data (unsigned int8)
         """
@@ -391,7 +393,7 @@ class EsmacatCom:
         """
         Set message 16-bit argument data entry in union
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             msg_arg_data16 (unsigned int16): Message argument data (unsigned int16)
         """
@@ -420,7 +422,7 @@ class EsmacatCom:
         """
         Get reg union 8-bit message argument data and copy to arg union
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
         """
 
@@ -433,7 +435,7 @@ class EsmacatCom:
         """
         Set message footer entry in union and update associated variable
 
-        Args:  
+        Arguments:  
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
         """
 
@@ -445,7 +447,7 @@ class EsmacatCom:
         """
         Get message footer from union
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
 
         Returns:
@@ -491,7 +493,7 @@ class EsmacatCom:
         """
         Check for and log any Ecat message parsing errors
 
-        Args:
+        Arguments:
             r_EM (EsmacatCom.EcatMessageStruct): EtherCAT message struct
             err_tp (EsmacatCom.ErrorType): Error type enum
             do_reset (bool): Reset error type flag if true (Optional)
@@ -522,7 +524,7 @@ class EsmacatCom:
         """
         Print EtherCAT register data
 
-        Args:
+        Arguments:
             level (str): ROS log level
             reg_u (EsmacatCom.RegUnion): EtherCAT register union
         """
@@ -566,7 +568,7 @@ class EsmacatCom:
         """
         Used to parse new incoming ROS ethercat msg data.
 
-        Args:
+        Arguments:
             reg_arr_si16 (list): Register array (signed int16).
 
         Returns:
@@ -619,7 +621,7 @@ class EsmacatCom:
         """
         Used to send outgoing ROS ethercat msg data.
 
-        Args:
+        Arguments:
             msg_type_enum (EsmacatCom.MessageType): Message type enum.
             msg_arg_data_i8 (list or scalar): 8-bit message argument data array.
             msg_arg_data_i16 (list or scalar): 16-bit message argument data array.

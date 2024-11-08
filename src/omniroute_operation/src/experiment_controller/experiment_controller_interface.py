@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+from shared_utils.ui_utilities import UIUtilities
+from omniroute_controller.omniroute_controller_interface import MazeDimensions
+
 import os,time
 import rospy
 import numpy as np
@@ -9,7 +12,6 @@ from std_msgs.msg import String, Int32, Int8
 from geometry_msgs.msg import PoseStamped, PointStamped
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
-from omniroute_controller.omniroute_controller_interface import MazeDimensions
 from dateutil.parser import parse as parsedate
 
 import pandas as pd
@@ -117,12 +119,18 @@ class Interface(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-
         # Add widget to the user interface
         if add:
             context.add_widget(self._widget)
 
         self.scene = QGraphicsScene()
+
+        # Set the window to a fixed size
+        UIUtilities.set_fixed_size(self._widget)
+
+        # Move the window
+        UIUtilities.move_ui_window(
+            self._widget, horizontal_alignment='right', vertical_alignment='bottom')
 
         self._widget.pauseBtn.setEnabled(True)
         self._widget.resumeBtn.setEnabled(False)

@@ -355,7 +355,7 @@
 #         """
 #         Relay feedback control to induce oscillations for a given axis (X or Y).
 
-#         Args:
+#         Arguments:
 #         - error: The current error in the selected axis.
 #         - relay_output: The current relay output for the selected axis.
 #         - last_error_sign: Last sign of the error in the selected axis.
@@ -430,7 +430,7 @@
 #         """
 #         PID control to calculate movement based on current error with integral windup protection for a single axis.
 
-#         Args:
+#         Arguments:
 #         - error: The difference between the gantry and target position for a single axis.
 #         - Kp: Proportional gain.
 #         - Ki: Integral gain.
@@ -471,7 +471,7 @@
 #         """
 #         Proportional control to calculate movement based on the current distance and direction to the target.
 
-#         Args:
+#         Arguments:
 #         - gantry_to_setpoint: Array containing the difference between the gantry and target positions in X and Y.
 #         - base_speed: The base speed to scale the movement by.
 #         - slow_on_approach: A flag to indicate if the gantry should decelerate when approaching the target.

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# Class for printing and logging to ROS
+"""
+Class for printing and logging to ROS
+"""
 
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem, QGraphicsItemGroup, QGraphicsLineItem
 from PyQt5.QtGui import QPen, QColor, QFont
