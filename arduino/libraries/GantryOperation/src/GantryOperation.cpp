@@ -224,11 +224,8 @@ void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
 	// Send the jog command
 	if (grblWrite(cmd_str) != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates: %s", cmd_str.c_str());
 	}
-
-	// TEMP print the command string
-	_Dbg.printMsg(_Dbg.MT::INFO, "[gantryMove] Command string: %s", cmd_str.c_str());
 }
 
 
@@ -241,6 +238,23 @@ void GantryOperation::grblJogCancel()
 	}
 }
 
+/// @brief Reset the origin to new coordinates.
+void GantryOperation::resetOrigin(float x, float y)
+{
+	// Convert float values to String with 2 decimal places
+	String x_str = String(x, 2);
+	String y_str = String(y, 2);
+
+	// Format the G92 command string using Strings
+	String cmd_str = "G92 X" + x_str + " Y" + y_str + " Z0.0";
+
+	// Send the jog command
+	if (grblWrite(cmd_str) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[resetOrigin] Error ressetomg origin: %s", cmd_str.c_str());
+	}
+}
+
 void GantryOperation::grblResetAlarm()
 {
 	// Send the reset alarm command
@@ -248,91 +262,6 @@ void GantryOperation::grblResetAlarm()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblResetAlarm] Error resetting alarm");
 	}
-}
-
-/// @brief Used to process new ROS ethercat msg argument data.
-void GantryOperation::procEcatMessage()
-{
-	uint8_t msg_arg_arr[9]; // store message arguments
-	uint8_t arg_len = 0;	// store argument length
-
-	// Check for new message
-	if (!EsmaCom.rcvEM.isNew)
-		return;
-
-	// Copy and send back recieved message arguments as the default response
-	arg_len = EsmaCom.rcvEM.argLen;
-	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
-		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
-
-	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
-
-	//............... Process and Execute Messages ...............
-
-	// HANDSHAKE
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
-	{
-		// Initialize ecat message variables
-		EsmaCom.initEcat(true);
-	}
-
-	// GANTRY_INITIALIZE_GRBL
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_INITIALIZE_GRBL)
-	{
-		float max_feed_rate = EsmaCom.rcvEM.ArgU.f32[0];	// get the max feed rate
-		float max_acceleration = EsmaCom.rcvEM.ArgU.f32[1]; // get the max acceleration
-		grblInitSystem();
-		grblInitRuntime(max_feed_rate, max_acceleration);
-		// Store mzx feed rate
-		maxFeedRate = max_feed_rate;
-	}
-
-	// GANTRY_HOME
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_HOME)
-	{
-		uint16_t home_speed = EsmaCom.rcvEM.ArgU.ui16[0]; // get the homing speed
-		gantryHome(home_speed);
-	}
-
-	// GANTRY_MOVE_REL
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
-	{
-		float x = EsmaCom.rcvEM.ArgU.f32[0];			 // get the x position
-		float y = EsmaCom.rcvEM.ArgU.f32[1];			 // get the y position
-		gantryMove(x, y, maxFeedRate);
-	}
-
-	// GANTRY_JOG_CANCEL
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_JOG_CANCEL)
-	{
-		grblJogCancel();
-	}
-
-	// GANTRY_SET_FEEDER
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_SET_FEEDER)
-	{
-		uint8_t move_dir = EsmaCom.rcvEM.ArgU.ui8[0]; // get the move direction
-		feederMove(move_dir);
-	}
-
-	// GANTRY_RUN_PUMP
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RUN_PUMP)
-	{
-		uint8_t run_state = EsmaCom.rcvEM.ArgU.ui8[0]; // get the run state
-		pumpRun(run_state);
-	}
-
-	// GANTRY_REWARD
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
-	{
-		float duration = EsmaCom.rcvEM.ArgU.f32[0] * 1000; // get the reward durration in ms
-		runReward(duration);
-	}
-
-	//............... Send Ecat Ack ...............
-
-	// NO ERROR
-	EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
 }
 
 void GantryOperation::debugPrintSerialChars()
@@ -432,4 +361,97 @@ void GantryOperation::runReward(float diration)
 
 	// Raise the feeder
 	feederMove(0);
+}
+
+/// @brief Used to process new ROS ethercat msg argument data.
+void GantryOperation::procEcatMessage()
+{
+	uint8_t msg_arg_arr[9]; // store message arguments
+	uint8_t arg_len = 0;	// store argument length
+
+	// Check for new message
+	if (!EsmaCom.rcvEM.isNew)
+		return;
+
+	// Copy and send back recieved message arguments as the default response
+	arg_len = EsmaCom.rcvEM.argLen;
+	for (size_t arg_i = 0; arg_i < arg_len; arg_i++)
+		msg_arg_arr[arg_i] = EsmaCom.rcvEM.ArgU.ui8[arg_i];
+
+	_Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT PROCESSING: %s", EsmaCom.rcvEM.msgID, EsmaCom.rcvEM.msg_tp_str);
+
+	//............... Process and Execute Messages ...............
+
+	// HANDSHAKE
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::HANDSHAKE)
+	{
+		// Initialize ecat message variables
+		EsmaCom.initEcat(true);
+	}
+
+	// GANTRY_INITIALIZE_GRBL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_INITIALIZE_GRBL)
+	{
+		float max_feed_rate = EsmaCom.rcvEM.ArgU.f32[0];	// get the max feed rate
+		float max_acceleration = EsmaCom.rcvEM.ArgU.f32[1]; // get the max acceleration
+		grblInitSystem();
+		grblInitRuntime(max_feed_rate, max_acceleration);
+		// Store mzx feed rate
+		maxFeedRate = max_feed_rate;
+	}
+
+	// GANTRY_HOME
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_HOME)
+	{
+		uint16_t home_speed = EsmaCom.rcvEM.ArgU.ui16[0]; // get the homing speed
+		gantryHome(home_speed);
+	}
+
+	// GANTRY_MOVE_REL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
+	{
+		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
+		gantryMove(x, y, maxFeedRate);
+	}
+
+	// GANTRY_JOG_CANCEL
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_JOG_CANCEL)
+	{
+		grblJogCancel();
+	}
+
+	// GANTRY_SET_FEEDER
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_SET_FEEDER)
+	{
+		uint8_t move_dir = EsmaCom.rcvEM.ArgU.ui8[0]; // get the move direction
+		feederMove(move_dir);
+	}
+
+	// GANTRY_RUN_PUMP
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RUN_PUMP)
+	{
+		uint8_t run_state = EsmaCom.rcvEM.ArgU.ui8[0]; // get the run state
+		pumpRun(run_state);
+	}
+
+	// GANTRY_REWARD
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
+	{
+		float duration = EsmaCom.rcvEM.ArgU.f32[0] * 1000; // get the reward durration in ms
+		runReward(duration);
+	}
+
+	// RESET_ORIGIN
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_ORIGIN)
+	{
+		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
+		resetOrigin(x, y);
+	}
+
+	//............... Send Ecat Ack ...............
+
+	// NO ERROR
+	EsmaCom.writeEcatAck(EsmaCom.ErrorType::ERR_NONE, msg_arg_arr, arg_len); // send back recieved message arguments
 }

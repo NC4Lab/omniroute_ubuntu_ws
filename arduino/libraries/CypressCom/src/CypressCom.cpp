@@ -434,7 +434,6 @@ uint8_t CypressCom::i2cScan()
 	uint8_t cnt_err = 0;
 	uint8_t list_addr[128] = {0};
 	uint8_t list_addr_with_err[128] = {0};
-	uint8_t list__err_code[128] = {0};
 
 	// Loop and test all 128 possible addresses
 	for (address = 1; address < 127; address++)
@@ -448,12 +447,14 @@ uint8_t CypressCom::i2cScan()
 
 		// Handle response
 		if (resp == 0)
-		{ // check for repsonse
+		{ 
+			// check for repsonse
 			list_addr[cnt_addr] = address;
 			cnt_addr++;
 		}
 		else if (resp > 4)
-		{ // catch unknown error
+		{ 
+			// catch unknown error
 			list_addr_with_err[cnt_addr] = address;
 			cnt_err++;
 

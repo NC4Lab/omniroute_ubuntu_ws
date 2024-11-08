@@ -35,7 +35,7 @@ using std::cout;
  * Your custom application class ros_esmacat_app inherits the class 'esmacat_application' & 'ros_ethercat_arduino_shield_by_esmacat'
  * Write functions to override the parent functions of 'esmacat_application' & 'ros_ethercat_arduino_shield_by_esmacat'
  * Declare an object of your slave class (e.g. ecat_as)
- * Declare an object of your slave class to interact with ROS Nodes (e.g. maze_ard0_ease)
+ * Declare an object of your slave class to interact with ROS Nodes (e.g. maze_ease)
  * Declare any other variables you might want to add
  * Define the constructor for initialization
  */
@@ -44,7 +44,7 @@ class ros_esmacat_app : public esmacat_application
 public:
     /** A constructor- sets initial values for class members */
     ros_esmacat_app(): sync_ease("sync_ease"), sync_ease_ros_message(),
-    maze_ard0_ease("maze_ard0_ease"), maze_ard0_ease_ros_message(),
+    maze_ease("maze_ease"), maze_ease_ros_message(),
     gantry_ease("gantry_ease"), gantry_ease_ros_message() {}
 
     void assign_slave_sequence(); /** identify sequence of slaves and their types */
@@ -60,9 +60,9 @@ private:
     ros_ethercat_arduino_shield_by_esmacat :: write sync_ease_ros_message; // ROS message object for Esmacat slave
 
     // Declare slave objects for maze wall conroller arduino
-    esmacat_ethercat_arduino_shield_by_esmacat maze_ard0_ease_ecat_as; 
-    ros_ethercat_arduino_shield_by_esmacat maze_ard0_ease;
-    ros_ethercat_arduino_shield_by_esmacat :: write maze_ard0_ease_ros_message;
+    esmacat_ethercat_arduino_shield_by_esmacat maze_ease_ecat_as; 
+    ros_ethercat_arduino_shield_by_esmacat maze_ease;
+    ros_ethercat_arduino_shield_by_esmacat :: write maze_ease_ros_message;
 
     // Declare slave objects for feeder servos
     esmacat_ethercat_arduino_shield_by_esmacat gantry_ease_ecat_as; 

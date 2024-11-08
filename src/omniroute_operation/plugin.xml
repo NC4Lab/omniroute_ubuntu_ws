@@ -29,7 +29,7 @@
       <statustip>Use to test functioning of Omniroute</statustip>
     </qtgui>
   </class>
-  <class name="SignleTmaze" type="single_T_maze.single_T_maze_interface.Interface"
+  <class name="SingleTmaze" type="single_T_maze.single_T_maze_interface.Interface"
     base_class_type="rqt_gui_py::Plugin">
     <description>
       An rqt-based GUI for controlling single T maze experiment phases in maze.

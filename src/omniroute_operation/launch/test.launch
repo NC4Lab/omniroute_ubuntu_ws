@@ -1,21 +1,9 @@
-<launch> 
+<launch>
 
-    <!-- Esmacat ethernet adapter address (on nc4-lassi) -->
-    <param name="ethercat_adapter_name" type="str" value="enp9s0" /> 
-    
-    <!-- Esmacat parameter -->
-    <param name="sync_ease_slave_index" type="int" value="0" />
-    <param name="maze_ard0_ease_slave_index" type="int" value="1" />
-    <param name="_slave_index" type="int" value="2" />
+  <!-- Include the shared resources launch file -->
+  <include file="$(find omniroute_operation)/launch/shared_resources.launch" />
 
-    <!-- Esmacat Node -->
-    <node name = "Esmacat_application_node" pkg = "omniroute_esmacat_ros" type = "ros_esmacat_node" output = "screen" launch-prefix="ethercat_grant"/>
+  <!-- Omniroute omniroute_controller interface node -->
+  <node name="omniroute_controller_node" pkg="omniroute_operation" type="omniroute_controller" output="screen" />
 
-    <arg name="node_start_delay" default="5.0" />  
-
-
-    <!-- Omniroute omniroute_controller interface -->
-    <node name = "omniroute_controller_node" pkg = "omniroute_operation" type = "omniroute_controller" output = "screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
-
-    
-  </launch>
+</launch>

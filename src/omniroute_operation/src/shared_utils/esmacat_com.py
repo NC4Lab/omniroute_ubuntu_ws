@@ -59,6 +59,7 @@ class EsmacatCom:
         GANTRY_REWARD = 13
         GANTRY_MOVE_REL = 14
         GANTRY_JOG_CANCEL = 15
+        RESET_ORIGIN = 16
 
     class ErrorType(Enum):
         """ Enum for tracking message errors """
@@ -131,14 +132,24 @@ class EsmacatCom:
             self.isErr = False                         # Message error flag
             self.errTp = EsmacatCom.ErrorType.ERR_NONE  # Message error type
 
-    def __init__(self, suffix):
+    def __init__(self, suffix_str):
+        """
+        Constructor for the the EsmacatCom class.
+
+        Args:
+            suffix_str (string): String specifying the suffix used for the ROS topic lable.
+        """
+
         # Initialize message handler instances
         self.sndEM = self.EcatMessageStruct()
         self.rcvEM = self.EcatMessageStruct()
 
+        # Store the suffix string to identify the class and instance in log messages
+        self.instance_id_str = suffix_str
+
         # Construct topic names using the provided suffix
-        write_topic = f'/Esmacat_write_{suffix}'
-        read_topic = f'Esmacat_read_{suffix}'
+        write_topic = f'/Esmacat_write_{suffix_str}'
+        read_topic = f'Esmacat_read_{suffix_str}'
 
         # ROS Publisher: Initialize ethercat message handler instance
         self.maze_ard0_pub = rospy.Publisher(
@@ -372,7 +383,9 @@ class EsmacatCom:
             self._uGetArgData8(r_EM)
 
         else:
-            MazeDB.printMsg('WARNING', "Ecat: 8-bit argument data out of range: data[%d]", msg_arg_data8)
+            MazeDB.printMsg(
+                'WARNING', "[%s] Ecat: 8-bit argument data out of range: data[%d]", 
+                self.instance_id_str, msg_arg_data8)
 
     def _uSetArgData16(self, r_EM, msg_arg_data16):
         """
@@ -400,7 +413,8 @@ class EsmacatCom:
             self._uGetArgData8(r_EM)
 
         else:
-            MazeDB.printMsg('WARNING', "Ecat: 16-bit argument data out of range: data[%d]", msg_arg_data16)
+            MazeDB.printMsg('WARNING', "[%s] Ecat: 16-bit argument data out of range: data[%d]", 
+                            self.instance_id_str, msg_arg_data16)
 
     def _uGetArgData8(self, r_EM):
         """
@@ -495,7 +509,8 @@ class EsmacatCom:
 
                 # Print message as warning
                 MazeDB.printMsg(
-                    'WARNING', "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
+                    'WARNING', "[%s] Ecat: %s: id new[%d] id last[%d] type[%d][%s]", 
+                    self.instance_id_str, r_EM.errTp.name, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp.value, r_EM.msgTp.name)
                 self._printEcatReg('WARNING', r_EM.RegU)
 
         # Unset error type
@@ -592,9 +607,9 @@ class EsmacatCom:
         self.rcvEM.isNew = True
 
         # Print message
-        MazeDB.printMsg('INFO', "(%d)ECAT ACK RECEIVED: %s",
-                        self.rcvEM.msgID, self.rcvEM.msgTp.name)
-        self._printEcatReg('DEBUG', self.rcvEM.RegU)  # TEMP
+        MazeDB.printMsg('INFO', "[%s] Ecat Received [id=%d]: msg[%s] err[%s]",
+                        self.instance_id_str, self.rcvEM.msgID, self.rcvEM.msgTp.name, self.rcvEM.errTp.name)
+        self._printEcatReg('DEBUG', self.rcvEM.RegU) 
 
         return True
 
@@ -614,6 +629,12 @@ class EsmacatCom:
         Returns:
             int: Success/error codes [0:no message, 1:new message, 2:error]
         """
+
+        # Make sure no message is sent before handshake is complete
+        if not self.isEcatConnected and msg_type_enum != EsmacatCom.MessageType.HANDSHAKE:
+            MazeDB.printMsg('WARNING', "[%s] Attempted to Send Message Before Ecat Handshake: %s",
+                            self.instance_id_str, msg_type_enum.name)
+            return
 
         # Set all register values to -1 to clear buffer
         self._resetReg()
@@ -691,9 +712,9 @@ class EsmacatCom:
 
         # Print message
         if do_print:
-            MazeDB.printMsg('INFO', "(%d)ECAT SENT: %s",
-                            self.sndEM.msgID, self.sndEM.msgTp.name)
-            self._printEcatReg('DEBUG', self.sndEM.RegU) # TEMP
+            MazeDB.printMsg('INFO', "[%s] Ecat Sent [id=%d]: msg[%s]",
+                            self.instance_id_str, self.sndEM.msgID, self.sndEM.msgTp.name)
+            self._printEcatReg('DEBUG', self.sndEM.RegU)
 
     def resetEcat(self):
         """Reset all message structs."""
@@ -711,3 +732,15 @@ class EsmacatCom:
 
         # Setup Ethercat handshake flag
         self.isEcatConnected = False
+
+    def TEMP(self):
+        temp_u = EsmacatCom.RegUnion()
+        for i_16 in range(8):
+            temp_u.si16[i_16] = 4
+        self.maze_ard0_pub.publish(*temp_u.si16)
+        rospy.sleep(1000)
+        for i_16 in range(8):
+            temp_u.si16[i_16] = 6
+        self.maze_ard0_pub.publish(*temp_u.si16)
+        rospy.sleep(1000)
+        

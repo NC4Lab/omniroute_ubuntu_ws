@@ -57,6 +57,7 @@ add_message_files(
 	FILES
   WallState.msg
   GantryCmd.msg
+  SyncCmd.msg
   Event.msg
 )
 

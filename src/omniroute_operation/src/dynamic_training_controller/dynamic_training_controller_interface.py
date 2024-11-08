@@ -392,7 +392,7 @@ class Interface(Plugin):
                 rospy.loginfo("Right goal chamber selected")
             self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
             self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-            self.gantry_pub.publish("MOVE_TO_COORDINATE", [self.success_center_x, self.success_center_y])
+            self.gantry_pub.publish("move_to_coordinate", [self.success_center_x, self.success_center_y])
             
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.REWARD_START
@@ -407,7 +407,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                # self.gantry_pub.publish("TRACK_HARNESS", [])
+                # self.gantry_pub.publish("start_harness_tracking", [])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.POST_REWARD
                 rospy.loginfo("POST_REWARD")

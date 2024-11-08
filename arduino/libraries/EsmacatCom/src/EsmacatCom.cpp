@@ -140,7 +140,7 @@ bool EsmacatCom::_uSetCheckReg(EcatMessageStruct &r_EM, int p_reg_arr[], bool do
         static int id_last = 0;
         if (p_reg_arr[0] != id_last)
         {
-            _printEcatReg(_Dbg.MT::DEBUG, p_reg_arr);
+            _printEcatReg(_Dbg.MT::DEBUG, p_reg_arr, true, true);
             id_last = p_reg_arr[0];
         }
     }
@@ -421,7 +421,7 @@ void EsmacatCom::_trackParseErrors(EcatMessageStruct &r_EM, ErrorType err_tp, bo
 
             // Print error
             _Dbg.printMsg(_Dbg.MT::WARNING, "Ecat: %s: id new[%d] id last[%d] type[%d][%s]", r_EM.err_tp_str, r_EM.msgID, r_EM.msgID_last, r_EM.msgTp_val, r_EM.msg_tp_str);
-            _printEcatReg(_Dbg.MT::WARNING, r_EM.RegU);
+            _printEcatReg(_Dbg.MT::WARNING, r_EM.RegU, true, true);
 
             // Send error ack
             writeEcatAck(r_EM.errTp);
@@ -511,8 +511,8 @@ bool EsmacatCom::readEcatMessage()
     // Set new message flag
     rcvEM.isNew = true;
 
-    _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT RECEIVED: %s", rcvEM.msgID, rcvEM.msg_tp_str);
-    //_printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU); // TEMP
+    _Dbg.printMsg(_Dbg.MT::INFO, "Ecat Received [id=%d]: msg[%s]", rcvEM.msgID, rcvEM.msg_tp_str);
+    //_printEcatReg(_Dbg.MT::DEBUG, rcvEM.RegU, true, true);
 
     // Return message status
     return true;
@@ -558,7 +558,7 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
     // 	------------- Store arguments -------------
 
     // Store error arguments
-    if (msg_arg_len > 0 && p_msg_arg_data != nullptr) 
+    if (msg_arg_len > 0 && p_msg_arg_data != nullptr)
         for (size_t i = 0; i < msg_arg_len; i++)
             _uSetArgData8(sndEM, p_msg_arg_data[i]); // store message arguments if provided
     else
@@ -580,14 +580,14 @@ void EsmacatCom::writeEcatAck(ErrorType error_type_enum, uint8_t p_msg_arg_data[
     rcvEM.isNew = false;
 
     // Print ack message info with message type being acked
-    _Dbg.printMsg(_Dbg.MT::INFO, "(%d)ECAT ACK SENT: %s:%s", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
-    //_printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU); // TEMP
+    _Dbg.printMsg(_Dbg.MT::INFO, "Ecat Sent [id=%d]: msg[%s] err[%s]", sndEM.msgID, sndEM.msg_tp_str, sndEM.err_tp_str);
+    //_printEcatReg(_Dbg.MT::DEBUG, sndEM.RegU, true, true);
 }
 
 /// @brief Used for printing curren Ethercat register values.
 ///
 /// @param msg_type_enum Enum specifying message type.
-void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum)
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, bool print_ui16, bool print_ui8)
 {
     RegUnion U;
 
@@ -595,12 +595,12 @@ void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum)
     ecatReadRegAll(U.si16);
 
     // Pass to other _printEcatU() method
-    _printEcatReg(msg_type_enum, U);
+    _printEcatReg(msg_type_enum, U, print_ui16, print_ui8);
 }
 /// @overload: Option for printing Ethercat register values from an array.
 ///
 /// @param p_reg: An array of existing register values.
-void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, int p_reg[])
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, int p_reg[], bool print_ui16, bool print_ui8)
 {
     RegUnion U;
 
@@ -609,21 +609,29 @@ void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, int p_reg[])
         U.ui16[i] = p_reg[i];
 
     // Pass to other _printEcatU() method
-    _printEcatReg(msg_type_enum, U);
+    _printEcatReg(msg_type_enum, U, print_ui16, print_ui8);
 }
 /// @overload Option for printing Ethercat register values stored in RegUnion.
 ///
 /// @param U: A RegUnion object containing the register values to print.
-void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, RegUnion U)
+void EsmacatCom::_printEcatReg(MazeDebug::MT msg_type_enum, RegUnion U, bool print_ui16, bool print_ui8)
 {
-    // Print out register
-    _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 16-Bit Register:");
-    for (size_t i = 0; i < 8; i++)
-        _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui16[%d] [%d]", i, U.ui16[i]);
-    _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 8-Bit Register:");
-    for (size_t i = 0; i < 8; i++)
-        if (i < 5)
-            _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
-        else
-            _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+    // Print out register as uint16 values
+    if (print_ui16)
+    {
+        _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 16-Bit Register:");
+        for (size_t i = 0; i < 8; i++)
+            _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui16[%d] [%d]", i, U.ui16[i]);
+    }
+
+    // Print out register as uint8 values
+    if (print_ui8)
+    {
+        _Dbg.printMsg(_Dbg.MT::INFO, "\t Ecat 8-Bit Register:");
+        for (size_t i = 0; i < 8; i++)
+            if (i < 5)
+                _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d]   [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+            else
+                _Dbg.printMsg(_Dbg.MT::INFO, "\t\t ui8[%d][%d] [%d][%d]", 2 * i, 2 * i + 1, U.ui8[2 * i], U.ui8[2 * i + 1]);
+    }
 }

@@ -40,9 +40,9 @@ public:
 	float maxFeedRate = 50000.0;
 
 	// Feeder port servo parameters
-	Servo portServo;			 // Servo object
-	const int portServoPin = 8;	 // Servo pwm pin
-	const int portUpAngle = 270; // Servo up angle
+	Servo portServo;			  // Servo object
+	const int portServoPin = 8;	  // Servo pwm pin
+	const int portUpAngle = 270;  // Servo up angle
 	const int portDownAngle = 90; // Servo down angle
 
 	// Pump servo parameters
@@ -165,10 +165,10 @@ public:
 	void grblJogCancel();
 
 public:
-	void grblResetAlarm();
+	void resetOrigin(float x, float y);
 
 public:
-	void procEcatMessage();
+	void grblResetAlarm();
 
 public:
 	void debugPrintSerialChars();
@@ -184,6 +184,9 @@ public:
 
 public:
 	void runReward(float diration);
+
+public:
+	void procEcatMessage();
 };
 
 #endif

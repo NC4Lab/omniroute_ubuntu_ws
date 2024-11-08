@@ -31,9 +31,9 @@ void ros_esmacat_app::assign_slave_sequence()
     assign_esmacat_slave_index(&sync_ease_ecat_as, sync_ease_slave_index);      // Assign the slave object to a position in the chain
 
     // Assign the maze wall controller slave object to the actual slave in the EtherCAT communication chain
-    int maze_ard0_ease_slave_index;
-    ros::param::param<int>("/maze_ard0_ease_slave_index", maze_ard0_ease_slave_index, 1);
-    assign_esmacat_slave_index(&maze_ard0_ease_ecat_as, maze_ard0_ease_slave_index);
+    int maze_ease_slave_index;
+    ros::param::param<int>("/maze_ease_slave_index", maze_ease_slave_index, 1);
+    assign_esmacat_slave_index(&maze_ease_ecat_as, maze_ease_slave_index);
 
     // Assign the feeder servos slave object to the actual slave in the EtherCAT communication chain
     int gantry_ease_slave_index;
@@ -103,21 +103,21 @@ void ros_esmacat_app::loop()
 
     // The ROS object created is used to read the current state of registers from the Esmacat slave object
     // and store it in a shared memory location
-    maze_ard0_ease.set_read_registers(&maze_ard0_ease_ecat_as);
+    maze_ease.set_read_registers(&maze_ease_ecat_as);
 
     // The newly modified write registers from the ROS Communication is returned from the shared memory
-    maze_ard0_ease_ros_message = maze_ard0_ease.get_write_registers();
+    maze_ease_ros_message = maze_ease.get_write_registers();
 
     // The Esmacat slave object is used to update the corresponding Esmacat slave registers with the
     // updated values received from ROS Nodes.
-    maze_ard0_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(maze_ard0_ease_ros_message.INT0);
-    maze_ard0_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(maze_ard0_ease_ros_message.INT1);
-    maze_ard0_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(maze_ard0_ease_ros_message.INT2);
-    maze_ard0_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(maze_ard0_ease_ros_message.INT3);
-    maze_ard0_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(maze_ard0_ease_ros_message.INT4);
-    maze_ard0_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(maze_ard0_ease_ros_message.INT5);
-    maze_ard0_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(maze_ard0_ease_ros_message.INT6);
-    maze_ard0_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(maze_ard0_ease_ros_message.INT7);
+    maze_ease_ecat_as.set_output_variable_0_OUT_GEN_INT0(maze_ease_ros_message.INT0);
+    maze_ease_ecat_as.set_output_variable_1_OUT_GEN_INT1(maze_ease_ros_message.INT1);
+    maze_ease_ecat_as.set_output_variable_2_OUT_GEN_INT2(maze_ease_ros_message.INT2);
+    maze_ease_ecat_as.set_output_variable_3_OUT_GEN_INT3(maze_ease_ros_message.INT3);
+    maze_ease_ecat_as.set_output_variable_4_OUT_GEN_INT4(maze_ease_ros_message.INT4);
+    maze_ease_ecat_as.set_output_variable_5_OUT_GEN_INT5(maze_ease_ros_message.INT5);
+    maze_ease_ecat_as.set_output_variable_6_OUT_GEN_INT6(maze_ease_ros_message.INT6);
+    maze_ease_ecat_as.set_output_variable_7_OUT_GEN_INT7(maze_ease_ros_message.INT7);
 
     //............... Synchronize Esmacat Hardware with ROS Communication for Feeder Servo ...............
 

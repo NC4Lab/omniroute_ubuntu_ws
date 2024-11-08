@@ -169,7 +169,7 @@ class Interface(Plugin):
             self._widget.recordBtn.setText("Record")
 
         self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
-        self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
+        self.sync_pub = rospy.Publisher('/sync_cmd', SyncCmd, queue_size=1)
         self.trial_pub = rospy.Publisher('/selected_trial', String, queue_size=10)
 
         self.mode_pub = rospy.Publisher('/mode', String, queue_size=1)
@@ -354,7 +354,7 @@ class Interface(Plugin):
             rospy.sleep(3)
 
             # Send message to send positive TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("start_optitrack_sync", rospy.Time.now())
+            self.sync_pub.publish("start_optitrack_sync", rospy.Time.now())
             
             self._widget.recordBtn.setStyleSheet("background-color: red; color: yellow")
             self._widget.recordBtn.setText("Stop")
@@ -363,7 +363,7 @@ class Interface(Plugin):
 
         else:   # Stop recording
             # Send message to send negative TTL output to Optitrack eSync2 which is handled by the sync_sender node
-            self.event_pub.publish("stop_optitrack_sync", rospy.Time.now())
+            self.sync_pub.publish("stop_optitrack_sync", rospy.Time.now())
 
             rospy.sleep(1)
 
@@ -486,7 +486,7 @@ class CommonFunctions:
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("REWARD", [4.0]) # Send with pump duration (sec)
+        self.gantry_pub.publish("deliver_reward", [4.0]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):
         x = self.maze_dim.chamber_centers[chamber_num][0]

@@ -69,31 +69,48 @@
   <param name="maze_ease_slave_index" type="int" value="1" />
   <param name="gantry_ease_slave_index" type="int" value="2" />
 
+  <!-- Node start delays (sec) -->
+  <arg name="Esmacat_application_start_delay" default="0.0" />
+  <arg name="sync_node_start_delay" default="0.0" />
+  <arg name="maze_tf_broadcaster_node_start_delay" default="0.0" />
+  <arg name="rat_detector_node_start_delay" default="0.0" />
+  <arg name="gantry_operation_node_start_delay" default="0.0" />
+  <arg name="omniroute_controller_node_start_delay" default="0.0" />
+  <arg name="experiment_controller_node_start_delay" default="0.0" />
+
   <!-- Esmacat Node -->
   <node name="Esmacat_application_node" pkg="omniroute_esmacat_ros" type="ros_esmacat_node"
-    output="screen" launch-prefix="ethercat_grant" />
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg Esmacat_application_start_delay); ethercat_grant $0 $@'" />
 
   <!-- Time stamp sync node -->
-  <node name="sync_sender_node" pkg="omniroute_operation" type="sync_sender.py" output="screen" />
+  <node name="sync_sender_node" pkg="omniroute_operation" type="sync_sender.py"
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg sync_node_start_delay); $0 $@' " />
 
   <!-- Maze transformation broadcaster node -->
   <node name="maze_tf_broadcaster_node" pkg="omniroute_operation" type="maze_tf_broadcaster.py"
-    output="screen" />
-  
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg maze_tf_broadcaster_node_start_delay); $0 $@' " />
+
   <!-- Rat detector node -->
-  <node name="rat_detector" pkg="omniroute_operation" type="rat_detector.py" output="screen" />
+  <node name="rat_detector" pkg="omniroute_operation" type="rat_detector.py"
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg rat_detector_node_start_delay); $0 $@' " />
 
   <!-- Gantry node -->
   <node name="gantry_operation_node" pkg="omniroute_operation" type="gantry_operation.py"
-    output="screen" />
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg gantry_operation_node_start_delay); $0 $@' " />
 
-  <!-- Omniroute controller interface node -->
+  <!-- Omniroute omniroute_controller interface -->
   <node name="omniroute_controller_node" pkg="omniroute_operation" type="omniroute_controller"
-    output="screen" />
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg omniroute_controller_node_start_delay); $0 $@' " />
 
   <!-- Experiment controller interface -->
   <node name="experiment_controller" pkg="omniroute_operation" type="experiment_controller"
-    output="screen"/>
-
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg experiment_controller_node_start_delay); $0 $@' " />
 
 </launch>

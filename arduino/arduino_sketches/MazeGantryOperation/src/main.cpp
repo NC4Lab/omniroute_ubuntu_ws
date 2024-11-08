@@ -58,7 +58,4 @@ void loop()
 
   // Process and execute ethercat arguments
   GanOp.procEcatMessage();
-
-  //TEMP
-  Dbg.printMsg(Dbg.MT::INFO, "[loop] dt[%s]", Dbg.dtTrack());
 }
