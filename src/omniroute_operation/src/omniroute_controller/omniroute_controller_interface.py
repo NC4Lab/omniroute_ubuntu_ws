@@ -1213,7 +1213,7 @@ class Interface(Plugin):
         self.gantry_pub.publish("initialize_gantry", [])
 
         # Sebd command to initialize sync sender
-        self.sync_pub.publish("initialize_sync_sender", [])
+        self.sync_pub.publish("initialize_sync_sender", rospy.Time.now())
 
         # Send HANDSHAKE to maze arduino with current system settings
         self.EsmaCom.writeEcatMessage(
