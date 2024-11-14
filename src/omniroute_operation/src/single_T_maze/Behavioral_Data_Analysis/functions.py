@@ -84,20 +84,6 @@ def filter_start_of_trial_messages(messages):
                     messages[i] = f"START OF TRIAL {filtered_list}"
                 except Exception as e:
                     print(f"Error processing: {msg} - {e}")
-            # try:
-            #     # Evaluate the list after 'START OF TRIAL' and filter out 'nan' values
-            #     list_str = msg.split('START OF TRIAL')[1].strip()
-            #     trial_list = ast.literal_eval(list_str)
-            #     filtered_list = [x for x in trial_list if not (isinstance(x, float) and math.isnan(x))]
-            #     messages[i] = f"START OF TRIAL {filtered_list}"
-            # except (ValueError, SyntaxError):
-            #     print(f"Warning: Could not parse list in message: {msg}")
-
-    # for i, msg in enumerate(messages):
-    #     # Check if the item is a list
-    #     if msg.startswith('START OF TRIAL'):
-    #         # Remove 'nan' values from the sublist
-    #         messages[i] = f"START OF TRIAL {[x for x in ast.literal_eval(msg.split('START OF TRIAL')[1]) if not (isinstance(x, float) and math.isnan(x))]}"
 
     keywords = ['Chamber', 'Current trial number', 'START OF TRIAL', 'SUCCESS', 'ERROR', 'Right', 'Left']
     
@@ -197,12 +183,13 @@ def get_previous_folders(rat, date, path=os.environ['DATA_PATH']):
     except ValueError:
         raise ValueError(f"The given date {date} does not exist in the folder list.")
     
-    # Get the previous seven folders including the current one
-    start_index = max(current_index - 3, 0)
+    # Get the previous three folders including the current one
+    start_index = max(current_index - 2, 0)
     return all_folders[start_index:current_index+1]
 
 def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     folders = get_previous_folders(rat, date, path=os.environ['DATA_PATH'])
+    print(folders)
     if isinstance(rat, str):
         rat = int(rat)
 
@@ -210,11 +197,16 @@ def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     anim_folder = os.path.join(path, 'NC4%04d' % rat)
 
     combined_df = None
+    daily_success_counts = []
+    daily_total_reps = []
     
     for folder in folders:
         csv_path = os.path.join(anim_folder, folder, 'trial_type_summary.csv')
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path)
+             # Track daily success counts and total repetitions for the day
+            daily_success_counts.append(df['Success_Count'].sum())
+            daily_total_reps.append(df['Total_Repetitions'].sum())
             if combined_df is None:
                 combined_df = df.copy()
             else:
@@ -226,9 +218,19 @@ def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     combined_df['Error_Count'] = combined_df['Error_Count'] / combined_df['Total_Repetitions']
     combined_df['Success_Count'] = combined_df['Success_Count'] / combined_df['Total_Repetitions']
     
+    print('len is {}'.format(len(daily_success_counts)))
+
+    overall_success = {
+        f'Overall_Success_Day_{i+1}': [daily_success_counts[i] / daily_total_reps[i]]
+        for i in range(len(daily_success_counts))
+    }
+    overall_success_df = pd.DataFrame(overall_success)
+    
     # Save the combined DataFrame to a new CSV file
     output_path = os.path.join(anim_folder, date, 'Past_three_days_biases.csv')
+    output_path_overall = os.path.join(anim_folder, date, 'Overall_Success.csv')
     combined_df.to_csv(output_path, index=False)
+    overall_success_df.to_csv(output_path_overall, index=False)
     print(f"Combined CSV saved to {output_path}")
 
 
