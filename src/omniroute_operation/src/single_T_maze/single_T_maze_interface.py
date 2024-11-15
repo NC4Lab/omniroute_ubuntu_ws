@@ -200,7 +200,7 @@ class Interface(Plugin):
         # Duration to wait for rat to move to the choice point
         self.choice_delay = rospy.Duration(1.5)
         # Duration to wait to dispense reward if the rat made the right choice
-        self.reward_start_delay = rospy.Duration(13)
+        self.reward_start_delay = rospy.Duration(5)
         # Duration to wait to for the reward to despense
         self.reward_end_delay = rospy.Duration(2)
         # Duration to wait if the rat made the right choice
