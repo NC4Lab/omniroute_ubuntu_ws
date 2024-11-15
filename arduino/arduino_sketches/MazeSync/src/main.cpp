@@ -7,7 +7,17 @@
 
 /**
  @file Arduino INO file for MazeSync handeling time stamp syncing oppertions.
+
+ @note For motive to start the recording in response to a sync signal,
+ check the following settings:
+ In the "Device" tab, go to "Syncronization" and click eSync2.
+ In the "Properteis" panel find the "Recrord Triggering" and check that:
+  - "Trigger Source" = "Isolated"
+  - "Trigger Edge" = "High Gates"
+  Also, the record button must be pressed.
 */
+
+
 
 // BUILT IN
 #include "Arduino.h"
@@ -18,7 +28,7 @@
 //============ VARIABLES ===============
 
 // Global variables
-bool DB_VERBOSE = 0;  // set to control debugging behavior [0:silent, 1:verbose]
+bool DB_VERBOSE = 1;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
 // Initialize class instances for local libraries
