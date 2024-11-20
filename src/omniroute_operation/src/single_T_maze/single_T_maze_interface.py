@@ -192,7 +192,7 @@ class Interface(Plugin):
         self.experiment_pub.publish("single_T_maze_experiment")
 
         # Experiment parameters
-        self.delay = rospy.Duration(2.0)  # Duration of delay between each loop
+        self.delay = rospy.Duration(3.0)  # Duration of delay between each loop
         # Duration of delay in the beginning of the trial
         self.start_first_delay = rospy.Duration(5.0)
         # Duration of delay in the beginning of the trial
@@ -268,61 +268,56 @@ class Interface(Plugin):
 
         # Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
-            1: ['1', 'Triangle', 'No_Cue', 'White_Noise'],
-            2: ['1', 'No_Cue', 'Triangle', '5KHz'],
-            3: ['1', 'Triangle', 'No_Cue', '5KHz'],
-            4: ['1', 'No_Cue', 'Triangle', 'White_Noise'],
-            5: ['3', 'Triangle', 'No_Cue', 'White_Noise'],
-            6: ['3', 'No_Cue', 'Triangle', '5KHz'],
-            7: ['3', 'Triangle', 'No_Cue', '5KHz'],
-            8: ['3', 'No_Cue', 'Triangle', 'White_Noise'],
-            9: ['5', 'Triangle', 'No_Cue', 'White_Noise'],
-            10: ['5', 'No_Cue', 'Triangle', '5KHz'],
-            11: ['5', 'Triangle', 'No_Cue', '5KHz'],
-            12: ['5', 'No_Cue', 'Triangle', 'White_Noise'],
-            13: ['7', 'Triangle', 'No_Cue', 'White_Noise'],
-            14: ['7', 'No_Cue', 'Triangle', '5KHz'],
-            15: ['7', 'Triangle', 'No_Cue', '5KHz'],
-            16: ['7', 'No_Cue', 'Triangle', 'White_Noise']
+            1: ['5', 'Triangle', 'No_Cue', 'Black'],
+            2: ['5', 'No_Cue', 'Triangle', 'Black'],
+            3: ['5', 'Triangle', 'No_Cue', 'Green'],
+            4: ['5', 'No_Cue', 'Triangle', 'Green']
         }
 
-        self.trial_count = {key: 0 for key in self.trial_types}
+        self.trial_type_success_count = {key: 0 for key in self.trial_types}
 
-    def find_start_chamber(self, id_value, df):
-        if id_value == 1:
-            trial_types_to_check = [1, 2, 3, 4]
-        elif id_value == 3:
-            trial_types_to_check = [5, 6, 7, 8]
-        elif id_value == 5:
-            trial_types_to_check = [9, 10, 11, 12]
-        elif id_value == 7:
-            trial_types_to_check = [13, 14, 15, 16]
+    def number_of_correct_trials_types(self, dict, group):
+        if group == 'group1':
+            sum_success = sum([dict[key] for key in dict if key in [3, 4]])
+            key1 = 3
+            key2 = 4
         else:
-            raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+            sum_success = sum([dict[key] for key in dict if key in [1, 2]])
+            key1 = 1
+            key2 = 2
 
-        # Extract the values from the specified trial types
-        subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
+        if sum_success % 10 == 0:
+            dict[key1] == 0
+            dict[key2] == 0
+            return True
+        else:
+            return False
+        
+    def pick_trial(self):
+        # Initialize current_group if it doesn't exist yet
+        if not hasattr(self, 'current_group'):
+            self.current_group = 'group1'
 
-        values = subset_df['Error_Count'].to_numpy()
+        if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
+            # Switch to the other group
+            if self.current_group == 'group1':
+                self.current_group = 'group2'
+            else:
+                self.current_group = 'group1'
 
-        # Normalize the values to create probabilities
-        total = np.sum(values)
-        probabilities = values / total
+            print(f"Switching to {self.current_group}")
 
-        # Choose one value based on probabilities
-        selected_value = np.random.choice(values, size=1, p=probabilities)
+        if self.current_group == 'group1':
+            # Randomly select a trial from trial types with keys 3 and 4
+            trial_key = random.choice([3, 4])
+        else:
+            # Randomly select a trial from trial types with keys 1 and 2
+            trial_key = random.choice([1, 2])
 
-        selected_value_index = values.tolist().index(selected_value)
+        trial = self.trial_types[trial_key]
+        print(f"Selected trial: {trial} from key {trial_key}")
 
-        trial_type = subset_df['Trial Type'].iloc[selected_value_index]
-
-        return trial_type
-
-    def generate_trial(self, id_value, df):
-        start_chamber = self.find_start_chamber(id_value, df)
-        trial = self.trial_types[start_chamber]
-
-        return trial
+        return trial, trial_key
 
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
@@ -608,25 +603,36 @@ class Interface(Plugin):
             # publish the images to be projected on the walls
             self.currentTrialNumber = self.currentTrialNumber+1
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
-            if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
-                self.currentTrial = self.trials[self.currentTrialNumber]
+            if self.trial_generator:
+                trial = self.pick_trial()
+                self.left_visual_cue = trial[0][1]
+                self.right_visual_cue = trial[0][2]
+                self.floor_cue = trial[0][3]
+                self.trail_type_key = trial[1]
+
+                rospy.loginfo(
+                    f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
             else:
-                # Handle the case where trials is empty or currentTrialNumber is out of range
-                self.currentTrial = None
 
-            # self.projection_wall_img_pub.publish(self.wall_img_num)
+                if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                    self.currentTrial = self.trials[self.currentTrialNumber]
+                else:
+                    # Handle the case where trials is empty or currentTrialNumber is out of range
+                    self.currentTrial = None
 
-            rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
+                # self.projection_wall_img_pub.publish(self.wall_img_num)
 
-            if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
-                self.mode = Mode.END_EXPERIMENT
+                rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-            if self.currentTrial is not None:
-                # Set training mode from file if the automatic mode is selected
-                self.training_mode = self.currentTrial[3]
-                self.left_visual_cue = self.currentTrial[0]
-                self.right_visual_cue = self.currentTrial[1]
-                self.floor_cue = self.currentTrial[2]
+                if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                    self.mode = Mode.END_EXPERIMENT
+
+                if self.currentTrial is not None:
+                    # Set training mode from file if the automatic mode is selected
+                    self.training_mode = self.currentTrial[3]
+                    self.left_visual_cue = self.currentTrial[0]
+                    self.right_visual_cue = self.currentTrial[1]
+                    self.floor_cue = self.currentTrial[2]
 
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
@@ -729,7 +735,7 @@ class Interface(Plugin):
                             self.right_goal_wall, send=True)
                 else:
                     self.common_functions.lower_wall(
-                        self.left_goal_wall, send=True)
+                        self.left_goal_wall, send=False)
                     self.common_functions.lower_wall(
                         self.right_goal_wall, send=True)
 
@@ -768,6 +774,7 @@ class Interface(Plugin):
                 self.common_functions.raise_wall(
                     self.right_goal_wall, send=False)
                 self.common_functions.raise_wall(self.start_wall, send=True)
+                self.trial_type_success_count[self.trail_type_key] += 1
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
