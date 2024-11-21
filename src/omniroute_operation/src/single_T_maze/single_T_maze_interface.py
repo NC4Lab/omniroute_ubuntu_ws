@@ -276,6 +276,11 @@ class Interface(Plugin):
 
         self.trial_type_success_count = {key: 0 for key in self.trial_types}
 
+        self.success_count = 0
+        self.previous_trial_result = None
+        #self.current_trail_result = None
+        
+
     def number_of_correct_trials_types(self, dict, group):
         if group == 'group1':
             sum_success = sum([dict[key] for key in dict if key in [3, 4]])
@@ -283,7 +288,8 @@ class Interface(Plugin):
         else:
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
-        if sum_success > 0 and sum_success % 10 == 0:
+        #if sum_success > 0 and sum_success % 10 == 0:
+        if sum_success >= 8:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -775,7 +781,21 @@ class Interface(Plugin):
                 self.common_functions.raise_wall(
                     self.right_goal_wall, send=False)
                 self.common_functions.raise_wall(self.start_wall, send=True)
-                self.trial_type_success_count[self.trail_type_key] += 1
+                # self.success_count += 1
+                # if self.success_count == 1:
+                #     self.trial_type_success_count[self.trail_type_key] += 1
+                #     self.previous_trial_result = "Success"
+                
+                # if self.success_count > 1 and self.previous_trial_result == "Success":
+                #     self.trial_type_success_count[self.trail_type_key] += 1
+                #     self.previous_trial_result = "Success"
+                self.success_count += 1
+
+                # Update trial success count based on conditions
+                if self.success_count == 1 or (self.success_count > 1 and self.previous_trial_result == "Success"):
+                    self.trial_type_success_count[self.trail_type_key] += 1
+                    self.previous_trial_result = "Success"
+               
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
@@ -786,6 +806,10 @@ class Interface(Plugin):
                 self.common_functions.raise_wall(
                     self.right_goal_wall, send=False)
                 self.common_functions.raise_wall(self.start_wall, send=True)
+                self.success_count = 0
+                for key in self.trial_type_success_count:
+                    self.trial_type_success_count[key] = 0
+                self.previous_trial_result = "Error"
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.ERROR
                 rospy.loginfo("ERROR")
