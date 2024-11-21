@@ -279,16 +279,17 @@ class Interface(Plugin):
     def number_of_correct_trials_types(self, dict, group):
         if group == 'group1':
             sum_success = sum([dict[key] for key in dict if key in [3, 4]])
-            key1 = 3
-            key2 = 4
+    
         else:
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
-            key1 = 1
-            key2 = 2
-
-        if sum_success % 10 == 0:
-            dict[key1] == 0
-            dict[key2] == 0
+          
+        if sum_success > 0 and sum_success % 10 == 0:
+            if group == 'group1':
+               dict[3] = 0
+               dict[4] = 0
+            else:
+               dict[1] = 0
+               dict[2] = 0
             return True
         else:
             return False
@@ -604,11 +605,11 @@ class Interface(Plugin):
             self.currentTrialNumber = self.currentTrialNumber+1
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             if self.trial_generator:
-                trial = self.pick_trial()
-                self.left_visual_cue = trial[0][1]
-                self.right_visual_cue = trial[0][2]
-                self.floor_cue = trial[0][3]
-                self.trail_type_key = trial[1]
+                trial, trial_type_key = self.pick_trial()
+                self.left_visual_cue = trial[1]
+                self.right_visual_cue = trial[2]
+                self.floor_cue = trial[3]
+                self.trail_type_key = trial_type_key
 
                 rospy.loginfo(
                     f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
