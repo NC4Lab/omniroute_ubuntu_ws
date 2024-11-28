@@ -148,8 +148,9 @@ def extract_trial_info(trial_str):
         item1 = trial_list[0]
         item2 = trial_list[1]
         item3 = trial_list[2]
+        item4 = trial_list[3]
         
-        return item1, item2, item3
+        return item1, item2, item3, item4
     
     except (IndexError, ValueError, SyntaxError) as e:
         # Handle cases where the string is not as expected
@@ -166,6 +167,12 @@ def determine_trial_type(row):
         if trial_info == expected_values:
             return trial_type
     return None  # In case no match is found
+
+#function to delte the trials in which the training mode was forced choice.
+def remove_rows_with_value(df, column_name, value_to_remove):
+    # Create a new dataframe without rows where the value in the specified column matches 'value_to_remove'
+    filtered_df = df[df[column_name] != value_to_remove]
+    return filtered_df
 
 def get_previous_folders(rat, date, path=os.environ['DATA_PATH']):
     if isinstance(rat, str):
@@ -189,7 +196,6 @@ def get_previous_folders(rat, date, path=os.environ['DATA_PATH']):
 
 def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     folders = get_previous_folders(rat, date, path=os.environ['DATA_PATH'])
-    print(folders)
     if isinstance(rat, str):
         rat = int(rat)
 
@@ -217,8 +223,6 @@ def combine_csv_files(rat, date, path=os.environ['DATA_PATH']):
     # Calculate Error and Success counts as proportions
     combined_df['Error_Count'] = combined_df['Error_Count'] / combined_df['Total_Repetitions']
     combined_df['Success_Count'] = combined_df['Success_Count'] / combined_df['Total_Repetitions']
-    
-    print('len is {}'.format(len(daily_success_counts)))
 
     overall_success = {
         f'Overall_Success_Day_{i+1}': [daily_success_counts[i] / daily_total_reps[i]]
