@@ -84,7 +84,7 @@ class RatDetector:
                 return True
         else:
             # Diagonal movement check with distance threshold
-            if self.dist(self.harness_x, self.harness_y, current_chamber_x, current_chamber_y) >= (self.MazeDim.chamber_wd * (math.sqrt(2) + 0.25)) and self.is_rat_head_in_chamber(new_chamber):
+            if self.dist(self.harness_x, self.harness_y, current_chamber_x, current_chamber_y) >= (self.MazeDim.chamber_wd * (math.sqrt(2) + 0.3)) and self.is_rat_head_in_chamber(new_chamber):
                 return True
 
         return False
