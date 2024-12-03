@@ -148,9 +148,11 @@ def extract_trial_info(trial_str):
         item1 = trial_list[0]
         item2 = trial_list[1]
         item3 = trial_list[2]
-        item4 = trial_list[3]
-        
-        return item1, item2, item3, item4
+        if len(trial_list) >= 4:
+            item4 = trial_list[3]
+            return item1, item2, item3, item4
+        else:
+            return item1, item2, item3
     
     except (IndexError, ValueError, SyntaxError) as e:
         # Handle cases where the string is not as expected
