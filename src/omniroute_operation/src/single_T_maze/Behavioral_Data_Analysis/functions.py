@@ -148,9 +148,11 @@ def extract_trial_info(trial_str):
         item1 = trial_list[0]
         item2 = trial_list[1]
         item3 = trial_list[2]
-        item4 = trial_list[3]
-        
-        return item1, item2, item3, item4
+        if len(trial_list) >= 4:
+            item4 = trial_list[3]
+            return item1, item2, item3, item4
+        else:
+            return item1, item2, item3
     
     except (IndexError, ValueError, SyntaxError) as e:
         # Handle cases where the string is not as expected
@@ -166,7 +168,8 @@ def determine_trial_type(row):
     for trial_type, expected_values in trial_types.items():
         if trial_info == expected_values:
             return trial_type
-    return None  # In case no match is found
+        else:
+            return None  # In case no match is found
 
 #function to delte the trials in which the training mode was forced choice.
 def remove_rows_with_value(df, column_name, value_to_remove):
