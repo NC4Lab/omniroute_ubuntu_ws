@@ -129,9 +129,15 @@ class Interface(Plugin):
 
         self._widget.startChamberBtnGroup.buttonClicked.connect(
             self._handle_startChamberBtnGroup_clicked)
+        
+        self._widget.phaseOneBtn.clicked.connect(self._handle_phaseOneBtn_clicked)
+
+        self._widget.phaseTwoBtn.clicked.connect(self._handle_phaseTwoBtn_clicked)
 
         self.is_testing_phase = False
         self.trial_generator = False
+        self.phase_one = False
+        self.phase_two = False
 
         self.maze_dim = MazeDimensions()
 
@@ -289,7 +295,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 6:
+        if sum_success >= 5:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -300,7 +306,7 @@ class Interface(Plugin):
         else:
             return False
         
-    def pick_trial(self):
+    def pick_trial_phase_one(self):
         # Initialize current_group if it doesn't exist yet
         if not hasattr(self, 'current_group'):
             self.current_group = 'group1'
@@ -324,6 +330,12 @@ class Interface(Plugin):
         trial = self.trial_types[trial_key]
         print(f"Selected trial: {trial} from key {trial_key}")
 
+        return trial, trial_key
+    
+    def pick_trial_phase_two(self):
+        trial_key = random.choice([1, 2, 3, 4])
+        trial = self.trial_types[trial_key]
+        print(f"Selected trial: {trial} from key {trial_key}")
         return trial, trial_key
 
     def _handle_testingPhaseBtn_clicked(self):
@@ -355,6 +367,14 @@ class Interface(Plugin):
     def _handle_trialGeneratorBtn_clicked(self):
         self.trial_generator = True
         rospy.loginfo("Trial Generator enabled")
+
+    def _handle_phaseOneBtn_clicked(self):
+        self.phase_one = True
+        rospy.loginfo("Phase One selected")
+
+    def _handle_phaseTwoBtn_clicked(self):
+        self.phase_two = True
+        rospy.loginfo("Phase Two selected")
 
     def _handle_lowerAllDoorsBtn_clicked(self):
         self.setLowerConfig()
@@ -610,15 +630,23 @@ class Interface(Plugin):
             # publish the images to be projected on the walls
             self.currentTrialNumber = self.currentTrialNumber+1
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
-            if self.trial_generator:
-                trial, trial_type_key = self.pick_trial()
+            #if self.trial_generator:
+            if self.phase_one:
+                trial, trial_type_key = self.pick_trial_phase_one()
                 self.left_visual_cue = trial[1]
                 self.right_visual_cue = trial[2]
                 self.floor_cue = trial[3]
                 self.trail_type_key = trial_type_key
+                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
+                
+            elif self.phase_two:
+                trial, trial_type_key = self.pick_trial_phase_two()
+                self.left_visual_cue = trial[1]
+                self.right_visual_cue = trial[2]
+                self.floor_cue = trial[3]
+                self.trail_type_key = trial_type_key
+                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
 
-                rospy.loginfo(
-                    f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
             else:
 
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -725,26 +753,34 @@ class Interface(Plugin):
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
 
             if (self.current_time - self.mode_start_time).to_sec() >= self.delay.to_sec():
-                if not self.trial_generator:
-                    if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]:
-                        if self.success_chamber == self.left_chamber:
-                            self.common_functions.lower_wall(
-                                self.left_goal_wall, send=True)
-                            rospy.loginfo("Lowering left goal wall")
-                        else:
-                            self.common_functions.lower_wall(
-                                self.right_goal_wall, send=True)
-                            rospy.loginfo("Lowering right goal wall")
-                    elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
-                        self.common_functions.lower_wall(
-                            self.left_goal_wall, send=False)
-                        self.common_functions.lower_wall(
-                            self.right_goal_wall, send=True)
-                else:
+                #if not self.trial_generator:
+                if self.phase_one:
                     self.common_functions.lower_wall(
                         self.left_goal_wall, send=False)
                     self.common_functions.lower_wall(
                         self.right_goal_wall, send=True)
+                elif self.phase_two:
+                    self.common_functions.lower_wall(
+                        self.left_goal_wall, send=False)
+                    self.common_functions.lower_wall(
+                        self.right_goal_wall, send=True)
+                else:
+                    if not self.phase_one or not self.phase_two:
+                        if self.training_mode is not None and self.training_mode in ["forced_choice", "user_defined_forced_choice"]:
+                            if self.success_chamber == self.left_chamber:
+                                self.common_functions.lower_wall(
+                                    self.left_goal_wall, send=True)
+                                rospy.loginfo("Lowering left goal wall")
+                            else:
+                                self.common_functions.lower_wall(
+                                    self.right_goal_wall, send=True)
+                                rospy.loginfo("Lowering right goal wall")
+                        elif self.training_mode is not None and self.training_mode in ["choice", "user_defined_choice"]:
+                            self.common_functions.lower_wall(
+                                self.left_goal_wall, send=False)
+                            self.common_functions.lower_wall(
+                                self.right_goal_wall, send=True)
+                
 
                 self.mode = Mode.START
                 rospy.loginfo("START")
@@ -781,21 +817,16 @@ class Interface(Plugin):
                 self.common_functions.raise_wall(
                     self.right_goal_wall, send=False)
                 self.common_functions.raise_wall(self.start_wall, send=True)
-                # self.success_count += 1
-                # if self.success_count == 1:
-                #     self.trial_type_success_count[self.trail_type_key] += 1
-                #     self.previous_trial_result = "Success"
-                
-                # if self.success_count > 1 and self.previous_trial_result == "Success":
-                #     self.trial_type_success_count[self.trail_type_key] += 1
-                #     self.previous_trial_result = "Success"
-                self.success_count += 1
+                if self.phase_one:
+                    self.success_count += 1
 
-                # Update trial success count based on conditions
-                if self.success_count == 1 or (self.success_count > 1 and self.previous_trial_result == "Success"):
+                    # Update trial success count based on conditions
+                    if self.success_count == 1 or (self.success_count > 1 and self.previous_trial_result == "Success"):
+                        self.trial_type_success_count[self.trail_type_key] += 1
+                        self.previous_trial_result = "Success"
+                elif self.phase_two:
                     self.trial_type_success_count[self.trail_type_key] += 1
-                    self.previous_trial_result = "Success"
-               
+
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
@@ -806,10 +837,11 @@ class Interface(Plugin):
                 self.common_functions.raise_wall(
                     self.right_goal_wall, send=False)
                 self.common_functions.raise_wall(self.start_wall, send=True)
-                self.success_count = 0
-                for key in self.trial_type_success_count:
-                    self.trial_type_success_count[key] = 0
-                self.previous_trial_result = "Error"
+                if self.phase_one: 
+                    self.success_count = 0
+                    for key in self.trial_type_success_count:
+                        self.trial_type_success_count[key] = 0
+                    self.previous_trial_result = "Error"
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.ERROR
                 rospy.loginfo("ERROR")
