@@ -852,10 +852,6 @@ class Interface(Plugin):
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.REINITIALIZE_SYSTEM:
             MazeDB.printMsg('ATTN', "System Reinitialization Confirmed")
 
-            # Send INITIALIZE_WALLS message again
-            self.EsmaCom.writeEcatMessage(
-                EsmacatCom.MessageType.INITIALIZE_WALLS)
-
         # RESET_SYSTEM
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.RESET_SYSTEM:
             MazeDB.printMsg('ATTN', "Ecat Disconnection Confirmed")
