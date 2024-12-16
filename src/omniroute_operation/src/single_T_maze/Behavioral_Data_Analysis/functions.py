@@ -168,8 +168,7 @@ def determine_trial_type(row):
     for trial_type, expected_values in trial_types.items():
         if trial_info == expected_values:
             return trial_type
-        else:
-            return None  # In case no match is found
+    return None  # In case no match is found
 
 #function to delte the trials in which the training mode was forced choice.
 def remove_rows_with_value(df, column_name, value_to_remove):
