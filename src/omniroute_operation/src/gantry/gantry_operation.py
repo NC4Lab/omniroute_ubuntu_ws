@@ -51,12 +51,17 @@ class GantryOperation:
         # Initialize gantry coordinate class variables
         self.gantry_x = 0.0
         self.gantry_y = 0.0
+        self.prev_gantry_x = 0.0
+        self.prev_gantry_y = 0.0
         self.harness_x = 0.0
         self.harness_y = 0.0
         self.prev_harness_x = 0.0
         self.prev_harness_y = 0.0
 
-        self.distance_threshold = 0.10  # Distance threshold for stopping the gantry
+        self.harness_vel = np.array([0.0, 0.0])
+        self.gantry_vel = np.array([0.0, 0.0])
+
+        self.distance_threshold = 0.15  # Distance threshold for stopping the gantry
 
         # Track if movement is in progress
         self.movement_in_progress = False
@@ -90,6 +95,7 @@ class GantryOperation:
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
 
         # Initialize the gantry mode used for state machine
+        # self.gantry_mode = GantryState.IDLE
         self.gantry_mode = GantryState.IDLE
 
         # ................ Ecat Setup ................
@@ -212,6 +218,9 @@ class GantryOperation:
             # Compute the harness velocity
             self.harness_vel = np.array(
                 [self.harness_x - self.prev_harness_x, self.harness_y - self.prev_harness_y])
+            
+            self.gantry_vel = np.array(
+                [self.gantry_x - self.prev_gantry_x, self.gantry_y - self.prev_gantry_y])
 
             # Get the current distance between the gantry and the harness
             gantry_to_harness = np.array(
@@ -225,14 +234,17 @@ class GantryOperation:
 
             if distance > self.distance_threshold:
                 # Compute angle between harness velocity and gantry to harness vector
-                angle = math.acos(np.dot(self.harness_vel, gantry_to_harness) /
-                                  (np.linalg.norm(self.harness_vel) * np.linalg.norm(gantry_to_harness)))
+                # angle = math.acos(np.dot(self.harness_vel, gantry_to_harness) /
+                #                   (np.linalg.norm(self.harness_vel) * np.linalg.norm(gantry_to_harness)))
+
+                angle = math.acos(np.dot(self.gantry_vel, gantry_to_harness) /
+                                  (np.linalg.norm(self.gantry_vel) * np.linalg.norm(gantry_to_harness)))
 
                 # Print angle
                 # MazeDB.printMsg('INFO', "Angle: %.2f", angle*180/math.pi)
 
                 # Stop the gantry if it is moving in the wrong direction
-                if angle > 3*math.pi/4:
+                if angle > math.pi/4:
                     if self.movement_in_progress:
                         self.jog_cancel()
                         self.movement_in_progress = False
@@ -245,9 +257,6 @@ class GantryOperation:
                 self.move_gantry_rel(
                     jog_distance[0], jog_distance[1], self.max_feed_rate)
 
-                # Update the time
-                self.prev_time = current_time
-
             # Stop the gantry when it reaches the harness
             elif self.movement_in_progress:
                 self.jog_cancel()
@@ -255,6 +264,12 @@ class GantryOperation:
 
             self.prev_harness_x = self.harness_x
             self.prev_harness_y = self.harness_y
+
+            self.prev_gantry_x = self.gantry_x
+            self.prev_gantry_y = self.gantry_y
+
+            # Update the time
+            self.prev_time = current_time
 
     def compute_jog(self, gantry_to_target, max_feed_rate, dt_sec, Kp):
         """
