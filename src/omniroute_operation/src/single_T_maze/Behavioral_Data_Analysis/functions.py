@@ -43,14 +43,18 @@ def determine_trial_info(rat, date, path=os.environ['DATA_PATH']):
 
     date_folder = os.path.join(anim_folder, date)
 
-    print(f"Looking in folder: {date_folder}")
+    raw_folder = os.path.join(date_folder, 'Raw')
+
+    ros_folder = os.path.join(raw_folder, 'ROS')
+
+    print(f"Looking in folder: {ros_folder}")
     
     bag_files = []  # To store paths of all bag files found
 
     # Collect all .bag files in the folder
-    for file in os.listdir(date_folder):
+    for file in os.listdir(ros_folder):
         if file.endswith('.bag'):
-            bag_files.append(os.path.join(date_folder, file))
+            bag_files.append(os.path.join(ros_folder, file))
 
     if not bag_files:
         raise FileNotFoundError("No .bag files found in the specified folder.")
@@ -65,7 +69,7 @@ def determine_trial_info(rat, date, path=os.environ['DATA_PATH']):
                 msg_list.append(msg.msg)
 
     # Return combined messages and the last .bag file
-    return msg_list, bag_files[-1]
+    return msg_list, raw_folder #bag_files[-1]
 
 def filter_start_of_trial_messages(messages):
 
