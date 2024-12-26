@@ -175,7 +175,7 @@ class Interface(Plugin):
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(2.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
-        self.reward_start_delay = rospy.Duration(13)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_start_delay = rospy.Duration(5)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
@@ -284,27 +284,28 @@ class Interface(Plugin):
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
-        1: ['1', 'Triangle', 'No_Cue', 'White_Noise'],
-        2: ['1', 'No_Cue', 'Triangle', '5KHz'],
-        3: ['1', 'Triangle', 'No_Cue', '5KHz'],
-        4: ['1', 'No_Cue', 'Triangle', 'White_Noise'],
-        5: ['3', 'Triangle', 'No_Cue', 'White_Noise'],
-        6: ['3', 'No_Cue', 'Triangle', '5KHz'],
-        7: ['3', 'Triangle', 'No_Cue', '5KHz'],
-        8: ['3', 'No_Cue', 'Triangle', 'White_Noise'],
-        9: ['5', 'Triangle', 'No_Cue', 'White_Noise'],
-        10: ['5', 'No_Cue', 'Triangle', '5KHz'],
-        11: ['5', 'Triangle', 'No_Cue', '5KHz'],
-        12: ['5', 'No_Cue', 'Triangle', 'White_Noise'],
-        13: ['7', 'Triangle', 'No_Cue', 'White_Noise'],
-        14: ['7', 'No_Cue', 'Triangle', '5KHz'],
-        15: ['7', 'Triangle', 'No_Cue', '5KHz'],
-        16: ['7', 'No_Cue', 'Triangle', 'White_Noise']
+        1: ['1', 'Triangle', 'No_Cue', 'Green'],
+        2: ['1', 'No_Cue', 'Triangle', 'Green'],
+        3: ['1', 'Triangle', 'No_Cue', 'Black'],
+        4: ['1', 'No_Cue', 'Triangle', 'Black'],
+        5: ['3', 'Triangle', 'No_Cue', 'Green'],
+        6: ['3', 'No_Cue', 'Triangle', 'Green'],
+        7: ['3', 'Triangle', 'No_Cue', 'Black'],
+        8: ['3', 'No_Cue', 'Triangle', 'Black'],
+        9: ['5', 'Triangle', 'No_Cue', 'Green'],
+        10: ['5', 'No_Cue', 'Triangle', 'Green'],
+        11: ['5', 'Triangle', 'No_Cue', 'Black'],
+        12: ['5', 'No_Cue', 'Triangle', 'Black'],
+        13: ['7', 'Triangle', 'No_Cue', 'Green'],
+        14: ['7', 'No_Cue', 'Triangle', 'Green'],
+        15: ['7', 'Triangle', 'No_Cue', 'Black'],
+        16: ['7', 'No_Cue', 'Triangle', 'Black']
         }
 
         self.trial_count = {key: 0 for key in self.trial_types}
 
-    def find_start_chamber(self, id_value, df):
+    # def find_start_chamber(self, id_value):
+    def generate_trial(self, id_value):
         if id_value == 1:
             trial_types_to_check = [1, 2, 3, 4]
         elif id_value == 3:
@@ -316,29 +317,33 @@ class Interface(Plugin):
         else:
             raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
 
-        # Extract the values from the specified trial types
-        subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
+        # # Extract the values from the specified trial types
+        # subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
       
-        values = subset_df['Error_Count'].to_numpy()
+        # values = subset_df['Error_Count'].to_numpy()
      
-        # Normalize the values to create probabilities
-        total = np.sum(values)
-        probabilities = values / total
+        # # Normalize the values to create probabilities
+        # total = np.sum(values)
+        # probabilities = values / total
         
-        # Choose one value based on probabilities
-        selected_value = np.random.choice(values, size=1, p=probabilities)
+        # # Choose one value based on probabilities
+        # selected_value = np.random.choice(values, size=1, p=probabilities)
      
-        selected_value_index = values.tolist().index(selected_value)
+        # selected_value_index = values.tolist().index(selected_value)
 
-        trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+        # trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+
+        trial_type = random.choice(trial_types_to_check)
+        trial = self.trial_types[trial_type]
+        print(f"Selected trial: {trial} from key {trial_type}")
         
-        return trial_type
-
-    def generate_trial(self, id_value, df):
-        start_chamber = self.find_start_chamber(id_value, df)
-        trial = self.trial_types[start_chamber]
-
         return trial
+
+    # def generate_trial(self, id_value, df):
+    #     start_chamber = self.find_start_chamber(id_value, df)
+    #     trial = self.trial_types[start_chamber]
+
+    #     return trial
 
     def _handle_ephysRatTogBtn_clicked(self):
         if self._widget.ephysRatTogBtn.isChecked():
@@ -788,13 +793,12 @@ class Interface(Plugin):
                 self.currentTrialNumber = self.currentTrialNumber+1
                 rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
                 if self.trial_generator:
-                    trial = self.generate_trial(
-                        self.common_functions.start_chamber, self.df)
+                    trial = self.generate_trial(self.currentStartConfig)
                     self.left_visual_cue = trial[1]
                     self.right_visual_cue = trial[2]
-                    self.sound_cue = trial[3]
+                    self.floor_cue = trial[3]
 
-                    rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.sound_cue]}") 
+                    rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}") 
                 else:
                     if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                         self.currentTrial = self.trials[self.currentTrialNumber]
