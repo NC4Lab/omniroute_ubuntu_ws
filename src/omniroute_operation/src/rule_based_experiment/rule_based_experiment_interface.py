@@ -175,7 +175,7 @@ class Interface(Plugin):
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(2.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
-        self.reward_start_delay = rospy.Duration(5)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_start_delay = rospy.Duration(9)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
