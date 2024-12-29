@@ -175,7 +175,7 @@ class Interface(Plugin):
         self.start_first_delay = rospy.Duration(5.0)  # Duration of delay in the beginning of the trial
         self.start_second_delay = rospy.Duration(2.0)  # Duration of delay in the beginning of the trial
         self.choice_delay = rospy.Duration(1.5)  # Duration to wait for rat to move to the choice point
-        self.reward_start_delay = rospy.Duration(9)  # Duration to wait to dispense reward if the rat made the right choice
+        self.reward_start_delay = rospy.Duration(12)  # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
@@ -334,10 +334,14 @@ class Interface(Plugin):
         # trial_type = subset_df['Trial Type'].iloc[selected_value_index]
 
         trial_type = random.choice(trial_types_to_check)
+        if self.trial_count[trial_type] >= 4:
+            trial_types_to_check.remove(trial_type)
+            trial_type = random.choice(trial_types_to_check)
+
         trial = self.trial_types[trial_type]
         print(f"Selected trial: {trial} from key {trial_type}")
         
-        return trial
+        return trial, trial_type
 
     # def generate_trial(self, id_value, df):
     #     start_chamber = self.find_start_chamber(id_value, df)
@@ -794,9 +798,11 @@ class Interface(Plugin):
                 rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
                 if self.trial_generator:
                     trial = self.generate_trial(self.currentStartConfig)
-                    self.left_visual_cue = trial[1]
-                    self.right_visual_cue = trial[2]
-                    self.floor_cue = trial[3]
+                    self.left_visual_cue = trial[0][1]
+                    self.right_visual_cue = trial[0][2]
+                    self.floor_cue = trial[0][3]
+                    trial_type = trial[1]
+                    self.trial_count[trial_type] += 1
 
                     rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}") 
                 else:
@@ -1062,31 +1068,6 @@ class Interface(Plugin):
                 if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_delay.to_sec():
                     self.mode = Mode.START_TRIAL
                     rospy.loginfo("START_TRIAL")
-
-    # def play_sound_cue(self, sound_cue):
-    #     # if self.is_ephys_rat:
-    #     #     return
-    #     # rospy.loginfo(f"Play sound cue {sound_cue}")    
-    #     # if sound_cue == "White_Noise":
-    #     #     self.sound_pub.publish("White_Noise")
-
-    #     # elif sound_cue == "White_Noise_Training_Start":
-    #     #     self.sound_pub.publish("White_Noise_Training_Start")
-
-    #     # elif sound_cue == "White_Noise_Training_Stop":
-    #     #     self.sound_pub.publish("White_Noise_Training_Stop")
-
-    #     # elif sound_cue == "5KHz":
-    #     #     self.sound_pub.publish("5KHz")
-
-    #     # elif sound_cue == "5KHz_Training_Start":
-    #     #     self.sound_pub.publish("5KHz_Training_Start")
-
-    #     # elif sound_cue == "5KHz_Training_Stop":
-    #     #     self.sound_pub.publish("5KHz_Training_Stop")
-
-    #     if sound_cue == "Error":
-    #         self.sound_pub.publish("Error")
 
 
 if __name__ == '__main__':
