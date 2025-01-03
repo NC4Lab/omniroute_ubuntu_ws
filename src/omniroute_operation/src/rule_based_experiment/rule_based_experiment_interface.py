@@ -180,8 +180,8 @@ class Interface(Plugin):
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
-        self.wrong_choice_second_delay = rospy.Duration(2.5) 
-        self.wrong_choice_third_delay = rospy.Duration(2.5)
+        self.wrong_choice_second_delay = rospy.Duration(5) 
+        self.wrong_choice_third_delay = rospy.Duration(1.5)
         self.wrong_choice_delay = rospy.Duration(40)  # Duration to wait if the rat made the wrong choice
         self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
@@ -318,7 +318,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [3, 4, 7, 8, 11, 12, 15, 16]])
 
         # if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 3:
+        if sum_success >= 8:
             if group == 'group1':
                dict[1] = 0
                dict[2] = 0
@@ -1090,6 +1090,7 @@ class Interface(Plugin):
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
                     self.publish_walls(self.cued_chamber, self.chamber_walls_list)
+                    rospy.sleep(0.1)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD") 
@@ -1137,6 +1138,7 @@ class Interface(Plugin):
                     self.projection_wall_img_pub.publish(self.wall_img_black_num)
                     rospy.sleep(0.1)
                     self.publish_walls(self.cued_chamber, self.chamber_walls_list)
+                    rospy.sleep(0.1)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_END
                     rospy.loginfo("POST_END")
