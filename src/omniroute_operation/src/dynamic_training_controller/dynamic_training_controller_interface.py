@@ -90,7 +90,8 @@ class Interface(Plugin):
         
 
         # Define all buttons in the interface
-        self._widget.dynamicTrainingBtn.clicked.connect(self._handle_dynamicTrainingBtn_clicked)
+        self._widget.alignMaxTrainingBtn.clicked.connect(self._handle_alignMaxTrainingBtn_clicked)
+        self._widget.learnMaxTrainingBtn.clicked.connect(self._handle_learnMaxTrainingBtn_clicked)
         self._widget.pseudorandomTrainingBtn.clicked.connect(self._handle_pseudorandomTrainingBtn_clicked) # Depending on how we design the dynamic controller, we may need more than one control training mode
         self._widget.testingPhaseBtn.clicked.connect(self._handle_testingPhaseBtn_clicked)
         self._widget.contTMazeBtn.clicked.connect(self._handle_contTMazeBtn_clicked)
@@ -98,7 +99,9 @@ class Interface(Plugin):
         # The starting chamber is always the same so no need to define it in the interface
 
         self.is_testing_phase = False
-        self.trial_generator = False
+        self.alignMax_training = False
+        self.learnMax_training = False
+        self.pseudorandom_training = False
 
         # Define all Publishers
         self.gantry_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=1)
@@ -183,6 +186,18 @@ class Interface(Plugin):
         # Maze parameters
         self.maze_dim = MazeDimensions()
 
+        # Weight Parameters
+        self.current_weights = np.random.rand(10) #Replace with wMode[:, -1] later
+        self.goal_weights = None
+        self.w_R = np.array([1, 0, -1, 0, 0, 0, 0, 0, 0])
+        self.w_L = np.array([-1, 1, 0, 0, 0, 0, 0, 0, 0])
+        self.w_U = np.array([0, 1, -1, 0, 0, 0, 0, 0, 0])
+        delta = 0.2 # maybe change later
+
+        # Learning Parameters
+        stage = "early"
+        early_learning_threshold = 300
+
         # Common functions
         self.common_functions = CommonFunctions()
 
@@ -195,12 +210,16 @@ class Interface(Plugin):
         self.trial_count = {key: 0 for key in self.trial_types} 
 
     # Define actions for clicking each button in the interface
-    def _handle_dynamicTrainingBtn_clicked(self):
-        # set training mode to dynamic training
-        rospy.loginfo("Dynamic training selected")
+    def _handle_alignMaxTrainingBtn_clicked(self):
+        self.alignMax_training = True
+        rospy.loginfo("AlignMax training selected")
+
+    def _handle_learnMaxTrainingBtn_clicked(self):
+        self.learnMax_training = True
+        rospy.loginfo("LearnMax training selected")
 
     def _handle_pseudorandomTrainingBtn_clicked(self):
-        #set training mode to pseudorandom training
+        self.pseudorandom_training = True
         rospy.loginfo("Pseudorandom training selected")
 
     def _handle_testingPhaseBtn_clicked(self):
@@ -330,8 +349,35 @@ class Interface(Plugin):
                 self.mode = Mode.END_EXPERIMENT
 
             if self.currentTrial is not None:
-                # Set trial generator to the training mode selected
-                self.training_mode = self.currentTrial[0] #LOOK OVER THIS AGAIN
+                if self.alignMax_training:
+                    average_weights = self.calculate_average_weights()
+                    selected_stimulus = self.alignmax_stimulus_selection(average_weights, self.w_U)
+                    rospy.loginfo(f"Selected stimulus is: {selected_stimulus}")
+                    self.publish_stimulus(selected_stimulus)
+
+                elif self.learnMax_training:
+                    current_bias = self.get_current_bias()
+                    self.goal_weights = self.adjust_goal_weights(current_bias)
+                    average_weights = self.calculate_average_weights()
+                    selected_stimulus = self.alignmax_stimulus_selection(
+                    average_weights, self.goal_weights)
+                    rospy.loginfo(f"Selected stimulus is: {selected_stimulus}")
+                    self.publish_stimulus(selected_stimulus)
+
+                elif self.pseudorandom_training:
+                    if self.trial_count[-1] < 3 and self.trial_count[1] < 3:
+                        stimulus = random.choice([-1, 1])
+                    elif self.trial_count[-1] >= 3:
+                        stimulus = 1
+                    elif self.trial_count[1] >= 3:
+                        stimulus = -1
+                    else:
+                        stimulus = random.choice([-1, 1])
+
+                    self.trial_count[stimulus] += 1
+                    rospy.loginfo(f"Selected stimulus is: {stimulus}")
+                    self.publish_stimulus(stimulus)
+            
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_START_CHAMBER
@@ -490,12 +536,3 @@ if __name__ == '__main__':
     rospy.init_node('dynamic_training_controller')
     Interface()
     rospy.spin()
-
-
-
-
-
-
-
-
-
