@@ -30,6 +30,9 @@ from shared_utils.wall_utilities import MazeDimensions
 from experiment_controller.experiment_controller_interface import Wall
 from experiment_controller.experiment_controller_interface import CommonFunctions
 
+import psytrack as psy
+from psytrack.helper.helperFunctions import read_input
+
 class Mode(Enum):
     START_EXPERIMENT = 1
     START_TRIAL = 2
@@ -188,15 +191,22 @@ class Interface(Plugin):
 
         # Weight Parameters
         self.current_weights = np.random.rand(10) #Replace with wMode[:, -1] later
-        self.goal_weights = None
+        self.goalWeights = None
         self.w_R = np.array([1, 0, -1, 0, 0, 0, 0, 0, 0])
         self.w_L = np.array([-1, 1, 0, 0, 0, 0, 0, 0, 0])
         self.w_U = np.array([0, 1, -1, 0, 0, 0, 0, 0, 0])
-        delta = 0.2 # maybe change later
+        self.delta = 0.2 # maybe change later
+        self.bias = self.current_weights[0]
+
+        # PsyTrack Parameters
+        self.nPrev = 3
+        self.inputVector = 0
+        self.probabilityRight = 0
+        self.probabilityLeft = 0
 
         # Learning Parameters
-        stage = "early"
-        early_learning_threshold = 300
+        self.stage = "early"
+        self.early_learning_threshold = 300
 
         # Common functions
         self.common_functions = CommonFunctions()
@@ -242,9 +252,20 @@ class Interface(Plugin):
                 self.common_functions.lower_wall(Wall(i, 2), False) # Left and right goal walls remain raised until the first trial starts
         self.common_functions.activateWalls()
 
-
     def _handle_lowerAllDoorsBtn_clicked(self):
         self.setlowerConfig()
+
+    def is_recording_on(self):
+        list_cmd = subprocess.Popen(
+            "rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        ret = 0
+        for str in list_output.decode().split("\n"):
+            if (str.startswith("/record")):
+                ret = 1
+        return ret
 
     # Lower Walls of the chambers that the rat is at risk of getting caught in (i.e. those that are lowered/ raised during the experiment)
     def setlowerConfig(self):
@@ -313,6 +334,51 @@ class Interface(Plugin):
         # Log the received trial and index
         rospy.loginfo(f"Received selected trial: {self.currentTrial}")
         rospy.loginfo(f"Received current_trial_index: {self.current_trial_index}")
+
+    # Use PsyTrack to calculate weights
+    nPrev = 3
+    weights = {
+        'bias': 1,
+        'stimulus': 1,
+        'stimH': nPrev,
+        'actionH': nPrev,
+        'actionXposRewardH': nPrev,
+        'actionXnegReward': nPrev,
+    }
+
+    K = np.sum(list(weights.values()))
+
+    hyper = {
+        'sigInit': 2**4.,
+        'sigma': [2**-4,] * K,
+        'sigDay': 2**-2,
+    }
+
+    optList = ['sigDay'] 
+
+    hyp, evd, wMode, hess_info = psy.hyperOpt(self, hyper, weights, optList)
+
+    def goal_weights(self):
+        if self.stage == "early":
+            if self.bias > self.delta:
+                self.goalWeights = self.w_R
+            elif self.bias < -self.delta:
+                self.goalWeights = self.w_L
+            else:
+                self.goalWeights = self.w_U
+        elif self.stage == "late":
+            self.goalWeights = self.w_U
+
+    def update_stage(self):
+        if self.currentTrialNumber > self.early_learning_threshold: #or performane >= performance_threshold
+            self.stage = "late"
+        else: 
+            self.stage = "early"
+    
+    def calculate_probabilities(self):
+        self.inputVector = np.dot(self.g_xt, self.current_weights)
+        self.probabilityRight = 1 / (1 + np.exp(-self.inputVector))
+        self.probabilityLeft = 1 - self.probabilityRight
 
     def run_experiment(self):
 
