@@ -305,6 +305,19 @@
       <string>Phase Two</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="phaseThreeBtn">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>100</y>
+       <width>101</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Phase Three</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="frame_3">
     <property name="geometry">

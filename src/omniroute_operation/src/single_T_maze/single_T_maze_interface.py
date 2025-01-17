@@ -134,10 +134,13 @@ class Interface(Plugin):
 
         self._widget.phaseTwoBtn.clicked.connect(self._handle_phaseTwoBtn_clicked)
 
+        self._widget.phaseThreeBtn.clicked.connect(self._handle_phaseThreeBtn_clicked)
+
         self.is_testing_phase = False
         self.trial_generator = False
         self.phase_one = False
         self.phase_two = False
+        self.phase_three = False
 
         self.maze_dim = MazeDimensions()
 
@@ -295,7 +298,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 5:
+        if sum_success >= 8:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -337,6 +340,7 @@ class Interface(Plugin):
         trial = self.trial_types[trial_key]
         print(f"Selected trial: {trial} from key {trial_key}")
         return trial, trial_key
+    
 
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
@@ -375,6 +379,10 @@ class Interface(Plugin):
     def _handle_phaseTwoBtn_clicked(self):
         self.phase_two = True
         rospy.loginfo("Phase Two selected")
+
+    def _handle_phaseThreeBtn_clicked(self):
+        self.phase_three = True
+        rospy.loginfo("Phase Three selected")
 
     def _handle_lowerAllDoorsBtn_clicked(self):
         self.setLowerConfig()
@@ -464,6 +472,9 @@ class Interface(Plugin):
         self.left_chamber = 5
         self.right_chamber = 3
 
+        self.left_walls_key = 1
+        self.right_walls_key = 2
+
         # self.walls = {1:left walls, 2:right walls}
         self.walls = {1: [Wall(5, 0).to_dict(),
                           Wall(5, 1).to_dict(),
@@ -487,6 +498,10 @@ class Interface(Plugin):
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
         self.right_goal_wall = Wall(4, 0)
+        self.right_exit_wall = Wall(0, 6)
+        self.left_exit_wall = Wall(2, 6)
+        self.right_start_chamber_enter_wall = Wall(0, 4)
+        self.left_start_chamber_enter_wall = Wall(2, 0)
 
     def setChamberThreeStartConfig(self):
         self.start_chamber = 3
@@ -519,6 +534,10 @@ class Interface(Plugin):
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
         self.right_goal_wall = Wall(4, 6)
+        self.right_exit_wall = Wall(6, 4)
+        self.left_exit_wall = Wall(0, 4)
+        self.right_start_chamber_enter_wall = Wall(6, 2)
+        self.left_start_chamber_enter_wall = Wall(0, 6)
 
     def setChamberFiveStartConfig(self):
         self.start_chamber = 5
@@ -587,6 +606,10 @@ class Interface(Plugin):
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
         self.right_goal_wall = Wall(4, 4)
+        self.right_exit_wall = Wall(8, 2)
+        self.left_exit_wall = Wall(6, 2)
+        self.right_start_chamber_enter_wall = Wall(8, 0)
+        self.left_start_chamber_enter_wall = Wall(6, 4)
 
     def publish_walls(self, previous_cued_chamber, chamber_walls_list):
         if previous_cued_chamber in chamber_walls_list:
@@ -639,7 +662,7 @@ class Interface(Plugin):
                 self.trail_type_key = trial_type_key
                 rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
                 
-            elif self.phase_two:
+            elif self.phase_two or self.phase_three:
                 trial, trial_type_key = self.pick_trial_phase_two()
                 self.left_visual_cue = trial[1]
                 self.right_visual_cue = trial[2]
@@ -876,8 +899,16 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
-                self.setChamberFiveStartConfig()
-                rospy.loginfo("Chamber 5 selected")
+                self.setChamberSevenStartConfig()
+                rospy.loginfo("Chamber 7 selected")
+                # if self.phase_three:
+                #     if self.currentTrialNumber >= 2 and self.success_chamber == self.right_chamber:
+                #         self.setChamberOneStartConfig()
+                #         rospy.loginfo("Chamber 1 selected")
+                #     else:
+                #         self.setChamberFiveStartConfig()
+                #         rospy.loginfo("Chamber 5 selected")
+                
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
@@ -905,8 +936,15 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
-                self.setChamberFiveStartConfig()
-                rospy.loginfo("Chamber 5 selected")
+                self.setChamberSevenStartConfig()
+                rospy.loginfo("Chamber 7 selected")
+                # if self.phase_three:
+                #     if self.currentTrialNumber >= 2 and self.error_chamber == self.right_chamber:
+                #         self.setChamberOneStartConfig()
+                #         rospy.loginfo("Chamber 1 selected")
+                #     else:
+                #         self.setChamberFiveStartConfig()
+                #         rospy.loginfo("Chamber 5 selected")
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
