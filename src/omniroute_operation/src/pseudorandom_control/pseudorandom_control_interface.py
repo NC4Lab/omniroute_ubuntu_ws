@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+from shared_utils.ui_utilities import UIUtilities
+from shared_utils.maze_debug import MazeDB
+from shared_utils.wall_utilities import MazeDimensions, WallConfig
+from experiment_controller.experiment_controller_interface import Wall
+from experiment_controller.experiment_controller_interface import CommonFunctions
+
 import os
 import time
 import rospy
@@ -19,16 +25,13 @@ from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
 from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
-from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup, QFileDialog, QWidget, QApplication
+from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup, QFileDialog, QWidget
 from PyQt5.QtCore import QTimer
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 
 import json
-from shared_utils.wall_utilities import MazeDimensions
-from experiment_controller.experiment_controller_interface import Wall
-from experiment_controller.experiment_controller_interface import CommonFunctions
 
 import psytrack as psy
 from psytrack.helper.helperFunctions import read_input
@@ -62,7 +65,7 @@ class Interface(Plugin):
         super(Interface, self).__init__(context)
 
         self._joint_sub = None
-        self.setObjectName('Dynamic Training Controller Interface')
+        self.setObjectName('Pseudorandom Control Interface')
 
         from argparse import ArgumentParser
         parser = ArgumentParser()
@@ -77,7 +80,7 @@ class Interface(Plugin):
         # Create QWidget
         self._widget = QWidget()
         ui_file = os.path.join(os.path.dirname(os.path.realpath(
-            __file__)), 'dynamic_training_controller_interface.ui')
+            __file__)), 'pseudorandom_control_interface.ui')
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
 
@@ -138,7 +141,7 @@ class Interface(Plugin):
         # Time for setting up publishers and subscribers
         rospy.sleep(1.0)
 
-        self.experiment_pub.publish("dynamic_training_controller_experiment")
+        self.experiment_pub.publish("pseudorandom_controller_experiment")
 
         # EXPERIMENTAL PARAMETERS
 
@@ -211,35 +214,13 @@ class Interface(Plugin):
         # Maze parameters
         self.maze_dim = MazeDimensions()
 
-        # Weight Parameters
-        self.current_weights = np.random.rand(
-            10)  # Replace with wMode[:, -1] later
-        self.goal_weights = self.w_U
-        # pushing bias to the right
-        self.w_R = np.array([2.2, 2.2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        # pushing bias to the left
-        self.w_L = np.array([-2.2, 2.2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        self.w_U = np.array([0, 2.2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        self.delta = 1  # maybe change later
-
-        self.weight_sum_neg1 = np.zeros_like(self.current_weights)
-        self.weight_sum_pos1 = np.zeros_like(self.current_weights)
-
         # Learning Parameters
         self.stage = "early"
         self.early_learning_threshold = 300
         self.performance_threshold = 0.70
 
-        # Input-Response Combinations
-        self.next_trial_data = {
-            "condition_1": {'y': 2, 'stimulus': -1},
-            "condition_2": {'y': 1, 'stimulus': 1},
-            "condition_3": {'y': 1, 'stimulus': -1},
-            "condition_4": {'y': 2, 'stimulus': 1},
-        }
-
         # Trial Data Parameters
-        self.y = np.empty(self.nTrials, dtype=int)
+        self.y = y = np.empty(self.nTrials, dtype=int)
         self.inputs = np.empty(self.nTrials, dtype=int)
         self.name = []
         self.answer = np.empty(self.nTrials, dtype=int)
@@ -247,53 +228,11 @@ class Interface(Plugin):
         self.dayLength = np.empty(self.nDay, dtype=int)
         self.performance = 0
 
-        self.data = {
-            'y':  np.zeros(self.nTrials, dtype=int),
-            'inputs':  np.zeros(self.nTrials, dtype=int),
-            'answer': np.zeros(self.nTrials, dtype=int),
-            'correct': np.zeros(self.nTrials, dtype=int),
-            'dayLength': np.zeros(1, dtype=int)
-            }
-
-
-        # PsyTrack Parameters
-        self.predicted_weights = {}
-        self.weights = {'bias': 1,
-                        'stimulus': 1,
-                        'stimH': 0,
-                        'actionH': self.nPrevTrials,
-                        'actionXposRewardH': self.nPrevTrials,
-                        'actionXnegRewardH': self.nPrevTrials}
-
-        # It is often useful to have the total number of weights K in your model
-        K = np.sum([self.weights[i] for i in self.weights.keys()])
-
-        self.hyper = {'sigInit': 2**4.,      # Set to a single, large value for all weights. Will not be optimized further.
-                      # Each weight will have it's own sigma optimized, but all are initialized the same
-                      'sigma': [2**-4.]*K,
-                      'sigDay': 2**-2.}      # Indicates that session boundaries will be ignored in the optimization
-
-        # The hyperparameters that are fitted
-        self.optList = ['sigma', 'sigDay']
-
-        self.g_xt = np.zeros(len(self.weights))
-        self.g_xt[0] = 1.0  # Bias term
-        self.g_xt[1] = self.stimulus
-        self.g_xt[2] = self.stimH
-        self.g_xt[3] = self.actionH
-        self.g_xt[4] = self.actionXposRewardH
-        self.g_xt[5] = self.actionXnegRewardH
-        self.gw = 0
-        self.pR = 0
-        self.pL = 0
-
         # Training Algorithm Parameters
         self.selected_stimulus = None
         self.next_trial_data = {}
         self.stimulus = 0
-        self.goal_weights = np.zeros(len(self.current_weights))
         self.bias = 0
-        self.alignments = {}
 
         # Common functions
         self.common_functions = CommonFunctions()
@@ -412,155 +351,6 @@ class Interface(Plugin):
         rospy.loginfo(
             f"Received current_trial_index: {self.current_trial_index}")
 
-    def run_psytrack(self):
-        hyp, evd, wMode, hess_info = psy.hyperOpt(self.data, self.hyper,self.weights, self.optList)
-
-        self.current_weights = wMode[:, -1]  # Last column of weights
-        return self.current_weights
-
-    # Function to calculate dynamically adjusted goal weights
-    def define_goal_weights(self):
-        if self.stage == "early":
-            if self.bias > self.delta:
-                self.goal_weights = self.w_R
-            elif self.bias < -self.delta:
-                self.goal_weights = self.w_L
-            else:
-                self.goal_weights = self.w_U
-        elif self.stage == "late":
-            self.goal_weights = self.w_U
-        else:
-            raise ValueError("Invalid stage. Must be 'early' or 'late'.")
-
-        assert self.goal_weights.shape == self.current_weights.shape
-
-    # Function to dynamically update the stage of learning based on training progress and performance
-    def update_stage(self):
-        if self.currentTrialNumber > self.early_learning_threshold or self.performance >= self.performance_threshold:
-            self.stage = "late"
-        else:
-            self.stage = "early"
-
-    # Function to calculate probabilities of making a right (pR) or left (pL) turn on any given trial n
-    def calculate_probabilities(self):
-        self.gw = np.dot(self.g_xt)
-        self.pR = 1 / (1 + np.exp(-self.gw))
-        self.pL = 1 - self.pR
-
-    def calculate_average_weights(self):
-        for self.condition_name, self.trial_data in self.next_trial_data.items():
-
-            if self.condition_name == 1:
-                self.y[self.currentTrialNumber] = 2
-                self.inputs[self.currentTrialNumber] = -1
-                self.answer[self.currentTrialNumber] = 2
-                self.correct[self.currentTrialNumber] = 1
-
-            elif self.condition_name == 2:
-                self.y[self.currentTrialNumber] = 1
-                self.inputs[self.currentTrialNumber] = 1
-                self.answer[self.currentTrialNumber] = 1
-                self.correct[self.currentTrialNumber] = 1
-
-            elif self.condition_name == 3:
-                self.y[self.currentTrialNumber] = 1
-                self.inputs[self.currentTrialNumber] = -1
-                self.answer[self.currentTrialNumber] = 2
-                self.correct[self.currentTrialNumber] = 0
-
-            else:
-                self.y[self.currentTrialNumber] = 2
-                self.inputs[self.currentTrialNumber] = 1
-                self.answer[self.currentTrialNumber] = 1
-                self.correct[self.currentTrialNumber] = 0
-
-            self.g_xt = np.zeros(len(self.current_weights))
-            self.stimulus = self.inputs[self.currentTrialNumber]
-            if self.currentTrialNumber >= self.nPrevTrials:
-                self.stimH = self.inputs[self.currentTrialNumber - self.nPrevTrials]
-                self.actionH = self.y[self.currentTrialNumber - self.nPrevTrials]
-
-                self.prev_reward = self.correct[self.currentTrialNumber - self.nPrevTrials]
-                if self.prev_reward == 1:
-                    self.actionXposRewardH = self.y[self.currentTrialNumber - self.nPrevTrials]
-                else:
-                    self.actionXposRewardH = 0
-                if self.prev_reward == 0:
-                    self.actionXnegRewardH = - self.y[self.currentTrialNumber - self.nPrevTrials]
-                else:
-                    self.actionXnegRewardH = 0
-            else:
-                self.stimH = 0
-                self.actionH = 0
-                self.actionXposRewardH = 0
-                self.actionXnegRewardH = 0
-
-            rospy.loginfo(
-                f"Input Vector for {self.condition_name}: {self.g_xt}")
-            
-            _, _, wMode_next, _ = psy.hyperOpt(self.data, self.hyper, self.weights, self.optList)
-            
-
-            # Ensure wMode_next is 2D before accessing [:, -1]
-            #if wMode_next.ndim == 2:
-                # Exclude last column
-                #self.predicted_weights[self.condition_name] = wMode_next[:, :-1]
-                #rospy.loginfo(f"Predicted weights for {self.condition_name}: {wMode_next[:, -1]}")
-            #else:
-                #rospy.logerr(f"Unexpected wMode_next shape: {wMode_next.shape}")
-
-            self.predicted_weights[self.condition_name] = wMode_next[: -1]
-            rospy.loginfo(
-                f"Predicted weights for {self.condition_name}: {wMode_next[:, -1]}")
-
-            self.pR, self.pL = self.calculate_probabilities()
-            rospy.loginfo(
-                f"Predicted probabilities for {self. condition_name}: pR = {self.pR:.3f}, pL = {self.pL:.3f}")
-
-            if self.stimulus == -1:
-                if self.y == 1:
-                    self.weight_sum_neg1 += self.pR * self.predicted_weights[self.condition_name]
-                elif self.y == 2:
-                    self.weight_sum_neg1 += self.pL * self.predicted_weights[self.condition_name]
-            elif self.stimulus == 1:
-                if self.y == 1:
-                    self.weight_sum_pos1 += self.pR * self.predicted_weights[self.condition_name]
-                elif self.y == 2:
-                    self.weight_sum_pos1 += self.pL * self.predicted_weights[self.condition_name]
-
-        {'stimulus=-1': self.weight_sum_neg1, 'stimulus=1': self.weight_sum_pos1}
-
-        rospy.loginfo(f"Average Weights for Each Stimulus Condition:",
-                      self.calculate_average_weights)
-
-    def alignmax_stimulus_selection(self):
-        for self.stimulus_type, self.avg_weight in self.calculate_average_weights.items():
-            rospy.loginfo(
-                f"Average Weight for {self.stimulus_type}: {self.avg_weight}")
-            self.expected_weight_diff = self.avg_weight - self.current_weights
-            print(
-                f"Expected Weight Diff for {self.stimulus_type}: {self.expected_weight_diff}")
-            self.current_weight_diff = self.goal_weights - self.current_weights
-            print(
-                f"Current Weight Diff for {self.stimulus_type}: {self.current_weight_diff}")
-
-            # Dot product measures alignment
-            self.alignment = np.dot(
-                self.expected_weight_diff, self.current_weight_diff)
-            self.alignments[self.stimulus_type] = self.alignment
-            print(f"{self.stimulus_type}: Alignment = {self.alignment:.3f}")
-
-        # Determine the stimulus type with the maximum alignment (i.e. minumum distance)
-        self.selected_stimulus = min(self.alignments, key=self.alignments.get)
-        print(
-            f"Selected Stimulus: {self.elected_stimulus} with Alignment: {self.alignments[selected_stimulus]:.3f}")
-
-        # Extract the stimulus value from the key (e.g., 'stimulus=-1' -> -1, 'stimulus=1' -> 1)
-        if self.selected_stimulus == 'stimulus=-1':
-            return -1
-        elif self.selected_stimulus == 'stimulus=1':
-            return 1
-
     def run_experiment(self):
 
         self.current_time = rospy.Time.now()
@@ -597,29 +387,7 @@ class Interface(Plugin):
                 self.mode = Mode.END_EXPERIMENT
 
             if self.currentTrial is not None:
-                if self.alignMax_training:
-                    self.current_weights = self.run_psytrack()
-                    rospy.loginfo(
-                        f"Current weights for {self.name}: {self.current_weights}")
-                    self.stimulus = self.alignmax_stimulus_selection(
-                        self.calculate_average_weights)
-                    rospy.loginfo(
-                        f"Selected stimulus is: {self.selected_stimulus}")
-
-                elif self.learnMax_training:
-                    self.current_weights = self.run_psytrack()
-                    rospy.loginfo(
-                        f"Current weights for {self.name}: {self.current_weights}")
-                    # Extract current bias directly from current_weights
-                    self.bias = self.current_weights[0]
-                    rospy.loginfo(f"Current Bias: {self.bias}")
-                    self.goal_weights = self.define_goal_weights()
-                    self.stimulus = self.alignmax_stimulus_selection(
-                        self.calculate_average_weights)
-                    rospy.loginfo(
-                        f"Selected stimulus is: {self.selected_stimulus}")
-
-                elif self.pseudorandom_training:
+                if self.pseudorandom_training == True:
                     if self.trial_count[-1] < 3 and self.trial_count[1] < 3:
                         self.stimulus = random.choice([-1, 1])
                     elif self.trial_count[-1] >= 3:
@@ -818,6 +586,6 @@ class Interface(Plugin):
 
 
 if __name__ == '__main__':
-    rospy.init_node('dynamic_training_controller')
+    rospy.init_node('pseudorandom_control')
     Interface()
     rospy.spin()

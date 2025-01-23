@@ -262,7 +262,7 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="dynamicTrainingBtn">
+    <widget class="QPushButton" name="alignMaxTrainingBtn">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -301,7 +301,7 @@
       <string>Pseudorandom Training</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="dynamicTrainingBtn_2">
+    <widget class="QPushButton" name="learnMaxTrainingBtn">
      <property name="geometry">
       <rect>
        <x>200</x>
