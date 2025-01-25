@@ -361,7 +361,7 @@ class Interface(Plugin):
     def pick_trial_phase_one(self):
         # Initialize current_group if it doesn't exist yet
         if not hasattr(self, 'current_group'):
-            self.current_group = 'group1'
+            self.current_group = 'group2'
 
         if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
             # Switch to the other group
@@ -948,15 +948,15 @@ class Interface(Plugin):
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
                 if self.phase_three:
-                    if self.currentTrialNumber == 19:
+                    if self.currentTrialNumber == 14:
                         self.starting_config = self.success_chamber
                         self.choose_start_config(self.starting_config)
                         print('Trail 2 switch')
-                    elif self.currentTrialNumber == 39:
+                    elif self.currentTrialNumber == 29:
                         self.starting_config = self.success_chamber
                         self.choose_start_config(self.starting_config)
                         print("trial 5 switch")
-                    elif self.currentTrialNumber == 59:
+                    elif self.currentTrialNumber == 44:
                         self.starting_config = self.success_chamber
                         self.choose_start_config(self.starting_config)
                         print("trial 8 switch")
