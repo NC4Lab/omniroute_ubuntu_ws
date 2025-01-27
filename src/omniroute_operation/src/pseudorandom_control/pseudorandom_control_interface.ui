@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>621</width>
+    <width>733</width>
     <height>259</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>591</width>
+     <width>701</width>
      <height>231</height>
     </rect>
    </property>
@@ -30,7 +30,7 @@
      <rect>
       <x>380</x>
       <y>70</y>
-      <width>191</width>
+      <width>301</width>
       <height>141</height>
      </rect>
     </property>
@@ -43,7 +43,7 @@
     <widget class="QPushButton" name="contTMazeBtn">
      <property name="geometry">
       <rect>
-       <x>50</x>
+       <x>100</x>
        <y>20</y>
        <width>101</width>
        <height>41</height>
@@ -56,7 +56,7 @@
     <widget class="QPushButton" name="lowerAllDoorsBtn">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>80</x>
        <y>80</y>
        <width>141</width>
        <height>41</height>
@@ -223,7 +223,7 @@
      <rect>
       <x>380</x>
       <y>40</y>
-      <width>191</width>
+      <width>301</width>
       <height>31</height>
      </rect>
     </property>
@@ -275,7 +275,7 @@
       <string>AlignMax Training </string>
      </property>
     </widget>
-    <widget class="QPushButton" name="testingPhaseBtn">
+    <widget class="QPushButton" name="preTrainingBtn">
      <property name="geometry">
       <rect>
        <x>240</x>
@@ -285,7 +285,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Testing Phase</string>
+      <string>PreTraining</string>
      </property>
     </widget>
     <widget class="QPushButton" name="pseudorandomTrainingBtn">
