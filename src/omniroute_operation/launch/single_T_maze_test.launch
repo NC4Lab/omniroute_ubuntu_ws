@@ -4,7 +4,7 @@
   <include file="$(find omniroute_operation)/launch/shared_resources.launch" />
 
   <!-- Node start delays (sec) -->
-  <arg name="single_T_maze_node_start_delay" default="0.0" />
+  <arg name="single_T_maze_node_start_delay" default="0.5" />
 
   <!-- Single T-maze interface -->
   <node name="single_T_maze" pkg="omniroute_operation" type="single_T_maze"

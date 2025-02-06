@@ -69,6 +69,7 @@ class Mode(Enum):
     RESUME_EXPERIMENT = 15
     ERROR_END = 16
     ERROR_START = 18
+    POST_END = 19
  
 
 class Interface(Plugin):
@@ -179,7 +180,8 @@ class Interface(Plugin):
         self.reward_end_delay = rospy.Duration(2)  # Duration to wait to for the reward to despense
         self.right_choice_delay = rospy.Duration(5)  # Duration to wait if the rat made the right choice
         self.wrong_choice_first_delay = rospy.Duration(35.0)  # Duration to wait if the rat made the wrong choice
-        self.wrong_choice_second_delay = rospy.Duration(5.0) 
+        self.wrong_choice_second_delay = rospy.Duration(5) 
+        self.wrong_choice_third_delay = rospy.Duration(1.5)
         self.wrong_choice_delay = rospy.Duration(40)  # Duration to wait if the rat made the wrong choice
         self.end_trial_delay = rospy.Duration(1.0)  # Duration to wait at the end of the trial
 
@@ -284,61 +286,153 @@ class Interface(Plugin):
 
         #Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
         self.trial_types = {
-        1: ['1', 'Triangle', 'No_Cue', 'White_Noise'],
-        2: ['1', 'No_Cue', 'Triangle', '5KHz'],
-        3: ['1', 'Triangle', 'No_Cue', '5KHz'],
-        4: ['1', 'No_Cue', 'Triangle', 'White_Noise'],
-        5: ['3', 'Triangle', 'No_Cue', 'White_Noise'],
-        6: ['3', 'No_Cue', 'Triangle', '5KHz'],
-        7: ['3', 'Triangle', 'No_Cue', '5KHz'],
-        8: ['3', 'No_Cue', 'Triangle', 'White_Noise'],
-        9: ['5', 'Triangle', 'No_Cue', 'White_Noise'],
-        10: ['5', 'No_Cue', 'Triangle', '5KHz'],
-        11: ['5', 'Triangle', 'No_Cue', '5KHz'],
-        12: ['5', 'No_Cue', 'Triangle', 'White_Noise'],
-        13: ['7', 'Triangle', 'No_Cue', 'White_Noise'],
-        14: ['7', 'No_Cue', 'Triangle', '5KHz'],
-        15: ['7', 'Triangle', 'No_Cue', '5KHz'],
-        16: ['7', 'No_Cue', 'Triangle', 'White_Noise']
+        1: ['1', 'Triangle', 'No_Cue', 'Green'],
+        2: ['1', 'No_Cue', 'Triangle', 'Green'],
+        3: ['1', 'Triangle', 'No_Cue', 'Black'],
+        4: ['1', 'No_Cue', 'Triangle', 'Black'],
+        5: ['3', 'Triangle', 'No_Cue', 'Green'],
+        6: ['3', 'No_Cue', 'Triangle', 'Green'],
+        7: ['3', 'Triangle', 'No_Cue', 'Black'],
+        8: ['3', 'No_Cue', 'Triangle', 'Black'],
+        9: ['5', 'Triangle', 'No_Cue', 'Green'],
+        10: ['5', 'No_Cue', 'Triangle', 'Green'],
+        11: ['5', 'Triangle', 'No_Cue', 'Black'],
+        12: ['5', 'No_Cue', 'Triangle', 'Black'],
+        13: ['7', 'Triangle', 'No_Cue', 'Green'],
+        14: ['7', 'No_Cue', 'Triangle', 'Green'],
+        15: ['7', 'Triangle', 'No_Cue', 'Black'],
+        16: ['7', 'No_Cue', 'Triangle', 'Black']
         }
 
         self.trial_count = {key: 0 for key in self.trial_types}
+        self.trial_type_success_count = {key: 0 for key in self.trial_types}
 
-    def find_start_chamber(self, id_value, df):
-        if id_value == 1:
-            trial_types_to_check = [1, 2, 3, 4]
-        elif id_value == 3:
-            trial_types_to_check = [5, 6, 7, 8]
-        elif id_value == 5:
-            trial_types_to_check = [9, 10, 11, 12]
-        elif id_value == 7:
-            trial_types_to_check = [13, 14, 15, 16]
+        self.success_count = 0
+        self.previous_trial_result = None
+
+    def number_of_correct_trials_types(self, dict, group):
+        if group == 'group1':
+            sum_success = sum([dict[key] for key in dict if key in [1, 2, 5, 6, 9, 10, 13, 14]])
+
         else:
-            raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+            sum_success = sum([dict[key] for key in dict if key in [3, 4, 7, 8, 11, 12, 15, 16]])
 
-        # Extract the values from the specified trial types
-        subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
+        # if sum_success > 0 and sum_success % 10 == 0:
+        if sum_success >= 8:
+            if group == 'group1':
+               dict[1] = 0
+               dict[2] = 0
+               dict[5] = 0
+               dict[6] = 0
+               dict[9] = 0
+               dict[10] = 0
+               dict[13] = 0
+               dict[14] = 0
+               
+            else:
+               dict[3] = 0
+               dict[4] = 0
+               dict[7] = 0
+               dict[8] = 0
+               dict[11] = 0
+               dict[12] = 0
+               dict[15] = 0
+               dict[16] = 0
+            return True
+        else:
+            return False
+
+    def generate_trial(self, id_value):
+        # Initialize current_group if it doesn't exist yet
+        if not hasattr(self, 'current_group'):
+            self.current_group = 'group1'
+
+        if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
+            # Switch to the other group
+            if self.current_group == 'group1':
+                self.current_group = 'group2'
+            else:
+                self.current_group = 'group1'
+
+            print(f"Switching to {self.current_group}")
+
+        if self.current_group == 'group1':
+            # Randomly select a trial from trial types with green floor cue
+            if id_value == 1:
+                trial_types_to_check = [1, 2]
+            elif id_value == 3:
+                trial_types_to_check = [5, 6]
+            elif id_value == 5:
+                trial_types_to_check = [9, 10]
+            elif id_value == 7:
+                trial_types_to_check = [13, 14]
+            else:
+                raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+        else:
+            if id_value == 1:
+                trial_types_to_check = [3, 4]
+            elif id_value == 3:
+                trial_types_to_check = [7, 8]
+            elif id_value == 5:
+                trial_types_to_check = [11, 12]
+            elif id_value == 7:
+                trial_types_to_check = [15, 16]
+            else:
+                raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+            
+            # Randomly select a trial from trial types with keys 1 and 2
+            
+        trial_type = random.choice(trial_types_to_check)
+        trial = self.trial_types[trial_type]
+
+        print(f"Selected trial: {trial} from key {trial_type}")
+
+        return trial, trial_type
+
+    # def find_start_chamber(self, id_value):
+    # def generate_trial(self, id_value):
+    #     if id_value == 1:
+    #         trial_types_to_check = [1, 2, 3, 4]
+    #     elif id_value == 3:
+    #         trial_types_to_check = [5, 6, 7, 8]
+    #     elif id_value == 5:
+    #         trial_types_to_check = [9, 10, 11, 12]
+    #     elif id_value == 7:
+    #         trial_types_to_check = [13, 14, 15, 16]
+    #     else:
+    #         raise ValueError("Invalid ID value. It must be 1, 3, 5, or 7.")
+
+    #     # # Extract the values from the specified trial types
+    #     # subset_df = df[df['Trial Type'].isin(trial_types_to_check)]
       
-        values = subset_df['Error_Count'].to_numpy()
+    #     # values = subset_df['Error_Count'].to_numpy()
      
-        # Normalize the values to create probabilities
-        total = np.sum(values)
-        probabilities = values / total
+    #     # # Normalize the values to create probabilities
+    #     # total = np.sum(values)
+    #     # probabilities = values / total
         
-        # Choose one value based on probabilities
-        selected_value = np.random.choice(values, size=1, p=probabilities)
+    #     # # Choose one value based on probabilities
+    #     # selected_value = np.random.choice(values, size=1, p=probabilities)
      
-        selected_value_index = values.tolist().index(selected_value)
+    #     # selected_value_index = values.tolist().index(selected_value)
 
-        trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+    #     # trial_type = subset_df['Trial Type'].iloc[selected_value_index]
+
+    #     trial_type = random.choice(trial_types_to_check)
+    #     if self.trial_count[trial_type] >= 5:
+    #         trial_types_to_check.remove(trial_type)
+    #         trial_type = random.choice(trial_types_to_check)
+
+    #     trial = self.trial_types[trial_type]
+    #     print(f"Selected trial: {trial} from key {trial_type}")
         
-        return trial_type
+    #     return trial, trial_type
 
-    def generate_trial(self, id_value, df):
-        start_chamber = self.find_start_chamber(id_value, df)
-        trial = self.trial_types[start_chamber]
+    # def generate_trial(self, id_value, df):
+    #     start_chamber = self.find_start_chamber(id_value, df)
+    #     trial = self.trial_types[start_chamber]
 
-        return trial
+    #     return trial
 
     def _handle_ephysRatTogBtn_clicked(self):
         if self._widget.ephysRatTogBtn.isChecked():
@@ -788,13 +882,14 @@ class Interface(Plugin):
                 self.currentTrialNumber = self.currentTrialNumber+1
                 rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
                 if self.trial_generator:
-                    trial = self.generate_trial(
-                        self.common_functions.start_chamber, self.df)
-                    self.left_visual_cue = trial[1]
-                    self.right_visual_cue = trial[2]
-                    self.sound_cue = trial[3]
+                    trial = self.generate_trial(self.currentStartConfig)
+                    self.left_visual_cue = trial[0][1]
+                    self.right_visual_cue = trial[0][2]
+                    self.floor_cue = trial[0][3]
+                    self.trial_type = trial[1]
+                    #self.trial_count[trial_type] += 1
 
-                    rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.sound_cue]}") 
+                    rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}") 
                 else:
                     if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                         self.currentTrial = self.trials[self.currentTrialNumber]
@@ -938,6 +1033,12 @@ class Interface(Plugin):
                     self.common_functions.raise_wall(self.left_goal_wall, send=False)
                     self.common_functions.raise_wall(self.right_goal_wall, send=False)
                     self.common_functions.raise_wall(self.start_wall, send=True)
+                    self.success_count += 1
+
+                    # Update trial success count based on conditions
+                    if self.success_count == 1 or (self.success_count > 1 and self.previous_trial_result == "Success"):
+                        self.trial_type_success_count[self.trial_type] += 1
+                        self.previous_trial_result = "Success"
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.SUCCESS
                     rospy.loginfo("SUCCESS")
@@ -946,6 +1047,10 @@ class Interface(Plugin):
                     self.common_functions.raise_wall(self.left_goal_wall, send=False)
                     self.common_functions.raise_wall(self.right_goal_wall, send=False)
                     self.common_functions.raise_wall(self.start_wall, send=True)
+                    self.success_count = 0
+                    for key in self.trial_type_success_count:
+                        self.trial_type_success_count[key] = 0
+                    self.previous_trial_result = "Error"
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR
                     rospy.loginfo("ERROR")
@@ -982,6 +1087,10 @@ class Interface(Plugin):
                     # #     self.play_sound_cue(self.sound_cue)
                     # # else:
                     #     self.play_sound_cue(self.sound_cue_training_stop) 
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.publish_walls(self.cued_chamber, self.chamber_walls_list)
+                    rospy.sleep(0.1)
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD") 
@@ -1025,6 +1134,17 @@ class Interface(Plugin):
                     rospy.loginfo("ERROR_END")
 
             elif self.mode == Mode.ERROR_END:
+                if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_third_delay.to_sec():
+                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                    rospy.sleep(0.1)
+                    self.publish_walls(self.cued_chamber, self.chamber_walls_list)
+                    rospy.sleep(0.1)
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.POST_END
+                    rospy.loginfo("POST_END")
+
+
+            elif self.mode == Mode.POST_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
                     if self.error_chamber == 1:
                         self.setChamberOneStartConfig()
@@ -1058,31 +1178,6 @@ class Interface(Plugin):
                 if (self.current_time - self.mode_start_time).to_sec() >= self.end_trial_delay.to_sec():
                     self.mode = Mode.START_TRIAL
                     rospy.loginfo("START_TRIAL")
-
-    # def play_sound_cue(self, sound_cue):
-    #     # if self.is_ephys_rat:
-    #     #     return
-    #     # rospy.loginfo(f"Play sound cue {sound_cue}")    
-    #     # if sound_cue == "White_Noise":
-    #     #     self.sound_pub.publish("White_Noise")
-
-    #     # elif sound_cue == "White_Noise_Training_Start":
-    #     #     self.sound_pub.publish("White_Noise_Training_Start")
-
-    #     # elif sound_cue == "White_Noise_Training_Stop":
-    #     #     self.sound_pub.publish("White_Noise_Training_Stop")
-
-    #     # elif sound_cue == "5KHz":
-    #     #     self.sound_pub.publish("5KHz")
-
-    #     # elif sound_cue == "5KHz_Training_Start":
-    #     #     self.sound_pub.publish("5KHz_Training_Start")
-
-    #     # elif sound_cue == "5KHz_Training_Stop":
-    #     #     self.sound_pub.publish("5KHz_Training_Stop")
-
-    #     if sound_cue == "Error":
-    #         self.sound_pub.publish("Error")
 
 
 if __name__ == '__main__':

@@ -1,0 +1,14 @@
+<launch>
+
+  <!-- Include the shared resources launch file -->
+  <include file="$(find omniroute_operation)/launch/shared_resources.launch" />
+
+  <!-- Node start delays (sec) -->
+  <arg name="rule_based_experiment_node_start_delay" default="0.5" />
+
+  <!-- Single T-maze interface -->
+  <node name="rule_based_experiment" pkg="omniroute_operation" type="rule_based_experiment"
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg rule_based_experiment_node_start_delay); $0 $@' " />
+
+</launch>
