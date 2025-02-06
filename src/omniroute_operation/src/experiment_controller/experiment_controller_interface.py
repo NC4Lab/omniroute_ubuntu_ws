@@ -348,11 +348,14 @@ class Interface(Plugin):
                 self._widget.recordDataDir.setText(self.dataDir)
 
             if self.experiment_type == "rule_based_experiment":
-                # Record all ROS topics to domeExperimentData.bag
+                # Record all ROS topics to ruleBasedExperimentData.bag
                 command_data = f"rosbag record -a -o ruleBasedExperimentData"
             elif self.experiment_type == "single_T_maze_experiment":
-                # Record all ROS topics to domeExperimentData.bag
+                # Record all ROS topics to singleTmazeExperimentData.bag
                 command_data = f"rosbag record -a -o singleTmazeExperimentData"
+            elif self.experiment_type == "pseudorandom_controller_experiment":
+                # Record all ROS topics to pseudorandomExperimentData.bag
+                command_data = f"rosbag record -a -o pseudorandomExperimentData"
             else:
                 rospy.logerr(f"Unknown experiment type: {self.experiment_type}")
                 return
