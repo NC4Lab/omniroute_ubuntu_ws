@@ -214,6 +214,7 @@ class Interface(Plugin):
         self.left_return_chamber = 0
         self.right_return_chamber = 0
         self.previous_rat_chamber = 0
+        self.previous_goal_chamber = 0
 
         # Wall parameters
         self.start_wall = Wall(0, 0)
@@ -545,7 +546,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             # Raise start wall after he moves into the choice chamber
-            if self.rat_body_chamber == self.central_chamber:
+            if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
                 if self.pretraining_phase_one == True:
                     if self.currentTrialNumber == 0:
                         self.common_functions.lower_wall(
@@ -553,10 +554,10 @@ class Interface(Plugin):
                         self.common_functions.lower_wall(
                             self.right_return_wall, send=True)
                     else:
-                        if self.success_chamber == self.left_goal_chamber:
+                        if self.previous_goal_chamber == self.left_goal_chamber:
                             self.common_functions.lower_wall(
                                 self.right_return_wall, send=True)
-                        elif self.success_chamber == self.right_goal_chamber:
+                        elif self.previous_goal_chamber == self.right_goal_chamber:
                             self.common_functions.lower_wall(
                                 self.left_return_wall, send=True)
                     self.mode_start_time = rospy.Time.now()
@@ -592,6 +593,11 @@ class Interface(Plugin):
 
                 if self.pretraining_phase_one == True and self.pretraining_phase_two == False:
                     if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
+                        if self.rat_body_chamber == self.left_goal_chamber:
+                            self.previous_goal_chamber = self.left_goal_chamber
+                        elif self.rat_body_chamber == self.right_goal_chamber:
+                            self.previous_goal_chamber = self.right_goal_chamber
+
                         if self.rat_body_chamber == self.success_chamber:
                             if self.success_chamber == self.left_goal_chamber:
                                 self.common_functions.raise_wall(
