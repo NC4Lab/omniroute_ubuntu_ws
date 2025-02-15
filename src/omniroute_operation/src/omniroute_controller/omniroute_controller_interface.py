@@ -390,7 +390,7 @@ class Interface(Plugin):
 
     def __init__(self, context):
         super(Interface, self).__init__(context)
-        MazeDB.printMsg('ATTN', "Omniroute Conroller Interface Started")
+        MazeDB.printMsg('ATTN', "Omniroute Controller Interface Started")
 
         # ................ Access Shared State Variables ................
         self.wall_cfg_dir_default = rospy.get_param(
@@ -1097,7 +1097,7 @@ class Interface(Plugin):
             self.gantry_pub.publish("stop_pump", [])
 
     def qt_callback_rewardBtn_clicked(self):
-        """ Callback function to run the full feeder opperation from button press."""
+        """ Callback function to run the full feeder operation from button press."""
         self.gantry_pub.publish("deliver_reward", [1.0])
 
     def qt_callback_projWinTogBtn_clicked(self):
