@@ -634,6 +634,8 @@ class Interface(Plugin):
             self.qt_callback_runGantryBtn_clicked)
         self._widget.homeGantryBtn.clicked.connect(
             self.qt_callback_homeGantryBtn_clicked)
+        self._widget.initGantryBtn.clicked.connect(
+            self.qt_callback_initGantryBtn_clicked)
         self._widget.trackHarnessTogBtn.clicked.connect(
             self.qt_callback_trackHarnessTogBtn_clicked)
         self._widget.lowerFeederTogBtn.clicked.connect(
@@ -1066,6 +1068,10 @@ class Interface(Plugin):
         self.gantry_pub.publish("home_gantry", [])
         self._widget.xSpinBox.setValue(0)
         self._widget.ySpinBox.setValue(0)
+    
+    def qt_callback_initGantryBtn_clicked(self):
+        """ Callback function for the "Init Gantry" button."""
+        self.gantry_pub.publish("initialize_gantry", [])
 
     def qt_callback_runGantryBtn_clicked(self):
         """ Callback function for the "Run Gantry" button."""

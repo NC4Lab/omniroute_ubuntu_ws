@@ -1504,9 +1504,9 @@ QPushButton:pressed {
    <widget class="QPushButton" name="homeGantryBtn">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>90</x>
       <y>50</y>
-      <width>81</width>
+      <width>71</width>
       <height>30</height>
      </rect>
     </property>
@@ -1638,7 +1638,7 @@ QPushButton:pressed {
    <widget class="QPushButton" name="trackHarnessTogBtn">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>180</x>
       <y>50</y>
       <width>111</width>
       <height>30</height>
@@ -1674,6 +1674,24 @@ QPushButton:pressed {
     </property>
     <property name="checkable">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="initGantryBtn">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>71</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Init</string>
     </property>
    </widget>
   </widget>
