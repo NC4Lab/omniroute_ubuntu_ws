@@ -430,7 +430,8 @@ void GantryOperation::procEcatMessage()
 	{
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
-		gantryMove(x, y, maxFeedRate);
+		float feed_rate = EsmaCom.rcvEM.ArgU.f32[2]; // get the feed rate
+		gantryMove(x, y, feed_rate);
 	}
 
 	// GANTRY_MOVE_ABS
@@ -438,7 +439,8 @@ void GantryOperation::procEcatMessage()
 	{
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
-		gantryMoveAbs(x, y, maxFeedRate);
+		float feed_rate = EsmaCom.rcvEM.ArgU.f32[2]; // get the feed rate
+		gantryMoveAbs(x, y, feed_rate);
 	}
 
 	// GANTRY_JOG_CANCEL
