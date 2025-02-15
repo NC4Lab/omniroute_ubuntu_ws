@@ -1419,7 +1419,7 @@ QPushButton:pressed {
                 </string>
    </property>
    <property name="title">
-    <string>Feeder Gantry Opperation</string>
+    <string>Feeder Gantry Operation</string>
    </property>
    <widget class="QLabel" name="xSpinBoxLabel">
     <property name="geometry">

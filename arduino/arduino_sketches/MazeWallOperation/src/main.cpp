@@ -24,7 +24,7 @@
 bool DB_VERBOSE = 0;  // set to control debugging behavior [0:silent, 1:verbose]
 bool DO_ECAT_SPI = 1; // set to control block SPI [0:dont start, 1:start]
 
-// Wall opperation setup (these will be overwritten by the Ethercat message)
+// Wall operation setup (these will be overwritten by the Ethercat message)
 uint8_t nCham = 9;			   // number of chambers being used [1-9]
 uint8_t nChamPerBlock = 3;	   // max number of chambers to move at once [1-nCham]
 uint8_t nMoveAttempt = 3;	   // number of attempts to move a walls [1-255]
@@ -97,7 +97,7 @@ void loop()
 	// WallOper.testWallPWM(0, a_wall, 1);
 	// while (true);
 
-	// // Test wall opperation
+	// // Test wall operation
 	// uint8_t a_wall[2] = { 1, 3 };
 	// WallOper.testWallOperation(0, a_wall, 2);
 }

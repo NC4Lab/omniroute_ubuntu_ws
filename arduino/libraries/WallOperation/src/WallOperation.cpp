@@ -243,7 +243,7 @@ void WallOperation::initSoftware(uint8_t init_level, uint8_t setup_arg_arr[])
 {
 	_Dbg.printMsg(_Dbg.MT::ATTN, "START: SOFTWARE %s", init_level == 0 ? "INITIALIZATION" : init_level == 1 ? "REINITIALIZATION"
 																											  : "RESET");
-	// Update wall opperation variables for initialization or reinitialization
+	// Update wall operation variables for initialization or reinitialization
 	if (init_level == 0 || init_level == 1)
 	{
 		if (setup_arg_arr != nullptr)
@@ -1326,7 +1326,7 @@ uint8_t WallOperation::testWallOperation(uint8_t cham_i, uint8_t p_wall_inc[], u
 	}
 
 	// Test all walls
-	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test move opperation: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
+	_Dbg.printMsg(_Dbg.MT::ATTN, "RUNNING: Test move operation: chamber[%d] walls%s", cham_i, _Dbg.arrayStr(p_wi, s));
 	uint8_t r_bit_out = 1;
 	uint16_t dt = 2000;
 	uint16_t ts;

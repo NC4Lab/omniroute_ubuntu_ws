@@ -59,7 +59,7 @@ private:
     ros_ethercat_arduino_shield_by_esmacat sync_ease; // ROS object for Esmacat slave
     ros_ethercat_arduino_shield_by_esmacat :: write sync_ease_ros_message; // ROS message object for Esmacat slave
 
-    // Declare slave objects for maze wall conroller arduino
+    // Declare slave objects for maze wall controller arduino
     esmacat_ethercat_arduino_shield_by_esmacat maze_ease_ecat_as; 
     ros_ethercat_arduino_shield_by_esmacat maze_ease;
     ros_ethercat_arduino_shield_by_esmacat :: write maze_ease_ros_message;

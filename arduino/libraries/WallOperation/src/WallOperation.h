@@ -12,7 +12,7 @@
 #include <CypressCom.h>
 #include <EsmacatCom.h>
 
-/// @brief This class handles the actual opperation of the maze walls and Ethercat coms.
+/// @brief This class handles the actual operation of the maze walls and Ethercat coms.
 ///
 /// @remarks
 /// This class uses an instance of the MazeDebug and CypressCom classes.
