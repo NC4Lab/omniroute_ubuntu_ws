@@ -4,7 +4,6 @@
 from shared_utils.maze_debug import MazeDB
 from shared_utils.esmacat_com import EsmacatCom
 from shared_utils.wall_utilities import MazeDimensions
-from gantry.gcodeclient import Client as GcodeClient
 
 # ROS Imports
 import rospy
@@ -12,7 +11,7 @@ from omniroute_operation.msg import *
 
 # Other Imports
 import time
-from geometry_msgs.msg import PoseStamped, PointStamped
+from geometry_msgs.msg import PoseStamped
 import numpy as np
 from enum import Enum
 import math
@@ -85,7 +84,6 @@ class GantryOperation:
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
 
         # Initialize the gantry mode used for state machine
-        # self.gantry_mode = GantryState.IDLE
         self.gantry_mode = GantryState.IDLE
 
         # ................ Ecat Setup ................
@@ -328,7 +326,7 @@ class GantryOperation:
 
         if self.is_handshake_confirmed == False or self.is_grbl_initialize_confirmed == False or self.is_gantry_home_confirmed == False:
             MazeDB.printMsg(
-                'WARM', "Gantry not initialized. Cannot move gantry.")
+                'WARN', "Gantry not initialized. Cannot move gantry.")
             return
 
         # Flip x and y to account for gantry orientation and store to a list
@@ -457,7 +455,7 @@ class GantryOperation:
             # Set back to idle
             self.gantry_mode = GantryState.IDLE
 
-            MazeDB.printMsg('WARN', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
+            MazeDB.printMsg('INFO', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
                             chamber_num, target_x, target_y)
 
         elif msg.cmd == "start_harness_tracking":
