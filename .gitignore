@@ -9,3 +9,4 @@ src/CMakeLists.txt
 **/settings.json
 *.bag
 .pio
+arduino/.vscode/c_cpp_properties.json

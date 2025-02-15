@@ -196,20 +196,20 @@ class GantryOperation:
 
         # ................ Handle GRBL Position Reset ................
 
-        if self.EsmaCom.isEcatConnected:
+        # if self.EsmaCom.isEcatConnected:
 
-            # Check if the G92 command has not been sent in the last 2 seconds
-            if current_time - self.last_g92_time >= 2.0:
+        #     # Check if the G92 command has not been sent in the last 2 seconds
+        #     if current_time - self.last_g92_time >= 2.0:
                     
-                # Convert gantry positions to mm
-                gantry_x_mm = self.gantry_x * 1000.0
-                gantry_y_mm = self.gantry_y * 1000.0
+        #         # Convert gantry positions to mm
+        #         gantry_x_mm = self.gantry_x * 1000.0
+        #         gantry_y_mm = self.gantry_y * 1000.0
 
-                # Send the reset origin command
-                self.reset_origin(gantry_x_mm, gantry_y_mm)
+        #         # Send the reset origin command
+        #         self.reset_origin(gantry_x_mm, gantry_y_mm)
 
-                # Update the last G92 time
-                self.last_g92_time = current_time
+        #         # Update the last G92 time
+        #         self.last_g92_time = current_time
 
         # ................ Handle Haness Tracking ................
 
@@ -336,16 +336,51 @@ class GantryOperation:
         - max_feed_rate: max feed rate in mm/min.
         """
 
+        if self.is_handshake_confirmed == False or self.is_grbl_initialize_confirmed == False or self.is_gantry_home_confirmed == False:
+            MazeDB.printMsg(
+                'WARM', "Gantry not initialized. Cannot move gantry.")
+            return
+
         # Flip x and y to account for gantry orientation and store to a list
         xy_list = [y, x]
 
         # Print the move command
         MazeDB.printMsg(
-            'DEBUG', "Move gantry: x[%0.2f] y[%0.2f]", xy_list[0], xy_list[1])
+            'ERROR', "Move gantry: x[%0.2f] y[%0.2f]", xy_list[0], xy_list[1])
 
         # Send command to move gantry
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
+
+        # Set flag that movement is in progress
+        if x != 0 or y != 0:
+            self.movement_in_progress = True
+    
+    def move_gantry_abs(self, x, y, max_feed_rate):
+        """
+        Move the gantry to an absolute position.
+
+        Arguments:
+        - x: absolute x position in mm.
+        - y: absolute y position in mm.
+        - max_feed_rate: max feed rate in mm/min.
+        """
+
+        if self.is_handshake_confirmed == False or self.is_grbl_initialize_confirmed == False or self.is_gantry_home_confirmed == False:
+            MazeDB.printMsg(
+                'WARN', "Gantry not initialized. Cannot move gantry.")
+            return
+
+        # Flip x and y to account for gantry orientation and store to a list
+        xy_list = [y, x]
+
+        # Print the move command
+        MazeDB.printMsg(
+            'WARN', "Move gantry: x[%0.2f] y[%0.2f]", xy_list[0], xy_list[1])
+
+        # Send command to move gantry
+        self.EsmaCom.writeEcatMessage(
+            EsmacatCom.MessageType.GANTRY_MOVE_ABS, msg_arg_data_f32=xy_list, do_print=False)
 
         # Set flag that movement is in progress
         if x != 0 or y != 0:
@@ -422,22 +457,17 @@ class GantryOperation:
 
             # Get the target x and y
             chamber_num = int(msg.args[0])
-            target_x = self.chamber_centers[chamber_num][0]
-            target_y = self.chamber_centers[chamber_num][1]
-
-            # Compute move distance
-            gantry_to_target = np.array(
-                [target_x - self.gantry_x, target_y - self.gantry_y])
-            gantry_to_target_mm = gantry_to_target * 1000.0  # convert to mm
+            target_x = self.chamber_centers[chamber_num][0] * 1000.0 + 225
+            target_y = self.chamber_centers[chamber_num][1] * 1000.0
 
             # Send the move command
-            self.move_gantry_rel(
-                gantry_to_target_mm[0], gantry_to_target_mm[1], self.max_feed_rate)
+            self.move_gantry_abs(
+                target_x, target_y, self.max_feed_rate)
 
             # Set back to idle
             self.gantry_mode = GantryState.IDLE
 
-            MazeDB.printMsg('DEBUG', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
+            MazeDB.printMsg('WARN', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
                             chamber_num, target_x, target_y)
 
         elif msg.cmd == "start_harness_tracking":

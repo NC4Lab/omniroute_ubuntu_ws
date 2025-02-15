@@ -500,8 +500,7 @@ class CommonFunctions:
         self.gantry_pub.publish("deliver_reward", [4.0]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):
-        x = self.maze_dim.chamber_centers[chamber_num][0]
-        y = self.maze_dim.chamber_centers[chamber_num][1]
+        self.gantry_pub.publish("move_to_chamber", [chamber_num])
 
 
 if __name__ == '__main__':

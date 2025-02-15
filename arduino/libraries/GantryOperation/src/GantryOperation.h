@@ -162,6 +162,9 @@ public:
 	void gantryMove(float x, float y, float max_feed_rate);
 
 public:
+	void gantryMoveAbs(float x, float y, float max_feed_rate);
+
+public:
 	void grblJogCancel();
 
 public:

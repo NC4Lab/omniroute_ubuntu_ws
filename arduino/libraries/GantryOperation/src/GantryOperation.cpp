@@ -228,7 +228,25 @@ void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
 	}
 }
 
+void GantryOperation::gantryMoveAbs(float x, float y, float max_feed_rate)
+{
+	// Convert float values to String with 2 decimal places
+	String x_str = String(x, 2);
+	String y_str = String(y, 2);
+	String fr_str = "F" + String((long)max_feed_rate);
 
+	// Format the jog command string using Strings
+	String cmd_str = "G90 G21 X" + x_str + " Y" + y_str + " " + fr_str;
+
+	// Send the jog command
+	if (grblWrite(cmd_str) != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMoveAbs] Error moving to target coordinates: %s", cmd_str.c_str());
+	}
+}
+
+
+/// @brief Cancel the jog operation.
 void GantryOperation::grblJogCancel()
 {
 	// Send the jog cancel command
@@ -413,6 +431,14 @@ void GantryOperation::procEcatMessage()
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
 		gantryMove(x, y, maxFeedRate);
+	}
+
+	// GANTRY_MOVE_ABS
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_ABS)
+	{
+		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
+		gantryMoveAbs(x, y, maxFeedRate);
 	}
 
 	// GANTRY_JOG_CANCEL

@@ -72,7 +72,7 @@ public:
     bool isEcatConnected = false;      // flag to track setup handshake of ethercat coms
     const int dtEcatDisconnect = 1000; // time in ms to wait before final ecat register clear
 
-    const char message_type_str[17][30] = {
+    const char message_type_str[18][30] = {
         "MSG_NONE",
         "HANDSHAKE",
         "INITIALIZE_CYPRESS",
@@ -89,7 +89,8 @@ public:
         "GANTRY_REWARD",
         "GANTRY_MOVE_REL",
         "GANTRY_JOG_CANCEL",
-        "RESET_ORIGIN"};
+        "RESET_ORIGIN",
+        "GANTRY_MOVE_ABS"};
 
     enum MessageType
     {
@@ -110,6 +111,7 @@ public:
         GANTRY_MOVE_REL = 14,
         GANTRY_JOG_CANCEL = 15,
         RESET_ORIGIN = 16,
+        GANTRY_MOVE_ABS = 17,
         nMsgTypEnum
     };
     const char error_type_str[7][30] = {
