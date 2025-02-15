@@ -6,11 +6,8 @@ from experiment_controller.experiment_controller_interface import Wall
 from experiment_controller.experiment_controller_interface import CommonFunctions
 
 import os
-import time
 import rospy
 import numpy as np
-import math
-import subprocess
 import random
 from std_msgs.msg import String, Int32, Int8
 from geometry_msgs.msg import PoseStamped, PointStamped
@@ -18,7 +15,6 @@ from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
 from dateutil.parser import parse as parsedate
 
-import pandas as pd
 from enum import Enum
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
@@ -30,8 +26,6 @@ from PyQt5.QtCore import QTimer
 
 from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
-
-import json
 
 import psytrack as psy
 from psytrack.helper.helperFunctions import read_input

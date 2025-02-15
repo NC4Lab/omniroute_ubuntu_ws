@@ -3,6 +3,7 @@
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
 from shared_utils.esmacat_com import EsmacatCom
+from shared_utils.wall_utilities import MazeDimensions
 from gantry.gcodeclient import Client as GcodeClient
 
 # ROS Imports
@@ -66,18 +67,7 @@ class GantryOperation:
         # Track if movement is in progress
         self.movement_in_progress = False
 
-        # Paramters for positioning gantry
-        self.chamber_wd = 0.3  # Chamber width (m)
-        self.n_chamber_side = 3
-        self.chamber_centers = []  # List of chamber centers
-
-        # Compute the chamber centers
-        for i in range(0, self.n_chamber_side**2):
-            row = i//self.n_chamber_side
-            col = i % self.n_chamber_side
-            chamber_center = np.array([self.chamber_wd/2 + col*self.chamber_wd,
-                                      self.chamber_wd/2 + (self.n_chamber_side-1-row)*self.chamber_wd])
-            self.chamber_centers.append(chamber_center)
+        self.maze_dim = MazeDimensions()
 
         # ................ ROS Setup ................
 
@@ -457,8 +447,8 @@ class GantryOperation:
 
             # Get the target x and y
             chamber_num = int(msg.args[0])
-            target_x = self.chamber_centers[chamber_num][0] * 1000.0 + 225
-            target_y = self.chamber_centers[chamber_num][1] * 1000.0
+            target_x = self.maze_dim.chamber_centers[chamber_num][0] * 1000.0 + 225
+            target_y = self.maze_dim.chamber_centers[chamber_num][1] * 1000.0
 
             # Send the move command
             self.move_gantry_abs(
