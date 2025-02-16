@@ -65,28 +65,28 @@ uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout, bo
 	while (Serial1.available() > 0 || millis() - start_time < timeout)
 	{
 		// Read a byte from the Serial buffer
-		char new_bite = Serial1.read();
+		char new_byte = Serial1.read();
 
 		// Check for carriage return character
-		if (new_bite == '\r')
+		if (new_byte == '\r')
 		{
 			continue;
 		}
 
 		// Check for new line character
-		if (new_bite == '\n')
+		if (new_byte == '\n')
 		{
 			break;
 		}
 
 		// Append the byte to the String
-		resonse_str += new_bite;
+		resonse_str += new_byte;
 	}
 
 	// Check for timeout
 	if (millis() - start_time >= timeout)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timeodut");
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timedout");
 		return 2;
 	}
 
@@ -211,12 +211,14 @@ void GantryOperation::gantryHome(uint16_t home_speed)
 }
 
 /// @brief Move the gantry to the target coordinates.
-void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
+void GantryOperation::gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate)
 {
 	// Convert float values to String with 2 decimal places
-	String x_str = String(x, 2);
-	String y_str = String(y, 2);
-	String fr_str = "F" + String((long)max_feed_rate);
+	// String x_str = String(x, 2);
+	// String y_str = String(y, 2);
+	String x_str = String((long)x);
+	String y_str = String((long)y);
+	String fr_str = "F" + String((long)feed_rate);
 
 	// Format the jog command string using Strings
 	String cmd_str = "$J=G91 G21 X" + x_str + " Y" + y_str + " " + fr_str;
@@ -228,15 +230,17 @@ void GantryOperation::gantryMove(float x, float y, float max_feed_rate)
 	}
 }
 
-void GantryOperation::gantryMoveAbs(float x, float y, float max_feed_rate)
+void GantryOperation::gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate)
 {
 	// Convert float values to String with 2 decimal places
-	String x_str = String(x, 2);
-	String y_str = String(y, 2);
-	String fr_str = "F" + String((long)max_feed_rate);
+	// String x_str = String(x, 2);
+	// String y_str = String(y, 2);
+	String x_str = String((long)x);
+	String y_str = String((long)y);
+	String fr_str = "F" + String((long)feed_rate);
 
 	// Format the jog command string using Strings
-	String cmd_str = "G90 G21 X" + x_str + " Y" + y_str + " " + fr_str;
+	String cmd_str = "$J=G90 G21 X" + x_str + " Y" + y_str + " " + fr_str;
 
 	// Send the jog command
 	if (grblWrite(cmd_str) != 0)
@@ -414,7 +418,7 @@ void GantryOperation::procEcatMessage()
 		float max_acceleration = EsmaCom.rcvEM.ArgU.f32[1]; // get the max acceleration
 		grblInitSystem();
 		grblInitRuntime(max_feed_rate, max_acceleration);
-		// Store mzx feed rate
+		// Store max feed rate
 		maxFeedRate = max_feed_rate;
 	}
 
@@ -428,18 +432,22 @@ void GantryOperation::procEcatMessage()
 	// GANTRY_MOVE_REL
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_REL)
 	{
-		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
-		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
-		float feed_rate = EsmaCom.rcvEM.ArgU.f32[2]; // get the feed rate
-		gantryMove(x, y, feed_rate);
+		// float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		// float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
+		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
+		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
+		uint16_t feed_rate = EsmaCom.rcvEM.ArgU.ui16[2]; // get the feed rate
+		gantryMoveRel(x, y, feed_rate);
 	}
 
 	// GANTRY_MOVE_ABS
 	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_MOVE_ABS)
 	{
-		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
-		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
-		float feed_rate = EsmaCom.rcvEM.ArgU.f32[2]; // get the feed rate
+		// float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
+		// float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
+		uint16_t x = EsmaCom.rcvEM.ArgU.ui16[0]; // get the x position
+		uint16_t y = EsmaCom.rcvEM.ArgU.ui16[1]; // get the y position
+		uint16_t feed_rate = EsmaCom.rcvEM.ArgU.ui16[2]; // get the feed rate
 		gantryMoveAbs(x, y, feed_rate);
 	}
 

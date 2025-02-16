@@ -32,7 +32,7 @@ class GantryOperation:
         # ................ GRBL Runtime Parameters ................
         self.max_feed_rate = 28500  # Maxiumum feed rate (mm/min)
         self.max_acceleration = 500  # Maximum acceleration (mm/sec^2)
-        self.home_speed = 10000  # Homing speed (mm/min)
+        self.home_speed = 7500  # Homing speed (mm/min)
 
         # ................ Gantry Tracking Setup ................
 
@@ -314,15 +314,18 @@ class GantryOperation:
         self.EsmaCom.writeEcatMessage(
             EsmacatCom.MessageType.GANTRY_HOME, msg_arg_data_i16=[home_speed])
 
-    def move_gantry_rel(self, x, y, max_feed_rate):
+    def move_gantry_rel(self, x, y, feed_rate=-1):
         """
         Move the gantry to a relative position.
 
         Arguments:
         - x: relative x position in mm.
         - y: relative y position in mm.
-        - max_feed_rate: max feed rate in mm/min.
+        - feed_rate: max feed rate in mm/min.
         """
+
+        if feed_rate == -1:
+            feed_rate = self.max_feed_rate
 
         if self.is_handshake_confirmed == False or self.is_grbl_initialize_confirmed == False or self.is_gantry_home_confirmed == False:
             MazeDB.printMsg(
@@ -330,29 +333,33 @@ class GantryOperation:
             return
 
         # Flip x and y to account for gantry orientation and store to a list
-        xy_list = [y, x]
+        xy_list = [y, x, feed_rate]
+        xy_list = [int(i) for i in xy_list]
 
         # Print the move command
         MazeDB.printMsg(
-            'ERROR', "Move gantry: x[%0.2f] y[%0.2f]", xy_list[0], xy_list[1])
+            'DEBUG', "Move gantry rel: x[%0.2f] y[%0.2f] at rate %d", xy_list[0], xy_list[1], xy_list[2])
 
         # Send command to move gantry
         self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_f32=xy_list, do_print=False)
+            EsmacatCom.MessageType.GANTRY_MOVE_REL, msg_arg_data_i16=xy_list, do_print=False)
 
         # Set flag that movement is in progress
         if x != 0 or y != 0:
             self.movement_in_progress = True
     
-    def move_gantry_abs(self, x, y, max_feed_rate):
+    def move_gantry_abs(self, x, y, feed_rate=-1):
         """
         Move the gantry to an absolute position.
 
         Arguments:
         - x: absolute x position in mm.
         - y: absolute y position in mm.
-        - max_feed_rate: max feed rate in mm/min.
+        - feed_rate: max feed rate in mm/min.
         """
+
+        if feed_rate == -1:
+            feed_rate = self.max_feed_rate
 
         if self.is_handshake_confirmed == False or self.is_grbl_initialize_confirmed == False or self.is_gantry_home_confirmed == False:
             MazeDB.printMsg(
@@ -360,15 +367,16 @@ class GantryOperation:
             return
 
         # Flip x and y to account for gantry orientation and store to a list
-        xy_list = [y, x]
+        xy_list = [y, x, feed_rate]
+        xy_list = [int(i) for i in xy_list]
 
         # Print the move command
         MazeDB.printMsg(
-            'WARN', "Move gantry: x[%0.2f] y[%0.2f]", xy_list[0], xy_list[1])
+            'DEBUG', "Move gantry abs: x[%0.2f] y[%0.2f] at rate %d", xy_list[0], xy_list[1], xy_list[2])
 
         # Send command to move gantry
         self.EsmaCom.writeEcatMessage(
-            EsmacatCom.MessageType.GANTRY_MOVE_ABS, msg_arg_data_f32=xy_list, do_print=False)
+            EsmacatCom.MessageType.GANTRY_MOVE_ABS, msg_arg_data_i16=xy_list, do_print=False)
 
         # Set flag that movement is in progress
         if x != 0 or y != 0:
@@ -442,6 +450,7 @@ class GantryOperation:
                 'DEBUG', "Move to coordinate command received: target[%0.2fm, %0.2fm]", target_x, target_y)
 
         elif msg.cmd == "move_to_chamber":
+            self.jog_cancel()
 
             # Get the target x and y
             chamber_num = int(msg.args[0])
@@ -450,7 +459,7 @@ class GantryOperation:
 
             # Send the move command
             self.move_gantry_abs(
-                target_x, target_y, self.max_feed_rate)
+                target_x, target_y, 15000)
 
             # Set back to idle
             self.gantry_mode = GantryState.IDLE

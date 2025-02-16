@@ -159,10 +159,10 @@ public:
 	void gantryHome(uint16_t home_speed);
 
 public:
-	void gantryMove(float x, float y, float max_feed_rate);
+	void gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate);
 
 public:
-	void gantryMoveAbs(float x, float y, float max_feed_rate);
+	void gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate);
 
 public:
 	void grblJogCancel();
