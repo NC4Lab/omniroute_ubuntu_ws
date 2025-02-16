@@ -336,12 +336,24 @@ void GantryOperation::feederMove(uint8_t move_dir)
 	if (move_dir == 1)
 	{
 		_Dbg.printMsg(_Dbg.MT::INFO, "[feederMove] Lowering the feeder");
-		portServo.write(portDownAngle);
+
+		// Move from portUpAngle to portDownAngle in portDuration time
+		for (int i = portUpAngle; i >= portDownAngle; i--)
+		{
+			portServo.write(i);
+			delay(portDuration / (portUpAngle - portDownAngle));
+		}
 	}
 	else
 	{
 		_Dbg.printMsg(_Dbg.MT::INFO, "[feederMove] Raising the feeder");
-		portServo.write(portUpAngle);
+		
+		// Move from portDownAngle to portUpAngle in portDuration time
+		for (int i = portDownAngle; i <= portUpAngle; i++)
+		{
+			portServo.write(i);
+			delay(portDuration / (portUpAngle - portDownAngle));
+		}
 	}
 }
 
@@ -366,7 +378,7 @@ void GantryOperation::pumpRun(uint8_t run_state)
 ///
 /// @param diration: Duration to run the pump (ms).
 ///
-void GantryOperation::runReward(float diration)
+void GantryOperation::runReward(float duration)
 {
 	// Lower the feeder
 	feederMove(1);
@@ -376,7 +388,7 @@ void GantryOperation::runReward(float diration)
 	pumpRun(1);
 
 	// Wait for the duration
-	delay(diration);
+	delay(duration);
 
 	// Stop the pump
 	pumpRun(0);

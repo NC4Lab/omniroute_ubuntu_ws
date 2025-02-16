@@ -42,8 +42,9 @@ public:
 	// Feeder port servo parameters
 	Servo portServo;			  // Servo object
 	const int portServoPin = 8;	  // Servo pwm pin
-	const int portUpAngle = 270;  // Servo up angle
-	const int portDownAngle = 90; // Servo down angle
+	const int portUpAngle = 180;  // Servo up angle
+	const int portDownAngle = 0; // Servo down angle
+	const int portDuration = 2000; // Servo move duration (ms)
 
 	// Pump servo parameters
 	Servo pumpServo;				// Servo object

@@ -455,7 +455,7 @@ class GantryOperation:
             # Get the target x and y
             chamber_num = int(msg.args[0])
             target_x = self.maze_dim.chamber_centers[chamber_num][0] * 1000.0 + 225
-            target_y = self.maze_dim.chamber_centers[chamber_num][1] * 1000.0
+            target_y = self.maze_dim.chamber_centers[chamber_num][1] * 1000.0 - 30
 
             # Send the move command
             self.move_gantry_abs(
