@@ -276,6 +276,8 @@ class Interface(Plugin):
 
         self.previous_cued_chamber = 0
 
+        self.switch_trial = None
+
         # self.project_floor_img = Wall(9, 0).to_dict()
 
         self.maze_dim = MazeDimensions()
@@ -361,7 +363,7 @@ class Interface(Plugin):
     def pick_trial_phase_one(self):
         # Initialize current_group if it doesn't exist yet
         if not hasattr(self, 'current_group'):
-            self.current_group = 'group2'
+            self.current_group = 'group1'
 
         if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
             # Switch to the other group
@@ -875,10 +877,10 @@ class Interface(Plugin):
             rospy.loginfo("CHOICE")
 
         elif self.mode == Mode.CHOICE:
-            if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.CHOICE_TO_GOAL
-                rospy.loginfo("CHOICE TO GOAL")
+            #if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.CHOICE_TO_GOAL
+            rospy.loginfo("CHOICE TO GOAL")
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             if self.rat_body_chamber == self.success_chamber:
@@ -948,21 +950,29 @@ class Interface(Plugin):
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
                 if self.phase_three:
-                    if self.currentTrialNumber == 14:
+                    if self.currentTrialNumber < 9:
+                        # Before trial 10, do not switch even if self.success_chamber == self.left_chamber
+                        print(f"Trial {self.currentTrialNumber}: No switching before trial 10.")
+                        self.choose_start_config(self.start_chamber)  
+
+                    elif self.currentTrialNumber == 9 and self.success_chamber == self.left_chamber:
+                        # First switch happens at trial 10
+                        self.switch_trial = self.currentTrialNumber
                         self.starting_config = self.success_chamber
                         self.choose_start_config(self.starting_config)
-                        print('Trail 2 switch')
-                    elif self.currentTrialNumber == 29:
-                        self.starting_config = self.success_chamber
-                        self.choose_start_config(self.starting_config)
-                        print("trial 5 switch")
-                    elif self.currentTrialNumber == 44:
-                        self.starting_config = self.success_chamber
-                        self.choose_start_config(self.starting_config)
-                        print("trial 8 switch")
+                        print(f"First switch at trial {self.currentTrialNumber}")
+
+                    elif self.success_chamber == self.left_chamber:
+                         # Switch only if at least 2 trials have passed since the last switch
+                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 10:
+                            self.switch_trial = self.currentTrialNumber
+                            self.starting_config = self.success_chamber
+                            self.choose_start_config(self.starting_config)
+                            print(f"Switch at trial {self.currentTrialNumber}")
+                        else:
+                            self.choose_start_config(self.start_chamber)
                     else:
                         self.choose_start_config(self.start_chamber)
-
                 else:
                     self.setChamberFiveStartConfig()
                     rospy.loginfo("Chamber 5 selected")
@@ -996,18 +1006,27 @@ class Interface(Plugin):
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
                 if self.phase_three:
-                    if self.currentTrialNumber == 19:
-                        self.starting_config = self.error_chamber 
-                        self.choose_start_config(self.starting_config)
-                        print('Trail 2 switch')
-                    elif self.currentTrialNumber == 39:
+                    if self.currentTrialNumber < 9:
+                        # Before trial 10, do not switch even if self.success_chamber == self.left_chamber
+                        print(f"Trial {self.currentTrialNumber}: No switching before trial 10.")
+                        self.choose_start_config(self.start_chamber)  
+
+                    elif self.currentTrialNumber == 9 and self.error_chamber == self.left_chamber:
+                        # First switch happens at trial 10
+                        self.switch_trial = self.currentTrialNumber
                         self.starting_config = self.error_chamber
                         self.choose_start_config(self.starting_config)
-                        print("trial 5 switch")
-                    elif self.currentTrialNumber == 59:
-                        self.starting_config = self.error_chamber
-                        self.choose_start_config(self.starting_config)
-                        print("trial 8 switch")
+                        print(f"First switch at trial {self.currentTrialNumber}")
+
+                    elif self.error_chamber == self.left_chamber:
+                         # Switch only if at least 10 trials have passed since the last switch
+                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 10:
+                            self.switch_trial = self.currentTrialNumber
+                            self.starting_config = self.error_chamber
+                            self.choose_start_config(self.starting_config)
+                            print(f"Switch at trial {self.currentTrialNumber}")
+                        else:
+                            self.choose_start_config(self.start_chamber)
                     else:
                         self.choose_start_config(self.start_chamber)
 
