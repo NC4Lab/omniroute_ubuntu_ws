@@ -217,6 +217,9 @@ class Interface(Plugin):
         elif experiment == "single_T_maze_experiment":
             self.experiment_type = "single_T_maze_experiment"
             rospy.loginfo("Single T-maze experiment selected")
+        elif experiment == "pseudorandom_controller_experiment":
+            self.experiment_type = "pseudorandom_controller_experiment"
+            rospy.loginfo("Pseudorandom control experiment selected")
 
     def _handle_browseBtn_clicked(self):
         pathDir = os.path.dirname((__file__))
@@ -464,6 +467,9 @@ class Interface(Plugin):
         elif experiment == "single_T_maze_experiment":
             self.experiment_type = "single_T_maze_experiment"
             rospy.loginfo("Single T-maze experiment selected")
+        elif experiment == "pseudorandom_controller_experiment":
+            self.experiment_type = "pseudorandom_controller_experiment"
+            rospy.loginfo("Pseudorandom control experiment selected")
 
 
 class CommonFunctions:

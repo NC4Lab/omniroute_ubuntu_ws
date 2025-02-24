@@ -3,7 +3,8 @@ import cv2
 import os
 
 # Define the folder containing AVI files
-folder_path = r"\\10.34.1.59\big_gulp\nc4_rat_data\Maze_Rats\NC40008\250129\Cam_14" # Change this to your folder path
+folder_path = r"/mnt/big_gulp/nc4_rat_data/Maze_Rats/NC40008/250206/Cam_14"
+# Change this to your folder path
 output_file = os.path.join(folder_path, "merged_video.avi")
 
 # Get list of AVI files in the folder
