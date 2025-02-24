@@ -58,9 +58,10 @@ class Mode(Enum):
     ERROR_RETURN_TO_START = 23
     ERROR_START = 24
     ERROR_END = 25
-    WALL_HABITUATION = 26
+    WALL_HABITUATION_START = 26
     RAISE_WALLS = 27
     LOWER_WALLS = 28
+    WALL_HABITUATION_STOP = 29
 
 
 class Interface(Plugin):
@@ -413,7 +414,7 @@ class Interface(Plugin):
             # Update the previous_rat_chamber for the next iteration
             self.previous_rat_chamber = current_rat_chamber
         
-        if self.mode == Mode.WALL_HABITUATION:
+        if self.mode == Mode.WALL_HABITUATION_START:
             if self._widget.gantryCheckBtn.isChecked():
                 rospy.loginfo("Checking if need to raise walls")
                 if self.wall_habituation_done == False:
@@ -421,7 +422,6 @@ class Interface(Plugin):
                     
 
         if self.mode == Mode.RAISE_WALLS:
-            rospy.loginfo(f"Rat is in chamber: {self.rat_body_chamber}")
             if self.rat_body_chamber == self.start_chamber:
                 # Ensure mode_start_time is only set once per chamber visit
                 if self.wall_habituation_start_time is None:
@@ -476,13 +476,7 @@ class Interface(Plugin):
                     self.common_functions.lower_wall(
                         self.right_return_wall, send=True)
 
-                    # Only set habituation as done once the rat has moved
-                    if self.rat_body_chamber != self.start_chamber:
-                        self.wall_habituation_start_time = None
-                        self.wall_habituation_done = False  # Reset flag
-                        self.mode = Mode.WALL_HABITUATION
-                    else:
-                        self.wall_habituation_done = True  # Ensure walls do not raise again until needed
+                    self.mode = Mode.WALL_HABITUATION_STOP
 
                 elif self.rat_body_chamber == self.left_goal_chamber:
                     rospy.loginfo("Lower Walls")
@@ -491,13 +485,7 @@ class Interface(Plugin):
                     self.common_functions.lower_wall(
                         self.left_goal_exit_wall, send=True)
                     
-                    # Only set habituation as done once the rat has moved
-                    if self.rat_body_chamber != self.left_goal_chamber:
-                        self.wall_habituation_start_time = None
-                        self.wall_habituation_done = False  # Reset flag
-                        self.mode = Mode.WALL_HABITUATION
-                    else:
-                        self.wall_habituation_done = True  # Ensure walls do not raise again until needed
+                    self.mode = Mode.WALL_HABITUATION_STOP
 
                 elif self.rat_body_chamber == self.right_goal_chamber:
                     rospy.loginfo("Lower Walls")
@@ -505,19 +493,47 @@ class Interface(Plugin):
                         self.right_goal_entry_wall, send=True)
                     self.common_functions.lower_wall(
                         self.right_goal_exit_wall, send=True)
-                    
-                    # Only set habituation as done once the rat has moved
-                    if self.rat_body_chamber != self.right_goal_chamber:
-                        self.wall_habituation_start_time = None
-                        self.wall_habituation_done = False  # Reset flag
-                        self.mode = Mode.WALL_HABITUATION
-                    else:
-                        self.wall_habituation_done = True  # Ensure walls do not raise again until needed
+
+                    self.mode = Mode.WALL_HABITUATION_STOP
+
+        if self.mode == Mode.WALL_HABITUATION_STOP:
+            if self.previous_rat_chamber == self.start_chamber:
+
+                # Only set habituation as done once the rat has moved
+                if self.rat_body_chamber != self.start_chamber:
+                    self.wall_habituation_done = False  # Reset flag
+                    self.wall_habituation_start_time = None
+                    rospy.loginfo("Wall Habituation Done")
+                    self.mode = Mode.WALL_HABITUATION_START
+                else:
+                    self.wall_habituation_done = True  # Ensure walls do not raise again until needed
+
+            elif self.previous_rat_chamber == self.left_goal_chamber:
+
+                # Only set habituation as done once the rat has moved
+                if self.rat_body_chamber != self.left_goal_chamber:
+                    self.wall_habituation_done = False  # Reset flag
+                    self.wall_habituation_start_time = None
+                    rospy.loginfo("Wall Habituation Done")
+                    self.mode = Mode.WALL_HABITUATION_START
+                else:
+                    self.wall_habituation_done = True  # Ensure walls do not raise again until needed
+
+            elif self.previous_rat_chamber == self.right_goal_chamber:
+
+                # Only set habituation as done once the rat has moved
+                if self.rat_body_chamber != self.right_goal_chamber:
+                    self.wall_habituation_done = False  # Reset flag
+                    self.wall_habituation_start_time = None
+                    rospy.loginfo("Wall Habituation Done")
+                    self.mode = Mode.WALL_HABITUATION_START
+                else:
+                    self.wall_habituation_done = True  # Ensure walls do not raise again until needed
 
         if self.mode == Mode.START_EXPERIMENT:
 
             if self.wall_habituation == True:
-                self.mode = Mode.WALL_HABITUATION
+                self.mode = Mode.WALL_HABITUATION_START
                 rospy.loginfo("Start Wall Habituation")
                
             else:
@@ -816,8 +832,8 @@ class Interface(Plugin):
             rospy.loginfo("REWARD_START")
 
         elif self.mode == Mode.REWARD_START:
+            self.common_functions.reward_dispense()
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
-                # self.common_functions.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_END
                 rospy.loginfo("REWARD_END")
