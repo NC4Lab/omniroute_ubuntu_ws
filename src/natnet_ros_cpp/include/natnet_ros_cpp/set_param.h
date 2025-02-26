@@ -63,8 +63,8 @@ public:
         }
         else
         {
-            ROS_WARN("Failed to get server IP, using default 192.168.0.100");
-            serverIP = "192.168.0.100";
+            ROS_WARN("Failed to get server IP, using default 192.168.1.100");
+            serverIP = "192.168.1.100";
         }
 
         if (n.getParam("clientIP", clientIP))
@@ -73,8 +73,8 @@ public:
         }
         else
         {
-            ROS_WARN("Failed to get client IP, using default 192.168.0.101");
-            clientIP = "192.168.0.101";
+            ROS_WARN("Failed to get client IP, using default 192.168.1.101");
+            clientIP = "192.168.1.101";
         }
 
         if (n.getParam("serverType", serverType))

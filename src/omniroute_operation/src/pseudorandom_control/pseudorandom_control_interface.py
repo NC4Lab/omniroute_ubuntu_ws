@@ -169,7 +169,7 @@ class Interface(Plugin):
         self.nDay = 0
         self.currentTrial = []
         self.currentTrialNumber = 0
-        self.nTrials = 60
+        self.nTrials = 20
         self.trials = []
         self.current_trial_index = 0
         self.nPrevTrials = 0
@@ -194,9 +194,9 @@ class Interface(Plugin):
         # Duration to wait for rat to move to the choice point
         self.choice_delay = rospy.Duration(2)
         # Duration to wait to for the reward to dispense
-        self.reward_start_delay = rospy.Duration(10)
+        self.reward_start_delay = rospy.Duration(0.5)
         # Duration to wait to dispense reward if the rat made the right choice
-        self.reward_end_delay = rospy.Duration(2)
+        self.reward_end_delay = rospy.Duration(10)
         self.success_delay = rospy.Duration(1)  # Delay after reward ends
         self.error_delay = rospy.Duration(40)  # Delay after error
         self.end_trial_delay = rospy.Duration(
@@ -832,8 +832,8 @@ class Interface(Plugin):
             rospy.loginfo("REWARD_START")
 
         elif self.mode == Mode.REWARD_START:
-            self.common_functions.reward_dispense()
             if (self.current_time - self.mode_start_time).to_sec() >= self.reward_start_delay.to_sec():
+                self.common_functions.reward_dispense()
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_END
                 rospy.loginfo("REWARD_END")
@@ -851,7 +851,7 @@ class Interface(Plugin):
                     rospy.loginfo("REWARD_TO_RETURN")
 
         elif self.mode == Mode.REWARD_TO_RETURN:
-            if self.pseudorandom_training == True:
+            if self.pseudorandom_training == True or self.pretraining_phase_two == True:
                 if self.success_chamber == self.left_goal_chamber:
                     self.common_functions.lower_wall(
                         self.left_goal_exit_wall, send=True)
@@ -946,7 +946,7 @@ class Interface(Plugin):
                     rospy.loginfo("ERROR_TO_RETURN")
 
         elif self.mode == Mode.ERROR_TO_RETURN:
-            if self.pseudorandom_training == True:
+            if self.pseudorandom_training == True or self.pretraining_phase_two == True:
                 if self.error_chamber == self.left_goal_chamber:
                     self.common_functions.lower_wall(
                         self.left_goal_exit_wall, send=True)
