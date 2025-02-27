@@ -1,9 +1,7 @@
 <launch>
+    <!-- Load shared resources -->
+    <include file="$(find omniroute_operation)/launch/shared_resources.launch"/>
 
-  <!-- Include the shared resources launch file -->
-  <include file="$(find omniroute_operation)/launch/shared_resources.launch" />
-
-  <!-- Omniroute omniroute_controller interface node -->
-  <node name="omniroute_controller_node" pkg="omniroute_operation" type="omniroute_controller" output="screen" />
-
+    <!-- Run the gate_manuscript_testing node -->
+    <node name="gate_manuscript_testing_node" pkg="omniroute_operation" type="gate_manuscript_testing.py" output="screen"/>
 </launch>

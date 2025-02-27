@@ -830,6 +830,9 @@ class Interface(Plugin):
         if self.EsmaCom.rcvEM.msgTp == EsmacatCom.MessageType.INITIALIZE_WALLS:
             MazeDB.printMsg('ATTN', "Wall Initialization Confirmed")
 
+            # Publish to ROS event
+            self.event_pub.publish("walls_initialized", rospy.Time.now())
+
             # Loop through chambers and set enable flag for walls
             for cham_i, chamber in enumerate(self.MP.Chambers):
 

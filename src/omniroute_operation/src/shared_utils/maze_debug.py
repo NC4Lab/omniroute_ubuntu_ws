@@ -54,6 +54,8 @@ class MazeDB(QGraphicsView):
             rospy.logwarn(cls._frmt_msg(Fore.YELLOW, formatted_msg, *args))
         elif level == 'DEBUG':
             rospy.loginfo(cls._frmt_msg(Fore.CYAN, formatted_msg, *args))
+        elif level == 'OTHER':
+            rospy.loginfo(cls._frmt_msg(Fore.CYAN, formatted_msg, *args))
         else:
             rospy.loginfo(cls._frmt_msg(Fore.BLACK, formatted_msg, *args))
 
