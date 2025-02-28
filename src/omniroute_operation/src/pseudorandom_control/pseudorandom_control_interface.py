@@ -194,14 +194,15 @@ class Interface(Plugin):
         # Duration to wait for rat to move to the choice point
         self.choice_delay = rospy.Duration(2)
         # Duration to wait to for the reward to dispense
-        self.reward_start_delay = rospy.Duration(0.5)
+        self.reward_start_delay = rospy.Duration(5)
         # Duration to wait to dispense reward if the rat made the right choice
         self.reward_end_delay = rospy.Duration(10)
-        self.success_delay = rospy.Duration(1)  # Delay after reward ends
+        self.success_delay = rospy.Duration(5)  # Delay after reward ends
         self.error_delay = rospy.Duration(40)  # Delay after error
         self.end_trial_delay = rospy.Duration(
             1)  # Delay after the end of the trial
-        self.error_start_delay = rospy.Duration(8)
+        self.error_start_delay = rospy.Duration(5)
+        self.error_end_delay = rospy.Duration(10)
         self.wall_delay = rospy.Duration(10)
 
         # Stimulus parameters
@@ -607,8 +608,7 @@ class Interface(Plugin):
                 rospy.loginfo(f"Selected stimulus is: {self.stimulus}")
 
                 if self.stimulus == -1:
-                    self.sound_cue = '1kHz'
-                    self.sound_pub.publish(self.sound_cue)
+                    self.sound_cue = '1KHz'
                     self.answer[self.currentTrialNumber] = 2
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -618,8 +618,7 @@ class Interface(Plugin):
                     self.trial_count[1] = 0
 
                 elif self.stimulus == 1:
-                    self.sound_cue = '8kHz'
-                    self.sound_pub.publish(self.sound_cue)
+                    self.sound_cue = '8KHz'
                     self.answer[self.currentTrialNumber] = 1
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -645,8 +644,9 @@ class Interface(Plugin):
 
         elif self.mode == Mode.SOUND_CUE:
             if (self.current_time - self.mode_start_time).to_sec() >= self.sound_delay.to_sec():
-                # if self.training_mode is not None and self.training_mode in ["choice", "user_defined_forced_choice"]:
-                # self.play_sound_cue(self.sound_cue)
+                self.sound_pub.publish(self.sound_cue)
+                #self.play_sound_cue(self.sound_cue)
+                rospy.loginfo(f"sound played: {self.sound_cue}")
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TO_CHOICE
                 rospy.loginfo("START_TO_CHOICE")
