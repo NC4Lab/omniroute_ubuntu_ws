@@ -15,6 +15,10 @@ class GateManuscriptTesting:
         # Store test mode flags
         self.do_test = "sound" # [sound, ephys]
 
+        # Specify the number of wall up/down cycles
+        self.n_wall_runs = 2
+        self.run_count = 0
+
         # Publishers
         self.test_pub = rospy.Publisher('/gate_testing', String, queue_size=10)
         self.gate_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=10)
@@ -43,11 +47,12 @@ class GateManuscriptTesting:
             self.setup_complete = True
 
     def run(self):
-        """ Runs the appropriate test based on the selected mode. """
-        if self.do_test == "sound":
-            self.run_sound_test()
-        elif self.do_test == "ephys":
-            self.run_ephys_test()
+        """ Runs the appropriate test a fixed number of times. """
+        for _ in range(self.n_wall_runs):
+            if self.do_test == "sound":
+                self.run_sound_test()
+            elif self.do_test == "ephys":
+                self.run_ephys_test()
 
     def run_sound_test(self):
         """ Executes the sound test. """
@@ -99,7 +104,7 @@ class GateManuscriptTesting:
     def set_gate(self, cham, wall, state):
         """ Sets the specified wall state (raise or lower). """
         self.wall_states.chamber = cham
-        self.wall_states.wall = wall
+        self.wall_states.wall = [wall]  # Ensure wall is a list
         self.wall_states.state = state
         self.wall_states.send = False
         self.gate_pub.publish(self.wall_states)
