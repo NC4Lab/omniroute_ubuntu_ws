@@ -503,7 +503,7 @@ class CommonFunctions:
         self.door_pub.publish(self.wallStates)
 
     def reward_dispense(self):
-        self.gantry_pub.publish("deliver_reward", [4.0]) # Send with pump duration (sec)
+        self.gantry_pub.publish("deliver_reward", [1]) # Send with pump duration (sec)
 
     def move_gantry_to_chamber(self, chamber_num):
         self.gantry_pub.publish("move_to_chamber", [chamber_num])
