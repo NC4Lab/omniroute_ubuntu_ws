@@ -48,11 +48,15 @@ class GateManuscriptTesting:
 
     def run(self):
         """ Runs the appropriate test a fixed number of times. """
-        for _ in range(self.n_wall_runs):
+        if self.run_count < self.n_wall_runs:
             if self.do_test == "sound":
                 self.run_sound_test()
             elif self.do_test == "ephys":
                 self.run_ephys_test()
+            
+            self.run_count += 1  # Increment counter
+        else:
+            rospy.signal_shutdown("[GateManuscriptTesting] Test complete.")
 
     def run_sound_test(self):
         """ Executes the sound test. """
