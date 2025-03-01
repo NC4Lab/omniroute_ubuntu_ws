@@ -15,18 +15,23 @@ class GateManuscriptTesting:
         # Store test mode flags
         self.do_test = "sound" # [sound, ephys]
 
-        # Specify the number of wall up/down cycles
-        self.n_wall_runs = 2
-        self.run_count = 0
+        # Specify testing prameters
+        self.cycle_delay = 5 # time to wait between cycles
+        self.n_wall_runs = 2 # number of wall up/down cycles
+        self.run_count = 0 # counter for number of runs
+
+        # Specify sound cue
+        self.sound_cue = '1KHz'
 
         # Publishers
         self.test_pub = rospy.Publisher('/gate_testing', String, queue_size=10)
         self.gate_pub = rospy.Publisher('/wall_state_cmd', WallState, queue_size=10)
+        self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
 
         # Initialize wall state
         self.wall_states = WallState()
 
-        # Subscribe to setup event
+        # Subscribe to events
         self.event_sub = rospy.Subscriber('/event', Event, self.check_for_setup_event, queue_size=1, tcp_nodelay=True)
 
         # Track setup status
@@ -62,27 +67,27 @@ class GateManuscriptTesting:
         """ Executes the sound test. """
         MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Running Sound Test.")
 
-        # Set center chamber gates to the raised position
-        self.set_chamber_gates(4, 1)
-        self.publish_message("test_walls_up")
+        # Run walls up
+        self.run_walls(1)
 
-        # Send tone command
-        self.publish_message("test_tone")
+        # Run walls down
+        self.run_walls(1)
 
-        # Raise chambers
+    def run_walls(self, state):
+        """ Raises or lowers all walls. """
+
+        # Set center chamber gates to the state position
+        self.set_chamber_gates(4, state)
+
+        # Send tone command to time lock to and wait 
+        self.publish_message("test_sound_cue")
+        self.sound_pub.publish(self.sound_cue)
+        rospy.sleep(1)
+
+        # run walls
+        self.publish_message("test_walls_%d", state)
         self.send_wall_msg()
-        rospy.sleep(5)
-
-        # Set center chamber gates to the lowered position
-        self.set_chamber_gates(4, 0)
-        self.publish_message("test_walls_down")
-
-        # Send tone command
-        self.publish_message("test_tone")
-
-        # Raise chambers
-        self.send_wall_msg()
-        rospy.sleep(5)
+        rospy.sleep(self.cycle_delay-1)
 
     def run_ephys_test(self):
         """ Executes the ephys test (to be defined later). """
