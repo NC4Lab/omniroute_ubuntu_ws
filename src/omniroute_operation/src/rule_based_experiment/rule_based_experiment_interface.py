@@ -809,7 +809,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    # self.gantry_pub.publish("start_harness_tracking", [])
+                    # self.gantry_pub.publish("start_rat_tracking", [])
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.POST_REWARD
                     rospy.loginfo("POST REWARD")        
@@ -1082,7 +1082,7 @@ class Interface(Plugin):
 
             elif self.mode == Mode.REWARD_END:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    # self.gantry_pub.publish("start_harness_tracking", [])
+                    # self.gantry_pub.publish("start_rat_tracking", [])
                     # if not self.is_testing_phase:
                     # #     self.play_sound_cue(self.sound_cue)
                     # # else:

@@ -21,7 +21,7 @@ import math
 class GantryState(Enum):
     IDLE = 0
     INITIALIZE_GANTRY = 1
-    TRACK_HARNESS = 2
+    TRACK_RAT = 2
 
 
 class GantryOperation:
@@ -53,12 +53,12 @@ class GantryOperation:
         self.gantry_y = 0.0
         self.prev_gantry_x = 0.0
         self.prev_gantry_y = 0.0
-        self.harness_x = 0.0
-        self.harness_y = 0.0
-        self.prev_harness_x = 0.0
-        self.prev_harness_y = 0.0
+        self.rat_x = 0.0
+        self.rat_y = 0.0
+        self.prev_rat_x = 0.0
+        self.prev_rat_y = 0.0
 
-        self.harness_vel = np.array([0.0, 0.0])
+        self.rat_vel = np.array([0.0, 0.0])
         self.gantry_vel = np.array([0.0, 0.0])
 
         self.distance_threshold = 0.15  # Distance threshold for stopping the gantry
@@ -75,8 +75,8 @@ class GantryOperation:
                          self.ros_callback_gantry_cmd, queue_size=1, tcp_nodelay=True)
 
         # Initialize the subsrciber for reading in the tracker position data
-        rospy.Subscriber('/harness_pose_in_maze', PoseStamped,
-                         self.ros_callback_harness_pose, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/rat_pose_in_maze', PoseStamped,
+                         self.ros_callback_rat_pose, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/gantry_pose_in_maze', PoseStamped,
                          self.ros_callback_gantry_pose, queue_size=1, tcp_nodelay=True)
         
@@ -201,19 +201,19 @@ class GantryOperation:
 
         # ................ Handle Haness Tracking ................
 
-        if self.gantry_mode == GantryState.TRACK_HARNESS:
+        if self.gantry_mode == GantryState.TRACK_RAT:
 
-            # Compute the harness velocity
-            self.harness_vel = np.array(
-                [self.harness_x - self.prev_harness_x, self.harness_y - self.prev_harness_y])
+            # Compute the rat velocity
+            self.rat_vel = np.array(
+                [self.rat_x - self.prev_rat_x, self.rat_y - self.prev_rat_y])
             
             self.gantry_vel = np.array(
                 [self.gantry_x - self.prev_gantry_x, self.gantry_y - self.prev_gantry_y])
 
-            # Get the current distance between the gantry and the harness
-            gantry_to_harness = np.array(
-                [self.harness_x - self.gantry_x, self.harness_y - self.gantry_y])
-            distance = np.linalg.norm(gantry_to_harness)
+            # Get the current distance between the gantry and the rat
+            gantry_to_rat = np.array(
+                [self.rat_x - self.gantry_x, self.rat_y - self.gantry_y])
+            distance = np.linalg.norm(gantry_to_rat)
 
             # Calculate time step
             current_time = time.time()
@@ -221,15 +221,8 @@ class GantryOperation:
             dt = min(dt, 0.1)  # Limit dt to 0.1 sec
 
             if distance > self.distance_threshold:
-                # Compute angle between harness velocity and gantry to harness vector
-                # angle = math.acos(np.dot(self.harness_vel, gantry_to_harness) /
-                #                   (np.linalg.norm(self.harness_vel) * np.linalg.norm(gantry_to_harness)))
-
-                angle = math.acos(np.dot(self.gantry_vel, gantry_to_harness) /
-                                  (np.linalg.norm(self.gantry_vel) * np.linalg.norm(gantry_to_harness)))
-
-                # Print angle
-                # MazeDB.printMsg('INFO', "Angle: %.2f", angle*180/math.pi)
+                angle = math.acos(np.dot(self.gantry_vel, gantry_to_rat) /
+                                  (np.linalg.norm(self.gantry_vel) * np.linalg.norm(gantry_to_rat)))
 
                 # Stop the gantry if it is moving in the wrong direction
                 if angle > math.pi/4:
@@ -239,19 +232,19 @@ class GantryOperation:
 
                 # Compute jog distance
                 jog_distance = self.compute_jog(
-                    gantry_to_harness, self.max_feed_rate, dt, self.Kp)
+                    gantry_to_rat, self.max_feed_rate, dt, self.Kp)
 
                 # Send the movement command
                 self.move_gantry_rel(
                     jog_distance[0], jog_distance[1], self.max_feed_rate)
 
-            # Stop the gantry when it reaches the harness
+            # Stop the gantry when it reaches the rat
             elif self.movement_in_progress:
                 self.jog_cancel()
                 self.movement_in_progress = False
 
-            self.prev_harness_x = self.harness_x
-            self.prev_harness_y = self.harness_y
+            self.prev_rat_x = self.rat_x
+            self.prev_rat_y = self.rat_y
 
             self.prev_gantry_x = self.gantry_x
             self.prev_gantry_y = self.gantry_y
@@ -410,11 +403,11 @@ class GantryOperation:
         self.gantry_y = msg.pose.position.y + \
             self.gantry_marker_to_gantry_center[1]
 
-    def ros_callback_harness_pose(self, msg):
+    def ros_callback_rat_pose(self, msg):
         # Store x
-        self.harness_x = msg.pose.position.x
+        self.rat_x = msg.pose.position.x
         # Store y
-        self.harness_y = msg.pose.position.y
+        self.rat_y = msg.pose.position.y
 
     def ros_callback_gantry_cmd(self, msg):
         """
@@ -467,14 +460,14 @@ class GantryOperation:
             MazeDB.printMsg('INFO', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
                             chamber_num, target_x, target_y)
 
-        elif msg.cmd == "start_harness_tracking":
+        elif msg.cmd == "start_rat_tracking":
             MazeDB.printMsg(
-                'DEBUG', "Start tracking harness command received")
-            self.gantry_mode = GantryState.TRACK_HARNESS
+                'DEBUG', "Start tracking rat command received")
+            self.gantry_mode = GantryState.TRACK_RAT
 
-        elif msg.cmd == "stop_harness_tracking":
+        elif msg.cmd == "stop_rat_tracking":
             MazeDB.printMsg(
-                'DEBUG', "Stop tracking harness command received")
+                'DEBUG', "Stop tracking rat command received")
             self.gantry_mode = GantryState.IDLE
 
         elif msg.cmd == "lower_feeder":

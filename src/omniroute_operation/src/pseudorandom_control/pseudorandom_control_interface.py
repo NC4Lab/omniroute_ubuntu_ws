@@ -845,7 +845,7 @@ class Interface(Plugin):
                 rospy.loginfo("REWARD_TO_RETURN")
             else:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.reward_end_delay.to_sec():
-                    # self.gantry_pub.publish("start_harness_tracking", [])
+                    # self.gantry_pub.publish("start_rat_tracking", [])
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_TO_RETURN
                     rospy.loginfo("REWARD_TO_RETURN")
@@ -940,7 +940,7 @@ class Interface(Plugin):
                 self.mode = Mode.ERROR_TO_RETURN
             else:
                 if (self.current_time - self.mode_start_time).to_sec() >= self.error_end_delay.to_sec():
-                    # self.gantry_pub.publish("start_harness_tracking", [])
+                    # self.gantry_pub.publish("start_rat_tracking", [])
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.ERROR_TO_RETURN
                     rospy.loginfo("ERROR_TO_RETURN")
