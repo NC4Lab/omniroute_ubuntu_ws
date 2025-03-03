@@ -22,6 +22,8 @@ class MazeTransformer:
         # Publishers to output transformed poses of the harness and gantry within the maze
         self.harness_pose_in_maze_pub = rospy.Publisher(
             '/harness_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
+        self.headstage_pose_in_maze_pub = rospy.Publisher(
+            '/headstage_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
         self.gantry_pose_in_maze_pub = rospy.Publisher(
             '/gantry_pose_in_maze', PoseStamped, queue_size=1, tcp_nodelay=True)
 
@@ -46,6 +48,7 @@ class MazeTransformer:
         self.is_marker1_broadcasting = False
         self.is_marker2_broadcasting = False
         self.is_harness_pose_broadcasting = False
+        self.is_headstage_pose_broadcasting = False
         self.is_gantry_pose_broadcasting = False
 
         # Timeout duration for Optitrack broadcasting (sec)
@@ -61,8 +64,10 @@ class MazeTransformer:
         self.maze_R = np.eye(4, dtype=np.float32)
 
         # Subscribers for additional pose data regarding harness and gantry
-        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped,
+        rospy.Subscriber('/natnet_ros/Harness/pose', PoseStamped, 
                          self.ros_callback_harness_pose, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/natnet_ros/Headstage/pose', PoseStamped,
+                         self.ros_callback_headstage_pose, queue_size=1, tcp_nodelay=True)
         rospy.Subscriber('/natnet_ros/Gantry/pose', PoseStamped,
                          self.ros_callback_gantry_pose, queue_size=1, tcp_nodelay=True)
 
@@ -84,23 +89,20 @@ class MazeTransformer:
             # Compute and pulish the maze to world transform
             self.compute_and_publish_maze_transform()
 
-            # Set the broadcasting flag for the maze transform
-            self.is_maze_tranform_published = True
-
         # Check that all assets are broadcasting  
-        if not (
-            self.is_marker0_broadcasting and
-            self.is_marker1_broadcasting and
-            self.is_marker2_broadcasting and
-            self.is_harness_pose_broadcasting and
-            self.is_gantry_pose_broadcasting
-        ):
+        # if not (
+        #     self.is_marker0_broadcasting and
+        #     self.is_marker1_broadcasting and
+        #     self.is_marker2_broadcasting and
+        #     self.is_harness_pose_broadcasting and
+        #     self.is_gantry_pose_broadcasting
+        # ):
 
-            # Check for timeout on Optitrack broadcasting
-            if time.time() - self.ts_node_init > self.dt_optitrack_timeout:
-                MazeDB.printMsg(
-                    'ERROR', "Optitrack Markers Not Broadcasting: Shutting Down Node")
-                rospy.signal_shutdown("Optitrack Markers Not Broadcasting")
+        #     # Check for timeout on Optitrack broadcasting
+        #     if time.time() - self.ts_node_init > self.dt_optitrack_timeout:
+        #         MazeDB.printMsg(
+        #             'ERROR', "Optitrack Markers Not Broadcasting: Shutting Down Node")
+        #         rospy.signal_shutdown("Optitrack Markers Not Broadcasting")
         
     def compute_and_publish_maze_transform(self):
 
@@ -137,7 +139,11 @@ class MazeTransformer:
             R), rospy.Time.now(), "maze", "world")
 
         # Add a delay to make sure the transform is available
-        rospy.sleep(0.1)
+        rospy.sleep(0.5)
+
+        # Set the broadcasting flag for the maze transform
+        self.is_maze_tranform_published = True
+
 
     def transform_and_publish_pose(self, msg, publisher):
         
@@ -154,8 +160,17 @@ class MazeTransformer:
             msg.header.stamp = latest_time
 
             # Perform the transformation
-            transformed_pose = self.tf_listener.transformPose("maze", msg)
-            publisher.publish(transformed_pose)
+            if self.is_maze_tranform_published:
+                transformed_pose = self.tf_listener.transformPose("maze", msg)
+
+                # Out of bounds check, if the transformed pose is outside the maze, do not publish
+                if not (
+                    transformed_pose.pose.position.x < -0.1 or
+                    transformed_pose.pose.position.x > 1.1 or
+                    transformed_pose.pose.position.y < -0.1 or
+                    transformed_pose.pose.position.y > 1.1
+                ):
+                    publisher.publish(transformed_pose)
 
         except (tf.ExtrapolationException, tf.LookupException, tf.ConnectivityException) as e:
             MazeDB.printMsg(
@@ -165,6 +180,11 @@ class MazeTransformer:
         # Set the broadcasting flag for the harness pose and transform and publish it
         self.is_harness_pose_broadcasting = True
         self.transform_and_publish_pose(msg, self.harness_pose_in_maze_pub)
+
+    def ros_callback_headstage_pose(self, msg):
+        # Set the broadcasting flag for the headstage pose and transform and publish it
+        self.is_headstage_pose_broadcasting = True
+        self.transform_and_publish_pose(msg, self.headstage_pose_in_maze_pub)
 
     def ros_callback_gantry_pose(self, msg):
         # Set the broadcasting flag for the gantry pose and transform and publish it

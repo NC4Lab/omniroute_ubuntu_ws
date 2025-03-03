@@ -445,10 +445,9 @@ class Interface(Plugin):
     def mazeboundary_marker3_callback(self, msg):
         self.mazeboundary_marker3 = np.array([msg.point.x, msg.point.y, msg.point.z])
     
-    def harness_pose_callback(self, msg):
-        self.harness_x = msg.pose.position.x
-        self.harness_y = msg.pose.position.y
-    # print("Harness Pose: ", msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
+    def rat_pose_callback(self, msg):
+        self.rat_x = msg.pose.position.x
+        self.rat_y = msg.pose.position.y
 
     def button_callback(self, msg):
         button_mode = msg.data

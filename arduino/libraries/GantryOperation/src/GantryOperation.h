@@ -52,6 +52,9 @@ public:
 	const int pumpRunSpeed = 500;	// Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 	const int pumpStopSpeed = 1500; // Servo run speed (Forward: 500us to 1400us, Backward: 1600us to 2500us, Stop: 1500us)
 
+	bool feederRunning = false; 	// Flag to track the feeder state. [0:stopped, 1:running] No movement of gantry while feeder is running.
+	String queuedCmd = "";			// Queued command to be executed after the feeder stops.
+
 	// Instance of EsmacatCom class using SPI chip select pin 10
 	EsmacatCom EsmaCom;
 

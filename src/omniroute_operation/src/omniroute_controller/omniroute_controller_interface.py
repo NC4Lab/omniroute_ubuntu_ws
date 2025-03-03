@@ -599,9 +599,9 @@ class Interface(Plugin):
         self.event_sub = rospy.Subscriber(
             '/event', Event, self.ros_callback_event, queue_size=1, tcp_nodelay=True)
 
-        # Harness position subscriber
-        rospy.Subscriber('/harness_pose_in_maze', PoseStamped,
-                         self.ros_callback_harness_pose, queue_size=1, tcp_nodelay=True)
+        # Rat position subscriber
+        rospy.Subscriber('/rat_pose_in_maze', PoseStamped,
+                         self.ros_callback_rat_pose, queue_size=1, tcp_nodelay=True)
 
         # ................ Callback Setup ................
 
@@ -636,8 +636,8 @@ class Interface(Plugin):
             self.qt_callback_homeGantryBtn_clicked)
         self._widget.initGantryBtn.clicked.connect(
             self.qt_callback_initGantryBtn_clicked)
-        self._widget.trackHarnessTogBtn.clicked.connect(
-            self.qt_callback_trackHarnessTogBtn_clicked)
+        self._widget.trackRatTogBtn.clicked.connect(
+            self.qt_callback_trackRatTogBtn_clicked)
         self._widget.lowerFeederTogBtn.clicked.connect(
             self.qt_callback_lowerFeederTogBtn_clicked)
         self._widget.runPumpTogBtn.clicked.connect(
@@ -1084,12 +1084,12 @@ class Interface(Plugin):
             'DEBUG', "Publish Move to Coordinates: x[%0.2f] y[%0.2f]", x, y)
         self.gantry_pub.publish("move_to_coordinate", [x, y])
 
-    def qt_callback_trackHarnessTogBtn_clicked(self):
+    def qt_callback_trackRatTogBtn_clicked(self):
         """ Callback function to start and stop gantry tracking the rat from button press."""
-        if self._widget.trackHarnessTogBtn.isChecked():
-            self.gantry_pub.publish("start_harness_tracking", [])
+        if self._widget.trackRatTogBtn.isChecked():
+            self.gantry_pub.publish("start_rat_tracking", [])
         else:
-            self.gantry_pub.publish("stop_harness_tracking", [])
+            self.gantry_pub.publish("stop_rat_tracking", [])
 
     def qt_callback_lowerFeederTogBtn_clicked(self):
         """ Callback function to lower or raise the feeder from button press."""
@@ -1281,13 +1281,13 @@ class Interface(Plugin):
         # Emit the signal to update the plot (runs on the main GUI thread)
         self.signal_update_wall_plot.emit()
 
-    def ros_callback_harness_pose(self, msg):
-        harness_x = msg.pose.position.x
-        harness_y = msg.pose.position.y
+    def ros_callback_rat_pose(self, msg):
+        rat_x = msg.pose.position.x
+        rat_y = msg.pose.position.y
 
         # Convert to GUI coordinates
-        harness_pose_in_gui = self.optitrack_to_gui(
-            [harness_x, harness_y])
+        rat_pose_in_gui = self.optitrack_to_gui(
+            [rat_x, rat_y])
 
         # Convert orientation to euler angles
         q = [msg.pose.orientation.x, msg.pose.orientation.y,
@@ -1298,7 +1298,7 @@ class Interface(Plugin):
         yaw = -(int(yaw * 180 / math.pi)-30)
 
         self.signal_rat_pos.emit(
-            harness_pose_in_gui[0], harness_pose_in_gui[1], yaw)
+            rat_pose_in_gui[0], rat_pose_in_gui[1], yaw)
 
     def ros_callback_event(self, msg):
         """ Callback function to track handshake events for all arduinos. """

@@ -1635,7 +1635,7 @@ QPushButton:pressed {
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPushButton" name="trackHarnessTogBtn">
+   <widget class="QPushButton" name="trackRatTogBtn">
     <property name="geometry">
      <rect>
       <x>180</x>
@@ -1670,7 +1670,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string>Track Harness</string>
+     <string>Track Rat</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
