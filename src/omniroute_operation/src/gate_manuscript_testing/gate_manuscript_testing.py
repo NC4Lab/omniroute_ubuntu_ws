@@ -5,6 +5,14 @@ import rospy
 from std_msgs.msg import String
 from omniroute_operation.msg import *
 
+# Audio Imports
+import os
+import subprocess
+import shutil
+import signal
+
+# arecord -D hw:4,0 -f S16_LE -r 384000 -c 1 test.wav -d 5
+
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
 
@@ -36,6 +44,22 @@ class GateManuscriptTesting:
 
         # Track setup status
         self.setup_complete = False
+
+        # Define recording parameters
+        self.audio_file_name = "test_recording.wav"  # Change this as needed
+        self.audio_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/audio_recordings"
+        self.recording_process = None
+
+        # Start recording
+        MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Start audio recording: %s.", self.audio_file_name)
+        self.start_recording()
+
+        # Wait 
+        rospy.sleep(10)
+
+        # Stop recording
+        MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Stop audio recording: %s.", self.audio_file_name)
+        self.stop_recording()
 
         # Start loop
         self.rate = rospy.Rate(1)  # 1 Hz
@@ -85,7 +109,7 @@ class GateManuscriptTesting:
         rospy.sleep(1)
 
         # run walls
-        self.publish_message("test_walls_%d", state)
+        self.publish_message(f"test_walls_{state}")
         self.send_wall_msg()
         rospy.sleep(self.cycle_delay-1)
 
@@ -121,6 +145,76 @@ class GateManuscriptTesting:
     def send_wall_msg(self):
         self.wall_states.send = True
         self.gate_pub.publish(self.wall_states)
+
+    def start_recording(self):
+        """ Start recording from the Pettersson M500-384 microphone with debugging. """
+        
+        # Construct the full path for the audio file
+        audio_file = os.path.join(self.audio_save_path, self.audio_file_name)
+        
+        # Ensure the save directory exists
+        if not os.path.exists(self.audio_save_path):
+            MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] Audio save path does not exist: {self.audio_save_path}")
+            return
+
+        # Check if arecord is installed and accessible
+        if not shutil.which("arecord"):
+            MazeDB.printMsg('ERROR', "[GateManuscriptTesting] 'arecord' command not found. Ensure ALSA utilities are installed.")
+            return
+
+        # Construct the arecord command
+        arecord_cmd = [
+            "arecord", "-D", "hw:4,0", "-f", "S16_LE", "-r", "384000", "-c", "1", audio_file
+        ]
+
+        MazeDB.printMsg('OTHER', f"[GateManuscriptTesting] Executing arecord command: {' '.join(arecord_cmd)}")
+
+        try:
+            # Start the recording process
+            self.recording_process = subprocess.Popen(
+                arecord_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            
+            MazeDB.printMsg('OTHER', f"[GateManuscriptTesting] Recording started: {audio_file} (PID: {self.recording_process.pid})")
+
+        except Exception as e:
+            MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] Failed to start recording: {e}")
+
+    def stop_recording(self):
+        """ Stop the recording process more gracefully. """
+        
+        if self.recording_process is None:
+            MazeDB.printMsg('ERROR', "[GateManuscriptTesting] No active recording process to stop.")
+            return
+
+        try:
+            MazeDB.printMsg('OTHER', f"[GateManuscriptTesting] Stopping recording (PID: {self.recording_process.pid})")
+            
+            # Send SIGINT instead of terminate (equivalent to CTRL+C)
+            self.recording_process.send_signal(signal.SIGINT)
+            stdout, stderr = self.recording_process.communicate(timeout=5)  
+            self.recording_process.wait()
+
+            # Log any output
+            if stdout:
+                MazeDB.printMsg('OTHER', f"[GateManuscriptTesting] arecord stdout: {stdout.decode().strip()}")
+            if stderr and "Aborted by signal Interrupt" not in stderr.decode():
+                MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] arecord stderr: {stderr.decode().strip()}")
+
+
+            MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Recording stopped successfully.")
+
+        except subprocess.TimeoutExpired:
+            MazeDB.printMsg('ERROR', "[GateManuscriptTesting] Timeout while stopping recording. Force killing process.")
+            self.recording_process.kill()
+
+        except Exception as e:
+            MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] Error stopping recording: {e}")
+
+        finally:
+            self.recording_process = None
+
+
 
 
 # Main Execution
