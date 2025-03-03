@@ -793,8 +793,8 @@ class Interface(Plugin):
             elif self.mode == Mode.SUCCESS:
                 self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
                 self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-                if not self.is_ephys_rat:
-                    self.gantry_pub.publish("move_to_coordinate", [self.success_center_x, self.success_center_y])
+                # if not self.is_ephys_rat:
+                #     self.gantry_pub.publish("move_to_coordinate", [self.success_center_x, self.success_center_y])
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.REWARD_START
                 rospy.loginfo("REWARD START")
@@ -1062,8 +1062,6 @@ class Interface(Plugin):
                     rospy.loginfo("Right chamber selected and chamber number is {}".format(self.success_chamber))
                 self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
                 self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
-                # self.gantry_pub.publish("move_to_coordinate", [
-                #                          self.success_center_x, self.success_center_y])
                 #self.gantry_pub.publish("move_to_chamber", [
                     #self.success_chamber])
                 self.mode_start_time = rospy.Time.now()

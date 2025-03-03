@@ -23,7 +23,6 @@ class GantryState(Enum):
     INITIALIZE_GANTRY = 1
     TRACK_RAT = 2
 
-
 class GantryOperation:
     # Initialize the GantryOperation class
     def __init__(self):
@@ -433,7 +432,7 @@ class GantryOperation:
             target_y_mm = target_y * 1000.0  # convert to mm
 
             # Move the gantry to the target
-            self.move_gantry_rel(
+            self.move_gantry_abs(
                 target_x_mm, target_y_mm, self.max_feed_rate)
 
             # Set back to idle
@@ -459,6 +458,7 @@ class GantryOperation:
 
             MazeDB.printMsg('INFO', "Move to chamber command received: chamber[%d] target[%0.2fm, %0.2fm]",
                             chamber_num, target_x, target_y)
+            
 
         elif msg.cmd == "start_rat_tracking":
             MazeDB.printMsg(
