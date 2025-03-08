@@ -169,7 +169,7 @@ class Interface(Plugin):
         self.nDay = 0
         self.currentTrial = []
         self.currentTrialNumber = 0
-        self.nTrials = 40
+        self.nTrials = 60
         self.trials = []
         self.current_trial_index = 0
         self.nPrevTrials = 0
