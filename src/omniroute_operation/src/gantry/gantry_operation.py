@@ -183,20 +183,20 @@ class GantryOperation:
 
         # ................ Handle GRBL Position Reset ................
 
-        # if self.EsmaCom.isEcatConnected:
+        #if self.EsmaCom.isEcatConnected:
 
-        #     # Check if the G92 command has not been sent in the last 2 seconds
-        #     if current_time - self.last_g92_time >= 2.0:
+            ## Check if the G92 command has not been sent in the last 2 seconds
+            #if current_time - self.last_g92_time >= 2.0:
                     
-        #         # Convert gantry positions to mm
-        #         gantry_x_mm = self.gantry_x * 1000.0
-        #         gantry_y_mm = self.gantry_y * 1000.0
+                ## Convert gantry positions to mm
+                #gantry_x_mm = self.gantry_x * 1000.0
+                #gantry_y_mm = self.gantry_y * 1000.0
 
-        #         # Send the reset origin command
-        #         self.reset_origin(gantry_x_mm, gantry_y_mm)
+                ## Send the reset origin command
+                #self.reset_origin(gantry_x_mm, gantry_y_mm)
 
-        #         # Update the last G92 time
-        #         self.last_g92_time = current_time
+                ## Update the last G92 time
+                #self.last_g92_time = current_time
 
         # ................ Handle Haness Tracking ................
 
