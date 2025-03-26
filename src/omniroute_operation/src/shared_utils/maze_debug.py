@@ -9,7 +9,7 @@ import rospy
 import inspect
 
 # ======================== GLOBAL VARS ========================
-DB_VERBOSE = True  # debug verbose flag
+DB_VERBOSE = False  # debug verbose flag
 
 class MazeDB(QGraphicsView):
     """ MazeDebug class to plot the maze """

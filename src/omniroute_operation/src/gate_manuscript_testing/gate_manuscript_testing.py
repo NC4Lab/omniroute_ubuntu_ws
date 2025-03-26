@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# roslaunch omniroute_operation gate_manuscript_testing.launch
 
 # ROS Imports
 import rospy
@@ -20,12 +21,9 @@ class GateManuscriptTesting:
     def __init__(self):
         MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Node Started")
 
-        # Store test mode flags
-        self.do_test = "sound" # [sound, ephys]
-
         # Specify testing prameters
         self.cycle_delay = 5 # time to wait between cycles
-        self.n_wall_runs = 2 # number of wall up/down cycles
+        self.n_wall_runs = 3 # number of wall up/down cycles
         self.run_count = 0 # counter for number of runs
 
         # Specify sound cue
@@ -45,9 +43,11 @@ class GateManuscriptTesting:
         # Track setup status
         self.setup_complete = False
 
+        # Define data save path
+        self.data_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/data"
+        
         # Define recording parameters
-        self.audio_file_name = "test_recording.wav"  # Change this as needed
-        self.audio_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/audio_recordings"
+        self.audio_file_name = "audio_recording.wav"  # Change this as needed
         self.recording_process = None
 
         # Start recording
@@ -55,11 +55,7 @@ class GateManuscriptTesting:
         self.start_recording()
 
         # Wait 
-        rospy.sleep(10)
-
-        # Stop recording
-        MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Stop audio recording: %s.", self.audio_file_name)
-        self.stop_recording()
+        rospy.sleep(1)
 
         # Start loop
         self.rate = rospy.Rate(1)  # 1 Hz
@@ -78,61 +74,49 @@ class GateManuscriptTesting:
     def run(self):
         """ Runs the appropriate test a fixed number of times. """
         if self.run_count < self.n_wall_runs:
-            if self.do_test == "sound":
-                self.run_sound_test()
-            elif self.do_test == "ephys":
-                self.run_ephys_test()
+            
+            # Run walls up
+            self.run_walls("up")
+
+            # Set walls down
+            self.run_walls("down")
             
             self.run_count += 1  # Increment counter
         else:
             rospy.signal_shutdown("[GateManuscriptTesting] Test complete.")
-
-    def run_sound_test(self):
-        """ Executes the sound test. """
-        MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Running Sound Test.")
-
-        # Run walls up
-        self.run_walls(1)
-
-        # Run walls down
-        self.run_walls(1)
+            # Stop recording
+            MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Stop audio recording: %s.", self.audio_file_name)
+            self.stop_recording()
 
     def run_walls(self, state):
         """ Raises or lowers all walls. """
 
-        # Set center chamber gates to the state position
-        self.set_chamber_gates(4, state)
+        if state == "up":
+            self.set_chamber_gates(4, 1)
+        elif state == "down":  
+            self.set_chamber_gates(4, 0) 
 
         # Send tone command to time lock to and wait 
         self.publish_message("test_sound_cue")
         self.sound_pub.publish(self.sound_cue)
-        rospy.sleep(1)
+
+        # Wait for sound to play
+        rospy.sleep(2)
 
         # run walls
-        self.publish_message(f"test_walls_{state}")
+        self.publish_message(f"test_wall_move_{state}")
         self.send_wall_msg()
         rospy.sleep(self.cycle_delay-1)
-
-    def run_ephys_test(self):
-        """ Executes the ephys test (to be defined later). """
-        MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Running Ephys Test.")
 
     def publish_message(self, msg):
         """ Publishes a message to /gate_testing. """
         self.test_pub.publish(msg)
         MazeDB.printMsg('OTHER', f"[GateManuscriptTesting] Published: {msg}")
 
-    def set_all_chambers(self, state):
-        """ Sets all gates in all chambers to the specified state. """
-        for chamber in range(9):  # Chambers 0-8
-            for gate in range(8):  # Gates 0-7
-                self.set_gate(chamber, gate, state)
-
     def set_chamber_gates(self, cham, state):
         """ Sets all gates in a specific chamber to the specified state. """
         for gate in range(8):  # Gates 0-7
             self.set_gate(cham, gate, state)
-
 
     def set_gate(self, cham, wall, state):
         """ Sets the specified wall state (raise or lower). """
@@ -143,6 +127,9 @@ class GateManuscriptTesting:
         self.gate_pub.publish(self.wall_states)
 
     def send_wall_msg(self):
+        self.wall_states.chamber = -1
+        self.wall_states.wall = [0]
+        self.wall_states.state = True
         self.wall_states.send = True
         self.gate_pub.publish(self.wall_states)
 
@@ -150,11 +137,11 @@ class GateManuscriptTesting:
         """ Start recording from the Pettersson M500-384 microphone with debugging. """
         
         # Construct the full path for the audio file
-        audio_file = os.path.join(self.audio_save_path, self.audio_file_name)
+        audio_file = os.path.join(self.data_save_path, self.audio_file_name)
         
         # Ensure the save directory exists
-        if not os.path.exists(self.audio_save_path):
-            MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] Audio save path does not exist: {self.audio_save_path}")
+        if not os.path.exists(self.data_save_path):
+            MazeDB.printMsg('ERROR', f"[GateManuscriptTesting] Audio save path does not exist: {self.data_save_path}")
             return
 
         # Check if arecord is installed and accessible
