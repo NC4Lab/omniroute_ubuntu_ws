@@ -23,8 +23,9 @@ class GateManuscriptTesting:
         MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Node Started")
 
         # Specify testing prameters
+        self.start_delay = 30 # time to wait before starting test
         self.cycle_delay = 5 # time to wait between cycles
-        self.n_wall_runs = 3 # number of wall up/down cycles
+        self.n_wall_runs = 20 # number of wall up/down cycles
         self.run_count = 0 # counter for number of runs
 
         # Specify sound cue
@@ -63,7 +64,7 @@ class GateManuscriptTesting:
                     # Start recordings
                     self.start_rosbag_recordings()
                     self.start_audio_recording()
-                    rospy.sleep(5)
+                    rospy.sleep(self.start_delay)
                     self.publish_message("gate_test_start")
                 
                 # Run the test
