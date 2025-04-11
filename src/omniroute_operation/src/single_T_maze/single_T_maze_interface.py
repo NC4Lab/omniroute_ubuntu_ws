@@ -349,7 +349,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 5:
+        if sum_success >= 8:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -363,7 +363,7 @@ class Interface(Plugin):
     def pick_trial_phase_one(self):
         # Initialize current_group if it doesn't exist yet
         if not hasattr(self, 'current_group'):
-            self.current_group = 'group1'
+            self.current_group = 'group2'
 
         if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
             # Switch to the other group
@@ -751,6 +751,10 @@ class Interface(Plugin):
                     self.left_visual_cue = self.currentTrial[0]
                     self.right_visual_cue = self.currentTrial[1]
                     self.floor_cue = self.currentTrial[2]
+
+            self.sound_pub.publish("Starting_Sound")
+            rospy.loginfo("Starting sound played")
+            rospy.sleep(0.1)
 
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
