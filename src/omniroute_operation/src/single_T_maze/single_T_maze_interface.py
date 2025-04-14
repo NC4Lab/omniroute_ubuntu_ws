@@ -751,19 +751,18 @@ class Interface(Plugin):
                     self.left_visual_cue = self.currentTrial[0]
                     self.right_visual_cue = self.currentTrial[1]
                     self.floor_cue = self.currentTrial[2]
+            
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
             rospy.sleep(0.1)
+
 
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
                 rospy.sleep(0.1)
                 if self.left_visual_cue == "Triangle":
                     self.cued_chamber = self.left_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                    rospy.sleep(0.1)
-                    self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
                     for i in self.left_walls:
@@ -774,11 +773,6 @@ class Interface(Plugin):
                     self.error_chamber = self.right_chamber
                 else:
                     self.cued_chamber = self.right_chamber
-                    self.projection_wall_img_pub.publish(
-                        self.wall_img_black_num)
-                    rospy.sleep(0.1)
-                    self.publish_walls(
-                        self.previous_cued_chamber, self.chamber_walls_list)
                     self.projection_wall_img_pub.publish(
                         self.wall_img_triangle_num)
                     rospy.sleep(0.1)
@@ -791,10 +785,6 @@ class Interface(Plugin):
             else:
                 if self.left_visual_cue == "No_Cue":
                     self.cued_chamber = self.right_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                    rospy.sleep(0.1)
-                    self.publish_walls(
-                        self.previous_cued_chamber, self.chamber_walls_list)
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
                     for i in self.right_walls:
@@ -805,10 +795,6 @@ class Interface(Plugin):
                     self.error_chamber = self.right_chamber
                 else:
                     self.cued_chamber = self.left_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                    rospy.sleep(0.1)
-                    self.publish_walls(
-                        self.previous_cued_chamber, self.chamber_walls_list)
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
                     for i in self.left_walls:
@@ -979,6 +965,11 @@ class Interface(Plugin):
                 else:
                     self.setChamberFiveStartConfig()
                     rospy.loginfo("Chamber 5 selected")
+
+                self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                rospy.sleep(0.1)
+                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
+                rospy.sleep(0.1)
                 
 
                 self.mode_start_time = rospy.Time.now()
@@ -1036,6 +1027,11 @@ class Interface(Plugin):
                 else:
                     self.setChamberFiveStartConfig()
                     rospy.loginfo("Chamber 5 selected")
+
+                self.projection_wall_img_pub.publish(self.wall_img_black_num)
+                rospy.sleep(0.1)
+                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
+                rospy.sleep(0.1)
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
