@@ -363,7 +363,7 @@ class Interface(Plugin):
     def pick_trial_phase_one(self):
         # Initialize current_group if it doesn't exist yet
         if not hasattr(self, 'current_group'):
-            self.current_group = 'group2'
+            self.current_group = 'group1'
 
         if self.number_of_correct_trials_types(self.trial_type_success_count, self.current_group):
             # Switch to the other group
