@@ -676,7 +676,8 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE:
             # Raise start wall after he moves into the choice chamber
-            if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
+            #if self.rat_body_chamber in [self.left_goal_chamber, self.right_goal_chamber]:
+            if self.rat_head_chamber == self.central_chamber:
                 if self.pretraining_phase_one == True:
                     if self.currentTrialNumber == 0:
                         self.common_functions.lower_wall(
@@ -694,8 +695,10 @@ class Interface(Plugin):
                     self.mode = Mode.CHOICE_TO_GOAL
                     rospy.loginfo("CHOICE_TO_GOAL")
                 else:
-                    self.common_functions.raise_wall(
-                        self.start_wall, send=True)
+                    #self.common_functions.raise_wall(self.start_wall, send=True)
+                    self.sound_pub.publish(self.sound_cue)
+                    #self.play_sound_cue(self.sound_cue)
+                    rospy.loginfo(f"sound played: {self.sound_cue}")
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_TO_GOAL
                     rospy.loginfo("CHOICE_TO_GOAL")
@@ -780,6 +783,7 @@ class Interface(Plugin):
 
                 # If rat moved chose the correct chamber, raise the entry wall of both the left and right goal chambers
                 if self.rat_body_chamber == self.success_chamber:
+                    self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
@@ -794,6 +798,7 @@ class Interface(Plugin):
 
                 # If rat chose the wrong chamber, raise the entry wall of both the left and right return chambers
                 elif self.rat_body_chamber == self.error_chamber:
+                    self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
