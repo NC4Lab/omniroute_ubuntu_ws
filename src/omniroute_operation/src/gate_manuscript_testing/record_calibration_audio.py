@@ -6,16 +6,15 @@ import shutil
 import signal
 import datetime
 import time
-from shared_utils.maze_debug import MazeDB
 
 class RecordCalibrationAudio:
     def __init__(self):
         self.duration_sec = 20  # ← Change this duration as needed
-        self.data_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/audio_recordings"
+        self.data_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/data"
         self.audio_file_name = None
         self.recording_process = None
 
-        MazeDB.printMsg('OTHER', "[RecordCalibrationAudio] Initialized")
+        print('OTHER', "[RecordCalibrationAudio] Initialized")
 
     def start_recording(self):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -23,11 +22,11 @@ class RecordCalibrationAudio:
         audio_path = os.path.join(self.data_save_path, self.audio_file_name)
 
         if not os.path.exists(self.data_save_path):
-            MazeDB.printMsg('ERROR', f"[RecordCalibrationAudio] Save path does not exist: {self.data_save_path}")
+            print('ERROR', f"[RecordCalibrationAudio] Save path does not exist: {self.data_save_path}")
             return
 
         if not shutil.which("arecord"):
-            MazeDB.printMsg('ERROR', "[RecordCalibrationAudio] 'arecord' command not found. Is ALSA installed?")
+            print('ERROR', "[RecordCalibrationAudio] 'arecord' command not found. Is ALSA installed?")
             return
 
         arecord_cmd = [
@@ -35,34 +34,34 @@ class RecordCalibrationAudio:
             "-r", "384000", "-c", "1", audio_path
         ]
 
-        MazeDB.printMsg('OTHER', f"[RecordCalibrationAudio] Running command: {' '.join(arecord_cmd)}")
+        print('OTHER', f"[RecordCalibrationAudio] Running command: {' '.join(arecord_cmd)}")
         try:
             self.recording_process = subprocess.Popen(
                 arecord_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            MazeDB.printMsg('OTHER', f"[RecordCalibrationAudio] Recording started: {audio_path} (PID: {self.recording_process.pid})")
+            print('OTHER', f"[RecordCalibrationAudio] Recording started: {audio_path} (PID: {self.recording_process.pid})")
         except Exception as e:
-            MazeDB.printMsg('ERROR', f"[RecordCalibrationAudio] Failed to start recording: {e}")
+            print('ERROR', f"[RecordCalibrationAudio] Failed to start recording: {e}")
 
     def stop_recording(self):
         if self.recording_process is None:
-            MazeDB.printMsg('ERROR', "[RecordCalibrationAudio] No active recording process to stop.")
+            print('ERROR', "[RecordCalibrationAudio] No active recording process to stop.")
             return
 
         try:
-            MazeDB.printMsg('OTHER', f"[RecordCalibrationAudio] Stopping recording (PID: {self.recording_process.pid})")
+            print('OTHER', f"[RecordCalibrationAudio] Stopping recording (PID: {self.recording_process.pid})")
             self.recording_process.send_signal(signal.SIGINT)
             stdout, stderr = self.recording_process.communicate(timeout=5)
             if stdout:
-                MazeDB.printMsg('OTHER', f"[RecordCalibrationAudio] arecord stdout: {stdout.decode().strip()}")
+                print('OTHER', f"[RecordCalibrationAudio] arecord stdout: {stdout.decode().strip()}")
             if stderr and "Aborted by signal Interrupt" not in stderr.decode():
-                MazeDB.printMsg('ERROR', f"[RecordCalibrationAudio] arecord stderr: {stderr.decode().strip()}")
-            MazeDB.printMsg('OTHER', "[RecordCalibrationAudio] Recording stopped successfully.")
+                print('ERROR', f"[RecordCalibrationAudio] arecord stderr: {stderr.decode().strip()}")
+            print('OTHER', "[RecordCalibrationAudio] Recording stopped successfully.")
         except subprocess.TimeoutExpired:
-            MazeDB.printMsg('ERROR', "[RecordCalibrationAudio] Timeout—killing process.")
+            print('ERROR', "[RecordCalibrationAudio] Timeout—killing process.")
             self.recording_process.kill()
         except Exception as e:
-            MazeDB.printMsg('ERROR', f"[RecordCalibrationAudio] Error stopping recording: {e}")
+            print('ERROR', f"[RecordCalibrationAudio] Error stopping recording: {e}")
         finally:
             self.recording_process = None
 
