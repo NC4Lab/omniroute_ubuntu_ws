@@ -755,7 +755,7 @@ class Interface(Plugin):
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
-            rospy.sleep(0.1)
+            #rospy.sleep(0.1)
 
 
             if self.floor_cue == "Green":
