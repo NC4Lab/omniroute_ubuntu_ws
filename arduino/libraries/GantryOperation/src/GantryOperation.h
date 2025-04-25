@@ -43,7 +43,7 @@ public:
 	Servo portServo;			  // Servo object
 	const int portServoPin = 8;	  // Servo pwm pin
 	const int portUpAngle = 180;  // Servo up angle
-	const int portDownAngle = 0; // Servo down angle
+	const int portDownAngle = 90; // Servo down angle
 	const int portDuration = 2000; // Servo move duration (ms)
 
 	// Pump servo parameters
