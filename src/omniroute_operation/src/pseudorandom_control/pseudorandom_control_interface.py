@@ -208,7 +208,8 @@ class Interface(Plugin):
         # Stimulus parameters
         self.play_left_sound_cue = 0
         self.play_right_sound_cue = 0
-        self.sound_cue = "1kHz"
+        self.start_sound_cue = "1kHz"
+        self.choice_sound_cue = "1kHz_120s"
 
         # Chamber parameters
         self.success_chamber = 0
@@ -608,7 +609,8 @@ class Interface(Plugin):
                 rospy.loginfo(f"Selected stimulus is: {self.stimulus}")
 
                 if self.stimulus == -1:
-                    self.sound_cue = '1KHz'
+                    self.start_sound_cue = '1KHz'
+                    self.choice_sound_cue = '1KHz_120s'
                     self.answer[self.currentTrialNumber] = 2
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -618,7 +620,8 @@ class Interface(Plugin):
                     self.trial_count[1] = 0
 
                 elif self.stimulus == 1:
-                    self.sound_cue = '8KHz'
+                    self.start_sound_cue = '8KHz'
+                    self.choice_sound_cue = '8KHz_120s'
                     self.answer[self.currentTrialNumber] = 1
                     rospy.loginfo(
                         f"Correct stimulus-response choice is: {self.answer[self.currentTrialNumber]}")
@@ -643,9 +646,9 @@ class Interface(Plugin):
                     rospy.loginfo("START_TO_CHOICE")
 
         elif self.mode == Mode.SOUND_CUE:
-            self.sound_pub.publish(self.sound_cue)
+            self.sound_pub.publish(self.start_sound_cue)
             #self.play_sound_cue(self.sound_cue)
-            rospy.loginfo(f"sound played: {self.sound_cue}")
+            rospy.loginfo(f"sound played: {self.start_sound_cue}")
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.START_TO_CHOICE
             rospy.loginfo("START_TO_CHOICE")
@@ -696,9 +699,9 @@ class Interface(Plugin):
                     rospy.loginfo("CHOICE_TO_GOAL")
                 else:
                     #self.common_functions.raise_wall(self.start_wall, send=True)
-                    self.sound_pub.publish(self.sound_cue)
+                    self.sound_pub.publish(self.choice_sound_cue)
                     #self.play_sound_cue(self.sound_cue)
-                    rospy.loginfo(f"sound played: {self.sound_cue}")
+                    rospy.loginfo(f"sound played: {self.choice_sound_cue}")
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_TO_GOAL
                     rospy.loginfo("CHOICE_TO_GOAL")
@@ -783,11 +786,13 @@ class Interface(Plugin):
 
                 # If rat moved chose the correct chamber, raise the entry wall of both the left and right goal chambers
                 if self.rat_body_chamber == self.success_chamber:
+                    self.sound_pub.publish('Stop')
                     self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
                         self.right_goal_entry_wall, send=True)
+                    rospy.loginfo("sound stoppped")
                     # Record that the rat made the correct choice
                     self.correct[self.currentTrialNumber] = 1
                     self.mode_start_time = rospy.Time.now()
@@ -798,11 +803,13 @@ class Interface(Plugin):
 
                 # If rat chose the wrong chamber, raise the entry wall of both the left and right return chambers
                 elif self.rat_body_chamber == self.error_chamber:
+                    self.sound_pub.publish('Stop')
                     self.common_functions.raise_wall(self.start_wall, send=True)
                     self.common_functions.raise_wall(
                         self.left_goal_entry_wall, send=True)
                     self.common_functions.raise_wall(
                         self.right_goal_entry_wall, send=True)
+                    rospy.loginfo("sound stoppped")
                     # Record that the rat made the wrong choice
                     self.correct[self.currentTrialNumber] = 0
                     self.mode_start_time = rospy.Time.now()
