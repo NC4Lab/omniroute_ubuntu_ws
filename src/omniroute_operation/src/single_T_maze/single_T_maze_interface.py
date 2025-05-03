@@ -349,7 +349,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 8:
+        if sum_success >= 10:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -755,7 +755,7 @@ class Interface(Plugin):
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
-            #rospy.sleep(0.1)
+            rospy.sleep(0.1)
 
 
             if self.floor_cue == "Green":
