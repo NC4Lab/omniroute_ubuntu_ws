@@ -30,7 +30,7 @@ from qt_gui.plugin import Plugin
 import psytrack as psy
 from psytrack.helper.helperFunctions import read_input
 
-class Mode(Enum):
+#class Mode(Enum):
 
 
 
@@ -51,31 +51,31 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-        # Create QWidget
-        self._widget = QWidget()
-        ui_file = os.path.join(os.path.dirname(os.path.realpath(
-            __file__)), 'radial_maze.ui')
-        # Extend the widget with all attributes and children from UI file
-        loadUi(ui_file, self._widget)
+#         # Create QWidget
+#         self._widget = QWidget()
+#         ui_file = os.path.join(os.path.dirname(os.path.realpath(
+#             __file__)), 'radial_maze.ui')
+#         # Extend the widget with all attributes and children from UI file
+#         loadUi(ui_file, self._widget)
 
-        rospy.loginfo('Test Interface started')
+#         rospy.loginfo('Test Interface started')
 
-        self._widget.setObjectName('InterfacePluginUi')
-        if context.serial_number() > 1:
-            self._widget.setWindowTitle(
-                self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+#         self._widget.setObjectName('InterfacePluginUi')
+#         if context.serial_number() > 1:
+#             self._widget.setWindowTitle(
+#                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-        # Add widget to the user interface
-        context.add_widget(self._widget)
+#         # Add widget to the user interface
+#         context.add_widget(self._widget)
 
-        self.scene = QGraphicsScene()
+#         self.scene = QGraphicsScene()
 
-    def run_experiment(self):
+#     def run_experiment(self):
 
         
 
 
 if __name__ == '__main__':
-    rospy.init_node('radial maze')
+    rospy.init_node('radial_maze')
     Interface()
     rospy.spin()
