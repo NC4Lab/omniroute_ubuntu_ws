@@ -869,23 +869,23 @@ class Interface(Plugin):
                 self.mode_start_time = self.current_time
                 self.mode = Mode.POST_REWARD
                 rospy.loginfo("POST REWARD")
+
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
                 if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
+                elif self.phase != ExperimentPhases.PHASE_THREE:
+                    self.setChamberFiveStartConfig()
+                    rospy.loginfo("Chamber 5 selected")
                 else:
                     self.choose_start_config(self.start_chamber)
-            else:
-                self.setChamberFiveStartConfig()
-                rospy.loginfo("Chamber 5 selected")
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
                 rospy.sleep(0.1)
-               
-               
-                
+                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
+                rospy.sleep(0.1)
 
                 self.mode_start_time = self.current_time
                 self.mode = Mode.MOVE_TO_START_CHAMBER
@@ -922,34 +922,16 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
-                if self.phase == ExperimentPhases.PHASE_THREE:
-                    if self.currentTrialNumber < 9:
-                        # Before trial 10, do not switch even if self.success_chamber == self.left_chamber
-                        print(f"Trial {self.currentTrialNumber}: No switching before trial 10.")
-                        self.choose_start_config(self.start_chamber)  
-
-                    elif self.currentTrialNumber == 9 and self.error_chamber == self.left_chamber:
-                        # First switch happens at trial 10
-                        self.switch_trial = self.currentTrialNumber
-                        self.starting_config = self.error_chamber
-                        self.choose_start_config(self.starting_config)
-                        print(f"First switch at trial {self.currentTrialNumber}")
-
-                    elif self.error_chamber == self.left_chamber:
-                         # Switch only if at least 10 trials have passed since the last switch
-                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 10:
-                            self.switch_trial = self.currentTrialNumber
-                            self.starting_config = self.error_chamber
-                            self.choose_start_config(self.starting_config)
-                            print(f"Switch at trial {self.currentTrialNumber}")
-                        else:
-                            self.choose_start_config(self.start_chamber)
-                    else:
-                        self.choose_start_config(self.start_chamber)
-
-                else:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
+                    self.switch_trial = self.currentTrialNumber
+                    self.choose_start_config(self.success_chamber)
+                    print(f"Switch at trial {self.currentTrialNumber}")
+                elif self.phase != ExperimentPhases.PHASE_THREE:
                     self.setChamberFiveStartConfig()
                     rospy.loginfo("Chamber 5 selected")
+                else:
+                    self.choose_start_config(self.start_chamber)
+
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
                 rospy.sleep(0.1)
