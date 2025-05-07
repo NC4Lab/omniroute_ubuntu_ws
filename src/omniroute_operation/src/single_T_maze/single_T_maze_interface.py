@@ -40,14 +40,8 @@ class FloorCue(Enum):
     BLACK = 2
 
 class VisualCue(Enum):
-    LEFT = 3
-    RIGHT = 4
-
-class TrialType(Enum):
-    BLACK_LEFT = FloorCue.BLACK * VisualCue.LEFT
-    BLACK_RIGHT = FloorCue.BLACK * VisualCue.RIGHT
-    GREEN_LEFT = FloorCue.GREEN * VisualCue.LEFT
-    GREEN_RIGHT = FloorCue.GREEN * VisualCue.RIGHT
+    LEFT = 1
+    RIGHT = 2
 
 class TrainingMode(Enum):
     FORCED_CHOICE = 1
@@ -58,24 +52,11 @@ class Trial:
 
         self.visual_cue = visual_cue
         self.floor_cue = floor_cue
-        self.trial_type = visual_cue * floor_cue
         self.training_mode = training_mode
     
-    def randomize(self, floor_cue = None):
-        # Randomly select a trial type from the dictionary
-        if floor_cue is None:
-            self.trial_type = random.choice(TrialType)
-        else:
-            visual_cue = random.choice(VisualCue)
-            self.trial_type = floor_cue * visual_cue
-        
-        # Get the corresponding trial from the dictionary
-
-
-        
-
-
-        
+    def __print__(self):
+        return f"Trial(visual_cue={self.visual_cue}, floor_cue={self.floor_cue}, training_mode={self.training_mode})"
+    
 
 class ExperimentPhases(Enum):
     PHASE_ONE = 1
@@ -367,58 +348,34 @@ class Interface(Plugin):
         #     4: ['5', 'No_Cue', 'Triangle', 'Green']
         # }
 
-        self.trial_type_success_count = {key: 0 for key in TrialType}
+        self.cts_success_count = {
+            FloorCue.GREEN: 0,
+            FloorCue.BLACK: 0
+        }
 
-        self.success_count = 0
+        self.total_success_count = 0
         self.previous_trial_result = None
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10) # 10 ms
     
-
-
-    def number_of_correct_trials_types(self, dict, group):
-        if group == 'group1':
-            sum_success = sum([dict[key] for key in dict if key in [TrialType.GREEN_LEFT, TrialType.GREEN_RIGHT]])
-    
-        else:
-            sum_success = sum([dict[key] for key in dict if key in [TrialType.BLACK_LEFT, TrialType.BLACK_RIGHT]])
-          
-        #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 10:
-            if group == 'group1':
-               dict[3] = 0
-               dict[4] = 0
-            else:
-               dict[1] = 0
-               dict[2] = 0
-            return True
-        else:
-            return False
-        
     def pick_trial_phase_one(self):
-        if self.trial_type_success_count(self.currentTrial.trial_type) > 10:
-            self.trial_type_success_count[self.currentTrial.trial_type] = 0
+        if self.cts_success_count[self.currentTrial.floor_cue] > 10:
+            self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
             if self.currentTrial.floor_cue == FloorCue.GREEN:
-                self.nextTrial = random.choice([TrialType.BLACK_LEFT, TrialType.BLACK_RIGHT])
+                nextTrial = Trial(random.choice(list(VisualCue)), FloorCue.BLACK, self.training_mode)
             else:
-                self.nextTrial = random.choice([TrialType.GREEN_LEFT, TrialType.GREEN_RIGHT])
+                nextTrial = Trial(random.choice(list(VisualCue)), FloorCue.GREEN, self.training_mode)
 
-            print(f"Switching to trial: {self.nextTrial}")
+            print(f"Switching to trial: {nextTrial}")
+            return nextTrial
 
-    
     def pick_trial_phase_two(self):
         # Randomly select a trial type from the dictionary
-        self.next_trial_type = random.choice(list(self.trial_types.keys()))
-
-        # Get the corresponding trial from the dictionary
-
-
-        return trial, trial_key
-    
+        return Trial(random.choice(list(VisualCue)), random.choice(list(FloorCue)), self.training_mode)
 
     def _handle_testingPhaseBtn_clicked(self):
         self.is_testing_phase = True
@@ -748,52 +705,31 @@ class Interface(Plugin):
             rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
             #if self.trial_generator:
             if self.phase == ExperimentPhases.PHASE_ONE:
-                trial, trial_type_key = self.pick_trial_phase_one()
-                self.left_visual_cue = trial[1]
-                self.right_visual_cue = trial[2]
-                self.floor_cue = trial[3]
-               
-                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
+                self.currentTrial = self.pick_trial_phase_one()
                 
             elif self.phase == ExperimentPhases.PHASE_TWO or self.phase == ExperimentPhases.PHASE_THREE:
-                trial, trial_type_key = self.pick_trial_phase_two()
-                self.left_visual_cue = trial[1]
-                self.right_visual_cue = trial[2]
-                self.floor_cue = trial[3]
-                self.trial_type_key = trial_type_key
-                rospy.loginfo(f"START OF TRIAL {[self.left_visual_cue, self.right_visual_cue, self.floor_cue]}")
+                trial = self.pick_trial_phase_two()
 
             else:
-
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
                     self.currentTrial = self.trials[self.currentTrialNumber]
                 else:
                     # Handle the case where trials is empty or currentTrialNumber is out of range
                     self.currentTrial = None
 
-                # self.projection_wall_img_pub.publish(self.wall_img_num)
-
                 rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
                 if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
                     self.mode = Mode.END_EXPERIMENT
 
-                if self.currentTrial is not None:
-                    # Set training mode from file if the automatic mode is selected
-                    self.training_mode = self.currentTrial[3]
-                    self.left_visual_cue = self.currentTrial[0]
-                    self.right_visual_cue = self.currentTrial[1]
-                    self.floor_cue = self.currentTrial[2]
-            
-
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
             rospy.sleep(0.1)
 
-            if self.floor_cue == "Green":
+            if self.currentTrial.floor_cue == FloorCue.GREEN:
                 self.projection_floor_pub.publish(self.floor_img_green_num)
                 rospy.sleep(0.1)
-                if self.left_visual_cue == "Triangle":
+                if self.currentTrial.visual_cue == VisualCue.LEFT:
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
@@ -803,7 +739,7 @@ class Interface(Plugin):
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
-                else:
+                elif self.currentTrial.visual_cue == VisualCue.RIGHT:
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
@@ -813,8 +749,8 @@ class Interface(Plugin):
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
-            else:
-                if self.left_visual_cue == "No_Cue":
+            elif self.currentTrial.floor_cue == FloorCue.BLACK:
+                if self.currentTrial.visual_cue == VisualCue.RIGHT:
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
@@ -824,7 +760,7 @@ class Interface(Plugin):
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
-                else:
+                elif self.currentTrial.visual_cue == VisualCue.LEFT:
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
                     rospy.sleep(0.1)
@@ -891,47 +827,33 @@ class Interface(Plugin):
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             if self.rat_body_chamber == self.success_chamber:
-                self.common_functions.raise_wall(
-                    self.left_goal_wall, send=False)
-                self.common_functions.raise_wall(
-                    self.right_goal_wall, send=False)
-                self.common_functions.raise_wall(self.start_wall, send=True)
-                if self.phase == ExperimentPhases.PHASE_ONE:
-                    self.success_count += 1
-
-                    # Update trial success count based on conditions
-                    if self.success_count == 1 or (self.success_count > 1 and self.previous_trial_result == "Success"):
-                        self.trial_type_success_count[self.trial_type_key] += 1
-                        self.previous_trial_result = "Success"
-                elif self.phase == ExperimentPhases.PHASE_TWO:
-                    self.trial_type_success_count[self.trial_type_key] += 1
-
                 self.mode_start_time = self.current_time
                 self.mode = Mode.SUCCESS
                 rospy.loginfo("SUCCESS")
 
             elif self.rat_body_chamber == self.error_chamber:
-                self.common_functions.raise_wall(
-                    self.left_goal_wall, send=False)
-                self.common_functions.raise_wall(
-                    self.right_goal_wall, send=False)
-                self.common_functions.raise_wall(self.start_wall, send=True)
-                if self.phase == ExperimentPhases.PHASE_ONE: 
-                    self.success_count = 0
-                    for key in self.trial_type_success_count:
-                        self.trial_type_success_count[key] = 0
-                    self.previous_trial_result = "Error"
+
                 self.mode_start_time = self.current_time
                 self.mode = Mode.ERROR
                 rospy.loginfo("ERROR")
 
         elif self.mode == Mode.SUCCESS:
+            self.common_functions.raise_wall(
+                self.left_goal_wall, send=False)
+            self.common_functions.raise_wall(
+                self.right_goal_wall, send=False)
+            self.common_functions.raise_wall(self.start_wall, send=True)
+
+            self.total_success_count += 1
+            self.cts_success_count[self.currentTrial.floor_cue] += 1
+
             if self.success_chamber == self.left_chamber:
                 rospy.loginfo("Left chamber selected and chamber number is {}".format(
                     self.success_chamber))
             else:
                 rospy.loginfo("Right chamber selected and chamber number is {}".format(
                     self.success_chamber))
+
             self.success_center_x = self.maze_dim.chamber_centers[self.success_chamber][0]
             self.success_center_y = self.maze_dim.chamber_centers[self.success_chamber][1]
             self.mode_start_time = self.current_time
@@ -993,7 +915,14 @@ class Interface(Plugin):
                 rospy.loginfo("MOVE_TO_START_CHAMBER")
 
         elif self.mode == Mode.ERROR:
-            # if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_delay.to_sec():
+            self.common_functions.raise_wall(
+                self.left_goal_wall, send=False)
+            self.common_functions.raise_wall(
+                self.right_goal_wall, send=False)
+            self.common_functions.raise_wall(self.start_wall, send=True)
+
+            self.cts_success_count[self.currentTrial.floor_cue] = 0                
+
             self.sound_pub.publish("Error")
             rospy.loginfo("Error sound played")
             if self.error_chamber == self.left_chamber:
