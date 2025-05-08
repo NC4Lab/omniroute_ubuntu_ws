@@ -46,8 +46,8 @@ class ProjectionOperation:
     def __init__(self):
 
         # Initialize the node (if not already initialized)
-        if not rospy.core.is_initialized():
-            rospy.init_node('projection_opperation_node', anonymous=True)
+        # if not rospy.core.is_initialized():
+        #     rospy.init_node('projection_opperation_node', anonymous=True)
 
         # Create the publisher for 'projection_cmd' topic
         self.projection_pub = rospy.Publisher(
@@ -205,3 +205,7 @@ class ProjectionOperation:
             'INFO', "Published projection command: command[%d]", number)
         
     
+if __name__ == '__main__':
+    rospy.init_node('projection_opperation_node')
+    ProjectionOperation()
+    rospy.spin()

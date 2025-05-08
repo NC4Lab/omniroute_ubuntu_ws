@@ -126,7 +126,6 @@ class Interface(Plugin):
 
         self._widget.trialGeneratorBtn.clicked.connect(
             self._handle_trialGeneratorBtn_clicked)
-        # Button for designating if rewards should be despensed from the gantry
         self._widget.plusMazeBtn.clicked.connect(
             self._handle_plusMazeBtn_clicked)
         self._widget.lowerAllDoorsBtn.clicked.connect(
@@ -179,7 +178,7 @@ class Interface(Plugin):
         self._widget.lowerAllDoorsBtn.setStyleSheet(
             "background-color: red; color: yellow")
 
-        # self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
+        self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
 
         self.projection_pub = rospy.Publisher(
             'projection_walls', String, queue_size=100)
@@ -187,8 +186,6 @@ class Interface(Plugin):
             'projection_image_floor_num', Int32, queue_size=100)
         self.projection_wall_img_pub = rospy.Publisher(
             'projection_image_wall_num', Int32, queue_size=1)
-        self.gantry_pub = rospy.Publisher(
-            '/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher(
             '/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
@@ -248,10 +245,7 @@ class Interface(Plugin):
         self.nTrials = 0
         self.trials = []
 
-        self.current_file_index = 0
-
         self.training_mode = None
-        self.previous_rat_chamber = -1
 
         self.wallStates = WallState()
         self.wallStates.state = None
@@ -640,14 +634,6 @@ class Interface(Plugin):
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
-        current_rat_chamber = self.rat_head_chamber
-
-        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
-            # The rat has moved to a different chamber, update the gantry position
-            self.cf.move_gantry_to_chamber(current_rat_chamber)
-
-            # Update the previous_rat_chamber for the next iteration
-            self.previous_rat_chamber = current_rat_chamber
 
         if self.mode == Mode.START_EXPERIMENT:
             self.switch_to_mode(Mode.START_TRIAL)
@@ -656,7 +642,6 @@ class Interface(Plugin):
             # AWL Wait for walls to be initialized
             if not rospy.get_param('/shared_state/is_maze_initialized'):
                 return
-
 
         elif self.mode == Mode.START_TRIAL:
             # publish the images to be projected on the walls
@@ -679,7 +664,7 @@ class Interface(Plugin):
                 if self.currentTrial is None or self.currentTrialNumber >= self.nTrials:
                     self.switch_to_mode(Mode.END_EXPERIMENT)
 
-            # self.sound_pub.publish("Starting_Sound")
+            self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
             # rospy.sleep(0.1)
 
@@ -805,7 +790,6 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_END:
             if (self.current_time - self.mode_start_time) >= self.reward_end_delay:
-                # self.gantry_pub.publish("start_rat_tracking", [])
                 self.switch_to_mode(Mode.POST_REWARD)
 
         elif self.mode == Mode.POST_REWARD:
@@ -834,7 +818,7 @@ class Interface(Plugin):
 
             self.cts_success_count[self.currentTrial.floor_cue] = 0                
 
-            # self.sound_pub.publish("Error")
+            self.sound_pub.publish("Error")
             rospy.loginfo("Error sound played")
             if self.error_chamber == self.left_chamber:
                 rospy.loginfo(
