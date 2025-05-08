@@ -131,8 +131,6 @@ class Interface(Plugin):
         UIUtilities.move_ui_window(
             self._widget, horizontal_alignment='right', vertical_alignment='top')
 
-        self._widget.testingPhaseBtn.clicked.connect(
-            self._handle_testingPhaseBtn_clicked)
         self._widget.trialGeneratorBtn.clicked.connect(
             self._handle_trialGeneratorBtn_clicked)
         # Button for designating if rewards should be despensed from the gantry
@@ -244,14 +242,15 @@ class Interface(Plugin):
         self.wrong_choice_second_delay = rospy.Duration(5.0)
         # Duration to wait if the rat made the wrong choice
         self.wrong_choice_delay = rospy.Duration(40)
-        self.moving_back_to_start_chamber_delay = rospy.Duration(
-            1)  # Duration to wait if the rat made the wrong choice # Duration to wait at the end of the trial self.end_trial_delay = rospy.Duration(1.0)
+        self.moving_back_to_start_chamber_delay = rospy.Duration(1)  
+        # Duration to wait at the end of the trial 
+        self.end_trial_delay = rospy.Duration(1.0)
 
         self.mode = Mode.START
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
-        self.currentTrial = []
+        self.currentTrial = Trial(VisualCue.LEFT, FloorCue.GREEN, TrainingMode.FREE_CHOICE)
         self.currentTrialNumber = 0
         self.nTrials = 0
         self.trials = []
@@ -336,14 +335,6 @@ class Interface(Plugin):
                                     Wall(4, 7).to_dict()]
                                    }
 
-        # Trial Types: ['Start Chamber', 'Left Cue', 'Right Cue', 'Sound Cue']
-        # self.trial_types = {
-        #     1: ['5', 'Triangle', 'No_Cue', 'Black'],
-        #     2: ['5', 'No_Cue', 'Triangle', 'Black'],
-        #     3: ['5', 'Triangle', 'No_Cue', 'Green'],
-        #     4: ['5', 'No_Cue', 'Triangle', 'Green']
-        # }
-
         self.cts_success_count = {
             FloorCue.GREEN: 0,
             FloorCue.BLACK: 0
@@ -357,7 +348,8 @@ class Interface(Plugin):
         self.timer.start(10) # 10 ms
     
     def pick_trial_phase_one(self):
-        if self.cts_success_count[self.currentTrial.floor_cue] > 10:
+        rospy.loginfo("Picking trial phase one")
+        if self.cts_success_count[self.currentTrial.floor_cue] > 3:
             self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
@@ -367,15 +359,14 @@ class Interface(Plugin):
                 nextTrial = Trial(random.choice(list(VisualCue)), FloorCue.GREEN, self.training_mode)
 
             print(f"Switching to trial: {nextTrial}")
-            return nextTrial
+        else:
+            nextTrial = Trial(random.choice(list(VisualCue)), FloorCue.GREEN, self.training_mode)
+
+        return nextTrial
 
     def pick_trial_phase_two(self):
         # Randomly select a trial type from the dictionary
         return Trial(random.choice(list(VisualCue)), random.choice(list(FloorCue)), self.training_mode)
-
-    def _handle_testingPhaseBtn_clicked(self):
-        self.is_testing_phase = True
-        rospy.loginfo("Testing phase selected")
 
     def is_recording_on(self):
         list_cmd = subprocess.Popen(
@@ -650,7 +641,7 @@ class Interface(Plugin):
                 self.projection_pub.publish(json.dumps(obj))
                 rospy.loginfo(f"Published: {obj}")
                 # Add a small delay to ensure proper publishing
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
         else:
             rospy.logwarn(
                 f"Key {previous_cued_chamber} not found in the dictionary.")
@@ -705,7 +696,7 @@ class Interface(Plugin):
                 self.currentTrial = self.pick_trial_phase_one()
                 
             elif self.phase == ExperimentPhases.PHASE_TWO or self.phase == ExperimentPhases.PHASE_THREE:
-                trial = self.pick_trial_phase_two()
+                self.currentTrial = self.pick_trial_phase_two()
 
             else:
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -716,33 +707,33 @@ class Interface(Plugin):
 
                 rospy.loginfo(f"START OF TRIAL {self.currentTrial}")
 
-                if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                if self.currentTrial is None or self.currentTrialNumber >= self.nTrials:
                     self.mode = Mode.END_EXPERIMENT
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
-            rospy.sleep(0.1)
+            # rospy.sleep(0.1)
 
             if self.currentTrial.floor_cue == FloorCue.GREEN:
                 self.projection_floor_pub.publish(self.floor_img_green_num)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
                 if self.currentTrial.visual_cue == VisualCue.LEFT:
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
+                    # rospy.sleep(0.1)
                     for i in self.left_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                        # rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 elif self.currentTrial.visual_cue == VisualCue.RIGHT:
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
+                    # rospy.sleep(0.1)
                     for i in self.right_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                        # rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
@@ -750,20 +741,20 @@ class Interface(Plugin):
                 if self.currentTrial.visual_cue == VisualCue.RIGHT:
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
+                    # rospy.sleep(0.1)
                     for i in self.right_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                        # rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 elif self.currentTrial.visual_cue == VisualCue.LEFT:
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
+                    # rospy.sleep(0.1)
                     for i in self.left_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
+                        # rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
@@ -775,7 +766,7 @@ class Interface(Plugin):
         elif self.mode == Mode.RAT_WAITS:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
                 self.projection_floor_pub.publish(self.floor_img_black_num)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
                 self.mode_start_time = self.current_time
                 self.mode = Mode.RAT_IN_START_CHAMBER
                 rospy.loginfo("RAT_IN_START_CHAMBER")
@@ -883,9 +874,9 @@ class Interface(Plugin):
                     self.choose_start_config(self.start_chamber)
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
                 self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
 
                 self.mode_start_time = self.current_time
                 self.mode = Mode.MOVE_TO_START_CHAMBER
@@ -934,9 +925,9 @@ class Interface(Plugin):
 
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
                 self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
-                rospy.sleep(0.1)
+                # rospy.sleep(0.1)
 
                 self.mode_start_time = self.current_time
                 self.mode = Mode.MOVE_TO_START_CHAMBER
