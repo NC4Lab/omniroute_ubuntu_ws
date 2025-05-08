@@ -46,28 +46,23 @@ class ProjectionOperation:
     def __init__(self):
 
         # Initialize the node (if not already initialized)
-        if not rospy.core.is_initialized():
-            rospy.init_node('projection_opperation_node', anonymous=True)
+        # if not rospy.core.is_initialized():
+        #     rospy.init_node('projection_opperation_node', anonymous=True)
+        
+        # Initialize image_config as a 10x8 array with default values
+        self.image_config = [[0 for _ in range(8)] for _ in range(10)]
 
         # Create the publisher for 'projection_cmd' topic
-        self.projection_pub = rospy.Publisher(
-            'projection_cmd', Int32, queue_size=10)
+        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
 
         # Create the publisher for the 'projection_image' topic
-        self.image_pub = rospy.Publisher(
-            'projection_image', Int32MultiArray, queue_size=10)
+        self.image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=10)
         
         rospy.Subscriber('projection_image_floor_num', Int32, self.projection_image_floor_callback)
 
         rospy.Subscriber('projection_walls', String, self.projection_walls_callback)
 
         rospy.Subscriber('projection_image_wall_num', Int32, self.projection_image_wall_callback)
-
-        # Initialize image_config as a 10x8 array with default values
-        self.image_config = [[0 for _ in range(8)] for _ in range(10)]
-
-        # Rate for publishing set to 30hz
-        self.rate = rospy.Rate(30)
 
     def projection_image_floor_callback(self, msg):
         self.floor_img_num = msg.data
@@ -205,3 +200,7 @@ class ProjectionOperation:
             'INFO', "Published projection command: command[%d]", number)
         
     
+if __name__ == '__main__':
+    rospy.init_node('projection_opperation_node')
+    ProjectionOperation()
+    rospy.spin()
