@@ -349,7 +349,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 10:
+        if sum_success >= 7:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
