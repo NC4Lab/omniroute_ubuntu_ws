@@ -259,12 +259,6 @@ class Interface(Plugin):
         self.left_goal_wall = Wall(0, 0)
         self.right_goal_wall = Wall(0, 0)
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.run_experiment)
-        self.timer.start(10)
-
-        self.rat_position = 0
-
         self.floor_img_black_num = 0
         self.floor_img_green_num = 1
         self.wall_img_triangle_num = 3
@@ -273,7 +267,6 @@ class Interface(Plugin):
         self.starting_config = 0
 
         self.cued_chamber = 0
-
         self.previous_cued_chamber = 0
 
         self.switch_trial = None
@@ -335,10 +328,12 @@ class Interface(Plugin):
         }
 
         self.trial_type_success_count = {key: 0 for key in self.trial_types}
-
         self.success_count = 0
         self.previous_trial_result = None
-        #self.current_trail_result = None
+        
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.run_experiment)
+        self.timer.start(10)
         
 
     def number_of_correct_trials_types(self, dict, group):
@@ -664,8 +659,6 @@ class Interface(Plugin):
                 # Assuming obj can be serialized with json.dumps
                 self.projection_pub.publish(json.dumps(obj))
                 rospy.loginfo(f"Published: {obj}")
-                # Add a small delay to ensure proper publishing
-                rospy.sleep(0.1)
         else:
             rospy.logwarn(
                 f"Key {previous_cued_chamber} not found in the dictionary.")
@@ -755,19 +748,15 @@ class Interface(Plugin):
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
-            rospy.sleep(0.1)
 
 
             if self.floor_cue == "Green":
                 self.projection_floor_pub.publish(self.floor_img_green_num)
-                rospy.sleep(0.1)
                 if self.left_visual_cue == "Triangle":
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
                     for i in self.left_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
@@ -775,10 +764,8 @@ class Interface(Plugin):
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(
                         self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
                     for i in self.right_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
@@ -786,20 +773,16 @@ class Interface(Plugin):
                 if self.left_visual_cue == "No_Cue":
                     self.cued_chamber = self.right_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
                     for i in self.right_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
                 else:
                     self.cued_chamber = self.left_chamber
                     self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    rospy.sleep(0.1)
                     for i in self.left_walls:
                         self.projection_pub.publish(json.dumps(i))
-                        rospy.sleep(0.1)
                     rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
@@ -811,7 +794,6 @@ class Interface(Plugin):
         elif self.mode == Mode.RAT_WAITS:
             if (self.current_time - self.mode_start_time).to_sec() >= self.start_first_delay.to_sec():
                 self.projection_floor_pub.publish(self.floor_img_black_num)
-                rospy.sleep(0.1)
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.RAT_IN_START_CHAMBER
                 rospy.loginfo("RAT_IN_START_CHAMBER")
@@ -967,10 +949,7 @@ class Interface(Plugin):
                     rospy.loginfo("Chamber 5 selected")
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                rospy.sleep(0.1)
-                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
-                rospy.sleep(0.1)
-                
+                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)                
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
@@ -1029,9 +1008,7 @@ class Interface(Plugin):
                     rospy.loginfo("Chamber 5 selected")
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                rospy.sleep(0.1)
                 self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
-                rospy.sleep(0.1)
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER

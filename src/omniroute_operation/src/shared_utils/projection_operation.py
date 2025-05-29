@@ -28,7 +28,16 @@ class ProjectionOperation:
         "w_circle",
         "w_triangle",
         "w_star",
-        "w_pentagon"
+        "w_pentagon",
+        "w_rm_blue_left",
+        "w_rm_blue_middle",
+        "w_rm_blue_right",
+        "w_rm_green_left",
+        "w_rm_green_middle",
+        "w_rm_green_right",
+        "w_rm_teal_left",
+        "w_rm_teal_middle",
+        "w_rm_teal_right"
     ]
 
     # Floor image file names
