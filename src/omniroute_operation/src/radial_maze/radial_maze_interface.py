@@ -30,6 +30,8 @@ from qt_gui.plugin import Plugin
 import psytrack as psy
 from psytrack.helper.helperFunctions import read_input
 
+import json
+
 class Mode(Enum):
     IDLE = auto()
     START_EXPERIMENT = auto()
@@ -179,9 +181,9 @@ class Interface(Plugin):
         self.punishTime = 10
 
         # Stimuli variables
-        self.floor_img_green = 1
+        self.wall_blue_right = 8
         self.wall_img_green = 2
-        self.choice_sound_cue = "1kHz_120s"
+        self.choice_sound_cue = '1kHz_120s'
 
         # Maze variables
         # key is chamber number, value is chamber wall pointing to middle
@@ -229,7 +231,7 @@ class Interface(Plugin):
         }
 
         # Mode parameters
-        self.mode = Mode.START_EXPERIMENT
+        self.mode = Mode.TEST_MODE
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
         self.timer = QTimer(self)
@@ -329,7 +331,8 @@ class Interface(Plugin):
         if self.mode == Mode.TEST_MODE:
             rospy.loginfo("TESTING MODE")
             self.raiseAllWalls()
-            self.projection_floor_pub.publish(self.floor_img_green)
+            self.projection_wall_img_pub.publish(self.wall_blue_right)
+            self.projection_pub.publish(json.dumps(Wall(3, 0).to_dict()))
             rospy.loginfo("Waiting 3 seconds")
             rospy.sleep(3)
             self.lowerAllWalls()
@@ -382,7 +385,6 @@ class Interface(Plugin):
             self.raiseWalls(dict.fromkeys(current_rat_chamber, self.goalChambers[current_rat_chamber]))
             #visual and auditory cues
             #TODO check to see if chamber is correct or not each trial
-            self.projection_floor_pub.publish(self.floor_img_green)
             self.projection_wall_img_pub.publish(self.wall_img_green)
             self.sound_pub.publish(self.choice_sound_cue)
 

@@ -165,12 +165,9 @@ class Interface(Plugin):
 
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
 
-        self.projection_pub = rospy.Publisher(
-            'projection_walls', String, queue_size=100)
-        self.projection_floor_pub = rospy.Publisher(
-            'projection_image_floor_num', Int32, queue_size=100)
-        self.projection_wall_img_pub = rospy.Publisher(
-            'projection_image_wall_num', Int32, queue_size=1)
+        self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
+        self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=100)
+        self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
         self.gantry_pub = rospy.Publisher(
             '/gantry_cmd', GantryCmd, queue_size=1)
         self.write_sync_ease_pub = rospy.Publisher(
@@ -277,12 +274,15 @@ class Interface(Plugin):
         self.common_functions = CommonFunctions()  # Create an instance
 
         self.chamber_walls_list = {1:
-                                   [Wall(1, 0).to_dict(),
+                                   [Wall(2, 0).to_dict(),
+                                    Wall(1, 4).to_dict(),
                                     Wall(1, 1).to_dict(),
                                     Wall(1, 2).to_dict(),
                                     Wall(1, 3).to_dict(),
-                                    Wall(1, 4).to_dict(),
+                                    Wall(0, 4).to_dict(),
+                                    Wall(1, 0).to_dict(),
                                     Wall(1, 5).to_dict(),
+                                    Wall(4, 2).to_dict(),
                                     Wall(1, 6).to_dict(),
                                     Wall(1, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
@@ -307,10 +307,13 @@ class Interface(Plugin):
                                     Wall(5, 7).to_dict(),
                                     Wall(4, 3).to_dict(),
                                     Wall(4, 5).to_dict()],
-                                7: [Wall(7, 0).to_dict(),
+                                7: [Wall(6, 4).to_dict(),
+                                    Wall(7, 0).to_dict(),
                                     Wall(7, 1).to_dict(),
+                                    Wall(4, 6).to_dict(),
                                     Wall(7, 2).to_dict(),
                                     Wall(7, 3).to_dict(),
+                                    Wall(8, 0).to_dict(),
                                     Wall(7, 4).to_dict(),
                                     Wall(7, 5).to_dict(),
                                     Wall(7, 6).to_dict(),
@@ -344,7 +347,7 @@ class Interface(Plugin):
             sum_success = sum([dict[key] for key in dict if key in [1, 2]])
           
         #if sum_success > 0 and sum_success % 10 == 0:
-        if sum_success >= 6:
+        if sum_success >= 4:
             if group == 'group1':
                dict[3] = 0
                dict[4] = 0
@@ -836,23 +839,23 @@ class Interface(Plugin):
                 self.mode = Mode.START_TO_CHOICE
                 rospy.loginfo("START_TO_CHOICE")
 
+        # elif self.mode == Mode.START_TO_CHOICE:
+        #     # Wait for the rat to move to the choice point
+        #     if self.rat_head_chamber == self.central_chamber:
+        #         self.mode_start_time = rospy.Time.now()
+        #         self.mode = Mode.RAT_IN_CHOICE_CHAMBER
+        #         rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
+
         elif self.mode == Mode.START_TO_CHOICE:
-            # Wait for the rat to move to the choice point
-            if self.rat_head_chamber == self.central_chamber:
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.RAT_IN_CHOICE_CHAMBER
-                rospy.loginfo("RAT_IN_CHOICE_CHAMBER")
-
-        elif self.mode == Mode.RAT_IN_CHOICE_CHAMBER:
-            self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.CHOICE
-            rospy.loginfo("CHOICE")
-
-        elif self.mode == Mode.CHOICE:
-            #if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.CHOICE_TO_GOAL
-            rospy.loginfo("CHOICE TO GOAL")
+            rospy.loginfo("CHOICE_TO_GOAL")
+
+        # elif self.mode == Mode.CHOICE:
+        #     #if (self.current_time - self.mode_start_time).to_sec() >= self.choice_delay.to_sec():
+        #     self.mode_start_time = rospy.Time.now()
+        #     self.mode = Mode.CHOICE_TO_GOAL
+        #     rospy.loginfo("CHOICE TO GOAL")
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
             if self.rat_body_chamber == self.success_chamber:
