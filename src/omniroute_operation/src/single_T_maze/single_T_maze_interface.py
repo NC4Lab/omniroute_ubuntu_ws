@@ -159,22 +159,6 @@ class Interface(Plugin):
 
         self.maze_dim = MazeDimensions()
 
-        # self.trial_dir = '/media/big_gulp/nc4_rat_data/Maze_Rats'
-
-        # self.rat = 6
-        # self.date = '240829'
-
-        # self.rat_folder = os.path.join(self.trial_dir, 'NC4%04d' % self.rat)
-
-        # if '-' in self.date:
-        #     self.date = parsedate(self.date).strftime('%y%m%d')
-
-        # date_folder = os.path.join(self.rat_folder, self.date)
-
-        # self.trial_summary_path = os.path.join(date_folder, 'Past_seven_days_biases.csv')
-
-        # self.df = pd.read_csv(self.trial_summary_path)
-
         self._widget.lowerAllDoorsBtn.setStyleSheet(
             "background-color: red; color: yellow")
 
@@ -345,7 +329,7 @@ class Interface(Plugin):
 
             print(f"Switching to trial: {nextTrial}")
         else:
-            nextTrial = Trial(random.choice(list(TriangleCue)), FloorCue.GREEN, self.training_mode)
+            nextTrial = Trial(random.choice(list(TriangleCue)), self.currentTrial.floor_cue, self.training_mode)
 
         return nextTrial
 
