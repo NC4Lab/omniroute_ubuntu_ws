@@ -86,22 +86,28 @@ class Interface(Plugin):
         # TODO change names
         self._widget.testingPhaseBtn.clicked.connect(
             self._handle_testingPhaseBtn_clicked)
-        self._widget.trialGeneratorBtn.clicked.connect(
-            self._handle_trialGeneratorBtn_clicked)
-        self._widget.lowerAllDoorsBtn.clicked.connect(
+        self._widget.habituation1PhaseBtn.clicked.connect(
+            self._handle_habituation1PhaseBtn_clicked)
+        self._widget.habituation2PhaseBtn.clicked.connect(
+            self._handle_habituation2PhaseBtn_clicked)
+        self._widget.fullTaskPhaseBtn.clicked.connect(
+            self._handle_fullTaskPhaseBtn_clicked)
+        self._widget.lowerAllDoorsBtn.connect(
             self._handle_lowerAllDoorsBtn_clicked)
+        self._widget.radialMazeBtn.connect(
+            self._handle_radialMazeBtn_clicked)
         
         
         # buttons for each of the phases
         self._widget.phaseBtnGroup = QButtonGroup()
         self._widget.phaseBtnGroup.addButton(
-            self._widget.testingBtn, id=0)
+            self._widget.testingPhaseBtn, id=0)
         self._widget.phaseBtnGroup.addButton(
-            self._widget.habituation1Btn, id=1)
+            self._widget.habituation1PhaseBtn, id=1)
         self._widget.phaseBtnGroup.addButton(
-            self._widget.habituatoin2Btn, id=2)
+            self._widget.habituation2PhaseBtn, id=2)
         self._widget.phaseBtnGroup.addButton(
-            self._widget.fullTaskBtn, id=3)
+            self._widget.fullTaskPhaseBtn, id=3)
 
         self._widget.phaseBtnGroup.setExclusive(True)
         for button in self._widget.phaseBtnGroup.buttons():
@@ -139,13 +145,11 @@ class Interface(Plugin):
         self.experiment_pub.publish("radial_maze_experiment")
 
         # setting variables
-        # TODO change these
         
         self.common_functions = CommonFunctions()
 
         #phase variables
         self.is_testing_phase = False
-        self.trial_generator = False
         self.is_habituation1_phase = False
         self.is_habituation2_phase = False
         self.is_fullTask_phase = False
@@ -163,22 +167,13 @@ class Interface(Plugin):
         self.maze_dim = MazeDimensions()
 
         # Trial parameters
-        self.save = {
-            "trialNumber": [],
-            "SelectedChamber": [],
-            "correctChamber": [],
-            "correct?": [],
-            "startTime": [],
-            "endTIme": []
-        }
-
         self.currentTrial = 0
         self.prevTrial = -1
         self.numTrials = 32
         self.numBlocks = 4
         self.correctChambers = []
-        self.ITI = 5
-        self.punishTime = 10
+        self.ITI = rospy.Duration(5)
+        self.punishTime = rospy.Duration(10)
 
         # Stimuli variables
         self.wall_blue_right = 8
@@ -257,12 +252,12 @@ class Interface(Plugin):
     def _handle_fullTaskPhaseBtn_clicked(self):
         self.is_fullTask_phase = True
         rospy.loginfo("Full task phase selected")
-    def _handle_trialGeneratorBtn_clicked(self):
-        rospy.loginfo("Generating trials")
-        self.generateTrials()
     def _handle_lowerAllDoorsBtn_clicked(self):
         rospy.loginfo("Lowering all doors")
         self.lowerAllWalls()
+    def _handle_radialMazeBtn_clicked(self):
+        rospy.loginfo("Assuming radial maze configuration")
+        #TODO radial maze config
 
     def generateTrials(self):
         goalChambers = self.goalChambers.keys()
@@ -346,6 +341,17 @@ class Interface(Plugin):
             # TODO if something like a start button or ready button is clicked, then start
             self.mode = Mode.START_TRIAL
         
+        elif self.mode == Mode.PAUSE_EXPERIMENT:
+            rospy.loginfo("PAUSE_EXPERIMENT")
+            self.button_pub.publish("Pause_button_disabled")
+            self.mode_start_time = rospy.Time.now()
+
+        elif self.mode == Mode.RESUME_EXPERIMENT:
+            rospy.loginfo("RESUME_EXPERIMENT")
+            self.button_pub.publish("Pause_button_enabled")
+            self.mode_start_time = rospy.Time.now()
+            self.mode = self.mode_before_pause
+
         elif self.mode == Mode.START_TRIAL:
             rospy.loginfo("STARTING TRIAL")
 
@@ -421,6 +427,10 @@ class Interface(Plugin):
                 self.mode = Mode.START_TRIAL
                 #if there aren't any, end the experiment
                 self.mode = Mode.EXPERIMENT_END
+
+        elif self.mode == Mode.EXPERIMENT_END:
+            #TODO print the results?
+            rospy.loginfo("EXPERIMENT END")
 
 
 
