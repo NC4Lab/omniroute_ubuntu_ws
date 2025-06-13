@@ -70,14 +70,14 @@ class ProjectionOperation:
         self.publish_image_message()
         
     def projection_image_wall_callback(self, msg):
-        self.wall_image_num = msg.data
+        self.wall_image_num=msg.data
         
     def projection_walls_callback(self, msg):
         wall_num = json.loads(msg.data)
         self.cham_ind = wall_num['chamber_num']
         self.wall_ind = wall_num['wall_num']
 
-        self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
+        self.set_config('walls', img_ind=self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
         self.publish_image_message()
 
     

@@ -263,40 +263,52 @@ class Interface(Plugin):
 
         self.chamber_walls_list = {1:
                                    [Wall(1, 0).to_dict(),
+                                    Wall(0, 4).to_dict(),
                                     Wall(1, 1).to_dict(),
                                     Wall(1, 2).to_dict(),
                                     Wall(1, 3).to_dict(),
                                     Wall(1, 4).to_dict(),
+                                    Wall(2, 0).to_dict(),
                                     Wall(1, 5).to_dict(),
                                     Wall(1, 6).to_dict(),
+                                    Wall(4, 2).to_dict(),
                                     Wall(1, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
                                     Wall(4, 3).to_dict()],
                                 3: [Wall(3, 0).to_dict(),
                                     Wall(3, 1).to_dict(),
                                     Wall(3, 2).to_dict(),
+                                    Wall(0, 6).to_dict(),
                                     Wall(3, 3).to_dict(),
                                     Wall(3, 4).to_dict(),
+                                    Wall(4, 0).to_dict(), 
                                     Wall(3, 5).to_dict(),
                                     Wall(3, 6).to_dict(),
+                                    Wall(6, 2).to_dict(), 
                                     Wall(3, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
                                     Wall(4, 7).to_dict()],
                                 5: [Wall(5, 0).to_dict(),
+                                    Wall(4, 4).to_dict(), 
                                     Wall(5, 1).to_dict(),
                                     Wall(5, 2).to_dict(),
+                                    Wall(2, 6).to_dict(), 
                                     Wall(5, 3).to_dict(),
                                     Wall(5, 4).to_dict(),
                                     Wall(5, 5).to_dict(),
                                     Wall(5, 6).to_dict(),
+                                    Wall(8, 2).to_dict(),
                                     Wall(5, 7).to_dict(),
                                     Wall(4, 3).to_dict(),
                                     Wall(4, 5).to_dict()],
                                 7: [Wall(7, 0).to_dict(),
+                                    Wall(6, 4).to_dict(), 
                                     Wall(7, 1).to_dict(),
                                     Wall(7, 2).to_dict(),
+                                    Wall(4, 6).to_dict(), 
                                     Wall(7, 3).to_dict(),
                                     Wall(7, 4).to_dict(),
+                                    Wall(8, 0).to_dict(), 
                                     Wall(7, 5).to_dict(),
                                     Wall(7, 6).to_dict(),
                                     Wall(7, 7).to_dict(),
@@ -778,7 +790,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time) >= self.right_choice_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 3:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 2:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
@@ -818,7 +830,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 3:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 2:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
