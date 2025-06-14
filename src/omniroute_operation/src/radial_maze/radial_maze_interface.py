@@ -35,6 +35,7 @@ import json
 class Mode(Enum):
     IDLE = auto()
     START_EXPERIMENT = auto()
+    WAIT_FOR_START = auto()
     START_TRIAL = auto()
     TRIAL_ITI = auto()
     RAT_IS_WANDERING = auto()
@@ -48,6 +49,7 @@ class Mode(Enum):
     PAUSE_EXPERIMENT = auto()
     RESUME_EXPERIMENT = auto()
     TEST_MODE = auto()
+    OTHER_MODE = auto()
 
 
 class Interface(Plugin):
@@ -87,21 +89,9 @@ class Interface(Plugin):
         self.scene = QGraphicsScene()
 
         # Defining buttons in the scene
-        # self._widget.testingPhaseBtn.clicked.connect(
-        #     self._handle_testingPhaseBtn_clicked)
-        # self._widget.habituation1PhaseBtn.clicked.connect(
-        #     self._handle_habituation1PhaseBtn_clicked)
-        # self._widget.habituation2PhaseBtn.clicked.connect(
-        #     self._handle_habituation2PhaseBtn_clicked)
-        # self._widget.fullTaskPhaseBtn.clicked.connect(
-        #     self._handle_fullTaskPhaseBtn_clicked)
-        # self._widget.lowerAllDoorsBtn.connect(
-        #     self._handle_lowerAllDoorsBtn_clicked)
-        # self._widget.radialMazeBtn.connect(
-        #     self._handle_radialMazeBtn_clicked)
-        self._widget.startBtn.connect(
+      
+        self._widget.startBtn.clicked.connect(
             self._handle_startBtn_clicked)
-        
         
         # put buttons in groups
         self.TESTING_PHASE_ID = 0
@@ -155,6 +145,8 @@ class Interface(Plugin):
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
         self.trial_sub = rospy.Subscriber(
             '/selected_trial', String, self.trial_callback)
+        self.experiment_pub = rospy.Publisher(
+            '/experiment', String, queue_size=1)
 
         # Define all Subscribers
         rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
@@ -253,7 +245,7 @@ class Interface(Plugin):
         }
 
         # Mode parameters
-        self.mode = Mode.TEST_MODE
+        self.mode = Mode.START_EXPERIMENT
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
         self.timer = QTimer(self)
@@ -272,29 +264,34 @@ class Interface(Plugin):
             rospy.loginfo("Testing phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION1_PHASE_ID:
             self.is_habituation1_phase = True
+            self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Habituation 1 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION2_PHASE_ID:
             self.is_habituation2_phase = True
+            self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Habituation 2 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.FULLTASK_PHASE_ID:
             self.is_fullTask_phase = True
+            self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Full task phase selected")
         
     def _handle_wallBtnGroup_clicked(self):
         if self._widget.wallBtnGroup.checkedId() == self.RADIAL_MAZE_ID:
             rospy.loginfo("Assuming radial maze configuration")
+            self.raiseAllWalls()
             #TODO radial maze config
         elif self._widget.wallBtnGroup.checkedId() == self.LOWER_ALL_DOORS_ID:
             rospy.loginfo("Lowering all doors")
             self.lowerAllWalls()
     
     def _handle_startBtn_clicked(self):
+        rospy.loginfo("Start clicked")
         self.start = True
     
     # function definitions
 
     def generateTrials(self):
-        goalChambers = self.goalChambers.keys()
+        goalChambers = list(self.goalChambers.keys())
         self.correctChambers = []
         for i in range(self.numBlocks):
             random.shuffle(goalChambers)
@@ -303,9 +300,9 @@ class Interface(Plugin):
 
     def lowerWalls(self, walls):
         #lower designated central walls
+        #TODO there's only ever one wall per chamber, right?
         for chamber in walls.keys():
-            for wall in walls[chamber]:
-                self.common_functions.lower_wall(Wall(chamber, wall), False)
+            self.common_functions.lower_wall(Wall(chamber, walls[chamber]), False)
         self.common_functions.activateWalls()
 
     def raiseWalls(self, walls):
@@ -318,7 +315,7 @@ class Interface(Plugin):
     def raiseAllWalls(self):
         for i in range(8):
             for j in range(8):
-                self.common_functions.raiseWall(Wall(i, j), False)
+                self.common_functions.raise_wall(Wall(i, j), False)
         self.common_functions.activateWalls()
 
     def lowerAllWalls(self):
@@ -334,6 +331,20 @@ class Interface(Plugin):
     def rat_body_chamber_callback(self, msg):
         self.rat_body_chamber = msg.data
 
+    #TODO use this to keep track of the trials, reference Elena's code
+    def trial_callback(self, msg):
+        # Convert the string back into a list (if necessary)
+        trial_data = json.loads(msg.data)
+        self.currentTrial = trial_data['trial']
+        self.current_trial_index = trial_data['current_trial_index']
+        self.trials = trial_data['trials']
+        self.nTrials = trial_data['nTrials']
+
+        # Log the received trial and index
+        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
+        rospy.loginfo(
+            f"Received current_trial_index: {self.current_trial_index}")
+
     def mode_callback(self, msg):
         mode = msg.data
         if mode == "START_EXPERIMENT":
@@ -346,7 +357,7 @@ class Interface(Plugin):
 
     def run_experiment(self):
     # This funtion loops
-        rospy.loginfo("EXPERIMENT RUNNING")
+        #rospy.loginfo("EXPERIMENT RUNNING")
         self.current_time = rospy.Time.now()
         current_rat_chamber = self.rat_head_chamber
 
@@ -365,6 +376,9 @@ class Interface(Plugin):
             self.projection_pub.publish(json.dumps(Wall(3, 0).to_dict()))
             rospy.loginfo("Waiting 3 seconds")
             #self.lowerAllWalls()
+            self.mode = Mode.OTHER_MODE
+        elif self.mode == Mode.OTHER_MODE:
+            rospy.loginfo("WWWWWWWW")
 
         elif self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("STARTING EXPERIMENT")
@@ -373,6 +387,10 @@ class Interface(Plugin):
             #raise all walls but 4 corner walls
             self.raiseAllWalls()
             self.lowerWalls(self.diagonalChambers)
+    
+            self.mode = Mode.WAIT_FOR_START
+
+        elif self.mode == Mode.WAIT_FOR_START:
             #wait for user to press start button on UI
             if self.start == True:
                 self.mode_start_time = rospy.Time.now()
@@ -392,7 +410,7 @@ class Interface(Plugin):
         elif self.mode == Mode.START_TRIAL:
             self.prevTrial = self.currentTrial
             self.currentTrial += 1
-            rospy.loginfo("STARTING TRIAL" + self.currentTrial)
+            rospy.loginfo("STARTING TRIAL {self.currentTrial}")
 
             # key is chamber number, value is chamber wall pointing to middle
             self.goalChambers = {
@@ -454,11 +472,11 @@ class Interface(Plugin):
                 self.sound_pub.publish(self.choice_sound_cue)
 
             if (current_rat_chamber == self.correctChambers[self.currentTrial-1]) or self.is_habituation1_phase:
-                rospy.loginfo("Trial " + self.currentTrial + ": correct. Chamber: " + current_rat_chamber)
+                rospy.loginfo("Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_CORRECT
             else:
-                rospy.loginfo("Trial " + self.currentTrial + ": incorrect. Chamber: " + current_rat_chamber)
+                rospy.loginfo("Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_INCORRECT
         

@@ -280,6 +280,18 @@ class Interface(Plugin):
         self.left_count = 0
         self.right_count = 0
 
+    def trial_callback(self, msg):
+        # Convert the string back into a list (if necessary)
+        trial_data = json.loads(msg.data)
+        self.currentTrial = trial_data['trial']
+        self.current_trial_index = trial_data['current_trial_index']
+        self.trials = trial_data['trials']
+        self.nTrials = trial_data['nTrials']
+
+        # Log the received trial and index
+        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
+        rospy.loginfo(
+            f"Received current_trial_index: {self.current_trial_index}")
     # Define actions for clicking each button in the interface
     def _handle_alignMaxTrainingBtn_clicked(self):
         self.alignMax_training = True

@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QGroupBox" name="startBtn">
+  <widget class="QGroupBox" name="gui">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -347,7 +347,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="startBtn">
     <property name="geometry">
      <rect>
       <x>320</x>
