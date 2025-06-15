@@ -528,21 +528,21 @@ class Interface(Plugin):
 
         self.left_walls = [Wall(5, 0).to_dict(),
                            Wall(5, 1).to_dict(),
-                           Wall(2, 6).to_dict(),
+                           Wall(5, 2).to_dict(),
                            Wall(5, 3).to_dict(),
                            Wall(5, 4).to_dict(),
                            Wall(5, 5).to_dict(),
-                           Wall(8, 2).to_dict(),
+                           Wall(5, 6).to_dict(),
                            Wall(5, 7).to_dict(),
                            Wall(4, 5).to_dict()]
 
         self.right_walls = [Wall(3, 0).to_dict(),
                             Wall(3, 1).to_dict(),
-                            Wall(0, 6).to_dict(),
+                            Wall(3, 2).to_dict(),
                             Wall(3, 3).to_dict(),
                             Wall(3, 4).to_dict(),
                             Wall(3, 5).to_dict(),
-                            Wall(6, 2).to_dict(),
+                            Wall(3, 6).to_dict(),
                             Wall(3, 7).to_dict(),
                             Wall(4, 7).to_dict()]
 
@@ -560,7 +560,7 @@ class Interface(Plugin):
         self.left_chamber = 1
         self.right_chamber = 7
 
-        self.left_walls = [Wall(0, 4).to_dict(),
+        self.left_walls = [Wall(1, 0).to_dict(),
                            Wall(1, 1).to_dict(),
                            Wall(1, 2).to_dict(),
                            Wall(1, 3).to_dict(),
@@ -570,11 +570,11 @@ class Interface(Plugin):
                            Wall(1, 7).to_dict(),
                            Wall(4, 3).to_dict()]
 
-        self.right_walls = [Wall(6, 4).to_dict(),
+        self.right_walls = [Wall(7, 0).to_dict(),
                             Wall(7, 1).to_dict(),
                             Wall(7, 2).to_dict(),
                             Wall(7, 3).to_dict(),
-                            Wall(8, 0).to_dict(),
+                            Wall(7, 4).to_dict(),
                             Wall(7, 5).to_dict(),
                             Wall(7, 6).to_dict(),
                             Wall(7, 7).to_dict(),
@@ -594,17 +594,17 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.left_walls = [Wall(6, 4).to_dict(),
+        self.left_walls = [Wall(7, 0).to_dict(),
                            Wall(7, 1).to_dict(),
                            Wall(7, 2).to_dict(),
                            Wall(7, 3).to_dict(),
-                           Wall(8, 0).to_dict(),
+                           Wall(7, 4).to_dict(),
                            Wall(7, 5).to_dict(),
                            Wall(7, 6).to_dict(),
                            Wall(7, 7).to_dict(),
                            Wall(4, 7).to_dict()]
 
-        self.right_walls = [Wall(0, 4).to_dict(),
+        self.right_walls = [Wall(1, 0).to_dict(),
                             Wall(1, 1).to_dict(),
                             Wall(1, 2).to_dict(),
                             Wall(1, 3).to_dict(),
@@ -631,21 +631,21 @@ class Interface(Plugin):
 
         self.left_walls = [Wall(3, 0).to_dict(),
                            Wall(3, 1).to_dict(),
-                           Wall(0, 6).to_dict(),
+                           Wall(3, 2).to_dict(),
                            Wall(3, 3).to_dict(),
                            Wall(3, 4).to_dict(),
                            Wall(3, 5).to_dict(),
-                           Wall(6, 2).to_dict(),
+                           Wall(3, 6).to_dict(),
                            Wall(3, 7).to_dict(),
                            Wall(4, 1).to_dict()]
 
         self.right_walls = [Wall(5, 0).to_dict(),
                             Wall(5, 1).to_dict(),
-                            Wall(2, 6).to_dict(),
+                            Wall(5, 2).to_dict(),
                             Wall(5, 3).to_dict(),
                             Wall(5, 4).to_dict(),
                             Wall(5, 5).to_dict(),
-                            Wall(8, 2).to_dict(),
+                            Wall(5, 6).to_dict(),
                             Wall(5, 7).to_dict(),
                             Wall(4, 3).to_dict()]
 
