@@ -275,52 +275,40 @@ class Interface(Plugin):
 
         self.chamber_walls_list = {1:
                                    [Wall(1, 0).to_dict(),
-                                    Wall(0, 4).to_dict(),
                                     Wall(1, 1).to_dict(),
                                     Wall(1, 2).to_dict(),
                                     Wall(1, 3).to_dict(),
                                     Wall(1, 4).to_dict(),
-                                    Wall(2, 0).to_dict(),
                                     Wall(1, 5).to_dict(),
                                     Wall(1, 6).to_dict(),
-                                    Wall(4, 2).to_dict(),
                                     Wall(1, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
                                     Wall(4, 3).to_dict()],
                                 3: [Wall(3, 0).to_dict(),
                                     Wall(3, 1).to_dict(),
                                     Wall(3, 2).to_dict(),
-                                    Wall(0, 6).to_dict(),
                                     Wall(3, 3).to_dict(),
                                     Wall(3, 4).to_dict(),
-                                    Wall(4, 0).to_dict(), 
                                     Wall(3, 5).to_dict(),
                                     Wall(3, 6).to_dict(),
-                                    Wall(6, 2).to_dict(), 
                                     Wall(3, 7).to_dict(),
                                     Wall(4, 1).to_dict(),
                                     Wall(4, 7).to_dict()],
-                                5: [Wall(5, 0).to_dict(),
-                                    Wall(4, 4).to_dict(), 
+                                5: [Wall(5, 0).to_dict(), 
                                     Wall(5, 1).to_dict(),
                                     Wall(5, 2).to_dict(),
-                                    Wall(2, 6).to_dict(), 
                                     Wall(5, 3).to_dict(),
                                     Wall(5, 4).to_dict(),
                                     Wall(5, 5).to_dict(),
                                     Wall(5, 6).to_dict(),
-                                    Wall(8, 2).to_dict(),
                                     Wall(5, 7).to_dict(),
                                     Wall(4, 3).to_dict(),
                                     Wall(4, 5).to_dict()],
                                 7: [Wall(7, 0).to_dict(),
-                                    Wall(6, 4).to_dict(), 
                                     Wall(7, 1).to_dict(),
-                                    Wall(7, 2).to_dict(),
-                                    Wall(4, 6).to_dict(), 
+                                    Wall(7, 2).to_dict(), 
                                     Wall(7, 3).to_dict(),
-                                    Wall(7, 4).to_dict(),
-                                    Wall(8, 0).to_dict(), 
+                                    Wall(7, 4).to_dict(), 
                                     Wall(7, 5).to_dict(),
                                     Wall(7, 6).to_dict(),
                                     Wall(7, 7).to_dict(),
@@ -657,19 +645,26 @@ class Interface(Plugin):
         self.right_start_chamber_enter_wall = Wall(8, 0)
         self.left_start_chamber_enter_wall = Wall(6, 4)
 
-    def publish_walls(self, previous_cued_chamber, chamber_walls_list):
-        if previous_cued_chamber in chamber_walls_list:
-            # Get the list of objects associated with the key
-            object_list = chamber_walls_list[previous_cued_chamber]
+    # def publish_walls(self, previous_cued_chamber, chamber_walls_list):
+    #     if previous_cued_chamber in chamber_walls_list:
+    #         # Get the list of objects associated with the key
+    #         object_list = chamber_walls_list[previous_cued_chamber]
 
-            # Publish each object in the list
-            for obj in object_list:
-                # Assuming obj can be serialized with json.dumps
+    #         # Publish each object in the list
+    #         for obj in object_list:
+    #             # Assuming obj can be serialized with json.dumps
+    #             self.projection_pub.publish(json.dumps(obj))
+    #             rospy.loginfo(f"Published: {obj}")
+    #     else:
+    #         rospy.logwarn(
+    #             f"Key {previous_cued_chamber} not found in the dictionary.")
+
+    def publish_walls(self, chamber_walls_list):
+        for key in chamber_walls_list:
+            for obj in chamber_walls_list[key]:
                 self.projection_pub.publish(json.dumps(obj))
                 rospy.loginfo(f"Published: {obj}")
-        else:
-            rospy.logwarn(
-                f"Key {previous_cued_chamber} not found in the dictionary.")
+
             
     def choose_start_config(self, start_chamber_ID):
         if start_chamber_ID == 1:
@@ -957,7 +952,8 @@ class Interface(Plugin):
                     rospy.loginfo("Chamber 5 selected")
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)                
+                #self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
+                self.publish_walls(self.chamber_walls_list)                 
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
@@ -1016,7 +1012,7 @@ class Interface(Plugin):
                     rospy.loginfo("Chamber 5 selected")
 
                 self.projection_wall_img_pub.publish(self.wall_img_black_num)
-                self.publish_walls(self.previous_cued_chamber, self.chamber_walls_list)
+                self.publish_walls(self.chamber_walls_list)  
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.MOVE_TO_START_CHAMBER
