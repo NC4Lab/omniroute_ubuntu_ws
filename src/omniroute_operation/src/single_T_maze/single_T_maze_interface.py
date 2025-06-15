@@ -924,12 +924,12 @@ class Interface(Plugin):
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time).to_sec() >= self.right_choice_delay.to_sec():
                 if self.phase_three:
-                    if self.currentTrialNumber < 9:
+                    if self.currentTrialNumber < 14:
                         # Before trial 10, do not switch even if self.success_chamber == self.left_chamber
                         print(f"Trial {self.currentTrialNumber}: No switching before trial 10.")
                         self.choose_start_config(self.start_chamber)  
 
-                    elif self.currentTrialNumber == 9 and self.success_chamber == self.left_chamber:
+                    elif self.currentTrialNumber == 14 and self.success_chamber == self.left_chamber:
                         # First switch happens at trial 10
                         self.switch_trial = self.currentTrialNumber
                         self.starting_config = self.success_chamber
@@ -938,7 +938,7 @@ class Interface(Plugin):
 
                     elif self.success_chamber == self.left_chamber:
                          # Switch only if at least 2 trials have passed since the last switch
-                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 10:
+                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 15:
                             self.switch_trial = self.currentTrialNumber
                             self.starting_config = self.success_chamber
                             self.choose_start_config(self.starting_config)
@@ -983,12 +983,12 @@ class Interface(Plugin):
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time).to_sec() >= self.wrong_choice_second_delay.to_sec():
                 if self.phase_three:
-                    if self.currentTrialNumber < 9:
+                    if self.currentTrialNumber < 14:
                         # Before trial 10, do not switch even if self.success_chamber == self.left_chamber
                         print(f"Trial {self.currentTrialNumber}: No switching before trial 10.")
                         self.choose_start_config(self.start_chamber)  
 
-                    elif self.currentTrialNumber == 9 and self.error_chamber == self.left_chamber:
+                    elif self.currentTrialNumber == 14 and self.error_chamber == self.left_chamber:
                         # First switch happens at trial 10
                         self.switch_trial = self.currentTrialNumber
                         self.starting_config = self.error_chamber
@@ -997,7 +997,7 @@ class Interface(Plugin):
 
                     elif self.error_chamber == self.left_chamber:
                          # Switch only if at least 10 trials have passed since the last switch
-                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 10:
+                        if self.switch_trial is None or self.currentTrialNumber >= self.switch_trial + 15:
                             self.switch_trial = self.currentTrialNumber
                             self.starting_config = self.error_chamber
                             self.choose_start_config(self.starting_config)
