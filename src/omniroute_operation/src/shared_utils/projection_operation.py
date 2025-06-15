@@ -82,12 +82,24 @@ class ProjectionOperation:
         self.wall_image_num = msg.data
         
     def projection_walls_callback(self, msg):
-        wall_num = json.loads(msg.data)
-        self.cham_ind = wall_num['chamber_num']
-        self.wall_ind = wall_num['wall_num']
+        try:
+            wall_num = json.loads(msg.data)
+            self.cham_ind = wall_num['chamber_num']
+            self.wall_ind = wall_num['wall_num']
 
-        self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
-        self.publish_image_message()
+            if self.wall_image_num is None:
+                rospy.logwarn("wall_image_num has not been received yet.")
+                return
+
+            self.set_config(
+                'walls',
+                img_ind=self.wall_image_num,
+                cham_ind=self.cham_ind,
+                wall_ind=self.wall_ind
+            )
+            self.publish_image_message()
+        except Exception as e:
+            rospy.logerr(f"Failed in projection_walls_callback: {e}")
 
     
     def setup_layout(self, dim1, dim2):
