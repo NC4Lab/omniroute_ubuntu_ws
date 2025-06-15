@@ -53,6 +53,10 @@ class ProjectionOperation:
     ]
 
     def __init__(self):
+        
+        self.wall_image_num = None  
+        self.cham_ind = None
+        self.wall_ind = None
 
         # Initialize the node (if not already initialized)
         # if not rospy.core.is_initialized():
