@@ -300,20 +300,20 @@ class Interface(Plugin):
 
     def lowerWalls(self, walls):
         #lower designated central walls
-        #TODO there's only ever one wall per chamber, right?
+        #TODO there's only ever one wall per chamber, right? make separate 
         for chamber in walls.keys():
             self.common_functions.lower_wall(Wall(chamber, walls[chamber]), False)
         self.common_functions.activateWalls()
 
     def raiseWalls(self, walls):
+        rospy.loginfo(type(walls))
         #raise designated central walls
         for chamber in walls.keys():
-            for wall in walls[chamber]:
-                self.common_functions.raise_wall(Wall(chamber, wall), False)
+            self.common_functions.raise_wall(Wall(chamber, walls[chamber]), False)
         self.common_functions.activateWalls()
 
     def raiseAllWalls(self):
-        for i in range(8):
+        for i in range(9):
             for j in range(8):
                 self.common_functions.raise_wall(Wall(i, j), False)
         self.common_functions.activateWalls()
@@ -459,7 +459,9 @@ class Interface(Plugin):
         elif self.mode == Mode.CHOICE_MADE:
             rospy.loginfo("CHOICE MADE")
             #raise wall corresponding to goal chamber
-            self.raiseWalls(dict.fromkeys(current_rat_chamber, self.goalChambers[current_rat_chamber]))
+            self.common_functions.raise_wall(Wall(current_rat_chamber, self.goalChambers[current_rat_chamber]), False)
+            self.common_functions.activateWalls()
+            #self.raiseWalls(self, dict.fromkeys(current_rat_chamber, self.goalChambers[current_rat_chamber]))
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.PUBLISH_CUES
@@ -486,8 +488,10 @@ class Interface(Plugin):
                 #punish time over
                 rospy.loginfo("punishment over")
                 # remove chamber from list of possible goal chambers and lower wall
+                #TODO pop not working :((
                 self.lowerWalls(dict.fromkeys(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
-                
+                rospy.loginfo("popped")
+
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.RAT_IS_WANDERING
             
