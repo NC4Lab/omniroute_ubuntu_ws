@@ -15,7 +15,7 @@ from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
 from dateutil.parser import parse as parsedate
 
-from enum import Enum
+from enum import Enum, auto
 from python_qt_binding.QtCore import *
 from python_qt_binding.QtWidgets import *
 from python_qt_binding.QtGui import *
@@ -30,8 +30,26 @@ from qt_gui.plugin import Plugin
 import psytrack as psy
 from psytrack.helper.helperFunctions import read_input
 
-#class Mode(Enum):
+import json
 
+class Mode(Enum):
+    IDLE = auto()
+    START_EXPERIMENT = auto()
+    WAIT_FOR_START = auto()
+    START_TRIAL = auto()
+    TRIAL_ITI = auto()
+    RAT_IS_WANDERING = auto()
+    CHOICE_MADE = auto()
+    PUBLISH_CUES = auto()
+    CHOICE_INCORRECT = auto()
+    CHOICE_CORRECT = auto()
+    RAT_TO_CENTRE = auto()
+    RAT_IN_CENTRE = auto()
+    EXPERIMENT_END = auto()
+    PAUSE_EXPERIMENT = auto()
+    RESUME_EXPERIMENT = auto()
+    TEST_MODE = auto()
+    OTHER_MODE = auto()
 
 
 class Interface(Plugin):
@@ -51,31 +69,478 @@ class Interface(Plugin):
             print('arguments: ', args)
             print('unknowns: ', unknowns)
 
-#         # Create QWidget
-#         self._widget = QWidget()
-#         ui_file = os.path.join(os.path.dirname(os.path.realpath(
-#             __file__)), 'radial_maze.ui')
-#         # Extend the widget with all attributes and children from UI file
-#         loadUi(ui_file, self._widget)
+        # Create QWidget
+        self._widget = QWidget()
+        ui_file = os.path.join(os.path.dirname(os.path.realpath(
+            __file__)), 'radial_maze_interface.ui')
+        # Extend the widget with all attributes and children from UI file
+        loadUi(ui_file, self._widget)
 
-#         rospy.loginfo('Test Interface started')
+        rospy.loginfo('Test Interface started')
 
-#         self._widget.setObjectName('InterfacePluginUi')
-#         if context.serial_number() > 1:
-#             self._widget.setWindowTitle(
-#                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+        self._widget.setObjectName('InterfacePluginUi')
+        if context.serial_number() > 1:
+            self._widget.setWindowTitle(
+                self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-#         # Add widget to the user interface
-#         context.add_widget(self._widget)
+        # Add widget to the user interface
+        context.add_widget(self._widget)
 
-#         self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene()
 
-#     def run_experiment(self):
-
+        # Defining buttons in the scene
+      
+        self._widget.startBtn.clicked.connect(
+            self._handle_startBtn_clicked)
         
+        # put buttons in groups
+        self.TESTING_PHASE_ID = 0
+        self.HABITUATION1_PHASE_ID = 1
+        self.HABITUATION2_PHASE_ID = 2
+        self.FULLTASK_PHASE_ID = 3
+        self._widget.phaseBtnGroup = QButtonGroup()
+        self._widget.phaseBtnGroup.addButton(
+            self._widget.testingPhaseBtn, id=self.TESTING_PHASE_ID)
+        self._widget.phaseBtnGroup.addButton(
+            self._widget.habituation1PhaseBtn, id=self.HABITUATION1_PHASE_ID)
+        self._widget.phaseBtnGroup.addButton(
+            self._widget.habituation2PhaseBtn, id=self.HABITUATION2_PHASE_ID)
+        self._widget.phaseBtnGroup.addButton(
+            self._widget.fullTaskPhaseBtn, id=self.FULLTASK_PHASE_ID)
+
+        self._widget.phaseBtnGroup.setExclusive(True)
+        for button in self._widget.phaseBtnGroup.buttons():
+            button.setEnabled(True)
+
+        self._widget.phaseBtnGroup.buttonClicked.connect(
+            self._handle_phaseBtnGroup_clicked)
+        
+        self.RADIAL_MAZE_ID = 0
+        self.LOWER_ALL_DOORS_ID = 1
+        self._widget.wallBtnGroup = QButtonGroup()
+        self._widget.wallBtnGroup.addButton(
+            self._widget.radialMazeBtn, id=self.RADIAL_MAZE_ID)
+        self._widget.wallBtnGroup.addButton(
+            self._widget.lowerAllDoorsBtn, id=self.LOWER_ALL_DOORS_ID)
+        
+        self._widget.wallBtnGroup.setExclusive(True)
+        for button in self._widget.wallBtnGroup.buttons():
+            button.setEnabled(True)
+
+        self._widget.wallBtnGroup.buttonClicked.connect(
+            self._handle_wallBtnGroup_clicked)
+
+        # Setting rospy publishers
+        self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
+        self.projection_pub = rospy.Publisher(
+            'projection_walls', String, queue_size=100)
+        self.projection_floor_pub = rospy.Publisher(
+            'projection_image_floor_num', Int32, queue_size=100)
+        self.projection_wall_img_pub = rospy.Publisher(
+            'projection_image_wall_num', Int32, queue_size=1)
+        self.gantry_pub = rospy.Publisher(
+            '/gantry_cmd', GantryCmd, queue_size=1)
+        self.write_sync_ease_pub = rospy.Publisher(
+            '/Esmacat_write_sync_ease', ease_registers, queue_size=1)
+        self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
+        self.trial_sub = rospy.Subscriber(
+            '/selected_trial', String, self.trial_callback)
+        self.experiment_pub = rospy.Publisher(
+            '/experiment', String, queue_size=1)
+
+        # Define all Subscribers
+        rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
+        rospy.Subscriber('/rat_head_chamber', Int8,
+                         self.rat_head_chamber_callback, queue_size=1, tcp_nodelay=True)
+        rospy.Subscriber('/rat_body_chamber', Int8,
+                         self.rat_body_chamber_callback, queue_size=1, tcp_nodelay=True)
+
+        # Time for setting up publishers and subscribers
+        rospy.sleep(1.0)
+
+        self.experiment_pub.publish("radial_maze_experiment")
+
+        # setting variables
+        
+        self.common_functions = CommonFunctions()
+
+        #phase variables
+        self.is_testing_phase = False
+        self.is_habituation1_phase = False
+        self.is_habituation2_phase = False
+        self.is_fullTask_phase = False
+        self.end_task = False
+        self.start_task = False #TODO don't know if this is necessary??
+        self.start = False
+        self.pause_task = False
+        self.start_at_trial = False
+        
+        # rat variables
+        self.rat_head_chamber = -1
+        self.rat_body_chamber = -1
+        self.previous_rat_chamber = -1
+        self.rat_position = -1
+
+        self.maze_dim = MazeDimensions()
+
+        # Trial parameters
+        self.currentTrial = 0
+        self.prevTrial = -1
+        self.numTrials = 32
+        self.numBlocks = 4
+        self.correctChambers = []
+        self.ITI = rospy.Duration(5)
+        self.punishTime = rospy.Duration(10)
+        self.mode_start_time = rospy.Time.now()
+        self.current_time = rospy.Time.now()
+
+        # Stimuli variables
+        self.wall_blue_right = 8
+        self.wall_img_green = 2
+        self.choice_sound_cue = '1kHz_120s'
+
+        # Maze variables
+        # key is chamber number, value is chamber wall pointing to middle
+        self.goalChambers = {
+            0 : 5,
+            1 : 6,
+            2 : 7,
+            3 : 4,
+            5 : 0,
+            6 : 3,
+            7 : 2,
+            8 : 1
+        }
+        
+        # key is chamber number, value is chamber wall pointing to middle
+        self.diagonalChambers = {
+            0 : 5,
+            2 : 7,
+            6 : 3,
+            8 : 1
+        }
+
+        # key is goal chamber number, value is centre chamber wall pointing to goal chamber
+        self.goalChambersFromCentre = {
+            0 : 1,
+            1 : 2,
+            2 : 3,
+            3 : 0,
+            5 : 4,
+            6 : 7,
+            7 : 6,
+            8 : 5
+        }
+
+        # key is chamber number, value is chamber wall
+        self.centreWalls = {
+            4 : 0,
+            4 : 1,
+            4 : 2,
+            4 : 3,
+            4 : 4,
+            4 : 5,
+            4 : 6,
+            4 : 7
+        }
+
+        # Mode parameters
+        self.mode = Mode.START_EXPERIMENT
+        self.mode_start_time = rospy.Time.now()
+        self.current_time = rospy.Time.now()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.run_experiment)
+        self.timer.start(10)
+
+        # Common functions
+        self.common_functions = CommonFunctions()
+
+    # Defining functions of each button
+    
+    def _handle_phaseBtnGroup_clicked(self):
+        if self._widget.phaseBtnGroup.checkedId() == self.TESTING_PHASE_ID:
+            self.is_testing_phase = True
+            self.mode = Mode.TEST_MODE
+            rospy.loginfo("Testing phase selected")
+        elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION1_PHASE_ID:
+            self.is_habituation1_phase = True
+            self.mode = Mode.START_EXPERIMENT
+            rospy.loginfo("Habituation 1 phase selected")
+        elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION2_PHASE_ID:
+            self.is_habituation2_phase = True
+            self.mode = Mode.START_EXPERIMENT
+            rospy.loginfo("Habituation 2 phase selected")
+        elif self._widget.phaseBtnGroup.checkedId() == self.FULLTASK_PHASE_ID:
+            self.is_fullTask_phase = True
+            self.mode = Mode.START_EXPERIMENT
+            rospy.loginfo("Full task phase selected")
+        
+    def _handle_wallBtnGroup_clicked(self):
+        if self._widget.wallBtnGroup.checkedId() == self.RADIAL_MAZE_ID:
+            rospy.loginfo("Assuming radial maze configuration")
+            self.raiseAllWalls()
+            #TODO radial maze config
+        elif self._widget.wallBtnGroup.checkedId() == self.LOWER_ALL_DOORS_ID:
+            rospy.loginfo("Lowering all doors")
+            self.lowerAllWalls()
+    
+    def _handle_startBtn_clicked(self):
+        rospy.loginfo("Start clicked")
+        self.start = True
+    
+    # function definitions
+
+    def generateTrials(self):
+        goalChambers = list(self.goalChambers.keys())
+        self.correctChambers = []
+        for i in range(self.numBlocks):
+            random.shuffle(goalChambers)
+            self.correctChambers += goalChambers
+        rospy.loginfo(self.correctChambers)
+
+    def lowerWalls(self, walls):
+        #lower designated central walls
+        #TODO there's only ever one wall per chamber, right?
+        for chamber in walls.keys():
+            self.common_functions.lower_wall(Wall(chamber, walls[chamber]), False)
+        self.common_functions.activateWalls()
+
+    def raiseWalls(self, walls):
+        #raise designated central walls
+        for chamber in walls.keys():
+            for wall in walls[chamber]:
+                self.common_functions.raise_wall(Wall(chamber, wall), False)
+        self.common_functions.activateWalls()
+
+    def raiseAllWalls(self):
+        for i in range(8):
+            for j in range(8):
+                self.common_functions.raise_wall(Wall(i, j), False)
+        self.common_functions.activateWalls()
+
+    def lowerAllWalls(self):
+        for i in range(8):
+            for j in range(8):
+                self.common_functions.lowerWall(Wall(i, j), False)
+        self.common_functions.activateWalls()
+
+    # Define data revieved from gantry
+    def rat_head_chamber_callback(self, msg):
+        self.rat_head_chamber = msg.data
+
+    def rat_body_chamber_callback(self, msg):
+        self.rat_body_chamber = msg.data
+
+    #TODO use this to keep track of the trials, reference Elena's code
+    def trial_callback(self, msg):
+        # Convert the string back into a list (if necessary)
+        trial_data = json.loads(msg.data)
+        self.currentTrial = trial_data['trial']
+        self.current_trial_index = trial_data['current_trial_index']
+        self.trials = trial_data['trials']
+        self.nTrials = trial_data['nTrials']
+
+        # Log the received trial and index
+        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
+        rospy.loginfo(
+            f"Received current_trial_index: {self.current_trial_index}")
+
+    def mode_callback(self, msg):
+        mode = msg.data
+        if mode == "START_EXPERIMENT":
+            self.mode = Mode.START_EXPERIMENT
+        elif mode == "PAUSE_EXPERIMENT":
+            self.mode_before_pause = self.mode
+            self.mode = Mode.PAUSE_EXPERIMENT
+        elif mode == "RESUME_EXPERIMENT":
+            self.mode = Mode.RESUME_EXPERIMENT
+
+    def run_experiment(self):
+    # This funtion loops
+        #rospy.loginfo("EXPERIMENT RUNNING")
+        self.current_time = rospy.Time.now()
+        current_rat_chamber = self.rat_head_chamber
+
+        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+            # The rat has moved to a different chamber, update the gantry position
+            self.common_functions.move_gantry_to_chamber(current_rat_chamber)
+
+            # Update the previous_rat_chamber for the next iteration
+            self.previous_rat_chamber = current_rat_chamber
+
+        if self.mode == Mode.TEST_MODE:
+            self.mode_start_time = rospy.Time.now()
+            rospy.loginfo("TESTING MODE")
+            #self.raiseAllWalls()
+            self.projection_wall_img_pub.publish(self.wall_blue_right)
+            self.projection_pub.publish(json.dumps(Wall(3, 0).to_dict()))
+            rospy.loginfo("Waiting 3 seconds")
+            #self.lowerAllWalls()
+            self.mode = Mode.OTHER_MODE
+        elif self.mode == Mode.OTHER_MODE:
+            rospy.loginfo("WWWWWWWW")
+
+        elif self.mode == Mode.START_EXPERIMENT:
+            rospy.loginfo("STARTING EXPERIMENT")
+            #generate and print all trials
+            self.generateTrials()
+            #raise all walls but 4 corner walls
+            self.raiseAllWalls()
+            self.lowerWalls(self.diagonalChambers)
+    
+            self.mode = Mode.WAIT_FOR_START
+
+        elif self.mode == Mode.WAIT_FOR_START:
+            #wait for user to press start button on UI
+            if self.start == True:
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START_TRIAL
+        
+        elif self.mode == Mode.PAUSE_EXPERIMENT:
+            rospy.loginfo("PAUSE_EXPERIMENT")
+            self.button_pub.publish("Pause_button_disabled")
+            self.mode_start_time = rospy.Time.now()
+
+        elif self.mode == Mode.RESUME_EXPERIMENT:
+            rospy.loginfo("RESUME_EXPERIMENT")
+            self.button_pub.publish("Pause_button_enabled")
+            self.mode_start_time = rospy.Time.now()
+            self.mode = self.mode_before_pause
+
+        elif self.mode == Mode.START_TRIAL:
+            self.prevTrial = self.currentTrial
+            self.currentTrial += 1
+            rospy.loginfo("STARTING TRIAL {self.currentTrial}")
+
+            # key is chamber number, value is chamber wall pointing to middle
+            self.goalChambers = {
+                0 : 5,
+                1 : 6,
+                2 : 7,
+                3 : 4,
+                5 : 0,
+                6 : 3,
+                7 : 2,
+                8 : 1
+            }
+            # key is goal chamber number, value is centre chamber wall pointing to goal chamber
+            self.goalChambersFromCentre = {
+                0 : 1,
+                1 : 2,
+                2 : 3,
+                3 : 0,
+                5 : 4,
+                6 : 7,
+                7 : 6,
+                8 : 5
+            }
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.TRIAL_ITI
+
+        elif self.mode == Mode.TRIAL_ITI:
+            #wait for ITI
+            rospy.loginfo("Waiting for ITI")
+            if (self.current_time - self.mode_start_time).to_sec() >= self.ITI.to_sec():
+                #When the ITI is over,
+                rospy.loginfo("ITI over")
+                #lower centre walls
+                self.lowerWalls(self.centreWalls)
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.RAT_IS_WANDERING
+        
+        elif self.mode == Mode.RAT_IS_WANDERING:
+                #wait for rat to go to a goal cahmber
+                if current_rat_chamber in self.goalChambers.keys():
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.CHOICE_MADE
+        
+        elif self.mode == Mode.CHOICE_MADE:
+            rospy.loginfo("CHOICE MADE")
+            #raise wall corresponding to goal chamber
+            self.raiseWalls(dict.fromkeys(current_rat_chamber, self.goalChambers[current_rat_chamber]))
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.PUBLISH_CUES
+
+        elif self.mode == Mode.PUBLISH_CUES:
+            #publish visual and auditory cues
+            #TODO publish auditory cue
+            if (self.is_fullTask_phase or self.is_habituation2_phase):
+                self.projection_wall_img_pub.publish(self.wall_img_green)
+                self.sound_pub.publish(self.choice_sound_cue)
+
+            if (current_rat_chamber == self.correctChambers[self.currentTrial-1]) or self.is_habituation1_phase:
+                rospy.loginfo("Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE_CORRECT
+            else:
+                rospy.loginfo("Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.CHOICE_INCORRECT
+        
+        elif self.mode == Mode.CHOICE_INCORRECT:
+            rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
+            if (self.current_time - self.mode_start_time).to_sec() >= self.punishTime.to_sec():
+                #punish time over
+                rospy.loginfo("punishment over")
+                # remove chamber from list of possible goal chambers and lower wall
+                self.lowerWalls(dict.fromkeys(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
+                
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.RAT_IS_WANDERING
+            
+        
+        elif self.mode == Mode.CHOICE_CORRECT:
+            rospy.loginfo("CHOICE CORRECT")
+            # have gantry feed rat. Check phase for how much it should be fed
+            if self.is_habituation1_phase:
+                self.gantry_pub.publish("deliver_reward", [0.5]) # Send with pump duration (sec)
+            elif self.is_habituation2_phase or self.is_fullTask_phase:
+                self.gantry_pub.publish("deliver_reward", [1]) # Send with pump duration (sec)
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RAT_TO_CENTRE
+
+        elif self.mode == Mode.RAT_TO_CENTRE:
+            rospy.loginfo("MOVING RAT TO CENTRE")
+            #remove centre wall facing rat from the list so we don't raise and lower the same wall in a row (might make more noise than necessary)
+            self.goalChambersFromCentre.pop(current_rat_chamber)
+            self.raiseWalls(self.goalChambersFromCentre)
+            # remove chamber from list of possible goal chambers and lower wall
+            self.lowerWalls(dict.fromkeys(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
+
+            self.mode_start_time = rospy.Time.now()
+            self.mode = Mode.RAT_IN_CENTRE
+
+        elif self.mode == Mode.RAT_IN_CENTRE:
+            #if the rat is in the centre and we're giving rewards for that, give reward
+            if current_rat_chamber == 4:
+                #TODO gantry pub in same mode as raising walls?
+                self.raiseWalls(self.centreWalls)
+                if self.is_habituation1_phase or self.is_habituation2_phase:
+                    rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
+                    #give half reward
+                    self.gantry_pub.publish("deliver_reward", [0.5])
+
+                #check if there are still trials left
+                if self.currentTrial < self.numTrials:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.START_TRIAL
+                else:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.EXPERIMENT_END
+
+        elif self.mode == Mode.EXPERIMENT_END:
+            #TODO print the results?
+            rospy.loginfo("EXPERIMENT END")
+
+
+
+
 
 
 if __name__ == '__main__':
-    rospy.init_node('radial_maze')
+    rospy.init_node('radial maze')
     Interface()
     rospy.spin()
