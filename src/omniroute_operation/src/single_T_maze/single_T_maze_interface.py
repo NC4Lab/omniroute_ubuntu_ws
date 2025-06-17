@@ -820,7 +820,7 @@ class Interface(Plugin):
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
                 if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 2:
                     self.switch_trial = self.currentTrialNumber
-                    self.choose_start_config(self.success_chamber)
+                    self.choose_start_config(self.error_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
 
                 elif self.phase != ExperimentPhases.PHASE_THREE:
