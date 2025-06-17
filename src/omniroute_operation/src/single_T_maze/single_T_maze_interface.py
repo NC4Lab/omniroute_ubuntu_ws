@@ -580,20 +580,24 @@ class Interface(Plugin):
 
     def blank_cued_walls(self):
         self.projection_wall_img_pub.publish(self.wall_img_black_num)
-        if self.cued_chamber in self.chamber_walls_list:
-            # Get the list of objects associated with the key
-            object_list = self.chamber_walls_list[self.cued_chamber]
-
-            # Publish each object in the list
-            for obj in object_list:
-                # Assuming obj can be serialized with json.dumps
+        for key in self.chamber_walls_list:
+            for obj in self.chamber_walls_list[key]:
                 self.projection_pub.publish(json.dumps(obj))
-                rospy.loginfo(f"Published: {obj}")
-                # Add a small delay to ensure proper publishing
-                # rospy.sleep(0.1)
-        else:
-            rospy.logwarn(
-                f"Key {self.cued_chamber} not found in the dictionary.")
+
+        # if self.cued_chamber in self.chamber_walls_list:
+        #     # Get the list of objects associated with the key
+        #     object_list = self.chamber_walls_list[self.cued_chamber]
+
+        #     # Publish each object in the list
+        #     for obj in object_list:
+        #         # Assuming obj can be serialized with json.dumps
+        #         self.projection_pub.publish(json.dumps(obj))
+        #         rospy.loginfo(f"Published: {obj}")
+        #         # Add a small delay to ensure proper publishing
+        #         # rospy.sleep(0.1)
+        # else:
+        #     rospy.logwarn(
+        #         f"Key {self.cued_chamber} not found in the dictionary.")
             
     def choose_start_config(self, start_chamber_ID):
         if start_chamber_ID == 1:
