@@ -461,7 +461,6 @@ class Interface(Plugin):
             #raise wall corresponding to goal chamber
             self.common_functions.raise_wall(Wall(current_rat_chamber, self.goalChambers[current_rat_chamber]), False)
             self.common_functions.activateWalls()
-            #self.raiseWalls(self, dict.fromkeys(current_rat_chamber, self.goalChambers[current_rat_chamber]))
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.PUBLISH_CUES
@@ -489,7 +488,7 @@ class Interface(Plugin):
                 rospy.loginfo("punishment over")
                 # remove chamber from list of possible goal chambers and lower wall
                 #TODO pop not working :((
-                self.lowerWalls(dict.fromkeys(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
+                self.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
                 rospy.loginfo("popped")
 
                 self.mode_start_time = rospy.Time.now()
