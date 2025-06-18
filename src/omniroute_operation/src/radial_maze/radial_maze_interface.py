@@ -43,9 +43,10 @@ class Mode(Enum):
     PUBLISH_CUES = auto()
     CHOICE_INCORRECT = auto()
     CHOICE_CORRECT = auto()
+    REWARD_TIME = auto()
     RAT_TO_CENTRE = auto()
     RAT_IN_CENTRE = auto()
-    EXPERIMENT_END = auto()
+    END_EXPERIMENT = auto()
     PAUSE_EXPERIMENT = auto()
     RESUME_EXPERIMENT = auto()
     TEST_MODE = auto()
@@ -185,12 +186,15 @@ class Interface(Plugin):
 
         # Trial parameters
         self.currentTrial = 0
+        self.currentTrialNumber = 0
+        self.trials = []
         self.prevTrial = -1
-        self.numTrials = 32
+        self.nTrials = 32
         self.numBlocks = 4
         self.correctChambers = []
         self.ITI = rospy.Duration(5)
         self.punishTime = rospy.Duration(10)
+        self.rewardTime = rospy.Duration(3)
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
@@ -230,18 +234,6 @@ class Interface(Plugin):
             6 : 7,
             7 : 6,
             8 : 5
-        }
-
-        # key is chamber number, value is chamber wall
-        self.centreWalls = {
-            4 : 0,
-            4 : 1,
-            4 : 2,
-            4 : 3,
-            4 : 4,
-            4 : 5,
-            4 : 6,
-            4 : 7
         }
 
         # Mode parameters
@@ -299,10 +291,18 @@ class Interface(Plugin):
         rospy.loginfo(self.correctChambers)
 
     def lowerWalls(self, walls):
-        #lower designated central walls
-        #TODO there's only ever one wall per chamber, right? make separate 
         for chamber in walls.keys():
             self.common_functions.lower_wall(Wall(chamber, walls[chamber]), False)
+        self.common_functions.activateWalls()
+
+    def lowerCentreWalls(self):
+        for i in range(8):
+            self.common_functions.lower_wall(Wall(4, i), False)
+        self.common_functions.activateWalls()
+
+    def raiseCentreWalls(self):
+        for i in range(8):
+            self.common_functions.raise_wall(Wall(4, i), False)
         self.common_functions.activateWalls()
 
     def raiseWalls(self, walls):
@@ -409,8 +409,22 @@ class Interface(Plugin):
 
         elif self.mode == Mode.START_TRIAL:
             self.prevTrial = self.currentTrial
-            self.currentTrial += 1
-            rospy.loginfo("STARTING TRIAL {self.currentTrial}")
+            
+            #TODO what is this and why is this necessary. Can't I keep track of my own trials?
+            self.currentTrialNumber = self.currentTrialNumber+1
+            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
+
+            if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
+                self.currentTrial = self.trials[self.currentTrialNumber]
+            else:
+                # Handle the case where trials is empty or currentTrialNumber is out of range
+                self.currentTrial = None
+
+            # End experiment if there are no more trials from the predefined number of total trials
+            if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+                self.mode = Mode.END_EXPERIMENT
+            
+            rospy.loginfo(f"STARTING TRIAL {self.currentTrial}")
 
             # key is chamber number, value is chamber wall pointing to middle
             self.goalChambers = {
@@ -423,29 +437,18 @@ class Interface(Plugin):
                 7 : 2,
                 8 : 1
             }
-            # key is goal chamber number, value is centre chamber wall pointing to goal chamber
-            self.goalChambersFromCentre = {
-                0 : 1,
-                1 : 2,
-                2 : 3,
-                3 : 0,
-                5 : 4,
-                6 : 7,
-                7 : 6,
-                8 : 5
-            }
 
             self.mode_start_time = rospy.Time.now()
+            rospy.loginfo("Waiting for ITI")
             self.mode = Mode.TRIAL_ITI
 
         elif self.mode == Mode.TRIAL_ITI:
             #wait for ITI
-            rospy.loginfo("Waiting for ITI")
             if (self.current_time - self.mode_start_time).to_sec() >= self.ITI.to_sec():
                 #When the ITI is over,
                 rospy.loginfo("ITI over")
                 #lower centre walls
-                self.lowerWalls(self.centreWalls)
+                self.lowerCentreWalls()
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.RAT_IS_WANDERING
@@ -473,25 +476,25 @@ class Interface(Plugin):
                 self.sound_pub.publish(self.choice_sound_cue)
 
             if (current_rat_chamber == self.correctChambers[self.currentTrial-1]) or self.is_habituation1_phase:
-                rospy.loginfo("Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
+                rospy.loginfo(f"Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_CORRECT
             else:
-                rospy.loginfo("Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
+                rospy.loginfo(f"Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
+                rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
                 self.mode = Mode.CHOICE_INCORRECT
         
         elif self.mode == Mode.CHOICE_INCORRECT:
-            rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
             if (self.current_time - self.mode_start_time).to_sec() >= self.punishTime.to_sec():
                 #punish time over
                 rospy.loginfo("punishment over")
                 # remove chamber from list of possible goal chambers and lower wall
-                #TODO pop not working :((
-                self.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
-                rospy.loginfo("popped")
+                self.common_functions.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)), False)
+                self.common_functions.activateWalls()
 
                 self.mode_start_time = rospy.Time.now()
+                rospy.loginfo("rat is wandering")
                 self.mode = Mode.RAT_IS_WANDERING
             
         
@@ -502,16 +505,26 @@ class Interface(Plugin):
                 self.gantry_pub.publish("deliver_reward", [0.5]) # Send with pump duration (sec)
             elif self.is_habituation2_phase or self.is_fullTask_phase:
                 self.gantry_pub.publish("deliver_reward", [1]) # Send with pump duration (sec)
+            
             self.mode_start_time = rospy.Time.now()
-            self.mode = Mode.RAT_TO_CENTRE
+            rospy.loginfo("waiting for rat to drink rewards")
+            self.mode = Mode.REWARD_TIME
+
+        elif self.mode == Mode.REWARD_TIME:
+            #wait for reward time
+            if (self.current_time - self.mode_start_time).to_sec() >= self.rewardTime.to_sec():
+                #When the ITI is over,
+                rospy.loginfo("reward time over")
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.RAT_TO_CENTRE
 
         elif self.mode == Mode.RAT_TO_CENTRE:
             rospy.loginfo("MOVING RAT TO CENTRE")
-            #remove centre wall facing rat from the list so we don't raise and lower the same wall in a row (might make more noise than necessary)
-            self.goalChambersFromCentre.pop(current_rat_chamber)
-            self.raiseWalls(self.goalChambersFromCentre)
+            self.raiseCentreWalls()
+            self.common_functions.lower_wall(Wall(4, self.goalChambersFromCentre.get(current_rat_chamber)), False)
             # remove chamber from list of possible goal chambers and lower wall
-            self.lowerWalls(dict.fromkeys(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)))
+            self.common_functions.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)), False)
+            self.common_functions.activateWalls()
 
             self.mode_start_time = rospy.Time.now()
             self.mode = Mode.RAT_IN_CENTRE
@@ -520,21 +533,16 @@ class Interface(Plugin):
             #if the rat is in the centre and we're giving rewards for that, give reward
             if current_rat_chamber == 4:
                 #TODO gantry pub in same mode as raising walls?
-                self.raiseWalls(self.centreWalls)
+                self.raiseCentreWalls()
                 if self.is_habituation1_phase or self.is_habituation2_phase:
                     rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
                     #give half reward
                     self.gantry_pub.publish("deliver_reward", [0.5])
 
-                #check if there are still trials left
-                if self.currentTrial < self.numTrials:
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.START_TRIAL
-                else:
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.EXPERIMENT_END
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.START_TRIAL
 
-        elif self.mode == Mode.EXPERIMENT_END:
+        elif self.mode == Mode.END_EXPERIMENT:
             #TODO print the results?
             rospy.loginfo("EXPERIMENT END")
 
