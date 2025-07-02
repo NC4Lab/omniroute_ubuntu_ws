@@ -10,7 +10,7 @@ import os
 import rospy
 import subprocess
 import random
-from std_msgs.msg import String, Int32, Int8
+from std_msgs.msg import String, Int32, Int8, Int32MultiArray
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
 from dateutil.parser import parse as parsedate
@@ -166,17 +166,13 @@ class Interface(Plugin):
 
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
 
-        self.projection_pub = rospy.Publisher(
-            'projection_walls', String, queue_size=100)
-        self.projection_floor_pub = rospy.Publisher(
-            'projection_image_floor_num', Int32, queue_size=100)
-        self.projection_wall_img_pub = rospy.Publisher(
-            'projection_image_wall_num', Int32, queue_size=1)
-        self.write_sync_ease_pub = rospy.Publisher(
-            '/Esmacat_write_sync_ease', ease_registers, queue_size=1)
+        self.projection_pub = rospy.Publisher('projection_walls', String, queue_size=100)
+        self.projection_floor_pub = rospy.Publisher('projection_image_floor_num', Int32, queue_size=100)
+        self.projection_wall_img_pub = rospy.Publisher('projection_image_wall_num', Int32, queue_size=1)
+        self.projection_image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=1)
+        self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
-        self.trial_sub = rospy.Subscriber(
-            '/selected_trial', String, self.trial_callback)
+        self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
 
         # rospy.Subscriber('/selected_chamber', String,self.chamber_callback, queue_size=1)
 

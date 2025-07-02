@@ -12,58 +12,16 @@ from std_msgs.msg import Int32, Int32MultiArray, MultiArrayDimension, String
 
 # Other
 import csv
-import os
 import json
 
-
 class ProjectionOperation:
-    # ------------------------ CLASS VARIABLES ------------------------
-
-    # Wall image file names
-    # NOTE: This list needs to match that used in:
-    # omniroute_windows_ws\src\projection_operation\include\projection_utils.h
-    WALL_IMAGE_FILE_NAMES = [
-        "w_black",
-        "w_square",
-        "w_circle",
-        "w_triangle",
-        "w_star",
-        "w_pentagon",
-        "w_rm_blue_left",
-        "w_rm_blue_middle",
-        "w_rm_blue_right",
-        "w_rm_green_left",
-        "w_rm_green_middle",
-        "w_rm_green_right",
-        "w_rm_teal_left",
-        "w_rm_teal_middle",
-        "w_rm_teal_right"
-    ]
-
-    # Floor image file names
-    # NOTE: This list needs to match that used in:
-    # omniroute_windows_ws\src\projection_operation\include\projection_utils.h
-    FLOOR_IMAGE_FILE_NAMES = [
-        "f_black",
-        "f_green",
-        "f_pattern_0",
-        "f_pattern_1",
-        "f_pattern_2",
-        "f_white"
-    ]
-
     def __init__(self):
-        
-        self.wall_image_num = None  
-        self.cham_ind = None
-        self.wall_ind = None
+        self.num_chambers = 9  # Number of chambers
+        self.num_surfaces = 9  # Number of surfaces (8 walls + 1 floor)
+        self.blank_image_config = [[0 for _ in range(self.num_surfaces)] for _ in range(self.num_chambers)]
 
-        # Initialize the node (if not already initialized)
-        # if not rospy.core.is_initialized():
-        #     rospy.init_node('projection_opperation_node', anonymous=True)
-        
         # Initialize image_config as a 10x8 array with default values
-        self.image_config = [[0 for _ in range(8)] for _ in range(10)]
+        self.image_config = self.blank_image_config
 
         # Create the publisher for 'projection_cmd' topic
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
@@ -71,41 +29,29 @@ class ProjectionOperation:
         # Create the publisher for the 'projection_image' topic
         self.image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=10)
         
-        rospy.Subscriber('projection_image_floor_num', Int32, self.projection_image_floor_callback)
+        # rospy.Subscriber('projection_image_floor_num', Int32, self.projection_image_floor_callback)
 
-        rospy.Subscriber('projection_walls', String, self.projection_walls_callback)
+        # rospy.Subscriber('projection_walls', String, self.projection_walls_callback)
 
-        rospy.Subscriber('projection_image_wall_num', Int32, self.projection_image_wall_callback)
+        # rospy.Subscriber('projection_image_wall_num', Int32, self.projection_image_wall_callback)
 
-    def projection_image_floor_callback(self, msg):
-        self.floor_img_num = msg.data
-        self.set_config('floor', self.floor_img_num)
-        self.publish_image_message()
-        
-    def projection_image_wall_callback(self, msg):
-        self.wall_image_num = msg.data
-        
-    def projection_walls_callback(self, msg):
-        try:
-            wall_num = json.loads(msg.data)
-            self.cham_ind = wall_num['chamber_num']
-            self.wall_ind = wall_num['wall_num']
-
-            if self.wall_image_num is None:
-                rospy.logwarn("wall_image_num has not been received yet.")
-                return
-
-            self.set_config(
-                'walls',
-                img_ind=self.wall_image_num,
-                cham_ind=self.cham_ind,
-                wall_ind=self.wall_ind
-            )
-            self.publish_image_message()
-        except Exception as e:
-            rospy.logerr(f"Failed in projection_walls_callback: {e}")
-
+        self.wall_image_num = None  
+        self.cham_ind = None
+        self.wall_ind = None
     
+    #TODO Be able to use a string to set the wall image
+    def set_wall_image(self, chamber, wall, image_index):
+        if (wall < 0 or wall > 7) or (chamber < 0 or chamber > 8):
+            rospy.logwarn(f"[projection_sender:set_wall_image] Invalid chamber {chamber} or wall {wall}. Must be in range [0, 8] and [0, 7] respectively.")
+            return
+        
+        # Set the image index for the specified chamber and wall
+        self.image_config[chamber][wall] = image_index
+    
+    def set_floor_image(self, image_index):
+        for chamber in range(9):
+            self.image_config[chamber][8] = image_index
+
     def setup_layout(self, dim1, dim2):
         """Helper function to set up the layout for a 2-dimensional array."""
         layout = []
@@ -125,7 +71,7 @@ class ProjectionOperation:
         layout.append(dim2_layout)
 
         return layout
-
+    
     def set_config(self, data_type, img_ind, cham_ind=None, wall_ind=None):
         """
         Read the CSV and structure the data into either a 10x8 array for 'walls'
@@ -195,37 +141,35 @@ class ProjectionOperation:
                 MazeDB.printMsg(
                     'WARN', "[ProjectionOperation:set_config] Expected 'walls' or 'floor': data_type[%s]", data_type)
 
-    def publish_image_message(self):
+    def publish_image_message(self, image_config):
         """
-        Send the data from Int32MultiArray image_config.
+        Send the data from the CSV as an Int32MultiArray message.
+                
+        Args:
+            image_config (list): A 10x8 list that will be modified in place.
         """
-
         # Create the Int32MultiArray message
         projection_data = Int32MultiArray()
+        projection_data.layout.dim = self.setup_layout(9, 9)  
 
-        # Set up the layout using the helper function (10x8 array)
-        projection_data.layout.dim = self.setup_layout(10, 8)
-
-        # Flatten the 10x8 array into a single list
-        flat_data = [self.image_config[i][j]
-                     for i in range(10) for j in range(8)]
+        # Flatten the 9x9 array into a single list
+        flat_data = [image_config[i][j] for i in range(9) for j in range(9)]
         projection_data.data = flat_data
 
         # Publish the CSV data message
         self.image_pub.publish(projection_data)
 
         # Log the sent message data
-        MazeDB.printMsg(
-            'INFO', "Published new projection config")
+        # rospy.loginfo("[publish_image_message] Sent the following data:")
+        # for i in range(9):
+        #     rospy.loginfo("Data[%d] = %s", i, str(image_config[i]))
 
     def publish_command_message(self, number):
         # Can send any number
         self.projection_pub.publish(number)
-        MazeDB.printMsg(
-            'INFO', "Published projection command: command[%d]", number)
-        
+        # MazeDB.printMsg(
+        #     'INFO', "Published projection command: command[%d]", number)
     
 if __name__ == '__main__':
-    rospy.init_node('projection_opperation_node')
     ProjectionOperation()
     rospy.spin()
