@@ -563,7 +563,7 @@ class Interface(Plugin):
         # ................ Projection Setup ................
 
         # Projection command publisher
-        self.ProjOpp = ProjectionOperation()
+        self.ProjOp = ProjectionOperation()
 
         # ................ Gantry Setup ................
 
@@ -650,8 +650,8 @@ class Interface(Plugin):
             self.qt_callback_projWinTogBtn_clicked)
         self._widget.projWinTogFullScrBtn.clicked.connect(
             self.qt_callback_projWinTogFullScrBtn_clicked)
-        self._widget.projWinForceFucusBtn.clicked.connect(
-            self.qt_callback_projWinForceFucusBtn_clicked)
+        self._widget.projWinForceFocusBtn.clicked.connect(
+            self.qt_callback_projWinForceFocusBtn_clicked)
 
         # Signal callback to upsate rat position in GUI
         self.signal_rat_pos.connect(self.sig_callback_update_rat_pos_in_gui)
@@ -1109,23 +1109,22 @@ class Interface(Plugin):
     def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
 
-        # Code -1
-        self.ProjOpp.publish_command_message(-1)
+        self.ProjOp.publish_command_message("TOGGLE")
         MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
 
         # Code -2
-        self.ProjOpp.publish_command_message(-2)
+        self.ProjOp.publish_command_message("FULLSCREEN")
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
-    def qt_callback_projWinForceFucusBtn_clicked(self):
+    def qt_callback_projWinForceFocusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
 
         # Code -3
-        self.ProjOpp.publish_command_message(-3)
-        MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
+        self.ProjOp.publish_command_message("FORCE_FOCUS")
+        MazeDB.printMsg('DEBUG', "Command for projWinForceFocusBtn sent")
 
     def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
         """ Callback function to send projector wall image config from button press."""
@@ -1163,10 +1162,10 @@ class Interface(Plugin):
         csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
 
         # Load and store CSV data
-        self.ProjOpp.set_config_from_csv(csv_path, "walls")
+        self.ProjOp.set_config_from_csv(csv_path, "walls")
 
         # Send the new image configuration
-        self.ProjOpp.publish_image_message()
+        self.ProjOp.publish_image_message()
         MazeDB.printMsg(
             'Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
 
@@ -1196,10 +1195,10 @@ class Interface(Plugin):
         csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
 
         # Load and store CSV data
-        self.ProjOpp.set_config_from_csv(csv_path, "floor")
+        self.ProjOp.set_config_from_csv(csv_path, "floor")
 
         # Send the new image configuration
-        self.ProjOpp.publish_image_message()
+        self.ProjOp.publish_image_message()
         MazeDB.printMsg(
             'Sent', "Sent ROS Floor Image Configuration: file[%s]", file_name)
 

@@ -5,7 +5,7 @@
 // #################################
 
 /**
- @file Arduino INO file for running MazeGantryOpperation.
+ @file Arduino INO file for running MazeGantryOperation.
 */
 
 // BUILT IN

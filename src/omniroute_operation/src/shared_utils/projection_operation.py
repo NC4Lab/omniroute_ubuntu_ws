@@ -12,7 +12,7 @@ from std_msgs.msg import Int32, Int32MultiArray, MultiArrayDimension, String
 
 # Other
 import csv
-import json
+import os
 
 class ProjectionOperation:
     def __init__(self):
@@ -20,35 +20,80 @@ class ProjectionOperation:
         self.num_surfaces = 9  # Number of surfaces (8 walls + 1 floor)
         self.blank_image_config = [[0 for _ in range(self.num_surfaces)] for _ in range(self.num_chambers)]
 
+        # Read available images from the ROS parameter server
+        self.runtime_wall_images = rospy.get_param('runtime_wall_images', [])
+        self.runtime_floor_images = rospy.get_param('runtime_floor_images', [])
+
+        self.projection_cmds = {'-1': 'TOGGLE',
+                                '-2': 'FULLSCREEN',
+                                '-3': 'FORCE_FOCUS'}
+
         # Initialize image_config as a 10x8 array with default values
         self.image_config = self.blank_image_config
 
         # Create the publisher for 'projection_cmd' topic
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
-
         # Create the publisher for the 'projection_image' topic
         self.image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=10)
-        
-        # rospy.Subscriber('projection_image_floor_num', Int32, self.projection_image_floor_callback)
 
-        # rospy.Subscriber('projection_walls', String, self.projection_walls_callback)
+        MazeDB.printMsg('INFO', "ProjectionOperation initialized with %d chambers and %d surfaces.", self.num_chambers, self.num_surfaces)
+        MazeDB.printMsg('DEBUG', "Available wall images: %s", str(self.runtime_wall_images))
+        MazeDB.printMsg('DEBUG', "Available floor images: %s", str(self.runtime_floor_images))
 
-        # rospy.Subscriber('projection_image_wall_num', Int32, self.projection_image_wall_callback)
-
-        self.wall_image_num = None  
-        self.cham_ind = None
-        self.wall_ind = None
     
-    #TODO Be able to use a string to set the wall image
     def set_wall_image(self, chamber, wall, image_index):
+        """ Set the image index for a specific wall in a specific chamber.
+        Args:
+            chamber (int): The chamber number (0-8).
+            wall (int): The wall number (0-7).
+            image_index (int or str): The index of the image to set, or the name
+                of the image as a string. If a string is provided, it will be
+                looked up in the runtime_wall_images list.
+        """
+        # Update runtime_wall_images
+        self.runtime_wall_images = rospy.get_param('runtime_wall_images', [])
+
         if (wall < 0 or wall > 7) or (chamber < 0 or chamber > 8):
-            rospy.logwarn(f"[projection_sender:set_wall_image] Invalid chamber {chamber} or wall {wall}. Must be in range [0, 8] and [0, 7] respectively.")
+            MazeDB.printMsg('WARN', "[projection_sender:set_wall_image] Invalid chamber %d or wall %d. Must be in range [0, 8] and [0, 7] respectively.", chamber, wall)
+            return
+        
+        if isinstance(image_index, str):
+            # If image_index is a string, try to find its index in runtime_wall_images
+            if image_index in self.runtime_wall_images:
+                image_index = self.runtime_wall_images.index(image_index)
+            else:
+                MazeDB.printMsg('WARN', "[projection_sender:set_wall_image] Image '%s' not found in runtime_wall_images.", image_index)
+                return
+        
+        if image_index < 0 or image_index >= len(self.runtime_wall_images):
+            MazeDB.printMsg('WARN', "[projection_sender:set_wall_image] Invalid image index %d. Must be in range [0, %d].", image_index, len(self.runtime_wall_images) - 1)
             return
         
         # Set the image index for the specified chamber and wall
         self.image_config[chamber][wall] = image_index
     
     def set_floor_image(self, image_index):
+        """ Set the image index for the floor in all chambers.
+        Args:
+            image_index (int or str): The index of the image to set, or the name
+                of the image as a string. If a string is provided, it will be
+                looked up in the runtime_floor_images list.
+        """
+        # Update runtime_floor_images
+        self.runtime_floor_images = rospy.get_param('runtime_floor_images', [])
+
+        if isinstance(image_index, str):
+            # If image_index is a string, try to find its index in runtime_floor_images
+            if image_index in self.runtime_floor_images:
+                image_index = self.runtime_floor_images.index(image_index)
+            else:
+                MazeDB.printMsg('WARN', "[projection_sender:set_floor_image] Image '%s' not found in runtime_floor_images.", image_index)
+                return
+
+        if image_index < 0 or image_index >= len(self.runtime_floor_images):
+            MazeDB.printMsg('WARN', "[projection_sender:set_floor_image] Invalid image index %d. Must be in range [0, %d].", image_index, len(self.runtime_floor_images) - 1)
+            return
+
         for chamber in range(9):
             self.image_config[chamber][8] = image_index
 
@@ -71,75 +116,38 @@ class ProjectionOperation:
         layout.append(dim2_layout)
 
         return layout
-    
-    def set_config(self, data_type, img_ind, cham_ind=None, wall_ind=None):
+
+    def set_config_from_csv(self, image_config, file_name):
+        """ Set the image configuration from a CSV file.
+        Args:
+            image_config (list): A 9x9 list
+            file_name (str): The name of the CSV file (in <package_path>/data/csv_configs) to read from.
         """
-        Read the CSV and structure the data into either a 10x8 array for 'walls'
-        or extract a single value for 'floor' and modify the image_config.
-
-        Arguments:
-            data_type (str): A string that specifies whether to process the data as
-                            'walls' or 'floor'. 
-                            - 'walls': Updates the 10x8 array for wall configuration.
-                            - 'floor': Updates a single value in the last entry of dim1 and first entry of dim2.
-            img_ind (int): The index of the image to set.
-            cham_ind (int): The index of the chamber to set.
-            wall_ind (int): The index of the wall to set.
-
-        Returns:
-            list: modified 10x8 list.
-        """
-
-        if data_type == "walls":
-            self.image_config[cham_ind][wall_ind] = img_ind
-
-        elif data_type == "floor":
-            # Store the value in the last entry of dim1 and first entry of dim2
-            self.image_config[-1][0] = img_ind
-
-        else:
-            MazeDB.printMsg(
-                'WARN', "[ProjectionOperation:set_config] Expected 'walls' or 'floor': data_type[%s]", data_type)
-            
-
-    def set_config_from_csv(self, file_path, data_type):
-        """
-        Read the CSV and structure the data into either a 10x8 array for 'walls'
-        or extract a single value for 'floor' and modify the image_config.
-
-        Arguments:
-            file_path (str): The path to the CSV file containing the data.
-            data_type (str): A string that specifies whether to process the data as
-                            'walls' or 'floor'. 
-                            - 'walls': Updates the 10x8 array for wall configuration.
-                            - 'floor': Updates a single value in the last entry of dim1 and first entry of dim2.
-
-        Returns:
-            list: modified 10x8 list.
-        """
-
-        with open(file_path, mode='r') as csvfile:
+        image_config = self.blank_image_config
+        csv_path = os.path.join(self.package_path, '..', '..', 
+                                'data', 'csv_configs', file_name)
+        with open(csv_path, mode='r') as csvfile:
             csv_reader = csv.reader(csvfile)
 
-            if data_type == "walls":
-                next(csv_reader)  # Skip the header row
-                # For walls, store data as a 10x8 array
-                for row_idx, row in enumerate(csv_reader):
-                    if row_idx < 10:
-                        # Ignore the first column and take columns 1-8 (which are index 1 to 8 in 0-based indexing)
-                        data_row = list(map(int, row[1:9]))
-                        self.image_config[row_idx] = data_row
+            rdr = csv.reader(filter(lambda row: row[0]!='#', csv_reader))
+            data = [row for row in rdr]
 
-            elif data_type == "floor":
-                first_row = next(csv_reader)  # Get the first data row
-                # Read the value from the first column
-                floor_value = int(first_row[0])
-                # Store the value in the last entry of dim1 and first entry of dim2
-                self.image_config[-1][0] = floor_value
-
-            else:
-                MazeDB.printMsg(
-                    'WARN', "[ProjectionOperation:set_config] Expected 'walls' or 'floor': data_type[%s]", data_type)
+            if len(data) != self.num_chambers:
+                MazeDB.printMsg('WARN', "[projection_sender:set_config_from_csv] Expected %d rows, got %d", self.num_chambers, len(data))
+                return
+            for i, row in enumerate(data):
+                if len(row) != self.num_surfaces:
+                    MazeDB.printMsg('WARN', "[projection_sender:set_config_from_csv] Expected %d columns, got %d in row %d", self.num_surfaces, len(row), i)
+                    return
+                
+                for j in range(self.num_surfaces):
+                    try:
+                        image_config[i][j] = int(row[j])
+                    except ValueError:
+                        MazeDB.printMsg('WARN', "[projection_sender:set_config_from_csv] Invalid value '%s' at row %d, column %d", row[j], i, j)
+                        return
+        
+        self.image_config = image_config 
 
     def publish_image_message(self, image_config):
         """
@@ -160,15 +168,27 @@ class ProjectionOperation:
         self.image_pub.publish(projection_data)
 
         # Log the sent message data
-        # rospy.loginfo("[publish_image_message] Sent the following data:")
-        # for i in range(9):
-        #     rospy.loginfo("Data[%d] = %s", i, str(image_config[i]))
+        MazeDB.printMsg('INFO', "[publish_image_message] Sent data")
+        for i in range(9):
+            MazeDB.printMsg('DEBUG', "Data[%d] = %s", i, str(image_config[i]))
 
     def publish_command_message(self, number):
-        # Can send any number
+        """
+        Publish a command to the projection system.
+        Args:
+            number (int or str): The command number to publish. If a string is provided,
+                it will be looked up in the projection_cmds dictionary.
+        """
+
+        if isinstance(number, str):
+            if number in self.projection_cmds:
+                number = int(number)
+            else:
+                MazeDB.printMsg('WARN', "[projection_sender:publish_command_message] Invalid command '%s'.", number)
+                return
+        
         self.projection_pub.publish(number)
-        # MazeDB.printMsg(
-        #     'INFO', "Published projection command: command[%d]", number)
+        MazeDB.printMsg('INFO', "Published projection command: command[%d]", number)
     
 if __name__ == '__main__':
     ProjectionOperation()

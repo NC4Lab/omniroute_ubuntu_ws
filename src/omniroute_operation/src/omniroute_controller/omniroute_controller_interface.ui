@@ -1209,7 +1209,7 @@ QPushButton:pressed {
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPushButton" name="projWinForceFucusBtn">
+   <widget class="QPushButton" name="projWinForceFocusBtn">
     <property name="geometry">
      <rect>
       <x>20</x>
