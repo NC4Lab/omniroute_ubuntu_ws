@@ -265,6 +265,7 @@ class Interface(Plugin):
 
         self.chamber_walls_list = {1:
                                    [Wall(1, 0).to_dict(),
+                                    Wall(0, 4).to_dict(),
                                     Wall(1, 1).to_dict(),
                                     Wall(1, 2).to_dict(),
                                     Wall(1, 3).to_dict(),
@@ -295,6 +296,7 @@ class Interface(Plugin):
                                     Wall(4, 3).to_dict(),
                                     Wall(4, 5).to_dict()],
                                 7: [Wall(7, 0).to_dict(),
+                                    Wall(6, 4).to_dict(),
                                     Wall(7, 1).to_dict(),
                                     Wall(7, 2).to_dict(),
                                     Wall(7, 3).to_dict(),
@@ -320,7 +322,7 @@ class Interface(Plugin):
     
     def pick_trial_phase_one(self):
         rospy.loginfo("Picking trial phase one")
-        if self.cts_success_count[self.currentTrial.floor_cue] > 2:
+        if self.cts_success_count[self.currentTrial.floor_cue] > 4:
             self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
