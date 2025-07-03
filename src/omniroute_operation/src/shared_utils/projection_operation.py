@@ -8,7 +8,7 @@ from shared_utils.maze_debug import MazeDB
 
 # ROS Imports
 import rospy
-from std_msgs.msg import Int32, Int32MultiArray, MultiArrayDimension, String
+from std_msgs.msg import Int32, Int32MultiArray, MultiArrayDimension
 
 # Other
 import csv
@@ -149,13 +149,17 @@ class ProjectionOperation:
         
         self.image_config = image_config 
 
-    def publish_image_message(self, image_config):
+    def publish_image_message(self, image_config = None):
         """
         Send the data from the CSV as an Int32MultiArray message.
                 
         Args:
-            image_config (list): A 10x8 list that will be modified in place.
+            image_config (list): A 9x9 list of integers representing the image configuration.
+            If None, the current image_config will be used.
         """
+        if image_config is None:
+            image_config = self.image_config
+
         # Create the Int32MultiArray message
         projection_data = Int32MultiArray()
         projection_data.layout.dim = self.setup_layout(9, 9)  
