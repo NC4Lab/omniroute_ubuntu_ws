@@ -547,7 +547,7 @@ class Interface(Plugin):
             "sync_ease_connected": False,
         }
 
-        # Counter to incrementally shut down opperations
+        # Counter to incrementally shut down operations
         self.cnt_shutdown_step = 0  # tracks the current step
         self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
@@ -926,7 +926,7 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             # self.terminate_ros_node("/gantry_operation_node")
-            self.terminate_ros_node("/projection_opperation_node")
+            self.terminate_ros_node("/projection_operation_node")
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/omniroute_controller_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
