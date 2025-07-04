@@ -4,7 +4,7 @@
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
-from shared_utils.projection_operation import ProjectionOperation
+from shared_utils.projection_operation import ProjectionOperation, ProjectionCmd
 from shared_utils.esmacat_com import EsmacatCom
 from shared_utils.ui_utilities import UIUtilities
 from shared_utils.wall_utilities import MazeDimensions, WallConfig
@@ -14,9 +14,7 @@ from argparse import ArgumentParser
 import os
 import glob
 import subprocess
-import time
 import math
-import csv
 import ctypes
 from typing import List
 from enum import Enum
@@ -580,6 +578,10 @@ class Interface(Plugin):
             self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
         self.optitrack_to_gui_scale = gui_chamber_dist/optitrack_chamber_dist
 
+        # Populate configuration list
+        self._widget.projCfgList.clear()
+        self._widget.projCfgList.addItems([f.split('.')[0] for f in os.listdir(self.proj_cfg_dir_default) if f.startswith('new') and f.endswith('.csv')])
+
         # ................ ROS Setup ................
 
         # ROS wall state subscriber used to set walls from other interfaces
@@ -683,6 +685,10 @@ class Interface(Plugin):
         self.timer_endSession.setSingleShot(True)  # Run only once
 
         # Projected wall image ui callback
+        self._widget.projCfgList.currentItemChanged.connect(
+            self.qt_callback_projCfgList_currentItemChanged)
+
+
         self.proj_wall_img_cfg_btn_vec = []  # Initalize vector for buttons
         for i in range(9):
             button_name = f'projWallImgCfgBtn_{i}'
@@ -1109,22 +1115,42 @@ class Interface(Plugin):
     def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
 
-        self.ProjOp.publish_command_message("TOGGLE")
+        self.ProjOp.publish_command_message(ProjectionCmd.TOGGLE)
         MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
 
         # Code -2
-        self.ProjOp.publish_command_message("FULLSCREEN")
+        self.ProjOp.publish_command_message(ProjectionCmd.FULLSCREEN)
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
     def qt_callback_projWinForceFocusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
 
         # Code -3
-        self.ProjOp.publish_command_message("FORCE_FOCUS")
+        self.ProjOp.publish_command_message(ProjectionCmd.FORCE_FOCUS)
         MazeDB.printMsg('DEBUG', "Command for projWinForceFocusBtn sent")
+    
+    def qt_callback_projCfgList_currentItemChanged(self, current):
+        """ Callback function for the projector configuration label item change."""
+
+        # Get the selected item text
+        selected_item = current.text() if current else None
+
+        # Check if an item is selected
+        if selected_item:
+            # Load the corresponding CSV file based on the selected item
+            csv_file_name = f"{selected_item}.csv"
+            csv_path = os.path.join(self.proj_cfg_dir_default, csv_file_name)
+
+            # Load and store CSV data
+            self.ProjOp.set_config_from_csv(csv_path)
+
+            # Send the new image configuration
+            self.ProjOp.publish_image_message()
+            MazeDB.printMsg(
+                'INFO', "Sent ROS Wall Image Configuration: file[%s]", csv_file_name)
 
     def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
         """ Callback function to send projector wall image config from button press."""

@@ -7,12 +7,19 @@ Class for publishing commands to the projection system
 from shared_utils.maze_debug import MazeDB
 
 # ROS Imports
-import rospy
+import rospy, rospkg
 from std_msgs.msg import Int32, Int32MultiArray, MultiArrayDimension
+
+from enum import IntEnum
 
 # Other
 import csv
 import os
+
+class ProjectionCmd(IntEnum):
+    TOGGLE = -1
+    FULLSCREEN = -2
+    FORCE_FOCUS = -3
 
 class ProjectionOperation:
     def __init__(self):
@@ -23,10 +30,6 @@ class ProjectionOperation:
         # Read available images from the ROS parameter server
         self.runtime_wall_images = rospy.get_param('runtime_wall_images', [])
         self.runtime_floor_images = rospy.get_param('runtime_floor_images', [])
-
-        self.projection_cmds = {'-1': 'TOGGLE',
-                                '-2': 'FULLSCREEN',
-                                '-3': 'FORCE_FOCUS'}
 
         # Initialize image_config as a 10x8 array with default values
         self.image_config = self.blank_image_config
@@ -117,20 +120,23 @@ class ProjectionOperation:
 
         return layout
 
-    def set_config_from_csv(self, image_config, file_name):
+    def set_config_from_csv(self, file_name):
         """ Set the image configuration from a CSV file.
         Args:
             image_config (list): A 9x9 list
-            file_name (str): The name of the CSV file (in <package_path>/data/csv_configs) to read from.
+            file_name (str): The name of the CSV file to read from.
         """
-        image_config = self.blank_image_config
-        csv_path = os.path.join(self.package_path, '..', '..', 
-                                'data', 'csv_configs', file_name)
-        with open(csv_path, mode='r') as csvfile:
+        self.image_config = self.blank_image_config
+        with open(file_name, mode='r') as csvfile:
             csv_reader = csv.reader(csvfile)
 
-            rdr = csv.reader(filter(lambda row: row[0]!='#', csv_reader))
-            data = [row for row in rdr]
+            data = []
+            for row in csv_reader:
+                # Skip empty and commented rows
+                if not row or row[0].startswith('#'):
+                    continue
+                data.append([int(value) for value in row])
+
 
             if len(data) != self.num_chambers:
                 MazeDB.printMsg('WARN', "[projection_sender:set_config_from_csv] Expected %d rows, got %d", self.num_chambers, len(data))
@@ -142,12 +148,11 @@ class ProjectionOperation:
                 
                 for j in range(self.num_surfaces):
                     try:
-                        image_config[i][j] = int(row[j])
+                        self.image_config[i][j] = int(row[j])
                     except ValueError:
                         MazeDB.printMsg('WARN', "[projection_sender:set_config_from_csv] Invalid value '%s' at row %d, column %d", row[j], i, j)
                         return
         
-        self.image_config = image_config 
 
     def publish_image_message(self, image_config = None):
         """
@@ -183,14 +188,6 @@ class ProjectionOperation:
             number (int or str): The command number to publish. If a string is provided,
                 it will be looked up in the projection_cmds dictionary.
         """
-
-        if isinstance(number, str):
-            if number in self.projection_cmds:
-                number = int(number)
-            else:
-                MazeDB.printMsg('WARN', "[projection_sender:publish_command_message] Invalid command '%s'.", number)
-                return
-        
         self.projection_pub.publish(number)
         MazeDB.printMsg('INFO', "Published projection command: command[%d]", number)
     

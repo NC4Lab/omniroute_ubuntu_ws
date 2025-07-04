@@ -288,6 +288,7 @@
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
@@ -708,6 +709,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
@@ -1140,6 +1142,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -1180,6 +1183,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -1217,6 +1221,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -1227,8 +1232,8 @@ QPushButton:pressed {
    <widget class="QLabel" name="projImgCfgWallLabel">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>10</y>
+      <x>90</x>
+      <y>0</y>
       <width>271</width>
       <height>21</height>
      </rect>
@@ -1390,7 +1395,7 @@ QPushButton:pressed {
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QListView" name="projWallCSVList">
+   <widget class="QListWidget" name="projCfgList">
     <property name="geometry">
      <rect>
       <x>280</x>
@@ -1570,6 +1575,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -1610,6 +1616,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -1650,6 +1657,7 @@ QPushButton:pressed {
     <property name="font">
      <font>
       <pointsize>12</pointsize>
+      <weight>50</weight>
       <bold>false</bold>
      </font>
     </property>
