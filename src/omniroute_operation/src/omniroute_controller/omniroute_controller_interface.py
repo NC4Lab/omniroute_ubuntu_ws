@@ -688,26 +688,7 @@ class Interface(Plugin):
         self._widget.projCfgList.currentItemChanged.connect(
             self.qt_callback_projCfgList_currentItemChanged)
 
-
-        self.proj_wall_img_cfg_btn_vec = []  # Initalize vector for buttons
-        for i in range(9):
-            button_name = f'projWallImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect(  # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projWallImgCfgBtn_clicked(b))
-            self.proj_wall_img_cfg_btn_vec.append(button)  # Store the button
-
-        # Projected floor image ui callback
-        self.proj_floor_img_cfg_btn_vec = []  # Initalize vector for buttons
-        for i in range(4):
-            button_name = f'projFloorImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect(  # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projFloorImgCfgBtn_clicked(b))
-            self.proj_floor_img_cfg_btn_vec.append(button)  # Store the button
-
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
-
     def procEcatMessage(self):
         """ Used to parse new incoming ROS ethercat msg data. """
 
@@ -1151,82 +1132,6 @@ class Interface(Plugin):
             self.ProjOp.publish_image_message()
             MazeDB.printMsg(
                 'INFO', "Sent ROS Wall Image Configuration: file[%s]", csv_file_name)
-
-    def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
-        """ Callback function to send projector wall image config from button press."""
-
-        # Get the button that was clicked
-        clicked_button = self.proj_wall_img_cfg_btn_vec[button_number]
-
-        # Uncheck all the buttons except the one that was clicked
-        for i, button in enumerate(self.proj_wall_img_cfg_btn_vec):
-            if i != button_number:
-                button.setChecked(False)
-
-        # Load the appropriate file based on the button number
-        file_name = None
-        if button_number == 0:
-            file_name = 'walls_0_blank.csv'
-        elif button_number == 1:
-            file_name = 'walls_1_east_r.csv'
-        elif button_number == 2:
-            file_name = 'walls_2_east_l.csv'
-        elif button_number == 3:
-            file_name = 'walls_3_south_r.csv'
-        elif button_number == 4:
-            file_name = 'walls_4_south_l.csv'
-        elif button_number == 5:
-            file_name = 'walls_5_west_r.csv'
-        elif button_number == 6:
-            file_name = 'walls_6_west_l.csv'
-        elif button_number == 7:
-            file_name = 'walls_7_north_r.csv'
-        elif button_number == 8:
-            file_name = 'walls_8_north_l.csv'
-
-        # Format full path
-        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
-
-        # Load and store CSV data
-        self.ProjOp.set_config_from_csv(csv_path, "walls")
-
-        # Send the new image configuration
-        self.ProjOp.publish_image_message()
-        MazeDB.printMsg(
-            'Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
-
-    def qt_callback_projFloorImgCfgBtn_clicked(self, button_number):
-        """ Callback function to send projector floor image config from button press."""
-
-        # Get the button that was clicked
-        clicked_button = self.proj_floor_img_cfg_btn_vec[button_number]
-
-        # Uncheck all the buttons except the one that was clicked
-        for i, button in enumerate(self.proj_floor_img_cfg_btn_vec):
-            if i != button_number:
-                button.setChecked(False)
-
-        # Load the appropriate file based on the button number
-        file_name = None
-        if button_number == 0:
-            file_name = 'floor_0_blank.csv'
-        elif button_number == 1:
-            file_name = 'floor_1_green.csv'
-        elif button_number == 2:
-            file_name = 'floor_2_pat_1.csv'
-        elif button_number == 3:
-            file_name = 'floor_3_pat_2.csv'
-
-        # Format full path
-        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
-
-        # Load and store CSV data
-        self.ProjOp.set_config_from_csv(csv_path, "floor")
-
-        # Send the new image configuration
-        self.ProjOp.publish_image_message()
-        MazeDB.printMsg(
-            'Sent', "Sent ROS Floor Image Configuration: file[%s]", file_name)
 
     def qt_callback_sysStartBtn_clicked(self):
         """ 
