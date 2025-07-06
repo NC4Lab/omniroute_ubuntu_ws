@@ -580,7 +580,7 @@ class Interface(Plugin):
 
         # Populate configuration list
         self._widget.projCfgList.clear()
-        self._widget.projCfgList.addItems([f.split('.')[0] for f in os.listdir(self.proj_cfg_dir_default) if f.startswith('new') and f.endswith('.csv')])
+        self._widget.projCfgList.addItems([f.split('.')[0] for f in os.listdir(self.proj_cfg_dir_default) if f.endswith('.csv')])
 
         # ................ ROS Setup ................
 
