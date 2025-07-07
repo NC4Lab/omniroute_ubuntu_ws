@@ -29,8 +29,13 @@ from qt_gui.plugin import Plugin
 import json
 
 class Wall:
-    def __init__(self, chamber_num, wall_num):  
-        # Create equivalence between walls
+    def __init__(self, chamber_num, wall_num):
+        # For projection, we need the actual chamber and wall number  
+        self.proj_chamber_num = chamber_num
+        self.proj_wall_num = wall_num
+
+        # For wall activation, we need to convert the chamber and wall number
+        # to an equivalent chamber and wall number in the maze
         if chamber_num==1:
             if wall_num==0:
                 chamber_num = 0

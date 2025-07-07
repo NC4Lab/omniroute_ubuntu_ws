@@ -15,6 +15,7 @@ from enum import IntEnum
 # Other
 import csv
 import os
+import numpy as np
 
 class ProjectionCmd(IntEnum):
     TOGGLE = -1
@@ -25,26 +26,71 @@ class ProjectionOperation:
     def __init__(self):
         self.num_chambers = 9  # Number of chambers
         self.num_surfaces = 9  # Number of surfaces (8 walls + 1 floor)
-        self.blank_image_config = [[0 for _ in range(self.num_surfaces)] for _ in range(self.num_chambers)]
+        self.blank_image_config = np.zeros((self.num_chambers, self.num_surfaces), dtype=int)
+        self.unchanged_image_config = np.full((self.num_chambers, self.num_surfaces), -1, dtype=int)
 
         # Read available images from the ROS parameter server
         self.runtime_wall_images = rospy.get_param('runtime_wall_images', [])
         self.runtime_floor_images = rospy.get_param('runtime_floor_images', [])
-
-        # Initialize image_config as a 10x8 array with default values
-        self.image_config = self.blank_image_config
 
         # Create the publisher for 'projection_cmd' topic
         self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
         # Create the publisher for the 'projection_image' topic
         self.image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=10)
 
+        self.reset_image_config()
+
         MazeDB.printMsg('INFO', "ProjectionOperation initialized with %d chambers and %d surfaces.", self.num_chambers, self.num_surfaces)
         MazeDB.printMsg('DEBUG', "Available wall images: %s", str(self.runtime_wall_images))
         MazeDB.printMsg('DEBUG', "Available floor images: %s", str(self.runtime_floor_images))
-
     
-    def set_wall_image(self, chamber, wall, image_index):
+    def reset_image_config(self):
+        """ Reset the image configuration to the initial blank state. """
+        self.image_config = np.copy(self.unchanged_image_config)
+        MazeDB.printMsg('DEBUG', "[projection_sender:reset_image_config] Image configuration reset to blank values.")
+
+    def blank_maze(self, publish=False):
+        """ Reset the image configuration for all chambers to blank values. 
+        
+        Args:
+            publish (bool): If True, publish the blank configuration to the projection system.
+        """
+        self.image_config = np.copy(self.blank_image_config)
+        if publish:
+            self.publish_image_message()
+        MazeDB.printMsg('DEBUG', "[projection_sender:blank_maze] All chambers reset to blank configuration.")
+    
+    def blank_chamber(self, chamber: int, publish=False):
+        """ Reset the image configuration for a specific chamber to blank values.
+        
+        Args:
+            chamber (int): The chamber number (0-8).
+            publish (bool): If True, publish the blank configuration to the projection system.
+        """
+        if chamber < 0 or chamber >= self.num_chambers:
+            MazeDB.printMsg('WARN', "[projection_sender:blank_chamber] Invalid chamber %d. Must be in range [0, 8].", chamber)
+            return
+        
+        # Set the specified chamber's configuration to blank
+        self.image_config[chamber, :] = np.copy(self.blank_image_config[chamber, :])
+        
+        if publish:
+            self.publish_image_message()
+        MazeDB.printMsg('DEBUG', "[projection_sender:blank_chamber] Chamber %d reset to blank configuration.", chamber)
+
+    def blank_chambers(self, chambers: list, publish=False):
+        """ Reset the image configuration for a specific chamber to blank values.
+        Args:
+            chambers (list): List of chamber numbers (0-8) to reset.
+            publish (bool): If True, publish the blank configuration to the projection system.
+        """
+        for chamber in chambers:
+            self.blank_chamber(chamber, publish=False)
+
+        if publish:
+            self.publish_image_message()
+    
+    def set_wall_image(self, chamber, wall, image_index, publish=False):
         """ Set the image index for a specific wall in a specific chamber.
         Args:
             chamber (int): The chamber number (0-8).
@@ -52,6 +98,7 @@ class ProjectionOperation:
             image_index (int or str): The index of the image to set, or the name
                 of the image as a string. If a string is provided, it will be
                 looked up in the runtime_wall_images list.
+            publish (bool): If True, publish the updated configuration to the projection system.
         """
         # Update runtime_wall_images
         self.runtime_wall_images = rospy.get_param('runtime_wall_images', [])
@@ -74,13 +121,18 @@ class ProjectionOperation:
         
         # Set the image index for the specified chamber and wall
         self.image_config[chamber][wall] = image_index
+
+        if publish:
+            self.publish_image_message()
+        MazeDB.printMsg('DEBUG', "[projection_sender:set_wall_image] Set chamber %d, wall %d to image index %d.", chamber, wall, image_index)
     
-    def set_floor_image(self, image_index):
+    def set_floor_image(self, image_index, publish=False):
         """ Set the image index for the floor in all chambers.
         Args:
             image_index (int or str): The index of the image to set, or the name
                 of the image as a string. If a string is provided, it will be
                 looked up in the runtime_floor_images list.
+            publish (bool): If True, publish the updated configuration to the projection system.
         """
         # Update runtime_floor_images
         self.runtime_floor_images = rospy.get_param('runtime_floor_images', [])
@@ -99,6 +151,10 @@ class ProjectionOperation:
 
         for chamber in range(9):
             self.image_config[chamber][8] = image_index
+        
+        if publish:
+            self.publish_image_message()
+        MazeDB.printMsg('DEBUG', "[projection_sender:set_floor_image] Set all chambers to floor image index %d.", image_index)
 
     def setup_layout(self, dim1, dim2):
         """Helper function to set up the layout for a 2-dimensional array."""
@@ -160,7 +216,7 @@ class ProjectionOperation:
                 
         Args:
             image_config (list): A 9x9 list of integers representing the image configuration.
-            If None, the current image_config will be used.
+            If None, the class variable image_config will be used.
         """
         if image_config is None:
             image_config = self.image_config
@@ -170,8 +226,7 @@ class ProjectionOperation:
         projection_data.layout.dim = self.setup_layout(9, 9)  
 
         # Flatten the 9x9 array into a single list
-        flat_data = [image_config[i][j] for i in range(9) for j in range(9)]
-        projection_data.data = flat_data
+        projection_data.data = image_config.flatten().tolist()
 
         # Publish the CSV data message
         self.image_pub.publish(projection_data)
