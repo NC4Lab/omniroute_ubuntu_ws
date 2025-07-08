@@ -49,7 +49,7 @@ class ProjectionOperation:
         self.image_config = np.copy(self.unchanged_image_config)
         MazeDB.printMsg('DEBUG', "[projection_sender:reset_image_config] Image configuration reset to blank values.")
 
-    def blank_maze(self, publish=False):
+    def blank_maze(self, publish: bool=False):
         """ Reset the image configuration for all chambers to blank values. 
         
         Args:
@@ -60,41 +60,40 @@ class ProjectionOperation:
             self.publish_image_message()
         MazeDB.printMsg('DEBUG', "[projection_sender:blank_maze] All chambers reset to blank configuration.")
     
-    def blank_chamber(self, chamber: int, publish=False):
+    def blank_chamber(self, chamber: list | int, publish=False):
         """ Reset the image configuration for a specific chamber to blank values.
         
         Args:
-            chamber (int): The chamber number (0-8).
+            chamber (int or list): The chamber number (0-8) to reset, or a list of chamber numbers.
+                If a list is provided, all specified chambers will be reset.
+                If an integer is provided, only that chamber will be reset.
             publish (bool): If True, publish the blank configuration to the projection system.
         """
-        if chamber < 0 or chamber >= self.num_chambers:
-            MazeDB.printMsg('WARN', "[projection_sender:blank_chamber] Invalid chamber %d. Must be in range [0, 8].", chamber)
-            return
+        if isinstance(chamber, list):
+            for c in chamber:
+                self.blank_chamber(c, publish=False)
+        else:
+            if chamber < 0 or chamber >= self.num_chambers:
+                MazeDB.printMsg('WARN', "[projection_sender:blank_chamber] Invalid chamber %d. Must be in range [0, 8].", chamber)
+                return
+            
+            # Set the specified chamber's configuration to blank
+            self.image_config[chamber, :] = np.copy(self.blank_image_config[chamber, :])
         
-        # Set the specified chamber's configuration to blank
-        self.image_config[chamber, :] = np.copy(self.blank_image_config[chamber, :])
         
         if publish:
             self.publish_image_message()
         MazeDB.printMsg('DEBUG', "[projection_sender:blank_chamber] Chamber %d reset to blank configuration.", chamber)
-
-    def blank_chambers(self, chambers: list, publish=False):
-        """ Reset the image configuration for a specific chamber to blank values.
-        Args:
-            chambers (list): List of chamber numbers (0-8) to reset.
-            publish (bool): If True, publish the blank configuration to the projection system.
-        """
-        for chamber in chambers:
-            self.blank_chamber(chamber, publish=False)
-
-        if publish:
-            self.publish_image_message()
     
-    def set_wall_image(self, chamber, wall, image_index, publish=False):
+    def set_wall_image(self, chamber: list|int, wall: list|int, image_index: int|str, publish=False):
         """ Set the image index for a specific wall in a specific chamber.
         Args:
-            chamber (int): The chamber number (0-8).
-            wall (int): The wall number (0-7).
+            chamber (list or int): The chamber number (0-8) to set the wall image for, or a list of chamber numbers.
+                If a list is provided, the wall image will be set for all specified chambers.
+                If an integer is provided, only that chamber will be set.
+            wall (list or int): The wall number (0-7) to set the image for, or a list of wall numbers.
+                If a list is provided, the wall image will be set for all specified walls.
+                If an integer is provided, only that wall will be set.
             image_index (int or str): The index of the image to set, or the name
                 of the image as a string. If a string is provided, it will be
                 looked up in the runtime_wall_images list.

@@ -494,7 +494,7 @@ class Interface(Plugin):
         self.left_start_chamber_enter_wall = Wall(6, 4)
 
     def blank_cued_walls(self):
-        self.proj_op.blank_chambers(self.start_chambers, publish=True)
+        self.proj_op.blank_chamber(self.start_chambers, publish=True)
             
     def choose_start_config(self, start_chamber_ID):
         if start_chamber_ID == 1:
