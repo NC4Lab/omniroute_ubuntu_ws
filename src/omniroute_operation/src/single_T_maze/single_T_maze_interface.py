@@ -564,7 +564,7 @@ class Interface(Plugin):
                     for wall in self.proj_left_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
-                                                    image_num=self.wall_img_triangle_num,
+                                                    image_index=self.wall_img_triangle_num,
                                                     publish=False)
                     
 
@@ -575,7 +575,7 @@ class Interface(Plugin):
                     for wall in self.proj_right_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
-                                                    image_num=self.wall_img_triangle_num,
+                                                    image_index=self.wall_img_triangle_num,
                                                     publish=False)
 
             elif self.currentTrial.floor_cue == FloorCue.BLACK:
@@ -588,7 +588,7 @@ class Interface(Plugin):
                     for wall in self.proj_left_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
-                                                    image_num=self.wall_img_triangle_num,
+                                                    image_index=self.wall_img_triangle_num,
                                                     publish=False)
                    
                 elif self.currentTrial.visual_cue == TriangleCue.LEFT:
@@ -598,7 +598,7 @@ class Interface(Plugin):
                     for wall in self.proj_right_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
-                                                    image_num=self.wall_img_triangle_num,
+                                                    image_index=self.wall_img_triangle_num,
                                                     publish=False)
 
             self.proj_op.publish_image_message()
