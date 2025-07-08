@@ -242,7 +242,7 @@ class Interface(Plugin):
         self.wall_img_triangle_num = 3
         self.wall_img_black_num = 0
 
-        self.start_chambers = [1, 3, 5, 7]
+        self.cued_chambers = [1, 3, 5, 7, 4]
         self.cued_chamber = 0
         self.switch_trial = None
 
@@ -410,8 +410,9 @@ class Interface(Plugin):
 
     def setChamberOneStartConfig(self):
         self.start_chamber = 1
-        self.central_chamber = 4
+        self.central_chamber = 44
         self.left_chamber = 5
+        self.right_chamber = 3
         self.right_chamber = 3
 
         self.proj_left_walls = [Wall(5,1), Wall(5,2), Wall(5,3), 
@@ -494,7 +495,7 @@ class Interface(Plugin):
         self.left_start_chamber_enter_wall = Wall(6, 4)
 
     def blank_cued_walls(self):
-        self.proj_op.blank_chamber(self.start_chambers, publish=True)
+        self.proj_op.blank_chambers(self.cued_chambers, publish=True)
             
     def choose_start_config(self, start_chamber_ID):
         if start_chamber_ID == 1:
@@ -585,7 +586,7 @@ class Interface(Plugin):
                     self.cued_chamber = self.right_chamber
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
-                    for wall in self.proj_left_walls:
+                    for wall in self.proj_right_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
                                                     image_index=self.wall_img_triangle_num,
@@ -595,7 +596,7 @@ class Interface(Plugin):
                     self.cued_chamber = self.left_chamber
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
-                    for wall in self.proj_right_walls:
+                    for wall in self.proj_left_walls:
                         self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
                                                     wall=wall.proj_wall_num,
                                                     image_index=self.wall_img_triangle_num,

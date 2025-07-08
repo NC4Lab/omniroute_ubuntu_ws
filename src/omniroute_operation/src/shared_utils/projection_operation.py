@@ -60,7 +60,7 @@ class ProjectionOperation:
             self.publish_image_message()
         MazeDB.printMsg('DEBUG', "[projection_sender:blank_maze] All chambers reset to blank configuration.")
     
-    def blank_chamber(self, chamber: list | int, publish=False):
+    def blank_chamber(self, chamber: int, publish=False):
         """ Reset the image configuration for a specific chamber to blank values.
         
         Args:
@@ -69,23 +69,36 @@ class ProjectionOperation:
                 If an integer is provided, only that chamber will be reset.
             publish (bool): If True, publish the blank configuration to the projection system.
         """
-        if isinstance(chamber, list):
-            for c in chamber:
-                self.blank_chamber(c, publish=False)
-        else:
-            if chamber < 0 or chamber >= self.num_chambers:
-                MazeDB.printMsg('WARN', "[projection_sender:blank_chamber] Invalid chamber %d. Must be in range [0, 8].", chamber)
-                return
-            
-            # Set the specified chamber's configuration to blank
-            self.image_config[chamber, :] = np.copy(self.blank_image_config[chamber, :])
+        if chamber < 0 or chamber >= self.num_chambers:
+            MazeDB.printMsg('WARN', "[projection_sender:blank_chamber] Invalid chamber %d. Must be in range [0, 8].", chamber)
+            return
         
-        
+        # Set the specified chamber's configuration to blank
+        self.image_config[chamber, :] = np.copy(self.blank_image_config[chamber, :])
+    
         if publish:
             self.publish_image_message()
         MazeDB.printMsg('DEBUG', "[projection_sender:blank_chamber] Chamber %d reset to blank configuration.", chamber)
     
-    def set_wall_image(self, chamber: list|int, wall: list|int, image_index: int|str, publish=False):
+    def blank_chambers(self, chambers: list, publish=False):
+        """ Reset the image configuration for multiple chambers to blank values.
+
+        Args:
+            chambers (list): A list of chamber numbers (0-8) to reset.
+                If an integer is provided, it will be treated as a single chamber.
+            publish (bool): If True, publish the blank configuration to the projection system.
+        """
+        if isinstance(chambers, int):
+            chambers = [chambers]
+
+        for chamber in chambers:
+            self.blank_chamber(chamber, publish=False)
+        
+        if publish:
+            self.publish_image_message()
+        MazeDB.printMsg('DEBUG', "[projection_sender:blank_chambers] Chambers %s reset to blank configuration.", str(chambers))
+    
+    def set_wall_image(self, chamber: int, wall: int, image_index, publish=False):
         """ Set the image index for a specific wall in a specific chamber.
         Args:
             chamber (list or int): The chamber number (0-8) to set the wall image for, or a list of chamber numbers.
