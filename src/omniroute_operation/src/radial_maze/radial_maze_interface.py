@@ -2,6 +2,7 @@
 from shared_utils.ui_utilities import UIUtilities
 from shared_utils.maze_debug import MazeDB
 from shared_utils.wall_utilities import MazeDimensions, WallConfig
+from shared_utils.projection_operation import ProjectionOperation
 from experiment_controller.experiment_controller_interface import Wall
 from experiment_controller.experiment_controller_interface import CommonFunctions
 
@@ -89,8 +90,10 @@ class Interface(Plugin):
 
         self.scene = QGraphicsScene()
 
+        # Start ProjectionOperation
+        self.proj_op = ProjectionOperation()
+
         # Defining buttons in the scene
-      
         self._widget.startBtn.clicked.connect(
             self._handle_startBtn_clicked)
         
@@ -236,6 +239,18 @@ class Interface(Plugin):
             8 : 5
         }
 
+        # key is goal chamber number, value is the 3 walls on the opposite side of the entrance from left to right
+        self.projectionWalls = {
+            0 : [0, 1, 2],
+            1 : [1, 2, 3],
+            2 : [2, 3, 4],
+            3 : [7, 0, 1],
+            5 : [3, 4, 5],
+            6 : [6, 7, 0],
+            7 : [5, 6, 7],
+            8 : [4, 5, 6]
+        }
+
         # Mode parameters
         self.mode = Mode.START_EXPERIMENT
         self.mode_start_time = rospy.Time.now()
@@ -372,10 +387,10 @@ class Interface(Plugin):
             self.mode_start_time = rospy.Time.now()
             rospy.loginfo("TESTING MODE")
             #self.raiseAllWalls()
-            self.projection_wall_img_pub.publish(self.wall_blue_right)
-            self.projection_pub.publish(json.dumps(Wall(3, 0).to_dict()))
-            rospy.loginfo("Waiting 3 seconds")
-            #self.lowerAllWalls()
+            self.proj_op.blank_maze(publish=False)  # Start with a blank maze
+            self.proj_op.set_floor_image(self.floor_img_green_num, publish=False)
+            self.proj_op.publish_image_message()
+            rospy.loginfo("Projecting images")
             self.mode = Mode.OTHER_MODE
         elif self.mode == Mode.OTHER_MODE:
             rospy.loginfo("WWWWWWWW")
@@ -471,9 +486,17 @@ class Interface(Plugin):
         elif self.mode == Mode.PUBLISH_CUES:
             #publish visual and auditory cues
             #TODO publish auditory cue
+
             if (self.is_fullTask_phase or self.is_habituation2_phase):
-                self.projection_wall_img_pub.publish(self.wall_img_green)
+                self.proj_op.blank_maze(publish=False)  # Start with a blank maze
+                for wall in self.projectionWalls[current_rat_chamber]:
+                        self.proj_op.set_wall_image(chamber=current_rat_chamber,
+                                                    wall=wall,
+                                                    image_index=self.wall_img_triangle_num,
+                                                    publish=False)
                 self.sound_pub.publish(self.choice_sound_cue)
+                self.proj_op.publish_image_message()
+                rospy.loginfo("Projecting images")
 
             if (current_rat_chamber == self.correctChambers[self.currentTrial-1]) or self.is_habituation1_phase:
                 rospy.loginfo(f"Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
