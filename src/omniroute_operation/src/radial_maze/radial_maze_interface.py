@@ -147,8 +147,8 @@ class Interface(Plugin):
         self.write_sync_ease_pub = rospy.Publisher(
             '/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
-        self.trial_sub = rospy.Subscriber(
-            '/selected_trial', String, self.trial_callback)
+        # self.trial_sub = rospy.Subscriber(
+        #     '/selected_trial', String, self.trial_callback)
         self.experiment_pub = rospy.Publisher(
             '/experiment', String, queue_size=1)
 
@@ -172,7 +172,7 @@ class Interface(Plugin):
         self.is_testing_phase = False
         self.is_habituation1_phase = False
         self.is_habituation2_phase = False
-        self.is_fullTask_phase = False
+        self.is_fullTask_phase = True #TODO fix the buttons, they're not changing the phase for some reason
         self.end_task = False
         self.start_task = False #TODO don't know if this is necessary??
         self.start = False
@@ -202,9 +202,14 @@ class Interface(Plugin):
         self.current_time = rospy.Time.now()
 
         # Stimuli variables
-        self.wall_blue_right = 8
-        self.wall_img_green = 2
-        self.choice_sound_cue = '1kHz_120s'
+        self.wall_blue = [6, 7, 8] # index values of the wall images
+        self.wall_green = [9, 10, 11]
+        self.wall_teal = [12, 13, 14]
+        self.wall_black = [0, 0, 0]
+        self.blue_sound = '1KHz' # name of sound clip to be played
+        self.green_sound = '5KHz'
+        self.teal_sound = '8KHz'
+        self.correct_sound = 'Error'
 
         # Maze variables
         # key is chamber number, value is chamber wall pointing to middle
@@ -249,6 +254,31 @@ class Interface(Plugin):
             6 : [6, 7, 0],
             7 : [5, 6, 7],
             8 : [4, 5, 6]
+        }
+
+        # key is correct chamber number, value is 2 bit chamber number
+        self.twoBitChambers = {
+            0 : 2,
+            1 : 3,
+            2 : 0,
+            3 : 1,
+            5 : 7,
+            6 : 8,
+            7 : 5,
+            8 : 6
+        }
+
+        # key is goal chamber number, value is the stimuli to be projected
+        self.stimuli = {
+            0 : (self.wall_blue, self.blue_sound),
+            1 : (self.wall_blue, self.blue_sound),
+            2 : (self.wall_blue, self.blue_sound),
+            3 : (self.wall_blue, self.blue_sound),
+            4 : (self.wall_blue, self.blue_sound),
+            5 : (self.wall_blue, self.blue_sound),
+            6 : (self.wall_blue, self.blue_sound),
+            7 : (self.wall_blue, self.blue_sound),
+            8 : (self.wall_blue, self.blue_sound)
         }
 
         # Mode parameters
@@ -346,20 +376,6 @@ class Interface(Plugin):
     def rat_body_chamber_callback(self, msg):
         self.rat_body_chamber = msg.data
 
-    #TODO use this to keep track of the trials, reference Elena's code
-    def trial_callback(self, msg):
-        # Convert the string back into a list (if necessary)
-        trial_data = json.loads(msg.data)
-        self.currentTrial = trial_data['trial']
-        self.current_trial_index = trial_data['current_trial_index']
-        self.trials = trial_data['trials']
-        self.nTrials = trial_data['nTrials']
-
-        # Log the received trial and index
-        rospy.loginfo(f"Received selected trial: {self.currentTrial}")
-        rospy.loginfo(
-            f"Received current_trial_index: {self.current_trial_index}")
-
     def mode_callback(self, msg):
         mode = msg.data
         if mode == "START_EXPERIMENT":
@@ -372,7 +388,6 @@ class Interface(Plugin):
 
     def run_experiment(self):
     # This funtion loops
-        #rospy.loginfo("EXPERIMENT RUNNING")
         self.current_time = rospy.Time.now()
         current_rat_chamber = self.rat_head_chamber
 
@@ -386,14 +401,6 @@ class Interface(Plugin):
         if self.mode == Mode.TEST_MODE:
             self.mode_start_time = rospy.Time.now()
             rospy.loginfo("TESTING MODE")
-            #self.raiseAllWalls()
-            self.proj_op.blank_maze(publish=False)  # Start with a blank maze
-            self.proj_op.set_floor_image(self.floor_img_green_num, publish=False)
-            self.proj_op.publish_image_message()
-            rospy.loginfo("Projecting images")
-            self.mode = Mode.OTHER_MODE
-        elif self.mode == Mode.OTHER_MODE:
-            rospy.loginfo("WWWWWWWW")
 
         elif self.mode == Mode.START_EXPERIMENT:
             rospy.loginfo("STARTING EXPERIMENT")
@@ -424,19 +431,10 @@ class Interface(Plugin):
 
         elif self.mode == Mode.START_TRIAL:
             self.prevTrial = self.currentTrial
-            
-            #TODO what is this and why is this necessary. Can't I keep track of my own trials?
-            self.currentTrialNumber = self.currentTrialNumber+1
-            rospy.loginfo(f"Current trial number: {self.currentTrialNumber}")
-
-            if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
-                self.currentTrial = self.trials[self.currentTrialNumber]
-            else:
-                # Handle the case where trials is empty or currentTrialNumber is out of range
-                self.currentTrial = None
+            self.currentTrial += 1
 
             # End experiment if there are no more trials from the predefined number of total trials
-            if self.currentTrial is not None and self.currentTrialNumber >= self.nTrials:
+            if self.currentTrial >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
             
             rospy.loginfo(f"STARTING TRIAL {self.currentTrial}")
@@ -452,6 +450,29 @@ class Interface(Plugin):
                 7 : 2,
                 8 : 1
             }
+
+            self.correctChamber = self.correctChambers[self.currentTrial-1]
+
+            # key is goal chamber number, value is the stimuli to be projected
+            self.stimuli = {
+                0 : (self.wall_blue, self.blue_sound),
+                1 : (self.wall_blue, self.blue_sound),
+                2 : (self.wall_blue, self.blue_sound),
+                3 : (self.wall_blue, self.blue_sound),
+                4 : (self.wall_blue, self.blue_sound),
+                5 : (self.wall_blue, self.blue_sound),
+                6 : (self.wall_blue, self.blue_sound),
+                7 : (self.wall_blue, self.blue_sound),
+                8 : (self.wall_blue, self.blue_sound)
+            }
+
+            # set stimuli to be projected for the chambers with more than one bit of information
+            self.stimuli[8 - self.correctChamber] = (self.wall_green, self.green_sound)
+            self.stimuli[self.twoBitChambers[self.correctChamber]] = (self.wall_teal, self.teal_sound)
+            self.stimuli[8 - self.twoBitChambers[self.correctChamber]] = (self.wall_teal, self.teal_sound)
+            self.stimuli[self.correctChamber] = (self.wall_black, self.correct_sound)
+
+            self.proj_op.blank_maze(publish=True)  # Start with a blank maze
 
             self.mode_start_time = rospy.Time.now()
             rospy.loginfo("Waiting for ITI")
@@ -486,19 +507,22 @@ class Interface(Plugin):
         elif self.mode == Mode.PUBLISH_CUES:
             #publish visual and auditory cues
             #TODO publish auditory cue
+            rospy.loginfo("projection mode entered")
 
-            if (self.is_fullTask_phase or self.is_habituation2_phase):
-                self.proj_op.blank_maze(publish=False)  # Start with a blank maze
+            if ((self.is_fullTask_phase or self.is_habituation2_phase) and (current_rat_chamber != self.correctChamber)):
+                index = 0
                 for wall in self.projectionWalls[current_rat_chamber]:
                         self.proj_op.set_wall_image(chamber=current_rat_chamber,
                                                     wall=wall,
-                                                    image_index=self.wall_img_triangle_num,
+                                                    image_index=self.stimuli[current_rat_chamber][0][index],
                                                     publish=False)
-                self.sound_pub.publish(self.choice_sound_cue)
+                        index += 1
                 self.proj_op.publish_image_message()
-                rospy.loginfo("Projecting images")
+                self.sound_pub.publish(self.stimuli[current_rat_chamber][1])
+                rospy.loginfo("Projecting images and playing sound")
 
-            if (current_rat_chamber == self.correctChambers[self.currentTrial-1]) or self.is_habituation1_phase:
+            if (current_rat_chamber == self.correctChamber) or self.is_habituation1_phase:
+                #TODO publish auditory cue
                 rospy.loginfo(f"Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_CORRECT
@@ -543,6 +567,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.RAT_TO_CENTRE:
             rospy.loginfo("MOVING RAT TO CENTRE")
+            self.proj_op.blank_maze(publish=True)  # Start with a blank maze
             self.raiseCentreWalls()
             self.common_functions.lower_wall(Wall(4, self.goalChambersFromCentre.get(current_rat_chamber)), False)
             # remove chamber from list of possible goal chambers and lower wall
