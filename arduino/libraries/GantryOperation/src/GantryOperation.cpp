@@ -224,9 +224,16 @@ void GantryOperation::gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate)
 	String cmd_str = "$J=G91 G21 X" + x_str + " Y" + y_str + " " + fr_str;
 
 	// Send the jog command
-	if (grblWrite(cmd_str) != 0)
+	if (!feederRunning) {
+		if (grblWrite(cmd_str) != 0)
+		{
+			_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates: %s", cmd_str.c_str());
+		}
+	}
+	else
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates: %s", cmd_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::INFO, "[gantryMove] Feeder is running, queuing command: %s", cmd_str.c_str());
+		queuedCmd = cmd_str;
 	}
 }
 
@@ -243,9 +250,16 @@ void GantryOperation::gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate)
 	String cmd_str = "$J=G90 G21 X" + x_str + " Y" + y_str + " " + fr_str;
 
 	// Send the jog command
-	if (grblWrite(cmd_str) != 0)
+	if (!feederRunning) {
+		if (grblWrite(cmd_str) != 0)
+		{
+			_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMove] Error moving to target coordinates: %s", cmd_str.c_str());
+		}
+	}
+	else
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[gantryMoveAbs] Error moving to target coordinates: %s", cmd_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::INFO, "[gantryMove] Feeder is running, queuing command: %s", cmd_str.c_str());
+		queuedCmd = cmd_str;
 	}
 }
 
@@ -253,8 +267,9 @@ void GantryOperation::gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate)
 /// @brief Cancel the jog operation.
 void GantryOperation::grblJogCancel()
 {
+	char jog_cancel_cmd = 0x85;
 	// Send the jog cancel command
-	if (grblWrite("" + char(0x85)) != 0)
+	if (grblWrite(String(jog_cancel_cmd)) != 0)
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error canceling jog");
 	}
@@ -273,7 +288,7 @@ void GantryOperation::resetOrigin(float x, float y)
 	// Send the jog command
 	if (grblWrite(cmd_str) != 0)
 	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[resetOrigin] Error ressetomg origin: %s", cmd_str.c_str());
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[resetOrigin] Error resetting origin: %s", cmd_str.c_str());
 	}
 }
 
@@ -380,6 +395,11 @@ void GantryOperation::pumpRun(uint8_t run_state)
 ///
 void GantryOperation::runReward(float duration)
 {
+	_Dbg.printMsg(_Dbg.MT::INFO, "[runReward] Running the reward: duration[%f]", duration);
+	feederRunning = true;
+	grblJogCancel();
+	delay(250);
+
 	// Lower the feeder
 	feederMove(1);
 	delay(250);
@@ -395,6 +415,15 @@ void GantryOperation::runReward(float duration)
 
 	// Raise the feeder
 	feederMove(0);
+
+	feederRunning = false;
+	// Execute the queued command
+	if (queuedCmd != "")
+	{
+		_Dbg.printMsg(_Dbg.MT::INFO, "[runReward] Executing queued command: %s", queuedCmd.c_str());
+		grblWrite(queuedCmd);
+		queuedCmd = "";
+	}
 }
 
 /// @brief Used to process new ROS ethercat msg argument data.

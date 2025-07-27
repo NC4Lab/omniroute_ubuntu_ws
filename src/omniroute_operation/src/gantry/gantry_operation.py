@@ -183,20 +183,20 @@ class GantryOperation:
 
         # ................ Handle GRBL Position Reset ................
 
-        # if self.EsmaCom.isEcatConnected:
+        #if self.EsmaCom.isEcatConnected:
 
-        #     # Check if the G92 command has not been sent in the last 2 seconds
-        #     if current_time - self.last_g92_time >= 2.0:
+            ## Check if the G92 command has not been sent in the last 2 seconds
+            #if current_time - self.last_g92_time >= 2.0:
                     
-        #         # Convert gantry positions to mm
-        #         gantry_x_mm = self.gantry_x * 1000.0
-        #         gantry_y_mm = self.gantry_y * 1000.0
+                ## Convert gantry positions to mm
+                #gantry_x_mm = self.gantry_x * 1000.0
+                #gantry_y_mm = self.gantry_y * 1000.0
 
-        #         # Send the reset origin command
-        #         self.reset_origin(gantry_x_mm, gantry_y_mm)
+                ## Send the reset origin command
+                #self.reset_origin(gantry_x_mm, gantry_y_mm)
 
-        #         # Update the last G92 time
-        #         self.last_g92_time = current_time
+                ## Update the last G92 time
+                #self.last_g92_time = current_time
 
         # ................ Handle Haness Tracking ................
 
@@ -446,7 +446,7 @@ class GantryOperation:
 
             # Get the target x and y
             chamber_num = int(msg.args[0])
-            target_x = self.maze_dim.chamber_centers[chamber_num][0] * 1000.0 + 200
+            target_x = self.maze_dim.chamber_centers[chamber_num][0] * 1000.0 + 195 #changed from 200 to 195 to avoid wall walls during reward
             target_y = self.maze_dim.chamber_centers[chamber_num][1] * 1000.0 - 30
 
             # Send the move command

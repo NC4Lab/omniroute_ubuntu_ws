@@ -88,4 +88,19 @@
       <statustip>Use to test functioning of Pseudorandom Control Training</statustip>
     </qtgui>
   </class>
+  <class name="RadialMaze"
+    type="radial_maze.radial_maze_interface.Interface"
+    base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An rqt-based GUI for testing the functionality of the Radial Maze Training.
+    </description>
+    <qtgui>
+      <group>
+        <label>omniroute_operation</label>
+      </group>
+      <label>Radial Maze Training</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Use to test functioning of Radial Maze Training</statustip>
+    </qtgui>
+  </class>
 </library>

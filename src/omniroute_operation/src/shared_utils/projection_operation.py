@@ -28,7 +28,16 @@ class ProjectionOperation:
         "w_circle",
         "w_triangle",
         "w_star",
-        "w_pentagon"
+        "w_pentagon",
+        "w_rm_blue_left",
+        "w_rm_blue_middle",
+        "w_rm_blue_right",
+        "w_rm_green_left",
+        "w_rm_green_middle",
+        "w_rm_green_right",
+        "w_rm_teal_left",
+        "w_rm_teal_middle",
+        "w_rm_teal_right"
     ]
 
     # Floor image file names
@@ -44,30 +53,29 @@ class ProjectionOperation:
     ]
 
     def __init__(self):
+        
+        self.wall_image_num = None  
+        self.cham_ind = None
+        self.wall_ind = None
 
         # Initialize the node (if not already initialized)
-        if not rospy.core.is_initialized():
-            rospy.init_node('projection_opperation_node', anonymous=True)
+        # if not rospy.core.is_initialized():
+        #     rospy.init_node('projection_opperation_node', anonymous=True)
+        
+        # Initialize image_config as a 10x8 array with default values
+        self.image_config = [[0 for _ in range(8)] for _ in range(10)]
 
         # Create the publisher for 'projection_cmd' topic
-        self.projection_pub = rospy.Publisher(
-            'projection_cmd', Int32, queue_size=10)
+        self.projection_pub = rospy.Publisher('projection_cmd', Int32, queue_size=10)
 
         # Create the publisher for the 'projection_image' topic
-        self.image_pub = rospy.Publisher(
-            'projection_image', Int32MultiArray, queue_size=10)
+        self.image_pub = rospy.Publisher('projection_image', Int32MultiArray, queue_size=10)
         
         rospy.Subscriber('projection_image_floor_num', Int32, self.projection_image_floor_callback)
 
         rospy.Subscriber('projection_walls', String, self.projection_walls_callback)
 
         rospy.Subscriber('projection_image_wall_num', Int32, self.projection_image_wall_callback)
-
-        # Initialize image_config as a 10x8 array with default values
-        self.image_config = [[0 for _ in range(8)] for _ in range(10)]
-
-        # Rate for publishing set to 30hz
-        self.rate = rospy.Rate(30)
 
     def projection_image_floor_callback(self, msg):
         self.floor_img_num = msg.data
@@ -78,12 +86,24 @@ class ProjectionOperation:
         self.wall_image_num = msg.data
         
     def projection_walls_callback(self, msg):
-        wall_num = json.loads(msg.data)
-        self.cham_ind = wall_num['chamber_num']
-        self.wall_ind = wall_num['wall_num']
+        try:
+            wall_num = json.loads(msg.data)
+            self.cham_ind = wall_num['chamber_num']
+            self.wall_ind = wall_num['wall_num']
 
-        self.set_config('walls', self.wall_image_num, cham_ind=self.cham_ind, wall_ind=self.wall_ind)
-        self.publish_image_message()
+            if self.wall_image_num is None:
+                rospy.logwarn("wall_image_num has not been received yet.")
+                return
+
+            self.set_config(
+                'walls',
+                img_ind=self.wall_image_num,
+                cham_ind=self.cham_ind,
+                wall_ind=self.wall_ind
+            )
+            self.publish_image_message()
+        except Exception as e:
+            rospy.logerr(f"Failed in projection_walls_callback: {e}")
 
     
     def setup_layout(self, dim1, dim2):
@@ -205,3 +225,7 @@ class ProjectionOperation:
             'INFO', "Published projection command: command[%d]", number)
         
     
+if __name__ == '__main__':
+    rospy.init_node('projection_opperation_node')
+    ProjectionOperation()
+    rospy.spin()
