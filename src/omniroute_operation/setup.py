@@ -10,6 +10,7 @@ d = generate_distutils_setup(
     # scripts=['bin/myscript'], 
     
     # Define the packages to be included in the distribution
+<<<<<<< HEAD
     packages=['omniroute_controller', 
               'experiment_controller',
               'gantry', 'rat_detector', 
@@ -21,17 +22,25 @@ d = generate_distutils_setup(
               'rule_based_experiment', 
               'pseudorandom_control', 
               'gate_manuscript_testing'],
+=======
+    packages=['omniroute_controller', 'experiment_controller',
+              'gantry', 'rat_detector', 'transformer', 'ts_sync', 'shared_utils', 'single_T_maze', 'dynamic_training_controller', 'rule_based_experiment', 'pseudorandom_control', 'radial_maze'],
+>>>>>>> origin/master
     
     # Specify the root directory for the package source files
     package_dir={'': 'src'},
     
     # List of scripts to be installed and their locations
+<<<<<<< HEAD
     scripts=['scripts/omniroute_controller', 
              'scripts/experiment_controller', 
              'scripts/single_T_maze', 
              'scripts/dynamic_training_controller', 
              'scripts/rule_based_experiment', 
              'scripts/pseudorandom_control'],
+=======
+    scripts=['scripts/omniroute_controller', 'scripts/experiment_controller', 'scripts/single_T_maze', 'scripts/dynamic_training_controller', 'scripts/rule_based_experiment', 'scripts/pseudorandom_control', 'scripts/radial_maze'],
+>>>>>>> origin/master
 )
 
 # Pass the configuration dictionary to the setup function to create the package
