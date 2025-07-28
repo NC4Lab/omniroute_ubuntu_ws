@@ -1,0 +1,7 @@
+<launch>
+    <!-- Load shared resources -->
+    <include file="$(find omniroute_operation)/launch/shared_resources.launch"/>
+
+    <!-- Run the gantry_manuscript_testing node -->
+    <node name="gantry_manuscript_testing_node" pkg="omniroute_operation" type="gantry_manuscript_testing.py" output="screen"/>
+</launch>
