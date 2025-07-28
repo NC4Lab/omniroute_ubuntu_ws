@@ -251,21 +251,23 @@ class Interface(Plugin):
     
     def _handle_phaseBtnGroup_clicked(self):
         if self._widget.phaseBtnGroup.checkedId() == self.TESTING_PHASE_ID:
+            rospy.loginfo("Testing phase selected")
             self.is_testing_phase = True
             self.mode = Mode.TEST_MODE
-            rospy.loginfo("Testing phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION1_PHASE_ID:
+            rospy.loginfo("Habituation 1 phase selected")
             self.is_habituation1_phase = True
             self.mode = Mode.START_EXPERIMENT
-            rospy.loginfo("Habituation 1 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION2_PHASE_ID:
+            rospy.loginfo("Habituation 2 phase selected")
             self.is_habituation2_phase = True
             self.mode = Mode.START_EXPERIMENT
-            rospy.loginfo("Habituation 2 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.FULLTASK_PHASE_ID:
+            rospy.loginfo("Full task phase selected")
             self.is_fullTask_phase = True
             self.mode = Mode.START_EXPERIMENT
-            rospy.loginfo("Full task phase selected")
+        else:
+            rospy.loginfo("NOPE")
         
     def _handle_wallBtnGroup_clicked(self):
         if self._widget.wallBtnGroup.checkedId() == self.RADIAL_MAZE_ID:
