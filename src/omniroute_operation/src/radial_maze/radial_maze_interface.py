@@ -115,6 +115,8 @@ class Interface(Plugin):
         self._widget.phaseBtnGroup.setExclusive(True)
         for button in self._widget.phaseBtnGroup.buttons():
             button.setEnabled(True)
+        
+        self._widget.fullTaskPhaseBtn.setChecked(True)  # Default phase
 
         self._widget.phaseBtnGroup.buttonClicked.connect(
             self._handle_phaseBtnGroup_clicked)
@@ -130,6 +132,8 @@ class Interface(Plugin):
         self._widget.wallBtnGroup.setExclusive(True)
         for button in self._widget.wallBtnGroup.buttons():
             button.setEnabled(True)
+
+        self._widget.radialMazeBtn.setChecked(True)  # Default wall configuration
 
         self._widget.wallBtnGroup.buttonClicked.connect(
             self._handle_wallBtnGroup_clicked)
@@ -297,17 +301,29 @@ class Interface(Plugin):
     def _handle_phaseBtnGroup_clicked(self):
         if self._widget.phaseBtnGroup.checkedId() == self.TESTING_PHASE_ID:
             self.is_testing_phase = True
+            self.is_habituation1_phase = False
+            self.is_habituation2_phase = False
+            self.is_fullTask_phase = False
             self.mode = Mode.TEST_MODE
             rospy.loginfo("Testing phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION1_PHASE_ID:
+            self.is_testing_phase = False
             self.is_habituation1_phase = True
+            self.is_habituation2_phase = False
+            self.is_fullTask_phase = False
             self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Habituation 1 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.HABITUATION2_PHASE_ID:
+            self.is_testing_phase = False
+            self.is_habituation1_phase = False
             self.is_habituation2_phase = True
+            self.is_fullTask_phase = False
             self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Habituation 2 phase selected")
         elif self._widget.phaseBtnGroup.checkedId() == self.FULLTASK_PHASE_ID:
+            self.is_testing_phase = False
+            self.is_habituation1_phase = False
+            self.is_habituation2_phase = False
             self.is_fullTask_phase = True
             self.mode = Mode.START_EXPERIMENT
             rospy.loginfo("Full task phase selected")
@@ -316,7 +332,7 @@ class Interface(Plugin):
         if self._widget.wallBtnGroup.checkedId() == self.RADIAL_MAZE_ID:
             rospy.loginfo("Assuming radial maze configuration")
             self.raiseAllWalls()
-            #TODO radial maze config
+            self.lowerWalls(self.diagonalChambers)
         elif self._widget.wallBtnGroup.checkedId() == self.LOWER_ALL_DOORS_ID:
             rospy.loginfo("Lowering all doors")
             self.lowerAllWalls()
@@ -490,7 +506,7 @@ class Interface(Plugin):
                 self.mode = Mode.RAT_IS_WANDERING
         
         elif self.mode == Mode.RAT_IS_WANDERING:
-                #wait for rat to go to a goal cahmber
+                #wait for rat to go to a goal chamber
                 if current_rat_chamber in self.goalChambers.keys():
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_MADE
@@ -506,7 +522,6 @@ class Interface(Plugin):
 
         elif self.mode == Mode.PUBLISH_CUES:
             #publish visual and auditory cues
-            #TODO publish auditory cue
             rospy.loginfo("projection mode entered")
 
             if ((self.is_fullTask_phase or self.is_habituation2_phase) and (current_rat_chamber != self.correctChamber)):
@@ -522,10 +537,10 @@ class Interface(Plugin):
                 rospy.loginfo("Projecting images and playing sound")
 
             if (current_rat_chamber == self.correctChamber) or self.is_habituation1_phase:
-                #TODO publish auditory cue
                 rospy.loginfo(f"Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.CHOICE_CORRECT
+                #self.mode = Mode.CHOICE_CORRECT
+                self.mode = Mode.REWARD_TIME
             else:
                 rospy.loginfo(f"Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
@@ -555,7 +570,8 @@ class Interface(Plugin):
             
             self.mode_start_time = rospy.Time.now()
             rospy.loginfo("waiting for rat to drink rewards")
-            self.mode = Mode.REWARD_TIME
+            #self.mode = Mode.REWARD_TIME
+            self.mode = Mode.RAT_TO_CENTRE
 
         elif self.mode == Mode.REWARD_TIME:
             #wait for reward time
@@ -563,7 +579,8 @@ class Interface(Plugin):
                 #When the ITI is over,
                 rospy.loginfo("reward time over")
                 self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.RAT_TO_CENTRE
+                #self.mode = Mode.RAT_TO_CENTRE
+                self.mode = Mode.CHOICE_CORRECT
 
         elif self.mode == Mode.RAT_TO_CENTRE:
             rospy.loginfo("MOVING RAT TO CENTRE")
