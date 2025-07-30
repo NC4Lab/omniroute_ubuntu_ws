@@ -47,6 +47,7 @@ class Mode(Enum):
     REWARD_TIME = auto()
     RAT_TO_CENTRE = auto()
     RAT_IN_CENTRE = auto()
+    WAIT_FOR_GANTRY = auto()
     END_EXPERIMENT = auto()
     PAUSE_EXPERIMENT = auto()
     RESUME_EXPERIMENT = auto()
@@ -176,24 +177,18 @@ class Interface(Plugin):
         self.is_testing_phase = False
         self.is_habituation1_phase = False
         self.is_habituation2_phase = False
-        self.is_fullTask_phase = True #TODO fix the buttons, they're not changing the phase for some reason
-        self.end_task = False
-        self.start_task = False #TODO don't know if this is necessary??
+        self.is_fullTask_phase = True
         self.start = False
-        self.pause_task = False
-        self.start_at_trial = False
         
         # rat variables
         self.rat_head_chamber = -1
         self.rat_body_chamber = -1
         self.previous_rat_chamber = -1
-        self.rat_position = -1
 
         self.maze_dim = MazeDimensions()
 
         # Trial parameters
         self.currentTrial = 0
-        self.currentTrialNumber = 0
         self.trials = []
         self.prevTrial = -1
         self.nTrials = 32
@@ -382,7 +377,7 @@ class Interface(Plugin):
     def lowerAllWalls(self):
         for i in range(8):
             for j in range(8):
-                self.common_functions.lowerWall(Wall(i, j), False)
+                self.common_functions.lower_wall(Wall(i, j), False)
         self.common_functions.activateWalls()
 
     # Define data revieved from gantry
@@ -446,12 +441,12 @@ class Interface(Plugin):
             self.mode = self.mode_before_pause
 
         elif self.mode == Mode.START_TRIAL:
-            self.prevTrial = self.currentTrial
-            self.currentTrial += 1
-
             # End experiment if there are no more trials from the predefined number of total trials
             if self.currentTrial >= self.nTrials:
                 self.mode = Mode.END_EXPERIMENT
+
+            self.prevTrial = self.currentTrial
+            self.currentTrial += 1
             
             rospy.loginfo(f"STARTING TRIAL {self.currentTrial}")
 
@@ -597,15 +592,21 @@ class Interface(Plugin):
         elif self.mode == Mode.RAT_IN_CENTRE:
             #if the rat is in the centre and we're giving rewards for that, give reward
             if current_rat_chamber == 4:
-                #TODO gantry pub in same mode as raising walls?
                 self.raiseCentreWalls()
                 if self.is_habituation1_phase or self.is_habituation2_phase:
-                    rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
-                    #give half reward
-                    self.gantry_pub.publish("deliver_reward", [0.5])
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.WAIT_FOR_GANTRY
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TRIAL
+
+        elif self.mode == Mode.WAIT_FOR_GANTRY:
+                    #wait for reward time
+                    if (self.current_time - self.mode_start_time).to_sec() >= self.rewardTime.to_sec():
+                        rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
+                        #give half reward
+                        self.gantry_pub.publish("deliver_reward", [0.5])
+                        self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.END_EXPERIMENT:
             #TODO print the results?
