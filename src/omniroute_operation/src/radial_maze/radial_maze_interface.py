@@ -48,6 +48,7 @@ class Mode(Enum):
     RAT_TO_CENTRE = auto()
     RAT_IN_CENTRE = auto()
     REWARD_FOR_CENTRE = auto()
+    END_TRIAL = auto()
     END_EXPERIMENT = auto()
     PAUSE_EXPERIMENT = auto()
     RESUME_EXPERIMENT = auto()
@@ -530,11 +531,12 @@ class Interface(Plugin):
                 self.mode = Mode.CHOICE_CORRECT
             else:
                 rospy.loginfo(f"Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
-                self.mode_start_time = rospy.Time.now()
                 if (self.is_habituation2_phase):
                     #TODO give half reward
                     rospy.loginfo("Giving half reward for incorrect choice in habituation 2 phase")
+
                 rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
+                self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.CHOICE_INCORRECT
         
         elif self.mode == Mode.CHOICE_INCORRECT:
@@ -593,8 +595,13 @@ class Interface(Plugin):
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.REWARD_FOR_CENTRE
                 else:
-                    self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.START_TRIAL
+                    #check to see if there are still trials left
+                    if self.currentTrial >= self.nTrials:
+                        self.mode_start_time = rospy.Time.now()
+                        self.mode = Mode.END_EXPERIMENT
+                    else:
+                        self.mode_start_time = rospy.Time.now()
+                        self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.REWARD_FOR_CENTRE:
             rospy.loginfo("waiting for gantry")
@@ -603,14 +610,23 @@ class Interface(Plugin):
                 rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
                 #give half reward
                 self.gantry_pub.publish("deliver_reward", [0.5])
-
-                #check to see if there are still trials left
+                
+                if ((self.is_habituation2_phase) and (current_rat_chamber != 4)):
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.CHOICE_INCORRECT
+                else:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.END_TRIAL
+        
+        elif self.mode == Mode.END_TRIAL:
+            #check to see if there are still trials left
                 if self.currentTrial >= self.nTrials:
+                    rospy.loginfo("EXPERIMENT END")
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.END_EXPERIMENT
-
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.START_TRIAL
+                else:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.END_EXPERIMENT:
             rospy.loginfo("EXPERIMENT END")
