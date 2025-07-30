@@ -47,7 +47,7 @@ class Mode(Enum):
     REWARD_TIME = auto()
     RAT_TO_CENTRE = auto()
     RAT_IN_CENTRE = auto()
-    WAIT_FOR_GANTRY = auto()
+    REWARD_FOR_CENTRE = auto()
     END_EXPERIMENT = auto()
     PAUSE_EXPERIMENT = auto()
     RESUME_EXPERIMENT = auto()
@@ -191,12 +191,13 @@ class Interface(Plugin):
         self.currentTrial = 0
         self.trials = []
         self.prevTrial = -1
-        self.nTrials = 32
-        self.numBlocks = 4
+        self.nTrials = 16
+        self.numBlocks = 2
         self.correctChambers = []
         self.ITI = rospy.Duration(5)
         self.punishTime = rospy.Duration(10)
-        self.rewardTime = rospy.Duration(3)
+        self.gantryTime = rospy.Duration(1.5) #Time for gantry to move
+        self.rewardTime = rospy.Duration(6)
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
@@ -450,17 +451,8 @@ class Interface(Plugin):
             
             rospy.loginfo(f"STARTING TRIAL {self.currentTrial}")
 
-            # key is chamber number, value is chamber wall pointing to middle
-            self.goalChambers = {
-                0 : 5,
-                1 : 6,
-                2 : 7,
-                3 : 4,
-                5 : 0,
-                6 : 3,
-                7 : 2,
-                8 : 1
-            }
+            # reset end chambers
+            self.endChambers = self.goalChambers.copy()
 
             self.correctChamber = self.correctChambers[self.currentTrial-1]
 
@@ -501,15 +493,15 @@ class Interface(Plugin):
                 self.mode = Mode.RAT_IS_WANDERING
         
         elif self.mode == Mode.RAT_IS_WANDERING:
-                #wait for rat to go to a goal chamber
-                if current_rat_chamber in self.goalChambers.keys():
+                #wait for rat to go to a end chamber
+                if current_rat_chamber in self.endChambers.keys():
                     self.mode_start_time = rospy.Time.now()
                     self.mode = Mode.CHOICE_MADE
         
         elif self.mode == Mode.CHOICE_MADE:
             rospy.loginfo("CHOICE MADE")
-            #raise wall corresponding to goal chamber
-            self.common_functions.raise_wall(Wall(current_rat_chamber, self.goalChambers[current_rat_chamber]), False)
+            #raise wall corresponding to end chamber
+            self.common_functions.raise_wall(Wall(current_rat_chamber, self.endChambers[current_rat_chamber]), False)
             self.common_functions.activateWalls()
 
             self.mode_start_time = rospy.Time.now()
@@ -519,26 +511,29 @@ class Interface(Plugin):
             #publish visual and auditory cues
             rospy.loginfo("projection mode entered")
 
-            if ((self.is_fullTask_phase or self.is_habituation2_phase) and (current_rat_chamber != self.correctChamber)):
-                index = 0
-                for wall in self.projectionWalls[current_rat_chamber]:
-                        self.proj_op.set_wall_image(chamber=current_rat_chamber,
-                                                    wall=wall,
-                                                    image_index=self.stimuli[current_rat_chamber][0][index],
-                                                    publish=False)
-                        index += 1
-                self.proj_op.publish_image_message()
+            if (self.is_fullTask_phase or self.is_habituation2_phase):
+                if (current_rat_chamber != self.correctChamber):
+                    index = 0
+                    for wall in self.projectionWalls[current_rat_chamber]:
+                            self.proj_op.set_wall_image(chamber=current_rat_chamber,
+                                                        wall=wall,
+                                                        image_index=self.stimuli[current_rat_chamber][0][index],
+                                                        publish=False)
+                            index += 1
+                    self.proj_op.publish_image_message()
                 self.sound_pub.publish(self.stimuli[current_rat_chamber][1])
                 rospy.loginfo("Projecting images and playing sound")
 
             if (current_rat_chamber == self.correctChamber) or self.is_habituation1_phase:
                 rospy.loginfo(f"Trial {self.currentTrial}: correct. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
-                #self.mode = Mode.CHOICE_CORRECT
-                self.mode = Mode.REWARD_TIME
+                self.mode = Mode.CHOICE_CORRECT
             else:
                 rospy.loginfo(f"Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
                 self.mode_start_time = rospy.Time.now()
+                if (self.is_habituation2_phase):
+                    #TODO give half reward
+                    rospy.loginfo("Giving half reward for incorrect choice in habituation 2 phase")
                 rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
                 self.mode = Mode.CHOICE_INCORRECT
         
@@ -546,8 +541,8 @@ class Interface(Plugin):
             if (self.current_time - self.mode_start_time).to_sec() >= self.punishTime.to_sec():
                 #punish time over
                 rospy.loginfo("punishment over")
-                # remove chamber from list of possible goal chambers and lower wall
-                self.common_functions.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)), False)
+                # remove chamber from list of possible end chambers and lower wall
+                self.common_functions.lower_wall(Wall(current_rat_chamber, self.endChambers.pop(current_rat_chamber)), False)
                 self.common_functions.activateWalls()
 
                 self.mode_start_time = rospy.Time.now()
@@ -556,34 +551,33 @@ class Interface(Plugin):
             
         
         elif self.mode == Mode.CHOICE_CORRECT:
-            rospy.loginfo("CHOICE CORRECT")
-            # have gantry feed rat. Check phase for how much it should be fed
-            if self.is_habituation1_phase:
-                self.gantry_pub.publish("deliver_reward", [0.5]) # Send with pump duration (sec)
-            elif self.is_habituation2_phase or self.is_fullTask_phase:
-                self.gantry_pub.publish("deliver_reward", [1]) # Send with pump duration (sec)
-            
-            self.mode_start_time = rospy.Time.now()
-            rospy.loginfo("waiting for rat to drink rewards")
-            #self.mode = Mode.REWARD_TIME
-            self.mode = Mode.RAT_TO_CENTRE
+            #wait for gantry to be over the rat
+            if (self.current_time - self.mode_start_time).to_sec() >= self.gantryTime.to_sec():
+                rospy.loginfo("REWARDING FOR CORRECT CHOICE")
+                # have gantry feed rat. Check phase for how much it should be fed
+                if self.is_habituation1_phase:
+                    self.gantry_pub.publish("deliver_reward", [0.5]) # Send with pump duration (sec)
+                elif self.is_habituation2_phase or self.is_fullTask_phase:
+                    self.gantry_pub.publish("deliver_reward", [1]) # Send with pump duration (sec)
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.REWARD_TIME
 
         elif self.mode == Mode.REWARD_TIME:
             #wait for reward time
             if (self.current_time - self.mode_start_time).to_sec() >= self.rewardTime.to_sec():
-                #When the ITI is over,
-                rospy.loginfo("reward time over")
+                rospy.loginfo("REWARD TIME OVER")
+                
                 self.mode_start_time = rospy.Time.now()
-                #self.mode = Mode.RAT_TO_CENTRE
-                self.mode = Mode.CHOICE_CORRECT
+                self.mode = Mode.RAT_TO_CENTRE
 
         elif self.mode == Mode.RAT_TO_CENTRE:
             rospy.loginfo("MOVING RAT TO CENTRE")
             self.proj_op.blank_maze(publish=True)  # Start with a blank maze
             self.raiseCentreWalls()
             self.common_functions.lower_wall(Wall(4, self.goalChambersFromCentre.get(current_rat_chamber)), False)
-            # remove chamber from list of possible goal chambers and lower wall
-            self.common_functions.lower_wall(Wall(current_rat_chamber, self.goalChambers.pop(current_rat_chamber)), False)
+            # remove chamber from list of possible end chambers and lower wall
+            self.common_functions.lower_wall(Wall(current_rat_chamber, self.endChambers.pop(current_rat_chamber)), False)
             self.common_functions.activateWalls()
 
             self.mode_start_time = rospy.Time.now()
@@ -592,25 +586,35 @@ class Interface(Plugin):
         elif self.mode == Mode.RAT_IN_CENTRE:
             #if the rat is in the centre and we're giving rewards for that, give reward
             if current_rat_chamber == 4:
+                rospy.loginfo("RAT IN CENTRE")
                 self.raiseCentreWalls()
                 if self.is_habituation1_phase or self.is_habituation2_phase:
+                    rospy.loginfo(f"yes {self.is_habituation1_phase}")
                     self.mode_start_time = rospy.Time.now()
-                    self.mode = Mode.WAIT_FOR_GANTRY
+                    self.mode = Mode.REWARD_FOR_CENTRE
+                else:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.START_TRIAL
+
+        elif self.mode == Mode.REWARD_FOR_CENTRE:
+            rospy.loginfo("waiting for gantry")
+            #wait for gantry to be over the rat
+            if (self.current_time - self.mode_start_time).to_sec() >= self.gantryTime.to_sec():
+                rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
+                #give half reward
+                self.gantry_pub.publish("deliver_reward", [0.5])
+
+                #check to see if there are still trials left
+                if self.currentTrial >= self.nTrials:
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.END_EXPERIMENT
 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.START_TRIAL
 
-        elif self.mode == Mode.WAIT_FOR_GANTRY:
-                    #wait for reward time
-                    if (self.current_time - self.mode_start_time).to_sec() >= self.rewardTime.to_sec():
-                        rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
-                        #give half reward
-                        self.gantry_pub.publish("deliver_reward", [0.5])
-                        self.mode = Mode.START_TRIAL
-
         elif self.mode == Mode.END_EXPERIMENT:
-            #TODO print the results?
             rospy.loginfo("EXPERIMENT END")
+
 
 
 
