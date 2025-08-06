@@ -176,6 +176,9 @@ class Interface(Plugin):
 
         self.experiment_pub = rospy.Publisher(
             '/experiment', String, queue_size=1)
+        
+        self.gantry_pub = rospy.Publisher(
+            '/gantry_cmd', GantryCmd, queue_size=1)
 
         self.rat_head_chamber = -1
         self.rat_body_chamber = -1
@@ -231,6 +234,7 @@ class Interface(Plugin):
         self.central_chamber = 0
         self.start_chamber = 0
         self.rat_choice_chamber = 0
+        self.previous_rat_chamber = 0
 
         self.left_goal_wall = Wall(0, 0)
         self.right_goal_wall = Wall(0, 0)
@@ -520,6 +524,14 @@ class Interface(Plugin):
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
+        current_rat_chamber = self.rat_head_chamber
+
+        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+            # The rat has moved to a different chamber, update the gantry position
+            self.cf.move_gantry_to_chamber(current_rat_chamber)
+
+            # Update the previous_rat_chamber for the next iteration
+            self.previous_rat_chamber = current_rat_chamber
 
         if self.mode == Mode.START_EXPERIMENT:
             self.switch_to_mode(Mode.START_TRIAL)
@@ -676,7 +688,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time) >= self.reward_start_delay:
-                # self.common_functions.reward_dispense()
+                self.cf.reward_dispense()
                 self.switch_to_mode(Mode.REWARD_END)
 
         elif self.mode == Mode.REWARD_END:
@@ -685,7 +697,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time) >= self.right_choice_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 5:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
@@ -723,7 +735,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 5:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.error_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
