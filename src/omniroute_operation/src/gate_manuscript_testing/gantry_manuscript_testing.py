@@ -31,7 +31,7 @@ class GantryManuscriptTesting:
         ]
         self.n_moves = 21
         self.move_delay = 5  # seconds
-        self.start_delay = 2  # optional delay before first move
+        self.start_delay = 20  # optional delay before first move
 
         # === ROS Publishers ===
         self.cmd_pub = rospy.Publisher('/gantry_cmd', GantryCmd, queue_size=10)
