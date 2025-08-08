@@ -192,8 +192,8 @@ class Interface(Plugin):
         self.currentTrial = 0
         self.trials = []
         self.prevTrial = -1
-        self.nTrials = 16
-        self.numBlocks = 2
+        self.nTrials = 32
+        self.numBlocks = 4
         self.correctChambers = []
         self.ITI = rospy.Duration(5)
         self.punishTime = rospy.Duration(10)
@@ -402,9 +402,10 @@ class Interface(Plugin):
     def run_experiment(self):
     # This funtion loops
         self.current_time = rospy.Time.now()
-        current_rat_chamber = self.rat_head_chamber
+        current_rat_chamber = self.rat_body_chamber
 
-        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+        if (self.start) and (current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1):
+        #if (current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1):
             # The rat has moved to a different chamber, update the gantry position
             self.common_functions.move_gantry_to_chamber(current_rat_chamber)
 
@@ -604,7 +605,6 @@ class Interface(Plugin):
                         self.mode = Mode.START_TRIAL
 
         elif self.mode == Mode.REWARD_FOR_CENTRE:
-            rospy.loginfo("waiting for gantry")
             #wait for gantry to be over the rat
             if (self.current_time - self.mode_start_time).to_sec() >= self.gantryTime.to_sec():
                 rospy.loginfo("REWARDING FOR RETURNING TO CENTRE")
