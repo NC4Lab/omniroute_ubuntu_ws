@@ -249,6 +249,8 @@ class Interface(Plugin):
         self.cued_chambers = [1, 3, 5, 7, 4]
         self.cued_chamber = 0
         self.switch_trial = None
+        self.trial_group = 0
+        self.previous_trial_group = 0
 
         # self.project_floor_img = Wall(9, 0).to_dict()
         self.cf = CommonFunctions()  # Create an instance
@@ -258,12 +260,20 @@ class Interface(Plugin):
             FloorCue.BLACK: 0
         }
 
+        self.trial_type_count = {
+            FloorCue.GREEN and TriangleCue.LEFT: 0,
+            FloorCue.GREEN and TriangleCue.RIGHT: 0,
+            FloorCue.BLACK and TriangleCue.LEFT: 0,
+            FloorCue.BLACK and TriangleCue.RIGHT: 0
+        }
+
         self.total_success_count = 0
         self.previous_trial_result = None
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10) # 10 ms
+        self.trial_type_count = {key: 0 for key in range(1,3)}  # Initialize counts for each trial type
     
     def pick_trial_phase_one(self):
         rospy.loginfo("Picking trial phase one")
@@ -292,21 +302,60 @@ class Interface(Plugin):
                 rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
 
         return nextTrial
+    
+        
+    # def pick_trial_phase_two(self):
+    #     # Randomly select a trial type from the dictionary
+    #     trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
+    #     if trial.visual_cue == TriangleCue.LEFT:
+    #         if trial.floor_cue == FloorCue.GREEN:
+    #             rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Green']}")
+    #         else:
+    #             rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Black']}")
+    #     else:
+    #         if trial.floor_cue == FloorCue.GREEN:
+    #             rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Green']}")
+    #         else:
+    #             rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
+    #     return trial
 
     def pick_trial_phase_two(self):
-        # Randomly select a trial type from the dictionary
-        trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
-        if trial.visual_cue == TriangleCue.LEFT:
-            if trial.floor_cue == FloorCue.GREEN:
-                rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Green']}")
+        recently_reset = set()
+
+        while True:
+            # Randomly select a trial
+            trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
+
+            trial_group = None
+            trial_label = []
+
+            if trial.visual_cue == TriangleCue.LEFT:
+                if trial.floor_cue == FloorCue.GREEN:
+                    trial_group = 1  # Triangle, No Cue, Green
+                    trial_label = ['Triangle', 'No_Cue', 'Green']
+                else:
+                    trial_group = 2  # Triangle, No Cue, Black
+                    trial_label = ['Triangle', 'No_Cue', 'Black']
             else:
-                rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Black']}")
-        else:
-            if trial.floor_cue == FloorCue.GREEN:
-                rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Green']}")
-            else:
-                rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
-        return trial
+                if trial.floor_cue == FloorCue.GREEN:
+                    trial_group = 2  # No Cue, Triangle, Green
+                    trial_label = ['No_Cue', 'Triangle', 'Green']
+                else:
+                    trial_group = 1  # No Cue, Triangle, Black
+                    trial_label = ['No_Cue', 'Triangle', 'Black']
+
+            # If this trial_type was just reset, skip it this round
+            if trial_group in recently_reset:
+                continue
+
+            # If this trial_type hit count 3, reset and skip this round
+            if self.trial_type_count[trial_group] >= 3:
+                self.trial_type_count[trial_group] = 0
+                recently_reset.add(trial_group)
+                continue
+
+            # Valid trial — update count and return
+            return trial, trial_group, trial_label
 
     def is_recording_on(self):
         list_cmd = subprocess.Popen(
@@ -550,7 +599,13 @@ class Interface(Plugin):
                 self.currentTrial = self.pick_trial_phase_one()
                 
             elif self.phase == ExperimentPhases.PHASE_TWO or self.phase == ExperimentPhases.PHASE_THREE:
-                self.currentTrial = self.pick_trial_phase_two()
+                trial = self.pick_trial_phase_two()
+                self.currentTrial = trial[0]
+                self.trial_group = trial[1]
+                self.trial_label = trial[2]
+                rospy.loginfo(f"START OF TRIAL {self.trial_label}") 
+                if self.trial_group == self.previous_trial_group:
+                    self.trial_type_count[self.trial_group] += 1            
 
             else:
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -659,6 +714,7 @@ class Interface(Plugin):
                 self.switch_to_mode(Mode.CHOICE_TO_GOAL)
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
+            self.previous_trial_group = self.trial_group
             if self.rat_body_chamber == self.success_chamber:
                 self.switch_to_mode(Mode.SUCCESS)
                 rospy.loginfo("SUCCESS")
@@ -697,7 +753,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time) >= self.right_choice_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 5:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 15:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
@@ -735,7 +791,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 5:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 15:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.error_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
