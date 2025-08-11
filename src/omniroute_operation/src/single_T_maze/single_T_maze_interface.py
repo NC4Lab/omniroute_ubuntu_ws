@@ -354,6 +354,8 @@ class Interface(Plugin):
                 recently_reset.add(trial_group)
                 continue
 
+            recently_reset.clear()
+
             # Valid trial — update count and return
             return trial, trial_group, trial_label
 
@@ -744,7 +746,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time) >= self.reward_start_delay:
-                self.cf.reward_dispense()
+                #self.cf.reward_dispense()
                 self.switch_to_mode(Mode.REWARD_END)
 
         elif self.mode == Mode.REWARD_END:
@@ -753,7 +755,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time) >= self.right_choice_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 15:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 12:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
@@ -791,7 +793,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 15:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 12:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.error_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
