@@ -45,6 +45,8 @@ class Mode(Enum):
     CHOICE_INCORRECT = auto()
     CHOICE_CORRECT = auto()
     REWARD_TIME = auto()
+    WRONG_REWARD = auto()
+    WRONG_REWARD_TIME = auto()
     RAT_TO_CENTRE = auto()
     RAT_IN_CENTRE = auto()
     REWARD_FOR_CENTRE = auto()
@@ -192,12 +194,12 @@ class Interface(Plugin):
         self.currentTrial = 0
         self.trials = []
         self.prevTrial = -1
-        self.nTrials = 32
-        self.numBlocks = 4
+        self.nTrials = 16 #a multiple of 8
+        self.numBlocks = self.nTrials // 8
         self.correctChambers = []
         self.ITI = rospy.Duration(5)
         self.punishTime = rospy.Duration(10)
-        self.gantryTime = rospy.Duration(1.5) #Time for gantry to move
+        self.gantryTime = rospy.Duration(3) #Time for gantry to move
         self.rewardTime = rospy.Duration(6)
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
@@ -533,12 +535,12 @@ class Interface(Plugin):
             else:
                 rospy.loginfo(f"Trial {self.currentTrial}: incorrect. Chamber: {current_rat_chamber}")
                 if (self.is_habituation2_phase):
-                    #TODO give half reward
-                    rospy.loginfo("Giving half reward for incorrect choice in habituation 2 phase")
-
-                rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
-                self.mode_start_time = rospy.Time.now()
-                self.mode = Mode.CHOICE_INCORRECT
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.WRONG_REWARD
+                else:
+                    rospy.loginfo("CHOICE INCORRECT, waiting for punish time")
+                    self.mode_start_time = rospy.Time.now()
+                    self.mode = Mode.CHOICE_INCORRECT
         
         elif self.mode == Mode.CHOICE_INCORRECT:
             if (self.current_time - self.mode_start_time).to_sec() >= self.punishTime.to_sec():
@@ -573,6 +575,26 @@ class Interface(Plugin):
                 
                 self.mode_start_time = rospy.Time.now()
                 self.mode = Mode.RAT_TO_CENTRE
+
+        elif self.mode == Mode.WRONG_REWARD:
+            #wait for gantry to be over the rat
+            if (self.current_time - self.mode_start_time).to_sec() >= self.gantryTime.to_sec():
+                rospy.loginfo("GIVING HALF REWARD FOR INCORRECT CHOICE")
+                self.gantry_pub.publish("deliver_reward", [0.5])
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.WRONG_REWARD_TIME
+        
+        elif self.mode == Mode.WRONG_REWARD_TIME:
+            #wait for punish time
+            if (self.current_time - self.mode_start_time).to_sec() >= self.punishTime.to_sec():
+                rospy.loginfo("PUNISH REWARD TIME OVER")
+                # remove chamber from list of possible end chambers and lower wall
+                self.common_functions.lower_wall(Wall(current_rat_chamber, self.endChambers.pop(current_rat_chamber)), False)
+                self.common_functions.activateWalls()
+
+                self.mode_start_time = rospy.Time.now()
+                self.mode = Mode.RAT_IS_WANDERING
 
         elif self.mode == Mode.RAT_TO_CENTRE:
             rospy.loginfo("MOVING RAT TO CENTRE")
