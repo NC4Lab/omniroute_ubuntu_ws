@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File: src/omniroute_operation/src/gate_manuscript_testing/projection_manuscript_testing.py
 # Purpose: Alternate projector wall images (index 1 ↔ 2) on the 8 walls of center chamber (4),
-#          interleaved with audio playback, under the same gating/timing pattern as gate_manuscript_testing.py.
+#          interleaved with audio playback, matching the gating/timing pattern of the other test scripts.
 #
 # roslaunch omniroute_operation projection_manuscript_testing.launch
 
@@ -23,20 +23,12 @@ class ProjectionManuscriptTesting:
         # -------------------------
         # USER PARAMETERS (knobs)
         # -------------------------
-        # Start immediately after setup, but you can add a short delay if desired (sec)
-        self.start_delay = 0.0
+        self.start_delay = 0.0     # optional delay before first stimulus after priming (sec)
+        self.n_events    = 40      # total events, must be even (e.g., 40 => 20 images + 20 sounds)
+        self.dt          = 5.0     # fixed interval between EVERY event (sec)
+        self.sound_cue   = '1KHz'  # audio cue token expected by the audio node
 
-        # Number of TOTAL events (must be even): image, sound, image, sound, ...
-        # Example: 20 => 10 images + 10 sounds
-        self.n_events = 20
-
-        # Fixed interval between EVERY event (seconds)
-        self.dt = 5.0
-
-        # Audio cue token expected by the audio node
-        self.sound_cue = '1KHz'
-
-        # Paths for data capture
+        # Data capture path (same as other test scripts)
         self.data_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/data"
 
         # -------------------------
@@ -56,7 +48,6 @@ class ProjectionManuscriptTesting:
         self.setup_complete     = False
         self.recording_started  = False
         self.rosbag_process     = None
-        self.arecord_process    = None
         self.event_count        = 0
         self.next_image_index   = 1  # will alternate 1 ↔ 2
 
@@ -69,9 +60,10 @@ class ProjectionManuscriptTesting:
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if self.setup_complete:
-                # Start recordings immediately after setup gate
+                # Start recordings immediately after setup gate — ONCE
                 if not self.recording_started:
                     self._start_recordings()
+                    self.recording_started = True   # <<< CRITICAL: prevents re-entering init block every spin
                     self._mark("projection_test_recording_started")
 
                     # Projector window setup (move to projector monitors, fullscreen, focus)
@@ -83,6 +75,7 @@ class ProjectionManuscriptTesting:
                     # Prime projector once with image index 1 on center walls
                     self._publish_center_wall_image(1)
                     self._mark("projection_test_prime_image_index_1")
+                    self.next_image_index = 2
 
                     # Optional start delay before first stimulus
                     if self.start_delay > 0:
@@ -156,8 +149,8 @@ class ProjectionManuscriptTesting:
         """
         cfg = [row[:] for row in self.blank_ignored]  # deep copy
         chamber = 4
-        for wall in range(8):  # walls 0..7
-            cfg[chamber][wall] = image_index  # 1 or 2
+        for wall in range(1, 9):  # 1..8 are the 8 walls; 0 is floor
+            cfg[chamber][wall] = image_index
 
         msg = Int32MultiArray()
         # Layout is optional; display node uses size check only, but include it for clarity
@@ -216,19 +209,6 @@ class ProjectionManuscriptTesting:
         self.rosbag_process = subprocess.Popen(["rosbag", "record", "-a", "-O", bag_path])
         MazeDB.printMsg("OTHER", f"[ProjectionManuscriptTesting] Rosbag recording started: {bag_path}")
 
-        # Start arecord
-        audio_name = f"audio_recording_{ts}.wav"
-        audio_path = os.path.join(self.data_save_path, audio_name)
-        if shutil.which("arecord"):
-            cmd = ["arecord", "-D", "hw:4,0", "-f", "S16_LE", "-r", "384000", "-c", "1", audio_path]
-            try:
-                self.arecord_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                MazeDB.printMsg('OTHER', f"[ProjectionManuscriptTesting] arecord started: {audio_path} (PID {self.arecord_process.pid})")
-            except Exception as e:
-                MazeDB.printMsg('ERROR', f"[ProjectionManuscriptTesting] Failed to start arecord: {e}")
-        else:
-            MazeDB.printMsg('ERROR', "[ProjectionManuscriptTesting] 'arecord' not found; skipping audio capture.")
-
     def _stop_recordings(self):
         # Stop rosbag
         if self.rosbag_process:
@@ -236,26 +216,6 @@ class ProjectionManuscriptTesting:
             self.rosbag_process.wait()
             MazeDB.printMsg("OTHER", "[ProjectionManuscriptTesting] Rosbag recording stopped.")
             self.rosbag_process = None
-
-        # Stop arecord gracefully (SIGINT)
-        if self.arecord_process:
-            try:
-                self.arecord_process.send_signal(signal.SIGINT)
-                stdout, stderr = self.arecord_process.communicate(timeout=5)
-                self.arecord_process.wait()
-                if stdout:
-                    MazeDB.printMsg('OTHER', f"[ProjectionManuscriptTesting] arecord stdout: {stdout.decode().strip()}")
-                if stderr and "Aborted by signal Interrupt" not in stderr.decode():
-                    MazeDB.printMsg('ERROR', f"[ProjectionManuscriptTesting] arecord stderr: {stderr.decode().strip()}")
-                MazeDB.printMsg('OTHER', "[ProjectionManuscriptTesting] arecord stopped.")
-            except subprocess.TimeoutExpired:
-                MazeDB.printMsg('ERROR', "[ProjectionManuscriptTesting] Timeout stopping arecord; killing.")
-                self.arecord_process.kill()
-            except Exception as e:
-                MazeDB.printMsg('ERROR', f"[ProjectionManuscriptTesting] Error stopping arecord: {e}")
-            finally:
-                self.arecord_process = None
-
     # ---------------------------------
     # Markers
     # ---------------------------------
