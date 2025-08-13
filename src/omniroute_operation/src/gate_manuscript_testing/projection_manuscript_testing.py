@@ -2,6 +2,8 @@
 # File: src/omniroute_operation/src/gate_manuscript_testing/projection_manuscript_testing.py
 # Purpose: Alternate projector wall images (index 1 ↔ 2) on the 8 walls of center chamber (4),
 #          interleaved with audio playback, under the same gating/timing pattern as gate_manuscript_testing.py.
+#
+# roslaunch omniroute_operation projection_manuscript_testing.launch
 
 import rospy
 import os
