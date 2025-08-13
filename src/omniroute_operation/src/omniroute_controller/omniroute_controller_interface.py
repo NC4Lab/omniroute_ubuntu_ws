@@ -4,7 +4,7 @@
 
 # Custom Imports
 from shared_utils.maze_debug import MazeDB
-from shared_utils.projection_operation import ProjectionOperation
+from shared_utils.projection_operation import ProjectionOperation, ProjectionCmd
 from shared_utils.esmacat_com import EsmacatCom
 from shared_utils.ui_utilities import UIUtilities
 from shared_utils.wall_utilities import MazeDimensions, WallConfig
@@ -14,9 +14,7 @@ from argparse import ArgumentParser
 import os
 import glob
 import subprocess
-import time
 import math
-import csv
 import ctypes
 from typing import List
 from enum import Enum
@@ -547,7 +545,7 @@ class Interface(Plugin):
             "sync_ease_connected": False,
         }
 
-        # Counter to incrementally shut down opperations
+        # Counter to incrementally shut down operations
         self.cnt_shutdown_step = 0  # tracks the current step
         self.cnt_shutdown_ack_check = 0  # tracks number of times ack has been checked
         self.dt_shutdown_step = 0.25  # (sec)
@@ -563,7 +561,7 @@ class Interface(Plugin):
         # ................ Projection Setup ................
 
         # Projection command publisher
-        self.ProjOpp = ProjectionOperation()
+        self.ProjOp = ProjectionOperation()
 
         # ................ Gantry Setup ................
 
@@ -579,6 +577,10 @@ class Interface(Plugin):
         gui_chamber_dist = math.sqrt((self.MP.Chambers[0].center_x - self.MP.Chambers[1].center_x)**2 + (
             self.MP.Chambers[0].center_y - self.MP.Chambers[1].center_y)**2)
         self.optitrack_to_gui_scale = gui_chamber_dist/optitrack_chamber_dist
+
+        # Populate configuration list
+        self._widget.projCfgList.clear()
+        self._widget.projCfgList.addItems([f.split('.')[0] for f in os.listdir(self.proj_cfg_dir_default) if f.endswith('.csv')])
 
         # ................ ROS Setup ................
 
@@ -650,8 +652,8 @@ class Interface(Plugin):
             self.qt_callback_projWinTogBtn_clicked)
         self._widget.projWinTogFullScrBtn.clicked.connect(
             self.qt_callback_projWinTogFullScrBtn_clicked)
-        self._widget.projWinForceFucusBtn.clicked.connect(
-            self.qt_callback_projWinForceFucusBtn_clicked)
+        self._widget.projWinForceFocusBtn.clicked.connect(
+            self.qt_callback_projWinForceFocusBtn_clicked)
 
         # Signal callback to upsate rat position in GUI
         self.signal_rat_pos.connect(self.sig_callback_update_rat_pos_in_gui)
@@ -683,25 +685,10 @@ class Interface(Plugin):
         self.timer_endSession.setSingleShot(True)  # Run only once
 
         # Projected wall image ui callback
-        self.proj_wall_img_cfg_btn_vec = []  # Initalize vector for buttons
-        for i in range(9):
-            button_name = f'projWallImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect(  # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projWallImgCfgBtn_clicked(b))
-            self.proj_wall_img_cfg_btn_vec.append(button)  # Store the button
-
-        # Projected floor image ui callback
-        self.proj_floor_img_cfg_btn_vec = []  # Initalize vector for buttons
-        for i in range(4):
-            button_name = f'projFloorImgCfgBtn_{i}'
-            button = getattr(self._widget, button_name)
-            button.clicked.connect(  # Use lambda pass button index tor callback
-                lambda _, b=i: self.qt_callback_projFloorImgCfgBtn_clicked(b))
-            self.proj_floor_img_cfg_btn_vec.append(button)  # Store the button
+        self._widget.projCfgList.currentItemChanged.connect(
+            self.qt_callback_projCfgList_currentItemChanged)
 
     # ------------------------ FUNCTIONS: Ecat Communicaton ------------------------
-
     def procEcatMessage(self):
         """ Used to parse new incoming ROS ethercat msg data. """
 
@@ -929,7 +916,7 @@ class Interface(Plugin):
         elif self.cnt_shutdown_step == 2:
             # Kill specific nodes
             # self.terminate_ros_node("/gantry_operation_node")
-            self.terminate_ros_node("/projection_opperation_node")
+            self.terminate_ros_node("/projection_operation_node")
             self.terminate_ros_node("/Esmacat_application_node")
             self.terminate_ros_node("/omniroute_controller_node")
             MazeDB.printMsg('INFO', "SHUTDOWN: Killed specific nodes")
@@ -1112,99 +1099,42 @@ class Interface(Plugin):
     def qt_callback_projWinTogBtn_clicked(self):
         """ Callback function to toggle if projector widnows are on the main monitor or prjectors from button press."""
 
-        # Code -1
-        self.ProjOpp.publish_command_message(-1)
+        self.ProjOp.publish_command_message(ProjectionCmd.TOGGLE)
         MazeDB.printMsg('DEBUG', "Command for projWinTogBtn sent")
 
     def qt_callback_projWinTogFullScrBtn_clicked(self):
         """ Callback function to change projector widnows position from button press."""
 
         # Code -2
-        self.ProjOpp.publish_command_message(-2)
+        self.ProjOp.publish_command_message(ProjectionCmd.FULLSCREEN)
         MazeDB.printMsg('DEBUG', "Command for projWinTogFullScrBtn sent")
 
-    def qt_callback_projWinForceFucusBtn_clicked(self):
+    def qt_callback_projWinForceFocusBtn_clicked(self):
         """ Callback function to force windows to the top of the display stack from button press."""
 
         # Code -3
-        self.ProjOpp.publish_command_message(-3)
-        MazeDB.printMsg('DEBUG', "Command for projWinForceFucusBtn sent")
+        self.ProjOp.publish_command_message(ProjectionCmd.FORCE_FOCUS)
+        MazeDB.printMsg('DEBUG', "Command for projWinForceFocusBtn sent")
+    
+    def qt_callback_projCfgList_currentItemChanged(self, current):
+        """ Callback function for the projector configuration label item change."""
 
-    def qt_callback_projWallImgCfgBtn_clicked(self, button_number):
-        """ Callback function to send projector wall image config from button press."""
+        # Get the selected item text
+        selected_item = current.text() if current else None
 
-        # Get the button that was clicked
-        clicked_button = self.proj_wall_img_cfg_btn_vec[button_number]
+        # Check if an item is selected
+        if selected_item:
+            # Load the corresponding CSV file based on the selected item
+            csv_file_name = f"{selected_item}.csv"
+            csv_path = os.path.join(self.proj_cfg_dir_default, csv_file_name)
 
-        # Uncheck all the buttons except the one that was clicked
-        for i, button in enumerate(self.proj_wall_img_cfg_btn_vec):
-            if i != button_number:
-                button.setChecked(False)
+            # Load and store CSV data
+            self.ProjOp.set_config_from_csv(csv_path)
 
-        # Load the appropriate file based on the button number
-        file_name = None
-        if button_number == 0:
-            file_name = 'walls_0_blank.csv'
-        elif button_number == 1:
-            file_name = 'walls_1_east_r.csv'
-        elif button_number == 2:
-            file_name = 'walls_2_east_l.csv'
-        elif button_number == 3:
-            file_name = 'walls_3_south_r.csv'
-        elif button_number == 4:
-            file_name = 'walls_4_south_l.csv'
-        elif button_number == 5:
-            file_name = 'walls_5_west_r.csv'
-        elif button_number == 6:
-            file_name = 'walls_6_west_l.csv'
-        elif button_number == 7:
-            file_name = 'walls_7_north_r.csv'
-        elif button_number == 8:
-            file_name = 'walls_8_north_l.csv'
-
-        # Format full path
-        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
-
-        # Load and store CSV data
-        self.ProjOpp.set_config_from_csv(csv_path, "walls")
-
-        # Send the new image configuration
-        self.ProjOpp.publish_image_message()
-        MazeDB.printMsg(
-            'Sent', "Sent ROS Wall Image Configuration: file[%s]", file_name)
-
-    def qt_callback_projFloorImgCfgBtn_clicked(self, button_number):
-        """ Callback function to send projector floor image config from button press."""
-
-        # Get the button that was clicked
-        clicked_button = self.proj_floor_img_cfg_btn_vec[button_number]
-
-        # Uncheck all the buttons except the one that was clicked
-        for i, button in enumerate(self.proj_floor_img_cfg_btn_vec):
-            if i != button_number:
-                button.setChecked(False)
-
-        # Load the appropriate file based on the button number
-        file_name = None
-        if button_number == 0:
-            file_name = 'floor_0_blank.csv'
-        elif button_number == 1:
-            file_name = 'floor_1_green.csv'
-        elif button_number == 2:
-            file_name = 'floor_2_pat_1.csv'
-        elif button_number == 3:
-            file_name = 'floor_3_pat_2.csv'
-
-        # Format full path
-        csv_path = os.path.join(self.proj_cfg_dir_default, file_name)
-
-        # Load and store CSV data
-        self.ProjOpp.set_config_from_csv(csv_path, "floor")
-
-        # Send the new image configuration
-        self.ProjOpp.publish_image_message()
-        MazeDB.printMsg(
-            'Sent', "Sent ROS Floor Image Configuration: file[%s]", file_name)
+            # Send the new image configuration
+            self.ProjOp.publish_image_message()
+            MazeDB.printMsg(
+                'INFO', "Sent ROS Wall Image Configuration: file[%s]", csv_file_name)
 
     def qt_callback_sysStartBtn_clicked(self):
         """ 

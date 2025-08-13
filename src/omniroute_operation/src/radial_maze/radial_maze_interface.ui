@@ -40,7 +40,7 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="radialMazeBtn">
+    <widget class="QRadioButton" name="radialMazeBtn">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -53,7 +53,7 @@
       <string>Radial Maze</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="lowerAllDoorsBtn">
+    <widget class="QRadioButton" name="lowerAllDoorsBtn">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -262,7 +262,7 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QPushButton" name="habituation2PhaseBtn">
+    <widget class="QRadioButton" name="habituation2PhaseBtn">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -278,7 +278,7 @@
       <string>Habituation 2</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="fullTaskPhaseBtn">
+    <widget class="QRadioButton" name="fullTaskPhaseBtn">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -291,7 +291,7 @@
       <string>Full Task</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="habituation1PhaseBtn">
+    <widget class="QRadioButton" name="habituation1PhaseBtn">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -304,7 +304,7 @@
       <string>Habituation 1</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="testingPhaseBtn">
+    <widget class="QRadioButton" name="testingPhaseBtn">
      <property name="geometry">
       <rect>
        <x>30</x>

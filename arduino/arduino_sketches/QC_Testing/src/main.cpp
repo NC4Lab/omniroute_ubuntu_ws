@@ -109,7 +109,7 @@ void setup()
     Dbg.printMsg(Dbg.MT::INFO, "Measured address: %s", Dbg.hexStr(add_measure));
   }
 
-  // Manually set address for Wall_Opperation methods
+  // Manually set address for Wall_Operation methods
   WallOper.C[0].addr = add_measure;
 
   // Initialize I2C for Cypress chips

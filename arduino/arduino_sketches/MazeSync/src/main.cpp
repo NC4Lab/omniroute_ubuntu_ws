@@ -6,12 +6,12 @@
 // #################################
 
 /**
- @file Arduino INO file for MazeSync handeling time stamp syncing oppertions.
+ @file Arduino INO file for MazeSync handeling time stamp syncing operations.
 
  @note For motive to start the recording in response to a sync signal,
  check the following settings:
- In the "Device" tab, go to "Syncronization" and click eSync2.
- In the "Properteis" panel find the "Recrord Triggering" and check that:
+ In the "Device" tab, go to "Synchronization" and click eSync2.
+ In the "Properties" panel find the "Record Triggering" and check that:
   - "Trigger Source" = "Isolated"
   - "Trigger Edge" = "High Gates"
   Also, the record button must be pressed.

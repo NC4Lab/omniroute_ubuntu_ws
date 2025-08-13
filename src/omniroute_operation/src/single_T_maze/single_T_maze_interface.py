@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
-#!/usr/bin/env python
 from shared_utils.ui_utilities import UIUtilities
 from shared_utils.wall_utilities import MazeDimensions 
+from shared_utils.projection_operation import ProjectionOperation
 from experiment_controller.experiment_controller_interface import Wall
 from experiment_controller.experiment_controller_interface import CommonFunctions
 
@@ -10,10 +9,9 @@ import os
 import rospy
 import subprocess
 import random
-from std_msgs.msg import String, Int32, Int8
+from std_msgs.msg import String, Int8
 from omniroute_operation.msg import *
 from omniroute_esmacat_ros.msg import *
-from dateutil.parser import parse as parsedate
 
 from enum import Enum, auto
 from python_qt_binding.QtCore import *
@@ -23,8 +21,6 @@ from python_qt_binding import loadUi
 from python_qt_binding import QtOpenGL
 from PyQt5.QtWidgets import QGraphicsScene, QButtonGroup, QWidget
 from PyQt5.QtCore import QTimer
-
-from PyQt5 import QtWidgets, uic
 from qt_gui.plugin import Plugin
 
 import json
@@ -59,7 +55,6 @@ class ExperimentPhases(Enum):
     PHASE_THREE = 3
     FROM_CSV = 4
 
-
 class Mode(Enum):
     START = auto()
     START_EXPERIMENT = auto()
@@ -81,7 +76,6 @@ class Mode(Enum):
     ERROR_START = auto()
     MOVE_TO_START_CHAMBER = auto()
     RAT_BACK_IN_START_CHAMBER = auto()
-
 
 class Interface(Plugin):
     def __init__(self, context):
@@ -118,6 +112,9 @@ class Interface(Plugin):
         context.add_widget(self._widget)
 
         self.scene = QGraphicsScene()
+
+        # Start ProjectionOperation
+        self.proj_op = ProjectionOperation()
 
         # Set the window to a fixed size
         UIUtilities.set_fixed_size(self._widget)
@@ -165,20 +162,9 @@ class Interface(Plugin):
             "background-color: red; color: yellow")
 
         self.sound_pub = rospy.Publisher('sound_cmd', String, queue_size=1)
-
-        self.projection_pub = rospy.Publisher(
-            'projection_walls', String, queue_size=100)
-        self.projection_floor_pub = rospy.Publisher(
-            'projection_image_floor_num', Int32, queue_size=100)
-        self.projection_wall_img_pub = rospy.Publisher(
-            'projection_image_wall_num', Int32, queue_size=1)
-        self.write_sync_ease_pub = rospy.Publisher(
-            '/Esmacat_write_sync_ease', ease_registers, queue_size=1)
+        self.write_sync_ease_pub = rospy.Publisher('/Esmacat_write_sync_ease', ease_registers, queue_size=1)
         self.event_pub = rospy.Publisher('/event', Event, queue_size=1)
-        self.trial_sub = rospy.Subscriber(
-            '/selected_trial', String, self.trial_callback)
-
-        # rospy.Subscriber('/selected_chamber', String,self.chamber_callback, queue_size=1)
+        self.trial_sub = rospy.Subscriber('/selected_trial', String, self.trial_callback)
 
         rospy.Subscriber('/mode', String, self.mode_callback, queue_size=1)
         self.button_pub = rospy.Publisher('/button', String, queue_size=1)
@@ -190,6 +176,9 @@ class Interface(Plugin):
 
         self.experiment_pub = rospy.Publisher(
             '/experiment', String, queue_size=1)
+        
+        self.gantry_pub = rospy.Publisher(
+            '/gantry_cmd', GantryCmd, queue_size=1)
 
         self.rat_head_chamber = -1
         self.rat_body_chamber = -1
@@ -245,6 +234,7 @@ class Interface(Plugin):
         self.central_chamber = 0
         self.start_chamber = 0
         self.rat_choice_chamber = 0
+        self.previous_rat_chamber = 0
 
         self.left_goal_wall = Wall(0, 0)
         self.right_goal_wall = Wall(0, 0)
@@ -256,61 +246,25 @@ class Interface(Plugin):
         self.wall_img_triangle_num = 3
         self.wall_img_black_num = 0
 
+        self.cued_chambers = [1, 3, 5, 7, 4]
         self.cued_chamber = 0
-
         self.switch_trial = None
+        self.trial_group = 0
+        self.previous_trial_group = 0
 
         # self.project_floor_img = Wall(9, 0).to_dict()
         self.cf = CommonFunctions()  # Create an instance
 
-        self.chamber_walls_list = {1:
-                                   [Wall(1, 0).to_dict(),
-                                    Wall(0, 4).to_dict(),
-                                    Wall(1, 1).to_dict(),
-                                    Wall(1, 2).to_dict(),
-                                    Wall(1, 3).to_dict(),
-                                    Wall(1, 4).to_dict(),
-                                    Wall(1, 5).to_dict(),
-                                    Wall(1, 6).to_dict(),
-                                    Wall(1, 7).to_dict(),
-                                    Wall(4, 1).to_dict(),
-                                    Wall(4, 3).to_dict()],
-                                3: [Wall(3, 0).to_dict(),
-                                    Wall(3, 1).to_dict(),
-                                    Wall(3, 2).to_dict(),
-                                    Wall(3, 3).to_dict(),
-                                    Wall(3, 4).to_dict(),
-                                    Wall(3, 5).to_dict(),
-                                    Wall(3, 6).to_dict(),
-                                    Wall(3, 7).to_dict(),
-                                    Wall(4, 1).to_dict(),
-                                    Wall(4, 7).to_dict()],
-                                5: [Wall(5, 0).to_dict(),
-                                    Wall(5, 1).to_dict(),
-                                    Wall(5, 2).to_dict(),
-                                    Wall(5, 3).to_dict(),
-                                    Wall(5, 4).to_dict(),
-                                    Wall(5, 5).to_dict(),
-                                    Wall(5, 6).to_dict(),
-                                    Wall(5, 7).to_dict(),
-                                    Wall(4, 3).to_dict(),
-                                    Wall(4, 5).to_dict()],
-                                7: [Wall(7, 0).to_dict(),
-                                    Wall(6, 4).to_dict(),
-                                    Wall(7, 1).to_dict(),
-                                    Wall(7, 2).to_dict(),
-                                    Wall(7, 3).to_dict(),
-                                    Wall(7, 4).to_dict(),
-                                    Wall(7, 5).to_dict(),
-                                    Wall(7, 6).to_dict(),
-                                    Wall(7, 7).to_dict(),
-                                    Wall(4, 5).to_dict(),
-                                    Wall(4, 7).to_dict()]
-                                   }
-
         self.cts_success_count = {
             FloorCue.GREEN: 0,
             FloorCue.BLACK: 0
+        }
+
+        self.trial_type_count = {
+            FloorCue.GREEN and TriangleCue.LEFT: 0,
+            FloorCue.GREEN and TriangleCue.RIGHT: 0,
+            FloorCue.BLACK and TriangleCue.LEFT: 0,
+            FloorCue.BLACK and TriangleCue.RIGHT: 0
         }
 
         self.total_success_count = 0
@@ -319,10 +273,11 @@ class Interface(Plugin):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_experiment)
         self.timer.start(10) # 10 ms
+        self.trial_type_count = {key: 0 for key in range(1,3)}  # Initialize counts for each trial type
     
     def pick_trial_phase_one(self):
         rospy.loginfo("Picking trial phase one")
-        if self.cts_success_count[self.currentTrial.floor_cue] > 4:
+        if self.cts_success_count[self.currentTrial.floor_cue] > 2:
             self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
@@ -347,21 +302,62 @@ class Interface(Plugin):
                 rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
 
         return nextTrial
+    
+        
+    # def pick_trial_phase_two(self):
+    #     # Randomly select a trial type from the dictionary
+    #     trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
+    #     if trial.visual_cue == TriangleCue.LEFT:
+    #         if trial.floor_cue == FloorCue.GREEN:
+    #             rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Green']}")
+    #         else:
+    #             rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Black']}")
+    #     else:
+    #         if trial.floor_cue == FloorCue.GREEN:
+    #             rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Green']}")
+    #         else:
+    #             rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
+    #     return trial
 
     def pick_trial_phase_two(self):
-        # Randomly select a trial type from the dictionary
-        trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
-        if trial.visual_cue == TriangleCue.LEFT:
-            if trial.floor_cue == FloorCue.GREEN:
-                rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Green']}")
+        recently_reset = set()
+
+        while True:
+            # Randomly select a trial
+            trial = Trial(random.choice(list(TriangleCue)), random.choice(list(FloorCue)), self.training_mode)
+
+            trial_group = None
+            trial_label = []
+
+            if trial.visual_cue == TriangleCue.LEFT:
+                if trial.floor_cue == FloorCue.GREEN:
+                    trial_group = 1  # Triangle, No Cue, Green
+                    trial_label = ['Triangle', 'No_Cue', 'Green']
+                else:
+                    trial_group = 2  # Triangle, No Cue, Black
+                    trial_label = ['Triangle', 'No_Cue', 'Black']
             else:
-                rospy.loginfo(f"START OF TRIAL {['Triangle', 'No_Cue', 'Black']}")
-        else:
-            if trial.floor_cue == FloorCue.GREEN:
-                rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Green']}")
-            else:
-                rospy.loginfo(f"START OF TRIAL {['No_Cue', 'Triangle', 'Black']}")
-        return trial
+                if trial.floor_cue == FloorCue.GREEN:
+                    trial_group = 2  # No Cue, Triangle, Green
+                    trial_label = ['No_Cue', 'Triangle', 'Green']
+                else:
+                    trial_group = 1  # No Cue, Triangle, Black
+                    trial_label = ['No_Cue', 'Triangle', 'Black']
+
+            # If this trial_type was just reset, skip it this round
+            if trial_group in recently_reset:
+                continue
+
+            # If this trial_type hit count 3, reset and skip this round
+            if self.trial_type_count[trial_group] >= 3:
+                self.trial_type_count[trial_group] = 0
+                recently_reset.add(trial_group)
+                continue
+
+            recently_reset.clear()
+
+            # Valid trial — update count and return
+            return trial, trial_group, trial_label
 
     def is_recording_on(self):
         list_cmd = subprocess.Popen(
@@ -472,26 +468,14 @@ class Interface(Plugin):
         self.central_chamber = 4
         self.left_chamber = 5
         self.right_chamber = 3
+        self.right_chamber = 3
 
-        self.left_walls = [Wall(5, 0).to_dict(),
-                           Wall(5, 1).to_dict(),
-                           Wall(5, 2).to_dict(),
-                           Wall(5, 3).to_dict(),
-                           Wall(5, 4).to_dict(),
-                           Wall(5, 5).to_dict(),
-                           Wall(5, 6).to_dict(),
-                           Wall(5, 7).to_dict(),
-                           Wall(4, 5).to_dict()]
-
-        self.right_walls = [Wall(3, 0).to_dict(),
-                            Wall(3, 1).to_dict(),
-                            Wall(3, 2).to_dict(),
-                            Wall(3, 3).to_dict(),
-                            Wall(3, 4).to_dict(),
-                            Wall(3, 5).to_dict(),
-                            Wall(3, 6).to_dict(),
-                            Wall(3, 7).to_dict(),
-                            Wall(4, 7).to_dict()]
+        self.proj_left_walls = [Wall(5,1), Wall(5,2), Wall(5,3), 
+                                Wall(5,4), Wall(5,5), Wall(5,6), 
+                                Wall(5,7), Wall(4,5)]
+        self.proj_right_walls = [Wall(3,1), Wall(3,2), Wall(3,3),
+                                 Wall(3,5), Wall(3,6), Wall(3,7), 
+                                 Wall(3,0), Wall(4,7)]
 
         self.start_wall = Wall(1, 6)
         self.left_goal_wall = Wall(4, 4)
@@ -507,25 +491,12 @@ class Interface(Plugin):
         self.left_chamber = 1
         self.right_chamber = 7
 
-        self.left_walls = [Wall(1, 0).to_dict(),
-                           Wall(1, 1).to_dict(),
-                           Wall(1, 2).to_dict(),
-                           Wall(1, 3).to_dict(),
-                           Wall(1, 4).to_dict(),
-                           Wall(1, 5).to_dict(),
-                           Wall(1, 6).to_dict(),
-                           Wall(1, 7).to_dict(),
-                           Wall(4, 3).to_dict()]
-
-        self.right_walls = [Wall(7, 0).to_dict(),
-                            Wall(7, 1).to_dict(),
-                            Wall(7, 2).to_dict(),
-                            Wall(7, 3).to_dict(),
-                            Wall(7, 4).to_dict(),
-                            Wall(7, 5).to_dict(),
-                            Wall(7, 6).to_dict(),
-                            Wall(7, 7).to_dict(),
-                            Wall(4, 5).to_dict()]
+        self.proj_left_walls = [Wall(1, 1), Wall(1, 2), Wall(1, 3),
+                                Wall(1, 4), Wall(1, 5), Wall(1, 7),
+                                Wall(1, 0), Wall(4, 3)]
+        self.proj_right_walls = [Wall(7, 1), Wall(7, 3), Wall(7, 4),
+                                 Wall(7, 5), Wall(7, 6), Wall(7, 7),
+                                 Wall(7, 0), Wall(4, 5)]
 
         self.start_wall = Wall(3, 4)
         self.left_goal_wall = Wall(4, 2)
@@ -541,26 +512,12 @@ class Interface(Plugin):
         self.left_chamber = 7
         self.right_chamber = 1
 
-        self.left_walls = [Wall(7, 0).to_dict(),
-                           Wall(7, 1).to_dict(),
-                           Wall(7, 2).to_dict(),
-                           Wall(7, 3).to_dict(),
-                           Wall(7, 4).to_dict(),
-                           Wall(7, 5).to_dict(),
-                           Wall(7, 6).to_dict(),
-                           Wall(7, 7).to_dict(),
-                           Wall(4, 7).to_dict()]
-
-        self.right_walls = [Wall(1, 0).to_dict(),
-                            Wall(1, 1).to_dict(),
-                            Wall(1, 2).to_dict(),
-                            Wall(1, 3).to_dict(),
-                            Wall(1, 4).to_dict(),
-                            Wall(1, 5).to_dict(),
-                            Wall(1, 6).to_dict(),
-                            Wall(1, 7).to_dict(),
-                            Wall(4, 1).to_dict()]
-
+        self.proj_left_walls = [Wall(7, 1), Wall(7, 3), Wall(7, 4),
+                                Wall(7, 5), Wall(7, 6), Wall(7, 7),
+                                Wall(7, 0), Wall(4, 7)]
+        self.proj_right_walls = [Wall(1, 1), Wall(1, 2), Wall(1, 3),
+                                 Wall(1, 4), Wall(1, 5), Wall(1, 7),
+                                 Wall(1, 0), Wall(4, 1)]
 
         self.start_wall = Wall(5, 0)
         self.left_goal_wall = Wall(4, 6)
@@ -576,25 +533,13 @@ class Interface(Plugin):
         self.left_chamber = 3
         self.right_chamber = 5
 
-        self.left_walls = [Wall(3, 0).to_dict(),
-                           Wall(3, 1).to_dict(),
-                           Wall(3, 2).to_dict(),
-                           Wall(3, 3).to_dict(),
-                           Wall(3, 4).to_dict(),
-                           Wall(3, 5).to_dict(),
-                           Wall(3, 6).to_dict(),
-                           Wall(3, 7).to_dict(),
-                           Wall(4, 1).to_dict()]
+        self.proj_left_walls = [Wall(3, 1), Wall(3, 2), Wall(3, 3),
+                                Wall(3, 5), Wall(3, 6), Wall(3, 7),
+                                Wall(3, 0), Wall(4, 1)]
 
-        self.right_walls = [Wall(5, 0).to_dict(),
-                            Wall(5, 1).to_dict(),
-                            Wall(5, 2).to_dict(),
-                            Wall(5, 3).to_dict(),
-                            Wall(5, 4).to_dict(),
-                            Wall(5, 5).to_dict(),
-                            Wall(5, 6).to_dict(),
-                            Wall(5, 7).to_dict(),
-                            Wall(4, 3).to_dict()]
+        self.proj_right_walls = [Wall(5, 1), Wall(5, 2), Wall(5, 3),
+                                 Wall(5, 4), Wall(5, 5), Wall(5, 6),
+                                 Wall(5, 7), Wall(4, 3)]
 
         self.start_wall = Wall(7, 2)
         self.left_goal_wall = Wall(4, 0)
@@ -605,25 +550,7 @@ class Interface(Plugin):
         self.left_start_chamber_enter_wall = Wall(6, 4)
 
     def blank_cued_walls(self):
-        self.projection_wall_img_pub.publish(self.wall_img_black_num)
-        for key in self.chamber_walls_list:
-            for obj in self.chamber_walls_list[key]:
-                self.projection_pub.publish(json.dumps(obj))
-
-        # if self.cued_chamber in self.chamber_walls_list:
-        #     # Get the list of objects associated with the key
-        #     object_list = self.chamber_walls_list[self.cued_chamber]
-
-        #     # Publish each object in the list
-        #     for obj in object_list:
-        #         # Assuming obj can be serialized with json.dumps
-        #         self.projection_pub.publish(json.dumps(obj))
-        #         rospy.loginfo(f"Published: {obj}")
-        #         # Add a small delay to ensure proper publishing
-        #         # rospy.sleep(0.1)
-        # else:
-        #     rospy.logwarn(
-        #         f"Key {self.cued_chamber} not found in the dictionary.")
+        self.proj_op.blank_chambers(self.cued_chambers, publish=True)
             
     def choose_start_config(self, start_chamber_ID):
         if start_chamber_ID == 1:
@@ -648,6 +575,14 @@ class Interface(Plugin):
 
     def run_experiment(self):
         self.current_time = rospy.Time.now()
+        current_rat_chamber = self.rat_head_chamber
+
+        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+            # The rat has moved to a different chamber, update the gantry position
+            self.cf.move_gantry_to_chamber(current_rat_chamber)
+
+            # Update the previous_rat_chamber for the next iteration
+            self.previous_rat_chamber = current_rat_chamber
 
         if self.mode == Mode.START_EXPERIMENT:
             self.switch_to_mode(Mode.START_TRIAL)
@@ -666,7 +601,13 @@ class Interface(Plugin):
                 self.currentTrial = self.pick_trial_phase_one()
                 
             elif self.phase == ExperimentPhases.PHASE_TWO or self.phase == ExperimentPhases.PHASE_THREE:
-                self.currentTrial = self.pick_trial_phase_two()
+                trial = self.pick_trial_phase_two()
+                self.currentTrial = trial[0]
+                self.trial_group = trial[1]
+                self.trial_label = trial[2]
+                rospy.loginfo(f"START OF TRIAL {self.trial_label}") 
+                if self.trial_group == self.previous_trial_group:
+                    self.trial_type_count[self.trial_group] += 1            
 
             else:
                 if self.trials and 0 <= self.currentTrialNumber < len(self.trials):
@@ -680,63 +621,66 @@ class Interface(Plugin):
 
             self.sound_pub.publish("Starting_Sound")
             rospy.loginfo("Starting sound played")
-            # rospy.sleep(0.1)
+
+            self.proj_op.blank_maze(publish=False)  # Start with a blank maze
 
             if self.currentTrial.floor_cue == FloorCue.GREEN:
-                self.projection_floor_pub.publish(self.floor_img_green_num)
-                # rospy.sleep(0.1)
+                self.proj_op.set_floor_image(self.floor_img_green_num, publish=False)
+
                 if self.currentTrial.visual_cue == TriangleCue.LEFT:
                     self.cued_chamber = self.left_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    # rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        # rospy.sleep(0.1)
-                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
+                    for wall in self.proj_left_walls:
+                        self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
+                                                    wall=wall.proj_wall_num,
+                                                    image_index=self.wall_img_triangle_num,
+                                                    publish=False)
+                    
+
                 elif self.currentTrial.visual_cue == TriangleCue.RIGHT:
                     self.cued_chamber = self.right_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    # rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        # rospy.sleep(0.1)
-                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
+                    for wall in self.proj_right_walls:
+                        self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
+                                                    wall=wall.proj_wall_num,
+                                                    image_index=self.wall_img_triangle_num,
+                                                    publish=False)
+
             elif self.currentTrial.floor_cue == FloorCue.BLACK:
+                self.proj_op.set_floor_image(self.floor_img_black_num, publish=False)
+
                 if self.currentTrial.visual_cue == TriangleCue.RIGHT:
                     self.cued_chamber = self.right_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    # rospy.sleep(0.1)
-                    for i in self.right_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        # rospy.sleep(0.1)
-                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.left_chamber
                     self.error_chamber = self.right_chamber
+                    for wall in self.proj_right_walls:
+                        self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
+                                                    wall=wall.proj_wall_num,
+                                                    image_index=self.wall_img_triangle_num,
+                                                    publish=False)
+                   
                 elif self.currentTrial.visual_cue == TriangleCue.LEFT:
                     self.cued_chamber = self.left_chamber
-                    self.projection_wall_img_pub.publish(self.wall_img_triangle_num)
-                    # rospy.sleep(0.1)
-                    for i in self.left_walls:
-                        self.projection_pub.publish(json.dumps(i))
-                        # rospy.sleep(0.1)
-                    rospy.loginfo("Projecting wall images")
                     self.success_chamber = self.right_chamber
                     self.error_chamber = self.left_chamber
+                    for wall in self.proj_left_walls:
+                        self.proj_op.set_wall_image(chamber=wall.proj_chamber_num,
+                                                    wall=wall.proj_wall_num,
+                                                    image_index=self.wall_img_triangle_num,
+                                                    publish=False)
 
+            self.proj_op.publish_image_message()
+            rospy.loginfo("Projecting images")
             self.switch_to_mode(Mode.RAT_WAITS)
 
         elif self.mode == Mode.RAT_WAITS:
             if (self.current_time - self.mode_start_time) >= self.start_first_delay:
-                self.projection_floor_pub.publish(self.floor_img_black_num)
-                # rospy.sleep(0.1)
+                self.proj_op.set_floor_image(self.floor_img_black_num, publish=True)
                 self.switch_to_mode(Mode.RAT_IN_START_CHAMBER)
 
         elif self.mode == Mode.RAT_IN_START_CHAMBER:
-
             if (self.current_time - self.mode_start_time) >= self.delay:
                 if self.phase == ExperimentPhases.FROM_CSV:
                     if self.training_mode in ["forced_choice", "user_defined_forced_choice"]:
@@ -772,6 +716,7 @@ class Interface(Plugin):
                 self.switch_to_mode(Mode.CHOICE_TO_GOAL)
 
         elif self.mode == Mode.CHOICE_TO_GOAL:
+            self.previous_trial_group = self.trial_group
             if self.rat_body_chamber == self.success_chamber:
                 self.switch_to_mode(Mode.SUCCESS)
                 rospy.loginfo("SUCCESS")
@@ -801,7 +746,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.REWARD_START:
             if (self.current_time - self.mode_start_time) >= self.reward_start_delay:
-                # self.common_functions.reward_dispense()
+                #self.cf.reward_dispense()
                 self.switch_to_mode(Mode.REWARD_END)
 
         elif self.mode == Mode.REWARD_END:
@@ -810,7 +755,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.POST_REWARD:
             if (self.current_time - self.mode_start_time) >= self.right_choice_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.success_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 12:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.success_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
@@ -821,8 +766,6 @@ class Interface(Plugin):
                     self.choose_start_config(self.start_chamber)
 
                 self.blank_cued_walls()
-                # rospy.sleep(0.1)
-
                 self.switch_to_mode(Mode.MOVE_TO_START_CHAMBER)
 
         elif self.mode == Mode.ERROR:
@@ -850,7 +793,7 @@ class Interface(Plugin):
 
         elif self.mode == Mode.ERROR_END:
             if (self.current_time - self.mode_start_time) >= self.wrong_choice_second_delay:
-                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 10:
+                if self.phase == ExperimentPhases.PHASE_THREE and self.error_chamber == self.left_chamber and self.currentTrialNumber >= self.switch_trial + 12:
                     self.switch_trial = self.currentTrialNumber
                     self.choose_start_config(self.error_chamber)
                     print(f"Switch at trial {self.currentTrialNumber}")
