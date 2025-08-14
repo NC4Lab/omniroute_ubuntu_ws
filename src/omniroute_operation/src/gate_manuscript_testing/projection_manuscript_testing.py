@@ -1,29 +1,20 @@
 #!/usr/bin/env python
 # File: src/omniroute_operation/src/gate_manuscript_testing/projection_manuscript_testing.py
-# Purpose: After setup, raise the center chamber (index 4) walls, then run an alternating
-#          sequence of image displays (index 1 ↔ 2) and audio playbacks. Images are shown
-#          on the 8 walls of the center chamber only. Audio is published to /sound_cmd.
-# Notes:
-#   - Walls are surfaces 0..7; floor is surface 8.
-#   - ROS bag recording is active; audio .wav capture removed.
+# Purpose: Alternate projector wall images (index 1 ↔ 2) on the 8 walls of center chamber (4),
+#          interleaved with audio playback, matching the gating/timing pattern of the other test scripts.
 #
-# Example launch override:
-#   <node pkg="omniroute_operation" type="projection_manuscript_testing.py" name="projection_manuscript_testing" output="screen">
-#     <param name="n_events" value="40"/>
-#     <param name="dt" value="5.0"/>
-#     <param name="start_delay" value="0.0"/>
-#     <param name="sound_cue" value="1KHz"/>
-#   </node>
+# roslaunch omniroute_operation projection_manuscript_testing.launch
 
 import rospy
 import os
 import subprocess
+import shutil
+import signal
 import datetime
 
 from std_msgs.msg import String, Int32, Int32MultiArray, MultiArrayDimension
 from omniroute_operation.msg import Event, WallState
 from shared_utils.maze_debug import MazeDB
-
 
 class ProjectionManuscriptTesting:
     def __init__(self):
@@ -32,11 +23,10 @@ class ProjectionManuscriptTesting:
         # -------------------------
         # USER PARAMETERS (knobs)
         # -------------------------
-        # Allow param overrides from launch; fall back to defaults if unset.
-        self.start_delay = rospy.get_param("~start_delay", 0.0)   # seconds before first stimulus after priming
-        self.n_events    = int(rospy.get_param("~n_events", 40)) # total events (image/sound alternating)
-        self.dt          = float(rospy.get_param("~dt", 5.0))    # interval between events (seconds)
-        self.sound_cue   = rospy.get_param("~sound_cue", "1KHz") # string token published to /sound_cmd
+        self.start_delay = 0.0     # optional delay before first stimulus after priming (sec)
+        self.n_events    = 40      # total events, must be even (e.g., 40 => 20 images + 20 sounds)
+        self.dt          = 5.0     # fixed interval between EVERY event (sec)
+        self.sound_cue   = '1KHz'  # audio cue token expected by the audio node
 
         # Data capture path (same as other test scripts)
         self.data_save_path = "/home/nc4-lassi/omniroute_ubuntu_ws/src/omniroute_operation/src/gate_manuscript_testing/data"
@@ -59,38 +49,35 @@ class ProjectionManuscriptTesting:
         self.recording_started  = False
         self.rosbag_process     = None
         self.event_count        = 0
-        self.next_image_index   = 1  # alternates 1 ↔ 2 on image events
+        self.next_image_index   = 1  # will alternate 1 ↔ 2
 
-        # Pre-build a base 9x9 config of -1 (ignored)
+        # Pre-build a base 9x9 config of -1 (ignored) for safety
         self.num_chambers  = 9
         self.num_surfaces  = 9  # 8 walls + 1 floor
         self.blank_ignored = [[-1 for _ in range(self.num_surfaces)] for _ in range(self.num_chambers)]
-
-        # Graceful shutdown to stop rosbag if needed
-        rospy.on_shutdown(self._on_shutdown)
 
         # Main loop
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if self.setup_complete:
-                # One-time recording + projector/walls prime
+                # Start recordings immediately after setup gate — ONCE
                 if not self.recording_started:
                     self._start_recordings()
-                    self.recording_started = True
+                    self.recording_started = True   # <<< CRITICAL: prevents re-entering init block every spin
                     self._mark("projection_test_recording_started")
 
-                    # Projector window setup (move → fullscreen → focus)
+                    # Projector window setup (move to projector monitors, fullscreen, focus)
                     self._projector_window_setup()
 
                     # Raise center chamber walls once before starting stimuli
                     self._raise_center_walls_once()
 
-                    # Prime the projector once with image index 1 on center walls
+                    # Prime projector once with image index 1 on center walls
                     self._publish_center_wall_image(1)
                     self._mark("projection_test_prime_image_index_1")
                     self.next_image_index = 2
 
-                    # Optional start delay before the first stimulus event
+                    # Optional start delay before first stimulus
                     if self.start_delay > 0:
                         rospy.sleep(self.start_delay)
 
@@ -113,7 +100,7 @@ class ProjectionManuscriptTesting:
     # Sequence logic
     # ---------------------------------
     def _run_sequence(self):
-        # Stop condition after n_events total
+        # Stop condition: after n_events total (even number)
         if self.event_count >= self.n_events:
             self._mark("projection_test_end")
             rospy.sleep(1.0)
@@ -124,10 +111,10 @@ class ProjectionManuscriptTesting:
         # Alternate: image -> sound -> image -> sound ...
         if self.event_count % 2 == 0:
             # IMAGE EVENT
-            idx = self.next_image_index  # 1 or 2
+            idx = self.next_image_index              # 1 or 2
             self._publish_center_wall_image(idx)
             self._mark("image_evt_%02d_idx_%d" % ((self.event_count // 2) + 1, idx))
-            # Toggle for next image event
+            # toggle for next image event
             self.next_image_index = 2 if self.next_image_index == 1 else 1
         else:
             # SOUND EVENT
@@ -141,7 +128,7 @@ class ProjectionManuscriptTesting:
     # Projector helpers
     # ---------------------------------
     def _projector_window_setup(self):
-        # -1: move windows to projector monitors
+        # -1: toggle windows to projector monitors
         self.proj_cmd_pub.publish(Int32(data=-1))
         rospy.sleep(0.1)
 
@@ -157,24 +144,26 @@ class ProjectionManuscriptTesting:
 
     def _publish_center_wall_image(self, image_index: int):
         """
-        Publish a 9x9 (chamber x surface) Int32MultiArray where only chamber 4 walls are set.
-        All other entries are -1 (ignored by the display node). Floor (surface 8) is left untouched.
+        Publish an Int32MultiArray specifying which images to display
+        on each surface of each chamber. Only the walls (0–7) of chamber 4
+        are set to the given image_index; all other surfaces remain -1
+        so they are ignored by the projection system.
         """
-        cfg = [row[:] for row in self.blank_ignored]  # deep copy
-        chamber = 4
+        # Start from a base config where all surfaces are ignored (-1)
+        cfg = [row[:] for row in self.blank_ignored]
+        chamber = 4  # center chamber index
 
-        # Walls are 0..7; floor is 8. Set only walls.
+        # Set image for all 8 wall surfaces (indices 0–7); floor is index 8
         for wall in range(0, 8):
             cfg[chamber][wall] = image_index
 
-        # Build and publish
+        # Flatten 2D chamber/surface grid into row-major 1D array for publishing
         msg = Int32MultiArray()
-        msg.layout.dim = self._setup_layout(self.num_chambers, self.num_surfaces)  # clarity; display ignores layout
+        msg.layout.dim = self._setup_layout(self.num_chambers, self.num_surfaces)
         msg.data = [cfg[i][j] for i in range(self.num_chambers) for j in range(self.num_surfaces)]
-        self.proj_image_pub.publish(msg)
 
-        # Lightweight marker to confirm on-wire content for chamber 4
-        self._mark("push c4 walls[0..7]=" + ",".join(str(cfg[chamber][w]) for w in range(8)) + " floor=" + str(cfg[chamber][8]))
+        # Publish the projection image configuration
+        self.proj_image_pub.publish(msg)
 
     @staticmethod
     def _setup_layout(rows, cols):
@@ -228,26 +217,18 @@ class ProjectionManuscriptTesting:
         MazeDB.printMsg("OTHER", f"[ProjectionManuscriptTesting] Rosbag recording started: {bag_path}")
 
     def _stop_recordings(self):
+        # Stop rosbag
         if self.rosbag_process:
             self.rosbag_process.terminate()
             self.rosbag_process.wait()
             MazeDB.printMsg("OTHER", "[ProjectionManuscriptTesting] Rosbag recording stopped.")
             self.rosbag_process = None
-
     # ---------------------------------
-    # Markers & shutdown
+    # Markers
     # ---------------------------------
     def _mark(self, s: str):
         self.marker_pub.publish(s)
         MazeDB.printMsg('OTHER', f"[ProjectionManuscriptTesting] Mark: {s}")
-
-    def _on_shutdown(self):
-        # Ensure rosbag is terminated if the node dies early
-        try:
-            self._stop_recordings()
-        except Exception:
-            pass
-
 
 # -------------------------
 # Main
