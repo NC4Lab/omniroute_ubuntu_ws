@@ -23,7 +23,7 @@ class GateManuscriptTesting:
         MazeDB.printMsg('OTHER', "[GateManuscriptTesting] Node Started")
 
         # Specify testing prameters
-        self.start_delay = 20 # time to wait before starting test
+        self.start_delay = 5 # time to wait before starting test
         self.cycle_delay = 5 # time to wait between cycles
         self.n_wall_runs = 20 # number of wall up/down cycles
         self.run_count = 0 # counter for number of runs

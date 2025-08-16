@@ -23,7 +23,7 @@ class ProjectionManuscriptTesting:
         # -------------------------
         # USER PARAMETERS (knobs)
         # -------------------------
-        self.start_delay = 0.0     # optional delay before first stimulus after priming (sec)
+        self.start_delay = 2.5     # optional delay before first stimulus after priming (sec)
         self.n_events    = 40      # total events, must be even (e.g., 40 => 20 images + 20 sounds)
         self.dt          = 5.0     # fixed interval between EVERY event (sec)
         self.sound_cue   = '1KHz'  # audio cue token expected by the audio node
