@@ -23,8 +23,7 @@ GantryOperation::GantryOperation() {}
 /// @param timeout: Timeout for the grbl acknoledgement.
 ///
 /// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsigned long timeout)
-{
+uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsigned long timeout) {
 	// Write the command with a new line character
 	String full_cmd = cmd_str + "\n";
 	Serial1.write(full_cmd.c_str());
@@ -56,43 +55,33 @@ uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsi
 /// @param do_print_response: Flag to print the response.
 ///
 /// @return Status/error codes [0:response, 1:grbl error, 2:timeout].
-uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout, bool do_print_response)
-{
+uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout, bool do_print_response) {
 	// Check for new message
 	unsigned long start_time = millis(); // start time
 
 	// Read from the Serial1 buffer
-	while (Serial1.available() > 0 || millis() - start_time < timeout)
-	{
+	while (Serial1.available() > 0 || millis() - start_time < timeout) {
 		// Read a byte from the Serial buffer
 		char new_byte = Serial1.read();
 
 		// Check for carriage return character
-		if (new_byte == '\r')
-		{
-			continue;
-		}
+		if (new_byte == '\r') continue;
 
 		// Check for new line character
-		if (new_byte == '\n')
-		{
-			break;
-		}
+		if (new_byte == '\n') break;
 
 		// Append the byte to the String
 		resonse_str += new_byte;
 	}
 
 	// Check for timeout
-	if (millis() - start_time >= timeout)
-	{
+	if (millis() - start_time >= timeout) {
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblWrite] Timedout");
 		return 2;
 	}
 
 	// Check for error message
-	if (resonse_str == "error")
-	{
+	if (resonse_str == "error") {
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblRead] Error message");
 		return 1;
 	}
@@ -107,8 +96,7 @@ uint8_t GantryOperation::grblRead(String &resonse_str, unsigned long timeout, bo
 
 /// @brief Initialize the grbl system settings.
 /// @brief Initialize the grbl system settings.
-void GantryOperation::grblInitSystem()
-{
+void GantryOperation::grblInitSystem() {
 	// Loop through the settings array
 	for (size_t i = 0; i < sizeof(_grblSettings) / sizeof(_grblSettings[0]); ++i)
 	{
@@ -506,22 +494,19 @@ void GantryOperation::procEcatMessage()
 	}
 
 	// GANTRY_RUN_PUMP
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RUN_PUMP)
-	{
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_RUN_PUMP) {
 		uint8_t run_state = EsmaCom.rcvEM.ArgU.ui8[0]; // get the run state
 		pumpRun(run_state);
 	}
 
 	// GANTRY_REWARD
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD)
-	{
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::GANTRY_REWARD) {
 		float duration = EsmaCom.rcvEM.ArgU.f32[0] * 1000; // get the reward durration in ms
 		runReward(duration);
 	}
 
 	// RESET_ORIGIN
-	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_ORIGIN)
-	{
+	if (EsmaCom.rcvEM.msgTp == EsmaCom.MessageType::RESET_ORIGIN) {
 		float x = EsmaCom.rcvEM.ArgU.f32[0]; // get the x position
 		float y = EsmaCom.rcvEM.ArgU.f32[1]; // get the y position
 		resetOrigin(x, y);
