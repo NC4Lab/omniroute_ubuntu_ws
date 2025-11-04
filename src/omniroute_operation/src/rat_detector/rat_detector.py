@@ -42,6 +42,7 @@ class RatDetector:
 
         # Initialize the current chamber of the rat's body, retrying until valid
         self.current_body_chamber = -1
+        self.current_head_chamber = -1
         while self.current_body_chamber == -1:
             self.current_body_chamber = self.rat_head_chamber()
 
@@ -72,6 +73,23 @@ class RatDetector:
         return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
     # Check if the rat's body has moved to a new chamber
+    def did_rat_head_move_to(self, new_chamber):
+        current_chamber_x = self.MazeDim.chamber_centers[self.current_head_chamber][0]
+        current_chamber_y = self.MazeDim.chamber_centers[self.current_head_chamber][1]
+
+        new_chamber_x = self.MazeDim.chamber_centers[new_chamber][0]
+        new_chamber_y = self.MazeDim.chamber_centers[new_chamber][1]
+
+        # Check movement based on x or y alignment with the new chamber
+        if current_chamber_x == new_chamber_x or current_chamber_y == new_chamber_y:
+            dist_from_current_chamber = self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y)
+            # Verify distance threshold for movement
+            if dist_from_current_chamber >= (self.MazeDim.chamber_wd * 0.75) and self.is_rat_head_in_chamber(new_chamber):
+                return True
+
+        return False
+
+    # Check if the rat's body has moved to a new chamber
     def did_rat_body_move_to(self, new_chamber):
         current_chamber_x = self.MazeDim.chamber_centers[self.current_body_chamber][0]
         current_chamber_y = self.MazeDim.chamber_centers[self.current_body_chamber][1]
@@ -81,8 +99,7 @@ class RatDetector:
 
         # Check movement based on x or y alignment with the new chamber
         if current_chamber_x == new_chamber_x or current_chamber_y == new_chamber_y:
-            dist_from_current_chamber = self.dist(
-                self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y)
+            dist_from_current_chamber = self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y)
             # Verify distance threshold for movement
             if dist_from_current_chamber >= (self.MazeDim.chamber_wd * 1.2) and self.is_rat_head_in_chamber(new_chamber):
                 return True
@@ -106,9 +123,13 @@ class RatDetector:
     def loop(self):
         # Publish the current chamber of the rat's head
         for i in range(9):
-            if self.is_rat_head_in_chamber(i):
+            if self.did_rat_head_move_to(i):
+                self.current_head_chamber = i
                 self.rat_head_chamber_pub.publish(i)
                 break
+            # if self.is_rat_head_in_chamber(i):
+            #     self.rat_head_chamber_pub.publish(i)
+            #     break
 
         # Check and publish if the rat's body has moved to a new chamber
         for i in range(9):

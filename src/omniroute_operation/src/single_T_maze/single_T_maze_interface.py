@@ -56,6 +56,7 @@ class ExperimentPhases(Enum):
     FROM_CSV = 4
 
 class Mode(Enum):
+    IDLE = auto()
     START = auto()
     START_EXPERIMENT = auto()
     START_TRIAL = auto()
@@ -177,9 +178,6 @@ class Interface(Plugin):
         self.experiment_pub = rospy.Publisher(
             '/experiment', String, queue_size=1)
         
-        self.gantry_pub = rospy.Publisher(
-            '/gantry_cmd', GantryCmd, queue_size=1)
-
         self.rat_head_chamber = -1
         self.rat_body_chamber = -1
 
@@ -211,7 +209,7 @@ class Interface(Plugin):
         # Duration to wait at the end of the trial 
         self.end_trial_delay = rospy.Duration(1.0)
 
-        self.mode = Mode.START
+        self.mode = Mode.IDLE
         self.mode_start_time = rospy.Time.now()
         self.current_time = rospy.Time.now()
 
@@ -277,7 +275,7 @@ class Interface(Plugin):
     
     def pick_trial_phase_one(self):
         rospy.loginfo("Picking trial phase one")
-        if self.cts_success_count[self.currentTrial.floor_cue] > 2:
+        if self.cts_success_count[self.currentTrial.floor_cue] > 10:
             self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
@@ -580,12 +578,13 @@ class Interface(Plugin):
         self.current_time = rospy.Time.now()
         current_rat_chamber = self.rat_head_chamber
 
-        if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
-            # The rat has moved to a different chamber, update the gantry position
-            self.cf.move_gantry_to_chamber(current_rat_chamber)
+        if self.mode != Mode.IDLE and self.mode != Mode.PAUSE_EXPERIMENT:
+            if current_rat_chamber != self.previous_rat_chamber and current_rat_chamber != -1:
+                # The rat has moved to a different chamber, update the gantry position
+                self.cf.move_gantry_to_chamber(current_rat_chamber)
 
-            # Update the previous_rat_chamber for the next iteration
-            self.previous_rat_chamber = current_rat_chamber
+                # Update the previous_rat_chamber for the next iteration
+                self.previous_rat_chamber = current_rat_chamber
 
         if self.mode == Mode.START_EXPERIMENT:
             self.switch_to_mode(Mode.START_TRIAL)
