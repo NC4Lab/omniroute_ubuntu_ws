@@ -25,7 +25,7 @@ GantryOperation::GantryOperation() {}
 /// @return Status/error codes [0:success, 1:grbl error, 2:timeout].
 uint8_t GantryOperation::grblWrite(const String &cmd_str, bool do_wait_ack, unsigned long timeout) {
 	// Write the command with a new line character
-	String full_cmd = cmd_str + "\n";
+	String full_cmd = cmd_str + "\r\n";
 	Serial1.write(full_cmd.c_str());
 
 	// Bail if no read is needed
@@ -261,6 +261,16 @@ void GantryOperation::grblJogCancel()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error canceling jog");
 	}
+
+	// Send the dwell command
+	if (grblWrite("G4P100") != 0)
+	{
+		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error sending dwell command");
+	}
+
+	// // Write the command with a new line character
+	// String full_cmd = jog_cancel_cmd + "\r\n";
+	// Serial1.write(full_cmd.c_str());
 }
 
 /// @brief Reset the origin to new coordinates.

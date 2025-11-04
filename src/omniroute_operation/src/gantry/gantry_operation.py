@@ -424,6 +424,7 @@ class GantryOperation:
             self.home(self.home_speed)
 
         elif msg.cmd == "move_to_coordinate":
+            self.jog_cancel()
 
             # Get the target x and y
             target_x = msg.args[0]
@@ -433,13 +434,18 @@ class GantryOperation:
 
             # Move the gantry to the target
             self.move_gantry_abs(
-                target_x_mm, target_y_mm, self.max_feed_rate)
+                target_x_mm, target_y_mm, 5000)
 
             # Set back to idle
             self.gantry_mode = GantryState.IDLE
 
             MazeDB.printMsg(
                 'DEBUG', "Move to coordinate command received: target[%0.2fm, %0.2fm]", target_x, target_y)
+        
+        elif msg.cmd == "jog_cancel":
+            MazeDB.printMsg(
+                'DEBUG', "Gantry Jog Cancel command received")
+            self.jog_cancel()
 
         elif msg.cmd == "move_to_chamber":
             self.jog_cancel()
@@ -451,7 +457,7 @@ class GantryOperation:
 
             # Send the move command
             self.move_gantry_abs(
-                target_x, target_y, 15000)
+                target_x, target_y, 5000)
 
             # Set back to idle
             self.gantry_mode = GantryState.IDLE

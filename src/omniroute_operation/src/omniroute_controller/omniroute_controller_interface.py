@@ -632,8 +632,10 @@ class Interface(Plugin):
             self.qt_callback_fileListWidget_item_clicked)
 
         # Gantry ui callbacks
-        self._widget.runGantryBtn.clicked.connect(
-            self.qt_callback_runGantryBtn_clicked)
+        self._widget.moveToBtn.clicked.connect(
+            self.qt_callback_moveToBtn_clicked)
+        self._widget.moveToChamberBtn.clicked.connect(
+            self.qt_callback_moveToChamberBtn_clicked)
         self._widget.homeGantryBtn.clicked.connect(
             self.qt_callback_homeGantryBtn_clicked)
         self._widget.initGantryBtn.clicked.connect(
@@ -646,6 +648,8 @@ class Interface(Plugin):
             self.qt_callback_runPumpTogBtn_clicked)
         self._widget.rewardBtn.clicked.connect(
             self.qt_callback_rewardBtn_clicked)
+        self._widget.jogCancelBtn.clicked.connect(
+            self.qt_callback_jogCancelBtn_clicked)
 
         # Projector mode ui callbacks
         self._widget.projWinTogBtn.clicked.connect(
@@ -1060,13 +1064,20 @@ class Interface(Plugin):
         """ Callback function for the "Init Gantry" button."""
         self.gantry_pub.publish("initialize_gantry", [])
 
-    def qt_callback_runGantryBtn_clicked(self):
+    def qt_callback_moveToBtn_clicked(self):
         """ Callback function for the "Run Gantry" button."""
         x = self._widget.xSpinBox.value()
         y = self._widget.ySpinBox.value()
         MazeDB.printMsg(
             'DEBUG', "Publish Move to Coordinates: x[%0.2f] y[%0.2f]", x, y)
         self.gantry_pub.publish("move_to_coordinate", [x, y])
+    
+    def qt_callback_moveToChamberBtn_clicked(self):
+        """ Callback function for the "Move to Chamber" button."""
+        chamber_num = self._widget.chamberSpinBox.value()
+        MazeDB.printMsg(
+            'DEBUG', "Publish Move to Chamber: chamber[%d]", chamber_num)
+        self.gantry_pub.publish("move_to_chamber", [chamber_num])
 
     def qt_callback_trackRatTogBtn_clicked(self):
         """ Callback function to start and stop gantry tracking the rat from button press."""
@@ -1088,6 +1099,10 @@ class Interface(Plugin):
             self.gantry_pub.publish("start_pump", [])
         else:
             self.gantry_pub.publish("stop_pump", [])
+    
+    def qt_callback_jogCancelBtn_clicked(self):
+        """ Callback function to cancel gantry jogging from button press."""
+        self.gantry_pub.publish("jog_cancel", [])
 
     def qt_callback_rewardBtn_clicked(self):
         """ Callback function to run the full feeder operation from button press."""
