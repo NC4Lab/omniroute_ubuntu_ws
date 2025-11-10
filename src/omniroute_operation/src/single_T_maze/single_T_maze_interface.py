@@ -275,7 +275,7 @@ class Interface(Plugin):
     
     def pick_trial_phase_one(self):
         rospy.loginfo("Picking trial phase one")
-        if self.cts_success_count[self.currentTrial.floor_cue] > 10:
+        if self.cts_success_count[self.currentTrial.floor_cue] > 9:
             self.cts_success_count[self.currentTrial.floor_cue] = 0
 
             # Switch to the other group
