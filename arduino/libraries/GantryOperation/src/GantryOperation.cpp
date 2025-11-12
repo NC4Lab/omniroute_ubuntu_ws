@@ -199,8 +199,10 @@ void GantryOperation::gantryHome(uint16_t home_speed)
 }
 
 /// @brief Move the gantry to the target coordinates.
-void GantryOperation::gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate)
+void GantryOperation::gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate, bool cancel_jog)
 {
+	if (cancel_jog) grblJogCancel();
+
 	// Convert float values to String with 2 decimal places
 	// String x_str = String(x, 2);
 	// String y_str = String(y, 2);
@@ -225,8 +227,10 @@ void GantryOperation::gantryMoveRel(uint16_t x, uint16_t y, uint16_t feed_rate)
 	}
 }
 
-void GantryOperation::gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate)
+void GantryOperation::gantryMoveAbs(uint16_t x, uint16_t y, uint16_t feed_rate, bool cancel_jog)
 {
+	if (cancel_jog) grblJogCancel();
+
 	// Convert float values to String with 2 decimal places
 	// String x_str = String(x, 2);
 	// String y_str = String(y, 2);
@@ -261,16 +265,6 @@ void GantryOperation::grblJogCancel()
 	{
 		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error canceling jog");
 	}
-
-	// Send the dwell command
-	if (grblWrite("G4P100") != 0)
-	{
-		_Dbg.printMsg(_Dbg.MT::ERROR, "[grblJogCancel] Error sending dwell command");
-	}
-
-	// // Write the command with a new line character
-	// String full_cmd = jog_cancel_cmd + "\r\n";
-	// Serial1.write(full_cmd.c_str());
 }
 
 /// @brief Reset the origin to new coordinates.

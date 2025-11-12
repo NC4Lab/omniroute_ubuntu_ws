@@ -424,8 +424,6 @@ class GantryOperation:
             self.home(self.home_speed)
 
         elif msg.cmd == "move_to_coordinate":
-            self.jog_cancel()
-
             # Get the target x and y
             target_x = msg.args[0]
             target_y = msg.args[1]
@@ -448,8 +446,6 @@ class GantryOperation:
             self.jog_cancel()
 
         elif msg.cmd == "move_to_chamber":
-            self.jog_cancel()
-
             # Get the target x and y
             chamber_num = int(msg.args[0])
             target_x = self.maze_dim.chamber_centers[chamber_num][0] * 1000.0 + 195 #changed from 200 to 195 to avoid wall walls during reward
