@@ -453,7 +453,7 @@ class GantryOperation:
 
             # Send the move command
             self.move_gantry_abs(
-                target_x, target_y, 5000)
+                target_x, target_y, 15000)
 
             # Set back to idle
             self.gantry_mode = GantryState.IDLE

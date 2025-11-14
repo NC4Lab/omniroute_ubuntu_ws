@@ -66,6 +66,7 @@ class RatDetector:
             self.MazeDim.chamber_centers[chamber_num][0],
             self.MazeDim.chamber_centers[chamber_num][1]
         )
+        
         return dist_from_center <= self.threshold
 
     # Calculate Euclidean distance between two points
@@ -81,10 +82,14 @@ class RatDetector:
         new_chamber_y = self.MazeDim.chamber_centers[new_chamber][1]
 
         # Check movement based on x or y alignment with the new chamber
-        if current_chamber_x == new_chamber_x or current_chamber_y == new_chamber_y:
+        if current_chamber_x == new_chamber_x or current_chamber_y == new_chamber_y:            # SAME ROW OR COLUMN
             dist_from_current_chamber = self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y)
             # Verify distance threshold for movement
             if dist_from_current_chamber >= (self.MazeDim.chamber_wd * 0.75) and self.is_rat_head_in_chamber(new_chamber):
+                return True
+        else:
+            # Diagonal movement check with distance threshold
+            if self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y) >= (self.MazeDim.chamber_wd * math.sqrt(2) - 0.05) and self.is_rat_head_in_chamber(new_chamber):
                 return True
 
         return False
@@ -105,7 +110,7 @@ class RatDetector:
                 return True
         else:
             # Diagonal movement check with distance threshold
-            if self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y) >= (self.MazeDim.chamber_wd * math.sqrt(2) + 0.05) and self.is_rat_head_in_chamber(new_chamber):
+            if self.dist(self.rat_marker_x, self.rat_marker_y, current_chamber_x, current_chamber_y) >= (self.MazeDim.chamber_wd * math.sqrt(2) - 0.05) and self.is_rat_head_in_chamber(new_chamber):
                 return True
 
         return False
@@ -121,6 +126,9 @@ class RatDetector:
 
     # Main loop to update the rat's head and body positions in the GUI
     def loop(self):
+
+        rospy.loginfo(f"Rat Head Chamber: {self.current_head_chamber}, Rat Body Chamber: {self.current_body_chamber}")
+
         # Publish the current chamber of the rat's head
         for i in range(9):
             if self.did_rat_head_move_to(i):
