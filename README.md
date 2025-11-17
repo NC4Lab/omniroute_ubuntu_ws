@@ -1,11 +1,11 @@
-# (Ubuntu) Omniroute ROS Controller Setup and Usage
+# Omniroute ROS Controller Setup and Usage (Ubuntu)
 
 ## Overview
 
 This repository contains the Ubuntu ROS (Noetic) workspace used to control the Omniroute maze. It runs the ROS master, high-level behavioral logic, and the gate/gantry controller nodes, and provides the interface to the Windows-based tracking and projection workspace.
 
 <p align="center">
-  <img src="assets/system_diagram.svg" alt="System Diagram" width="700">
+  <img src="data\assets\sys_diagram.svg" alt="System Diagram" width="700">
 </p>
 
 ## Setup
@@ -165,4 +165,4 @@ roslaunch omniroute_operation omniroute_controller.launch
 
 * **Hardware design files** (for the Omniroute apparatus) are released under the **CERN-OHL-W** license.
     
-* **Analysis code in this repository** is released under the Apache-2.0 license (see `LICENSE`).
+* **Code in this repository** is released under the MIT License (MIT) (see LICENSE).
